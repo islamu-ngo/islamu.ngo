@@ -1,0 +1,7 @@
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\iLoveIbadah.Blazor.Server.UI.exe
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\appsettings.Development.json
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\appsettings.json
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\iLoveIbadah.Blazor.Server.UI.dll
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\iLoveIbadah.Blazor.Server.UI.deps.json
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\iLoveIbadah.Blazor.Server.UI.runtimeconfig.json
+C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.Server.UI\bin\Debug\net6.0\publish\iLoveIbadah.Blazor.Server.UI.pdb

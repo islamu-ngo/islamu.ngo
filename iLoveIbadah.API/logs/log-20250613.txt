@@ -1,0 +1,332 @@
+2025-06-13 16:04:23.260 +02:00 [INF] Now listening on: https://localhost:65302
+2025-06-13 16:04:23.285 +02:00 [INF] Now listening on: http://localhost:65303
+2025-06-13 16:04:23.285 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:04:23.285 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:04:23.321 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:04:23.321 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:04:23.321 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 16:04:33.079 +02:00 [ERR] An error occurred using the connection to database '' on server ''.
+2025-06-13 16:04:33.093 +02:00 [ERR] An exception occurred while iterating over the results of a query for context type 'iLoveIbadah.Persistence.iLoveIbadahDbContext'.
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2025-06-13 16:10:01.912 +02:00 [INF] Now listening on: https://localhost:65448
+2025-06-13 16:10:01.935 +02:00 [INF] Now listening on: http://localhost:65449
+2025-06-13 16:10:01.935 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:10:01.935 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:10:01.967 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:10:01.967 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:10:01.967 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 16:13:11.620 +02:00 [INF] Now listening on: https://localhost:49190
+2025-06-13 16:13:11.638 +02:00 [INF] Now listening on: http://localhost:49191
+2025-06-13 16:13:11.638 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:13:11.638 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:13:11.678 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:13:11.679 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:13:11.679 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 16:28:54.966 +02:00 [INF] Now listening on: https://localhost:49476
+2025-06-13 16:28:54.992 +02:00 [INF] Now listening on: http://localhost:49477
+2025-06-13 16:28:54.992 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:28:54.992 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:28:55.028 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:28:55.029 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:28:55.029 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 16:41:24.731 +02:00 [INF] Now listening on: https://localhost:49750
+2025-06-13 16:41:24.758 +02:00 [INF] Now listening on: http://localhost:49751
+2025-06-13 16:41:24.758 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:41:24.758 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:41:24.800 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:41:24.800 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:41:24.800 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 16:46:58.932 +02:00 [ERR] An error occurred using the connection to database '' on server ''.
+2025-06-13 16:46:58.941 +02:00 [ERR] An exception occurred while iterating over the results of a query for context type 'iLoveIbadah.Identity.iLoveIbadahIdentityDbContext'.
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2025-06-13 16:48:01.576 +02:00 [ERR] Une exception non gérée s'est produite: The ConnectionString property has not been initialized.
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Identity.UserManager`1.FindByEmailAsync(String email)
+   at iLoveIbadah.Identity.Services.AuthService.Login(AuthRequest request) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Identity\Services\AuthService.cs:line 37
+   at iLoveIbadah.API.Controllers.UserAccountsController.Login(AuthRequest request) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API\Controllers\UserAccountsController.cs:line 35
+   at lambda_method6(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at iLoveIbadah.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API\Middleware\ExceptionMiddleware.cs:line 21
+2025-06-13 16:48:01.740 +02:00 [ERR] Internal Server Error: The ConnectionString property has not been initialized.
+2025-06-13 16:49:32.136 +02:00 [ERR] An error occurred using the connection to database '' on server ''.
+2025-06-13 16:49:32.137 +02:00 [ERR] An exception occurred while iterating over the results of a query for context type 'iLoveIbadah.Identity.iLoveIbadahIdentityDbContext'.
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2025-06-13 16:49:36.964 +02:00 [ERR] Une exception non gérée s'est produite: The ConnectionString property has not been initialized.
+System.InvalidOperationException: The ConnectionString property has not been initialized.
+   at Microsoft.Data.SqlClient.SqlConnection.PermissionDemand()
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.PermissionDemand(DbConnection outerConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource`1 retry, DbConnectionOptions userOptions)
+   at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, SqlConnectionOverrides overrides)
+   at Microsoft.Data.SqlClient.SqlConnection.InternalOpenAsync(CancellationToken cancellationToken)
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Identity.UserManager`1.FindByEmailAsync(String email)
+   at iLoveIbadah.Identity.Services.AuthService.Login(AuthRequest request) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Identity\Services\AuthService.cs:line 37
+   at iLoveIbadah.API.Controllers.UserAccountsController.Login(AuthRequest request) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API\Controllers\UserAccountsController.cs:line 35
+   at lambda_method6(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at iLoveIbadah.API.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API\Middleware\ExceptionMiddleware.cs:line 21
+2025-06-13 16:49:37.008 +02:00 [ERR] Internal Server Error: The ConnectionString property has not been initialized.
+2025-06-13 16:52:17.710 +02:00 [INF] Now listening on: https://localhost:50224
+2025-06-13 16:52:17.739 +02:00 [INF] Now listening on: http://localhost:50225
+2025-06-13 16:52:17.739 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 16:52:17.739 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 16:52:17.782 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 16:52:17.782 +02:00 [INF] Hosting environment: Development
+2025-06-13 16:52:17.782 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 17:23:12.859 +02:00 [INF] Now listening on: https://localhost:50777
+2025-06-13 17:23:12.880 +02:00 [INF] Now listening on: http://localhost:50778
+2025-06-13 17:23:12.880 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 17:23:12.881 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 17:23:12.913 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 17:23:12.913 +02:00 [INF] Hosting environment: Development
+2025-06-13 17:23:12.913 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 17:50:57.137 +02:00 [INF] Now listening on: https://localhost:51220
+2025-06-13 17:50:57.158 +02:00 [INF] Now listening on: http://localhost:51221
+2025-06-13 17:50:57.158 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 17:50:57.158 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 17:50:57.191 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 17:50:57.191 +02:00 [INF] Hosting environment: Development
+2025-06-13 17:50:57.191 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 17:59:53.771 +02:00 [INF] Now listening on: https://localhost:51440
+2025-06-13 17:59:53.797 +02:00 [INF] Now listening on: http://localhost:51441
+2025-06-13 17:59:53.797 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 17:59:53.797 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 17:59:53.837 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 17:59:53.837 +02:00 [INF] Hosting environment: Development
+2025-06-13 17:59:53.837 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 20:07:00.910 +02:00 [INF] Now listening on: https://localhost:53994
+2025-06-13 20:07:00.934 +02:00 [INF] Now listening on: http://localhost:53995
+2025-06-13 20:07:00.934 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 20:07:00.934 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 20:07:00.971 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 20:07:00.971 +02:00 [INF] Hosting environment: Development
+2025-06-13 20:07:00.971 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 20:07:05.228 +02:00 [ERR] An error occurred using the connection to database 'ILoveIbadahDB' on server 'tcp:ibadahlover-sqlserver.database.windows.net,1433'.
+2025-06-13 20:07:05.239 +02:00 [ERR] An exception occurred while iterating over the results of a query for context type 'iLoveIbadah.Persistence.iLoveIbadahDbContext'.
+Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot open server 'ibadahlover-sqlserver' requested by the login. Client with IP address '138.199.30.165' is not allowed to access the server.  To enable access, use the Azure Management Portal or run sp_set_firewall_rule on the master database to create a firewall rule for this IP address or address range.  It may take up to five minutes for this change to take effect.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.TdsParser.Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.CompleteLogin(Boolean enlistOK)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean ignoreSniOpenTimeout, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+ClientConnectionId:33f2f438-1ebc-4cce-a979-0180f80ef5d4
+Error Number:40615,State:1,Class:14
+Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot open server 'ibadahlover-sqlserver' requested by the login. Client with IP address '138.199.30.165' is not allowed to access the server.  To enable access, use the Azure Management Portal or run sp_set_firewall_rule on the master database to create a firewall rule for this IP address or address range.  It may take up to five minutes for this change to take effect.
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.TdsParser.Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.CompleteLogin(Boolean enlistOK)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean ignoreSniOpenTimeout, TimeoutTimer timeout, Boolean withFailover)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionString connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+   at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
+   at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, Object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionFactory.CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.CreateObject(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.UserCreateRequest(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, DbConnectionOptions userOptions, DbConnectionInternal& connection)
+   at Microsoft.Data.ProviderBase.DbConnectionPool.WaitForPendingOpen()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+ClientConnectionId:33f2f438-1ebc-4cce-a979-0180f80ef5d4
+Error Number:40615,State:1,Class:14
+2025-06-13 20:08:31.760 +02:00 [INF] Now listening on: https://localhost:54136
+2025-06-13 20:08:31.779 +02:00 [INF] Now listening on: http://localhost:54137
+2025-06-13 20:08:31.779 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 20:08:31.779 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 20:08:31.873 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 20:08:31.873 +02:00 [INF] Hosting environment: Development
+2025-06-13 20:08:31.873 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 21:34:56.126 +02:00 [INF] Now listening on: https://localhost:55328
+2025-06-13 21:34:56.147 +02:00 [INF] Now listening on: http://localhost:55329
+2025-06-13 21:34:56.147 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 21:34:56.147 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 21:34:56.185 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 21:34:56.185 +02:00 [INF] Hosting environment: Development
+2025-06-13 21:34:56.185 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 21:36:17.718 +02:00 [INF] Now listening on: https://localhost:55396
+2025-06-13 21:36:17.746 +02:00 [INF] Now listening on: http://localhost:55397
+2025-06-13 21:36:17.746 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 21:36:17.746 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 21:36:17.786 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 21:36:17.786 +02:00 [INF] Hosting environment: Development
+2025-06-13 21:36:17.786 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 21:38:59.691 +02:00 [INF] Now listening on: https://localhost:55503
+2025-06-13 21:38:59.715 +02:00 [INF] Now listening on: http://localhost:55504
+2025-06-13 21:38:59.715 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 21:38:59.716 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 21:38:59.905 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 21:38:59.905 +02:00 [INF] Hosting environment: Development
+2025-06-13 21:38:59.905 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 21:45:45.830 +02:00 [INF] Now listening on: https://localhost:55698
+2025-06-13 21:45:45.858 +02:00 [INF] Now listening on: http://localhost:55699
+2025-06-13 21:45:45.858 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 21:45:45.858 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 21:45:45.899 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 21:45:45.899 +02:00 [INF] Hosting environment: Development
+2025-06-13 21:45:45.899 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-13 23:31:26.043 +02:00 [INF] Now listening on: https://localhost:57565
+2025-06-13 23:31:26.068 +02:00 [INF] Now listening on: http://localhost:57566
+2025-06-13 23:31:26.068 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-13 23:31:26.068 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-13 23:31:26.109 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-13 23:31:26.109 +02:00 [INF] Hosting environment: Development
+2025-06-13 23:31:26.109 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API

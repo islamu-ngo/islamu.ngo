@@ -1,0 +1,28 @@
+2025-06-06 00:46:24.048 +02:00 [INF] Now listening on: https://localhost:55500
+2025-06-06 00:46:24.069 +02:00 [INF] Now listening on: http://localhost:55501
+2025-06-06 00:46:24.070 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-06 00:46:24.070 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-06 00:46:24.100 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-06 00:46:24.100 +02:00 [INF] Hosting environment: Development
+2025-06-06 00:46:24.100 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-06 20:00:53.338 +02:00 [INF] Now listening on: https://localhost:62278
+2025-06-06 20:00:53.356 +02:00 [INF] Now listening on: http://localhost:62279
+2025-06-06 20:00:53.357 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-06 20:00:53.357 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-06 20:00:53.382 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-06 20:00:53.382 +02:00 [INF] Hosting environment: Development
+2025-06-06 20:00:53.382 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-06 22:41:03.201 +02:00 [INF] Now listening on: https://localhost:64292
+2025-06-06 22:41:03.219 +02:00 [INF] Now listening on: http://localhost:64293
+2025-06-06 22:41:03.220 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-06 22:41:03.220 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-06 22:41:03.243 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-06 22:41:03.244 +02:00 [INF] Hosting environment: Development
+2025-06-06 22:41:03.244 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API
+2025-06-06 23:26:24.180 +02:00 [INF] Now listening on: https://localhost:64808
+2025-06-06 23:26:24.198 +02:00 [INF] Now listening on: http://localhost:64809
+2025-06-06 23:26:24.199 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-06 23:26:24.199 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-06 23:26:24.223 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-06 23:26:24.223 +02:00 [INF] Hosting environment: Development
+2025-06-06 23:26:24.223 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API

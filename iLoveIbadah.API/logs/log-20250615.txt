@@ -1,0 +1,7 @@
+2025-06-15 00:40:20.293 +02:00 [INF] Now listening on: https://localhost:51067
+2025-06-15 00:40:20.318 +02:00 [INF] Now listening on: http://localhost:51068
+2025-06-15 00:40:20.318 +02:00 [INF] Now listening on: http://localhost:80
+2025-06-15 00:40:20.318 +02:00 [INF] Now listening on: http://localhost:443
+2025-06-15 00:40:20.354 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-06-15 00:40:20.354 +02:00 [INF] Hosting environment: Development
+2025-06-15 00:40:20.354 +02:00 [INF] Content root path: C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API

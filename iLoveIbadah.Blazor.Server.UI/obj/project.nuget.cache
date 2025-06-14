@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Mu0pG1gPToA=",
+  "success": true,
+  "projectFilePath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Blazor.Server.UI\\iLoveIbadah.Blazor.Server.UI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\AM5\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.22.1-preview.1\\microsoft.visualstudio.azure.containers.tools.targets.1.22.1-preview.1.nupkg.sha512"
+  ],
+  "logs": []
+}

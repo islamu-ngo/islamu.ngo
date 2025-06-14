@@ -1,0 +1,78 @@
+﻿@model IEnumerable<iLoveIbadah.Website.Models.BlogListVM>
+
+@{
+    ViewData["Title"] = "Blogs";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/bloglist-page.css" asp-append-version="true" />
+}
+
+<section class="wrapper blogs-header">
+    <h1 class="blogs-header__title">Blogs</h1>
+    <p class="blogs-header__subtitle">Blogs on leveraging contemporary technology to build a better relationship with Allah (God)</p>
+</section>
+
+<section class="wrapper blogs-main">
+    <div class="blogs">
+        @foreach (var blog in Model)
+        {
+            <article class="blog-card">
+                <div class="blog-card__header">
+                    <p class="blog-card__title"><a asp-action="Details" asp-route-id="@blog.Id">@blog.Title</a></p>
+                </div>
+                <div class="blog-card__main">
+                    
+                </div>
+                <div class="blog-card__footer">
+                    <a class="blog-card__footer__link" asp-action="Details" asp-route-id="@blog.Id">Read blog</a>
+                    <span class="blog-card__footer__metadata">@blog.TotalViews</span>
+                    <span class="blog-card__footer__metadata">@blog.CreatedAt</span>
+                    </div>
+            </article>
+        }
+    </div>
+</section>
+
+@* <table class="wrapper table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.BlobFileId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalViews)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedAt)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Title)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.BlobFileId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalViews)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedAt)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id=item.Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id=item.Id })
+            </td>
+        </tr>
+}
+    </tbody>
+</table> *@

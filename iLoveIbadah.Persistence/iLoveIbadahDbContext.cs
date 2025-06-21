@@ -30,18 +30,12 @@ namespace iLoveIbadah.Persistence
             modelBuilder.ApplyConfiguration(new CommentLikeConfiguration());
             modelBuilder.ApplyConfiguration(new TagConfiguration());
             modelBuilder.ApplyConfiguration(new UserAccountConfiguration());
-            modelBuilder.ApplyConfiguration(new DhikrTypeConfiguration());
-            modelBuilder.ApplyConfiguration(new SalahTypeConfiguration());
             modelBuilder.ApplyConfiguration(new ProfilePictureTypeConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionTypeConfiguration());
             modelBuilder.ApplyConfiguration(new RoleTypeConfiguration());
             modelBuilder.ApplyConfiguration(new RoleTypePermissionTypeMappingConfiguration());
             modelBuilder.ApplyConfiguration(new BlobFileConfiguration());
             modelBuilder.ApplyConfiguration(new UserAccountRoleTypeMappingConfiguration());
-            modelBuilder.ApplyConfiguration(new UserDhikrActivityConfiguration());
-            modelBuilder.ApplyConfiguration(new UserSalahActivityConfiguration());
-            modelBuilder.ApplyConfiguration(new UserDhikrOverviewConfiguration());
-            modelBuilder.ApplyConfiguration(new UserSalahOverviewConfiguration());
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(iLoveIbadahDbContext).Assembly);
         }
@@ -65,17 +59,11 @@ namespace iLoveIbadah.Persistence
 
         public DbSet<UserAccount> UserAccounts { get; set; }
         public DbSet<BlobFile> BlobFiles { get; set; }
-        public DbSet<DhikrType> DhikrTypes { get; set; }
-        public DbSet<SalahType> SalahTypes { get; set; }
         public DbSet<ProfilePictureType> ProfilePictureTypes { get; set; }
         public DbSet<PermissionType> PermissionTypes { get; set; }
         public DbSet<RoleType> RoleTypes { get; set; }
         public DbSet<RoleTypePermissionTypeMapping> RoleTypePermissionTypeMappings { get; set; }
         public DbSet<UserAccountRoleTypeMapping> UserAccountRoleTypeMappings { get; set; }
-        public DbSet<UserDhikrActivity> UserDhikrActivities { get; set; }
-        public DbSet<UserSalahActivity> UserSalahActivities { get; set; }
-        public DbSet<UserDhikrOverview> UserDhikrOverviews { get; set; }
-        public DbSet<UserSalahOverview> UserSalahOverviews { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogCategoryMapping> BlogCategoryMappings { get; set; }

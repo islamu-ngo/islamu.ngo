@@ -17,6 +17,8 @@ using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services.AddHttpContextAccessor();
 //AddSwaggerDoc(builder.Services); //using openapi documentation not swagger's one
 

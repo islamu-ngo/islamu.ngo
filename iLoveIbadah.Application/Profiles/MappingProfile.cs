@@ -7,19 +7,13 @@ using iLoveIbadah.Application.DTOs.BlogTagMapping;
 using iLoveIbadah.Application.DTOs.Category;
 using iLoveIbadah.Application.DTOs.Comment;
 using iLoveIbadah.Application.DTOs.CommentLike;
-using iLoveIbadah.Application.DTOs.DhikrType;
 using iLoveIbadah.Application.DTOs.PermissionType;
 using iLoveIbadah.Application.DTOs.ProfilePictureType;
 using iLoveIbadah.Application.DTOs.RoleType;
 using iLoveIbadah.Application.DTOs.RoleTypePermissionTypeMapping;
-using iLoveIbadah.Application.DTOs.SalahType;
 using iLoveIbadah.Application.DTOs.Tag;
 using iLoveIbadah.Application.DTOs.UserAccount;
 using iLoveIbadah.Application.DTOs.UserAccountRoleTypeMapping;
-using iLoveIbadah.Application.DTOs.UserDhikrActivity;
-using iLoveIbadah.Application.DTOs.UserDhikrOverview;
-using iLoveIbadah.Application.DTOs.UserSalahActivity;
-using iLoveIbadah.Application.DTOs.UserSalahOverview;
 using iLoveIbadah.Domain;
 using System;
 using System.Collections.Generic;
@@ -57,12 +51,6 @@ namespace iLoveIbadah.Application.Profiles
             CreateMap<BlobFile, BlobFileDto>().ReverseMap();
             CreateMap<BlobFile, BlobFileListDto>().ReverseMap();
             CreateMap<BlobFile, CreateBlobFileDto>().ReverseMap();
-            CreateMap<DhikrType, DhikrTypeListDto>().ReverseMap();
-            CreateMap<DhikrType, DhikrTypeDto>().ReverseMap();
-            CreateMap<DhikrType, CreateDhikrTypeDto>().ReverseMap();
-            CreateMap<DhikrType, DhikrTypeByUserAccountListDto>().ReverseMap();
-            CreateMap<SalahType, SalahTypeDto>().ReverseMap();
-            CreateMap<SalahType, SalahTypeListDto>().ReverseMap();
             CreateMap<ProfilePictureType, ProfilePictureTypeDto>().ReverseMap();
             CreateMap<ProfilePictureType, ProfilePictureTypeListDto>().ReverseMap();
             CreateMap<RoleType, RoleTypeDto>().ReverseMap();
@@ -82,20 +70,6 @@ namespace iLoveIbadah.Application.Profiles
             CreateMap<UserAccount, UpdateUserAccountTotalWarningsDto>().ReverseMap();
             CreateMap<UserAccountRoleTypeMapping, UserAccountRoleTypeMappingDto>().ReverseMap();
             CreateMap<UserAccountRoleTypeMapping, UserAccountRoleTypeMappingListDto>().ReverseMap();
-            CreateMap<UserDhikrActivity, UserDhikrActivityDto>().ReverseMap();
-            CreateMap<UserDhikrActivity, UserDhikrActivityListDto>().ReverseMap();
-            CreateMap<UserDhikrActivity, CreateUserDhikrActivityDto>().ReverseMap();
-            CreateMap<UserDhikrActivity, UpdateUserDhikrActivityDto>().ReverseMap();
-            CreateMap<UserDhikrOverview, UserDhikrOverviewDto>().ReverseMap();
-            CreateMap<UserDhikrOverview, UserDhikrOverviewListDto>().ReverseMap();
-            CreateMap<UserDhikrActivity, UserDhikrActivityByPerformedOnDto>().ReverseMap();
-            CreateMap<UserSalahActivity, UserSalahActivityListDto>().ReverseMap();
-            CreateMap<UserSalahActivity, UserSalahActivityListByTrackedOnDto>().ReverseMap();
-            CreateMap<UserSalahActivity, UserSalahActivityDto>().ReverseMap();
-            CreateMap<UserSalahActivity, CreateUserSalahActivityDto>().ReverseMap();
-            CreateMap<UserSalahActivity, UpdateUserSalahActivityDto>().ReverseMap();
-            CreateMap<UserSalahOverview, UserSalahOverviewDto>().ReverseMap();
-            CreateMap<UserSalahOverview, UserSalahOverviewListDto>().ReverseMap();
         }
     }
 }

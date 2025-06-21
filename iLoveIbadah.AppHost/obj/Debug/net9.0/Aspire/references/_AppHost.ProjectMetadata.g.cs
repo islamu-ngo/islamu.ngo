@@ -8,5 +8,5 @@ namespace Projects;
 public class iLoveIbadah_AppHost
 {
     private iLoveIbadah_AppHost() { }
-    public static string ProjectPath => """C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.AppHost""";
+    public static string ProjectPath => """C:\Programir\Github\Website\iLoveIbadah.AppHost""";
 }

@@ -7,5 +7,5 @@ namespace Projects;
 [global::System.Diagnostics.DebuggerDisplay("Type = {GetType().Name,nq}, ProjectPath = {ProjectPath}")]
 public class iLoveIbadah_API : global::Aspire.Hosting.IProjectMetadata
 {
-    public string ProjectPath => """C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.API\iLoveIbadah.API.csproj""";
+    public string ProjectPath => """C:\Programir\Github\Website\iLoveIbadah.API\iLoveIbadah.API.csproj""";
 }

@@ -12,20 +12,21 @@ using System;
 using System.Reflection;
 
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("d2462fb2-7f07-4f7c-a66c-1d8885aec36a")]
-[assembly: System.Reflection.AssemblyMetadata("dcpclipath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\dcp" +
+[assembly: System.Reflection.AssemblyMetadata("dcpclipath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\dcp" +
     ".exe")]
-[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\ext" +
+[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\ext" +
     "\\")]
-[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\ext" +
+[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.3.1\\tools\\ext" +
     "\\bin\\")]
-[assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.AppHost")]
+[assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Programir\\Github\\Website\\iLoveIbadah.AppHost")]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectname", "iLoveIbadah.AppHost.csproj")]
-[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\9.0.0\\tools\\Aspire.Dash" +
+[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\AM5\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\9.3.1\\tools\\Aspire.Dash" +
     "board.exe")]
+[assembly: System.Reflection.AssemblyMetadataAttribute("apphostprojectbaseintermediateoutputpath", "C:\\Programir\\Github\\Website\\iLoveIbadah.AppHost\\obj\\")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("iLoveIbadah.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f1314463ad084bce32633019f46dcf190c850f05")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79f5cebde91d9634d73244e94ac2646c9ec1ebcf")]
 [assembly: System.Reflection.AssemblyProductAttribute("iLoveIbadah.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("iLoveIbadah.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -57,3 +57,12 @@ C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\
 C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
 C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
 C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
+C:\Programir\Github\Website\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json

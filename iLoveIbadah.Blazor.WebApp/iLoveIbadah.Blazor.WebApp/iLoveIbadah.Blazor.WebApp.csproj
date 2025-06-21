@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\iLoveIbadah.Diagnostic\iLoveIbadah.Diagnostic.csproj" />
     <ProjectReference Include="..\..\iLoveIbadah.ServiceDefaults\iLoveIbadah.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\iLoveIbadah.Blazor.WebApp.Client\iLoveIbadah.Blazor.WebApp.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.5" />
   </ItemGroup>
 

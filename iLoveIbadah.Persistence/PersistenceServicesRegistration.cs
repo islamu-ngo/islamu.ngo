@@ -32,12 +32,6 @@ namespace iLoveIbadah.Persistence
             services.AddScoped<ICommentRepository, CommentRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IUserAccountRepository, UserAccountRepository>();
-            services.AddScoped<IUserSalahActivityRepository, UserSalahActivityRepository>();
-            services.AddScoped<IUserSalahOverviewRepository, UserSalahOverviewRepository>();
-            services.AddScoped<IUserDhikrActivityRepository, UserDhikrActivityRepository>();
-            services.AddScoped<IUserDhikrOverviewRepository, UserDhikrOverviewRepository>();
-            services.AddScoped<ISalahTypeRepository, SalahTypeRepository>();
-            services.AddScoped<IDhikrTypeRepository, DhikrTypeRepository>();
             services.AddScoped<IProfilePictureTypeRepository, ProfilePictureTypeRepository>();
             services.AddScoped<IPermissionTypeRepository, PermissionTypeRepository>();
             services.AddScoped<IRoleTypeRepository, RoleTypeRepository>();

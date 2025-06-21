@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using iLoveIbadah.Application.Features.DhikrTypes.Requests.Queries;
 using MediatR;
 using System;
 using System.Collections.Generic;

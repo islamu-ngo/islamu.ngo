@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3mKXJXUDpos=",
+  "dgSpecHash": "hXeNTeqCu0Q=",
   "success": true,
-  "projectFilePath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+  "projectFilePath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\AM5\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\AM5\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
@@ -31,9 +31,9 @@
       "code": "NU1701",
       "level": "Warning",
       "message": "Le package 'EntityFramework 5.0.0' a été restauré en utilisant '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' au lieu du framework cible du projet 'net8.0'. Ce package n'est peut-être pas totalement compatible avec votre projet.",
-      "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+      "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+      "filePath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
       "libraryId": "EntityFramework",
       "targetGraphs": [
         "net8.0"
@@ -43,9 +43,9 @@
       "code": "NU1701",
       "level": "Warning",
       "message": "Le package 'EntityFramework.fr 5.0.0' a été restauré en utilisant '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' au lieu du framework cible du projet 'net8.0'. Ce package n'est peut-être pas totalement compatible avec votre projet.",
-      "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+      "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+      "filePath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
       "libraryId": "EntityFramework.fr",
       "targetGraphs": [
         "net8.0"

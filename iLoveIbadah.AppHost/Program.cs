@@ -1,7 +1,22 @@
 using k8s.Models;
 using MetricsApp.AppHost.OpenTelemetryCollector;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Aspire.Hosting.ApplicationModel;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = DistributedApplication.CreateBuilder(args);
+
+var startAfter = DateTime.Now.AddMinutes(1); // Set the start time to 1 minute from now
+
+builder.Services.AddHealthChecks().AddCheck("mycheck", () =>
+{
+    return DateTime.Now > startAfter ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy();
+});
+
+//builder.Services.Configure<DistributedApplicationOptions>(options => {
+//    options. = TimeSpan.FromMinutes(5);
+//});
 
 //var prometheus = builder.AddContainer("prometheus", "prom/prometheus", "v3.2.1")
 //    .WithBindMount("./Config/prometheus.yaml", "/etc/prometheus", isReadOnly: true)
@@ -18,15 +33,64 @@ var builder = DistributedApplication.CreateBuilder(args);
 //var zipkin = builder.AddContainer("zipkin", "openzipkin/zipkin")
 //    .WithEndpoint(9411, 9411, "zipkin-http");
 
-var website = builder.AddProject<Projects.iLoveIbadah_Website>("iloveibadah-website")
-    .WithHttpEndpoint(5001, 8080, "iloveibadah-website-http")
-    .WithHttpEndpoint(5002, 8081, "iloveibadah-website-https")
-    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
+
+var iLoveIbadahIdentityServer = builder.AddPostgres("iLoveIbadahIdentityServer")
+    .WithDataVolume(isReadOnly: false)
+    .WithHealthCheck("mycheck");
+var iLoveIbadahIdentityDB = iLoveIbadahIdentityServer.AddDatabase("iLoveIbadahIdentityDB");
+
+var iLoveIbadahWebsiteServer = builder.AddPostgres("iLoveIbadahWebsiteServer")
+    .WithDataVolume(isReadOnly: false)
+    .WithHealthCheck("mycheck");
+var iLoveIbadahWebsiteDB = iLoveIbadahWebsiteServer.AddDatabase("iLoveIbadahWebsiteDB");
+
 
 var api = builder.AddProject<Projects.iLoveIbadah_API>("iloveibadah-api")
     .WithHttpEndpoint(5003, 80, "iloveibadah-api-http")
     .WithHttpEndpoint(5004, 443, "iloveibadah-api-https")
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
+//.WithReference(zipkin);
+
+
+builder.AddProject<Projects.iLoveIbadah_Website_UI>("iloveibadah-website-ui")
+    .WithHttpEndpoint(5001, 8080, "iloveibadah-website-http")
+    .WithHttpEndpoint(5002, 8081, "iloveibadah-website-https")
+    .WithReference(iLoveIbadahIdentityDB)
+    .WithReference(iLoveIbadahWebsiteDB)
+    .WaitFor(iLoveIbadahIdentityDB)
+    .WaitFor(iLoveIbadahWebsiteDB);
+
+//.WithReference(zipkin);
+
+//var website = builder.AddProject<Projects.iLoveIbadah_Website>("iloveibadah-website")
+//    .WithHttpEndpoint(5001, 8080, "iloveibadah-website-http")
+//    .WithHttpEndpoint(5002, 8081, "iloveibadah-website-https")
+//    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
+
+//var webapp = builder.AddProject<Projects.iLoveIbadah_Blazor_WebApp>("iloveibadah-blazor-webapp")
+//    .WithHttpEndpoint(5005, 8082, "iloveibadah-blazor-webapp-http")
+//    .WithHttpEndpoint(5006, 8083, "iloveibadah-blazor-webapp-https");
+
+
+
+
+//builder.AddProject<Projects.iLoveIbadah_WebApp>("iloveibadah-webapp");
+//.WithReference(zipkin);
+
+
+//var webapp = builder.AddProject<Projects.iLoveIbadah_Blazor_WebApp>("iloveibadah-blazor-webapp")
+//    .WithHttpEndpoint(5005, 8082, "iloveibadah-blazor-webapp-http")
+//    .WithHttpEndpoint(5006, 8083, "iloveibadah-blazor-webapp-https");
+
+
+//var webapp = builder.AddProject<Projects.iLoveIbadah_Blazor_WebApp>("iloveibadah-blazor-webapp")
+//    .WithHttpEndpoint(5005, 8082, "iloveibadah-blazor-webapp-http")
+//    .WithHttpEndpoint(5006, 8083, "iloveibadah-blazor-webapp-https");
+
+
+
+
+//builder.AddProject<Projects.iLoveIbadah_WebApp>("iloveibadah-webapp");
 //.WithReference(zipkin);
 
 

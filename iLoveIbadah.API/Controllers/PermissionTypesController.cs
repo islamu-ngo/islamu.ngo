@@ -1,6 +1,4 @@
-﻿using iLoveIbadah.Application.DTOs.DhikrType;
-using iLoveIbadah.Application.Features.DhikrTypes.Requests.Queries;
-using iLoveIbadah.Application.Features.PermissionTypes.Requests.Queries;
+﻿using iLoveIbadah.Application.Features.PermissionTypes.Requests.Queries;
 using iLoveIbadah.Application.DTOs.PermissionType;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

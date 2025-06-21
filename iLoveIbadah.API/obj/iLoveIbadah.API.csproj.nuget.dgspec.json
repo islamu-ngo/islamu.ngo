@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.API\\iLoveIbadah.API.csproj": {}
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.API\\iLoveIbadah.API.csproj": {}
   },
   "projects": {
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.API\\iLoveIbadah.API.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.API\\iLoveIbadah.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.API\\iLoveIbadah.API.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.API\\iLoveIbadah.API.csproj",
         "projectName": "iLoveIbadah.API",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.API\\iLoveIbadah.API.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.API\\iLoveIbadah.API.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.API\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -33,20 +33,23 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
               },
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj"
               },
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj"
               },
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj"
               },
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj"
+              },
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\iLoveIbadah.ServiceDefaults.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\iLoveIbadah.ServiceDefaults.csproj"
               }
             }
           }
@@ -115,7 +118,7 @@
             },
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
-              "version": "[9.0.5, )"
+              "version": "[10.0.0-preview.4.25258.110, )"
             },
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
@@ -177,18 +180,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj",
         "projectName": "iLoveIbadah.Application",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -210,8 +213,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj"
               }
             }
           }
@@ -269,18 +272,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj",
         "projectName": "iLoveIbadah.Diagnostic",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\iLoveIbadah.Diagnostic.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Diagnostic\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Diagnostic\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -380,18 +383,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj",
         "projectName": "iLoveIbadah.Domain",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\iLoveIbadah.Domain.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Domain\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -452,18 +455,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj",
         "projectName": "iLoveIbadah.Identity",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\iLoveIbadah.Identity.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Identity\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Identity\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -485,8 +488,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
               }
             }
           }
@@ -562,18 +565,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
         "projectName": "iLoveIbadah.Infrastructure",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\iLoveIbadah.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Infrastructure\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -595,8 +598,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
               }
             }
           }
@@ -642,18 +645,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj": {
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj",
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj",
         "projectName": "iLoveIbadah.Persistence",
-        "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\iLoveIbadah.Persistence.csproj",
         "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
-        "outputPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Persistence\\obj\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Persistence\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -675,8 +678,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
-                "projectPath": "C:\\Programir\\Github\\iLoveIbadah_API\\API\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
+              "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj": {
+                "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.Application\\iLoveIbadah.Application.csproj"
               }
             }
           }
@@ -722,7 +725,118 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\iLoveIbadah.ServiceDefaults.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\iLoveIbadah.ServiceDefaults.csproj",
+        "projectName": "iLoveIbadah.ServiceDefaults",
+        "projectPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\iLoveIbadah.ServiceDefaults.csproj",
+        "packagesPath": "C:\\Users\\AM5\\.nuget\\packages\\",
+        "outputPath": "C:\\Programir\\Github\\Website\\iLoveIbadah.ServiceDefaults\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\AM5\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Extensions.Diagnostics.HealthChecks": {
+              "target": "Package",
+              "version": "[10.0.0-preview.4.25258.110, )"
+            },
+            "Microsoft.Extensions.Http.Resilience": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[10.0.0-preview.4.25258.110, )"
+            },
+            "Microsoft.Extensions.ServiceDiscovery": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "OpenTelemetry": {
+              "target": "Package",
+              "version": "[1.12.0, )"
+            },
+            "OpenTelemetry.Exporter.OpenTelemetryProtocol": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.AspNetCore": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.Http": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.Runtime": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

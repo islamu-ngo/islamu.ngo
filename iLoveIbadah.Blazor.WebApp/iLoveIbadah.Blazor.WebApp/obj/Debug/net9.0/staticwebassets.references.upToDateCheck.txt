@@ -1,6 +1,0 @@
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.WebApp\iLoveIbadah.Blazor.WebApp.Client\obj\Debug\net9.0\staticwebassets.build.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.WebApp\iLoveIbadah.Blazor.WebApp.Client\obj\Debug\net9.0\staticwebassets.build.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Diagnostic\obj\Debug\net9.0\staticwebassets.build.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.WebApp\iLoveIbadah.Blazor.WebApp.Client\obj\Debug\net9.0\staticwebassets.build.json

@@ -1,0 +1,512 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "OpenISLAMU.Blazor/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": "9.0.8",
+          "OpenISLAMU.Blazor.Client": "1.0.0",
+          "OpenISLAMU.ServiceDefaults": "1.0.0"
+        },
+        "runtime": {
+          "OpenISLAMU.Blazor.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly/9.0.8": {
+        "dependencies": {
+          "Microsoft.JSInterop.WebAssembly": "9.0.8"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.dll": {
+            "assemblyVersion": "9.0.8.0",
+            "fileVersion": "9.0.825.36808"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/9.0.8": {
+        "runtime": {
+          "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "assemblyVersion": "9.0.8.0",
+            "fileVersion": "9.0.825.36808"
+          }
+        }
+      },
+      "Microsoft.Extensions.AmbientMetadata.Application/9.4.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.AmbientMetadata.Application.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions/9.4.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Compliance.Abstractions.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.AutoActivation/9.4.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyInjection.AutoActivation.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Diagnostics.ExceptionSummarization/9.4.0": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Http.Diagnostics/9.4.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "9.4.0",
+          "Microsoft.Extensions.Telemetry": "9.4.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Http.Diagnostics.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Http.Resilience/9.4.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Http.Diagnostics": "9.4.0",
+          "Microsoft.Extensions.Resilience": "9.4.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Http.Resilience.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Resilience/9.4.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.ExceptionSummarization": "9.4.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "9.4.0",
+          "Polly.Extensions": "8.4.2",
+          "Polly.RateLimiting": "8.4.2"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Resilience.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.ServiceDiscovery/9.3.1": {
+        "dependencies": {
+          "Microsoft.Extensions.ServiceDiscovery.Abstractions": "9.3.1"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.ServiceDiscovery.dll": {
+            "assemblyVersion": "9.3.1.0",
+            "fileVersion": "9.300.125.30506"
+          }
+        }
+      },
+      "Microsoft.Extensions.ServiceDiscovery.Abstractions/9.3.1": {
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.ServiceDiscovery.Abstractions.dll": {
+            "assemblyVersion": "9.3.1.0",
+            "fileVersion": "9.300.125.30506"
+          }
+        }
+      },
+      "Microsoft.Extensions.Telemetry/9.4.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AmbientMetadata.Application": "9.4.0",
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "9.4.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "9.4.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Telemetry.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.Extensions.Telemetry.Abstractions/9.4.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "9.4.0"
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.Telemetry.Abstractions.dll": {
+            "assemblyVersion": "9.4.0.0",
+            "fileVersion": "9.400.25.20705"
+          }
+        }
+      },
+      "Microsoft.JSInterop.WebAssembly/9.0.8": {
+        "runtime": {
+          "lib/net9.0/Microsoft.JSInterop.WebAssembly.dll": {
+            "assemblyVersion": "9.0.8.0",
+            "fileVersion": "9.0.825.36808"
+          }
+        }
+      },
+      "MudBlazor/8.11.0": {
+        "runtime": {
+          "lib/net9.0/MudBlazor.dll": {
+            "assemblyVersion": "8.11.0.0",
+            "fileVersion": "8.11.0.0"
+          }
+        }
+      },
+      "OpenTelemetry/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.12.0"
+        },
+        "runtime": {
+          "lib/net9.0/OpenTelemetry.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.12.0.1644"
+          }
+        }
+      },
+      "OpenTelemetry.Api/1.12.0": {
+        "runtime": {
+          "lib/net9.0/OpenTelemetry.Api.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.12.0.1644"
+          }
+        }
+      },
+      "OpenTelemetry.Api.ProviderBuilderExtensions/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry.Api": "1.12.0"
+        },
+        "runtime": {
+          "lib/net9.0/OpenTelemetry.Api.ProviderBuilderExtensions.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.12.0.1644"
+          }
+        }
+      },
+      "OpenTelemetry.Exporter.OpenTelemetryProtocol/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry": "1.12.0"
+        },
+        "runtime": {
+          "lib/net9.0/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.12.0.1644"
+          }
+        }
+      },
+      "OpenTelemetry.Extensions.Hosting/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry": "1.12.0"
+        },
+        "runtime": {
+          "lib/net9.0/OpenTelemetry.Extensions.Hosting.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.12.0.1644"
+          }
+        }
+      },
+      "OpenTelemetry.Instrumentation.AspNetCore/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.12.0"
+        },
+        "runtime": {
+          "lib/net8.0/OpenTelemetry.Instrumentation.AspNetCore.dll": {
+            "assemblyVersion": "1.12.0.490",
+            "fileVersion": "1.12.0.490"
+          }
+        }
+      },
+      "OpenTelemetry.Instrumentation.Http/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.12.0"
+        },
+        "runtime": {
+          "lib/net8.0/OpenTelemetry.Instrumentation.Http.dll": {
+            "assemblyVersion": "1.12.0.493",
+            "fileVersion": "1.12.0.493"
+          }
+        }
+      },
+      "OpenTelemetry.Instrumentation.Runtime/1.12.0": {
+        "dependencies": {
+          "OpenTelemetry.Api": "1.12.0"
+        },
+        "runtime": {
+          "lib/net8.0/OpenTelemetry.Instrumentation.Runtime.dll": {
+            "assemblyVersion": "1.12.0.496",
+            "fileVersion": "1.12.0.496"
+          }
+        }
+      },
+      "Polly.Core/8.4.2": {
+        "runtime": {
+          "lib/net8.0/Polly.Core.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.4.2.3950"
+          }
+        }
+      },
+      "Polly.Extensions/8.4.2": {
+        "dependencies": {
+          "Polly.Core": "8.4.2"
+        },
+        "runtime": {
+          "lib/net8.0/Polly.Extensions.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.4.2.3950"
+          }
+        }
+      },
+      "Polly.RateLimiting/8.4.2": {
+        "dependencies": {
+          "Polly.Core": "8.4.2"
+        },
+        "runtime": {
+          "lib/net8.0/Polly.RateLimiting.dll": {
+            "assemblyVersion": "8.0.0.0",
+            "fileVersion": "8.4.2.3950"
+          }
+        }
+      },
+      "OpenISLAMU.Blazor.Client/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.WebAssembly": "9.0.8",
+          "MudBlazor": "8.11.0"
+        },
+        "runtime": {
+          "OpenISLAMU.Blazor.Client.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "OpenISLAMU.ServiceDefaults/1.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Http.Resilience": "9.4.0",
+          "Microsoft.Extensions.ServiceDiscovery": "9.3.1",
+          "OpenTelemetry.Exporter.OpenTelemetryProtocol": "1.12.0",
+          "OpenTelemetry.Extensions.Hosting": "1.12.0",
+          "OpenTelemetry.Instrumentation.AspNetCore": "1.12.0",
+          "OpenTelemetry.Instrumentation.Http": "1.12.0",
+          "OpenTelemetry.Instrumentation.Runtime": "1.12.0"
+        },
+        "runtime": {
+          "OpenISLAMU.ServiceDefaults.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "OpenISLAMU.Blazor/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly/9.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-48tIkTqwYq/DVCxuDIbgz58JN15qveZqsyy+lZG5Lk8/y40JMjTioyOq1bYIX6SNLRRrGfJxZ2loh2w7+x/+4w==",
+      "path": "microsoft.aspnetcore.components.webassembly/9.0.8",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.9.0.8.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/9.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HelrX+9Q55A0uGUFsW0t5RbZaOn8pCUGpGk115ByrJQS8TKkKsOzMwhZEcVnZbdMYAhuj0TzHYhzW11LblFi8A==",
+      "path": "microsoft.aspnetcore.components.webassembly.server/9.0.8",
+      "hashPath": "microsoft.aspnetcore.components.webassembly.server.9.0.8.nupkg.sha512"
+    },
+    "Microsoft.Extensions.AmbientMetadata.Application/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zcjQBbp4whM4nxWmMg4P8JxTikB0dVxjKWHrGiz+6WVBgRctq9tSZgpbl/ywz06N+ZLzlooeWQOYgbpEOXOUYQ==",
+      "path": "microsoft.extensions.ambientmetadata.application/9.4.0",
+      "hashPath": "microsoft.extensions.ambientmetadata.application.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Compliance.Abstractions/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jDYE/o2Y/s9Tz896whtMEEUgCHPLSlzRXPRD6v2J1lJxnuuRcWIZ6ASJi6jSI4e9hbkpFTx8LtsL4CNB6bYbaQ==",
+      "path": "microsoft.extensions.compliance.abstractions/9.4.0",
+      "hashPath": "microsoft.extensions.compliance.abstractions.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.AutoActivation/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dg2VeBxiwqAszJkMRQT1k1jefeTneN+M8v/EkWwebR9OvLXzykP9CVE2+bWMuPvXIdHM04/ffWgo5Bl+0jKi/Q==",
+      "path": "microsoft.extensions.dependencyinjection.autoactivation/9.4.0",
+      "hashPath": "microsoft.extensions.dependencyinjection.autoactivation.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Diagnostics.ExceptionSummarization/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Ht5TQmWfYh7cbZTPTTWAUkgQmJhDg1JINvXSnxutx1sfZL1gkk1OXoF0Uh2383FLk9cm4le/cWfdgDslFeVigA==",
+      "path": "microsoft.extensions.diagnostics.exceptionsummarization/9.4.0",
+      "hashPath": "microsoft.extensions.diagnostics.exceptionsummarization.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Http.Diagnostics/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-LaYz7FDkJ/uh5PYOTFvhQBndvgrtpjDSLiuDO2JGYcgA75uU7QXiMDHI/RmS4LzvJUkadPgXKxquTkhPotTw9Q==",
+      "path": "microsoft.extensions.http.diagnostics/9.4.0",
+      "hashPath": "microsoft.extensions.http.diagnostics.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Http.Resilience/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-sml3XlyLrAnxYFTn96KaHzrzcnbkSZpxWzDffE9qs3QXloLepOa0nUjsgvhDg9InCNrd/KAuRLUzE6LCPa7r/g==",
+      "path": "microsoft.extensions.http.resilience/9.4.0",
+      "hashPath": "microsoft.extensions.http.resilience.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Resilience/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Xb3zb0x+2O8jGJIysLTqD7Pd9uWDepPX8kUuojE0wZkGK5FztT0nxEHvYcmbICmRRNlFFDEd0dLgBWBPOSHWoA==",
+      "path": "microsoft.extensions.resilience/9.4.0",
+      "hashPath": "microsoft.extensions.resilience.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.ServiceDiscovery/9.3.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z9tKpMm4V5LIMABboRjU2w+hYme4EUigi/OaOBcJZfRLHON/e6rtlkShZ0Opl4ownuReyCbUFbH2sD2C57NWvA==",
+      "path": "microsoft.extensions.servicediscovery/9.3.1",
+      "hashPath": "microsoft.extensions.servicediscovery.9.3.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.ServiceDiscovery.Abstractions/9.3.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qQFNxjqj3jgLsRUwQRs15PCpibaV3EWqnKZH+JJouDZzaCVlEpryWndJHzzy/FZ6upr5e7S+dJPTOa2CyKGuSg==",
+      "path": "microsoft.extensions.servicediscovery.abstractions/9.3.1",
+      "hashPath": "microsoft.extensions.servicediscovery.abstractions.9.3.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Telemetry/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Ax7GV4I2/BaiaAax+Yo1yjn2LYdw6FJP6gwCIcRMknu61iLZw8rZNx4tMz5JCGXj2ZO937NOwMcCrGN+wLB6NA==",
+      "path": "microsoft.extensions.telemetry/9.4.0",
+      "hashPath": "microsoft.extensions.telemetry.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Telemetry.Abstractions/9.4.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QoXTK3gaW1f/1Ms2NDkKmAc+IW/yMsBTTqxphiGL4AfZNKoh8Ie7srDOaMuhInm5/Qq0xEAkIafC53v1xt7wMQ==",
+      "path": "microsoft.extensions.telemetry.abstractions/9.4.0",
+      "hashPath": "microsoft.extensions.telemetry.abstractions.9.4.0.nupkg.sha512"
+    },
+    "Microsoft.JSInterop.WebAssembly/9.0.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-eevGq068Owgf1q6EswauGQ1JVu5FsM4K52l4H+Lx8/HaU2EUaAs6LzsawJkUOq6bBPxPTwaCsr/Sxv2iEMcm2Q==",
+      "path": "microsoft.jsinterop.webassembly/9.0.8",
+      "hashPath": "microsoft.jsinterop.webassembly.9.0.8.nupkg.sha512"
+    },
+    "MudBlazor/8.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-WeQTp5l7yYMxFrXlmI51bfIYv4LsFl/ClNruNdJBumG+ods1RkX61gFhlcv3XLmg4EMs5w6a+WqTWCwolYXg7A==",
+      "path": "mudblazor/8.11.0",
+      "hashPath": "mudblazor.8.11.0.nupkg.sha512"
+    },
+    "OpenTelemetry/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-aIEu2O3xFOdwIVH0AJsIHPIMH1YuX18nzu7BHyaDNQ6NWSk4Zyrs9Pp6y8SATuSbvdtmvue4mj/QZ3838srbwA==",
+      "path": "opentelemetry/1.12.0",
+      "hashPath": "opentelemetry.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Api/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Xt0qldi+iE2szGrM3jAqzEMEJd48YBtqI6mge0+ArXTZg3aTpRmyhL6CKKl3bLioaFSSVbBpEbPin8u6Z46Yrw==",
+      "path": "opentelemetry.api/1.12.0",
+      "hashPath": "opentelemetry.api.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Api.ProviderBuilderExtensions/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-t6Vk1143BfiisCWYbRcyzkAuN6Aq5RkYtfOSMoqCIRMvtN9p1e1xzc0nWQ+fccNGOVgHn3aMK5xFn2+iWMcr8A==",
+      "path": "opentelemetry.api.providerbuilderextensions/1.12.0",
+      "hashPath": "opentelemetry.api.providerbuilderextensions.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Exporter.OpenTelemetryProtocol/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7LzQSPhz5pNaL4xZgT3wkZODA1NLrEq3bet8KDHgtaJ9q+VNP7wmiZky8gQfMkB4FXuI/pevT8ZurL4p5997WA==",
+      "path": "opentelemetry.exporter.opentelemetryprotocol/1.12.0",
+      "hashPath": "opentelemetry.exporter.opentelemetryprotocol.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Extensions.Hosting/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6/8O6rsJRwslg5/Fm3bscBelw4Yh9T9CN24p7cAsuEFkrmmeSO9gkYUCK02Qi+CmPM2KHYTLjKi0lJaCsDMWQA==",
+      "path": "opentelemetry.extensions.hosting/1.12.0",
+      "hashPath": "opentelemetry.extensions.hosting.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Instrumentation.AspNetCore/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-r+Mzggd2P4N0Y34QIO6kakVPBOKFYSHnLkTrXXM+r37ABp+iaUvVUe+u/uxszsi5f7P5mrG0uYYaJ1QGHvzo3A==",
+      "path": "opentelemetry.instrumentation.aspnetcore/1.12.0",
+      "hashPath": "opentelemetry.instrumentation.aspnetcore.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Instrumentation.Http/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0rW+MbHgUQAdbvBtRxPYoQBosbNdWegL7cYkRlxq+KQ/VFyU8itt4pWTccmu1/FWmTgqJyT3LaujyDZoRrm8Yg==",
+      "path": "opentelemetry.instrumentation.http/1.12.0",
+      "hashPath": "opentelemetry.instrumentation.http.1.12.0.nupkg.sha512"
+    },
+    "OpenTelemetry.Instrumentation.Runtime/1.12.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-xmd0TAm2x+T3ztdf5BolIwLPh+Uy6osaBeIQtCXv611PN7h/Pnhsjg5lU2hkAWj7M7ns74U5wtVpS8DXmJ+94w==",
+      "path": "opentelemetry.instrumentation.runtime/1.12.0",
+      "hashPath": "opentelemetry.instrumentation.runtime.1.12.0.nupkg.sha512"
+    },
+    "Polly.Core/8.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-BpE2I6HBYYA5tF0Vn4eoQOGYTYIK1BlF5EXVgkWGn3mqUUjbXAr13J6fZVbp7Q3epRR8yshacBMlsHMhpOiV3g==",
+      "path": "polly.core/8.4.2",
+      "hashPath": "polly.core.8.4.2.nupkg.sha512"
+    },
+    "Polly.Extensions/8.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GZ9vRVmR0jV2JtZavt+pGUsQ1O1cuRKG7R7VOZI6ZDy9y6RNPvRvXK1tuS4ffUrv8L0FTea59oEuQzgS0R7zSA==",
+      "path": "polly.extensions/8.4.2",
+      "hashPath": "polly.extensions.8.4.2.nupkg.sha512"
+    },
+    "Polly.RateLimiting/8.4.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ehTImQ/eUyO07VYW2WvwSmU9rRH200SKJ/3jku9rOkyWE0A2JxNFmAVms8dSn49QLSjmjFRRSgfNyOgr/2PSmA==",
+      "path": "polly.ratelimiting/8.4.2",
+      "hashPath": "polly.ratelimiting.8.4.2.nupkg.sha512"
+    },
+    "OpenISLAMU.Blazor.Client/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OpenISLAMU.ServiceDefaults/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

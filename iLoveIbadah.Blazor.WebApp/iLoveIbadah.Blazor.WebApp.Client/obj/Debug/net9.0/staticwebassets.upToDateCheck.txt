@@ -1,4 +1,0 @@
-wwwroot\appsettings.Development.json
-wwwroot\appsettings.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.WebApp\iLoveIbadah.Blazor.WebApp.Client\wwwroot\appsettings.Development.json
-C:\Programir\Github\iLoveIbadah_API\API\iLoveIbadah.Blazor.WebApp\iLoveIbadah.Blazor.WebApp.Client\wwwroot\appsettings.json

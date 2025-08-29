@@ -1,0 +1,85 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\ISLAMU\\GitHub\\openislamu.org\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F9EE4FEF-E13A-40FC-8A9F-354AFD35AF3A}|OpenISLAMU.Blazor.Client\\OpenISLAMU.Blazor.Client.csproj|c:\\islamu\\github\\openislamu.org\\openislamu.blazor.client\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{F9EE4FEF-E13A-40FC-8A9F-354AFD35AF3A}|OpenISLAMU.Blazor.Client\\OpenISLAMU.Blazor.Client.csproj|solutionrelative:openislamu.blazor.client\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F9EE4FEF-E13A-40FC-8A9F-354AFD35AF3A}|OpenISLAMU.Blazor.Client\\OpenISLAMU.Blazor.Client.csproj|c:\\islamu\\github\\openislamu.org\\openislamu.blazor.client\\layout\\subnavmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{F9EE4FEF-E13A-40FC-8A9F-354AFD35AF3A}|OpenISLAMU.Blazor.Client\\OpenISLAMU.Blazor.Client.csproj|solutionrelative:openislamu.blazor.client\\layout\\subnavmenu.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A955E23-24C4-4EB1-B6D3-6825D3B01E8F}|OpenISLAMU.Blazor\\OpenISLAMU.Blazor.csproj|c:\\islamu\\github\\openislamu.org\\openislamu.blazor\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6A955E23-24C4-4EB1-B6D3-6825D3B01E8F}|OpenISLAMU.Blazor\\OpenISLAMU.Blazor.csproj|solutionrelative:openislamu.blazor\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 282,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SubNavMenu.razor",
+              "DocumentMoniker": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor.Client\\Layout\\SubNavMenu.razor",
+              "RelativeDocumentMoniker": "OpenISLAMU.Blazor.Client\\Layout\\SubNavMenu.razor",
+              "ToolTip": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor.Client\\Layout\\SubNavMenu.razor",
+              "RelativeToolTip": "OpenISLAMU.Blazor.Client\\Layout\\SubNavMenu.razor",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-08-29T01:33:37.228Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainLayout.razor",
+              "DocumentMoniker": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor.Client\\Layout\\MainLayout.razor",
+              "RelativeDocumentMoniker": "OpenISLAMU.Blazor.Client\\Layout\\MainLayout.razor",
+              "ToolTip": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor.Client\\Layout\\MainLayout.razor",
+              "RelativeToolTip": "OpenISLAMU.Blazor.Client\\Layout\\MainLayout.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-08-29T01:33:26.643Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor\\Program.cs",
+              "RelativeDocumentMoniker": "OpenISLAMU.Blazor\\Program.cs",
+              "ToolTip": "C:\\ISLAMU\\GitHub\\openislamu.org\\OpenISLAMU.Blazor\\Program.cs",
+              "RelativeToolTip": "OpenISLAMU.Blazor\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T01:33:10.832Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 282,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

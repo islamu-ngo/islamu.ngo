@@ -1,0 +1,37 @@
+﻿
+
+@* <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
+    
+    <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink> *@
+    <MudStack Row="true" Spacing="1">
+        <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">OpenISLAMU</MudNavLink>
+    </MudStack>
+
+    <MudSpacer />
+
+    <!-- Center: main links -->
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="7">
+        <MudNavLink Href="why" Match="NavLinkMatch.All">Why OpenISLAMU?</MudNavLink>
+
+        <MudNavLink Href="software-solutions" Match="NavLinkMatch.All">Software Solutions</MudNavLink>
+        
+        <MudNavLink Href="organization" Match="NavLinkMatch.All">Organization</MudNavLink>
+    </MudStack>
+
+    <MudSpacer />
+
+    <!-- Right: auth buttons -->
+    <MudStack Row="true" Spacing="1">
+        <MudIconButton Icon="@Icons.Material.Rounded.AutoMode"
+                       Color="Color.Inherit"
+                       OnClick="@OnToggleTheme" />
+
+        @*Needs link to Centralized Auth Server!*@
+        <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Login to ISLAMU</MudNavLink>
+
+    </MudStack>
+
+    @code {
+        [Parameter] public EventCallback OnToggleTheme { get; set; }
+    }

@@ -1,0 +1,4 @@
+wwwroot\appsettings.Development.json
+wwwroot\appsettings.json
+C:\ISLAMU\GitHub\openislamu.org\OpenISLAMU.Blazor.Client\wwwroot\appsettings.Development.json
+C:\ISLAMU\GitHub\openislamu.org\OpenISLAMU.Blazor.Client\wwwroot\appsettings.json

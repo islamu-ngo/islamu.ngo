@@ -1,4 +1,0 @@
-wwwroot\appsettings.Development.json
-wwwroot\appsettings.json
-C:\Programir\Github\Website\iLoveIbadah.Website.UI\iLoveIbadah.Website.UI.Client\wwwroot\appsettings.Development.json
-C:\Programir\Github\Website\iLoveIbadah.Website.UI\iLoveIbadah.Website.UI.Client\wwwroot\appsettings.json

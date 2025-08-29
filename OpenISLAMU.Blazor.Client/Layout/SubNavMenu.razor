@@ -1,0 +1,96 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Nav
+@implements IDisposable
+
+@* Renders nothing on landing ("/"). Shows a thin MudPaper row with buttons
+   for the current section: Why, Software Solutions, Organization. *@
+
+@if (ShowSubNav)
+{
+  <MudPaper Class="px-3 py-1">
+    @switch (Section)
+    {
+      case "why":
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+          <MudButton Link="true" Variant="Variant.Text" Href="/why"
+                     Class="@Active("/why")">Overview</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/why/vision"
+                     Class="@Active("/why/vision")">Vision</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/why/faq"
+                     Class="@Active("/why/faq")">FAQ</MudButton>
+        </MudStack>
+        break;
+
+      case "software-solutions":
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+          <MudButton Link="true" Variant="Variant.Text" Href="/software-solutions"
+                     Class="@Active("/software-solutions")">Overview</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/software-solutions/companion"
+                     Class="@Active("/software-solutions/companion")">Companion</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/software-solutions/store"
+                     Class="@Active("/software-solutions/store")">Store</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/software-solutions/daily-ilm"
+                     Class="@Active("/software-solutions/daily-ilm")">Daily Ilm</MudButton>
+        </MudStack>
+        break;
+
+      case "organization":
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+          <MudButton Link="true" Variant="Variant.Text" Href="/organization"
+                     Class="@Active("/organization")">Overview</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/organization/about"
+                     Class="@Active("/organization/about")">About</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/organization/careers"
+                     Class="@Active("/organization/careers")">Careers</MudButton>
+          <MudButton Link="true" Variant="Variant.Text" Href="/organization/contact"
+                     Class="@Active("/organization/contact")">Contact</MudButton>
+        </MudStack>
+        break;
+    }
+  </MudPaper>
+}
+
+@code {
+  private string _path = "/";
+  private string Section => GetSection(_path);
+  private bool ShowSubNav => Section is "why" or "software-solutions" or "organization";
+
+  protected override void OnInitialized()
+  {
+    _path = GetPath();
+    Nav.LocationChanged += OnLocationChanged;
+  }
+
+  private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+  {
+    _path = GetPath(e.Location);
+    InvokeAsync(StateHasChanged);
+  }
+
+  private string GetPath(string? absolute = null)
+  {
+    var rel = Nav.ToBaseRelativePath(absolute ?? Nav.Uri).Trim('/');
+    return "/" + rel; // ensures leading slash; "/" when empty
+  }
+
+  private static string GetSection(string path)
+  {
+    var p = path.Trim('/').ToLowerInvariant();
+    if (string.IsNullOrEmpty(p)) return ""; // landing -> no subnav
+    if (p.StartsWith("why")) return "why";
+    if (p.StartsWith("software-solutions")) return "software-solutions";
+    if (p.StartsWith("organization")) return "organization";
+    return ""; // unknown -> no subnav
+  }
+
+  private string Active(string href)
+    => _path.StartsWith(href, StringComparison.OrdinalIgnoreCase)
+       ? "subnav-active"
+       : string.Empty;
+
+  public void Dispose()
+  {
+    Nav.LocationChanged -= OnLocationChanged;
+  }
+}
+}

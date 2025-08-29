@@ -1,10 +1,9 @@
-# i Love Ibadah Website!
+# OpenISLAMU.org - Website
 
-Built with love for Allah.
+This is the repository for the OpenISLAMU Website!
 
-Please leave a Star!
 
-Fullstack
-ASP.NET: Blazor and Web Core API
-Postgres for the Database
-Docker for the containerization
+# Contributing
+
+- Submit a bug report, send feedback and trough GitHub's Issues
+- Open a Pull Request

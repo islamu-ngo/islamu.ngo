@@ -1,0 +1,2 @@
+wwwroot\favicon.ico
+C:\ISLAMU\GitHub\openislamu.org\OpenISLAMU.Blazor\wwwroot\favicon.ico

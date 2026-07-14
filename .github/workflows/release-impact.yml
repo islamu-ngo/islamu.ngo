@@ -1,0 +1,39 @@
+# ABOUTME: Validates release-impact and changelog evidence from pull request metadata.
+# ABOUTME: Uses trusted-base pull_request_target execution without running PR-head code.
+name: Release Impact Check
+
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Metadata-only release-impact check: trusted base checkout, read-only token, no PR-head code execution.
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-impact-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  release-impact:
+    name: Release Impact Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Trusted Base
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Validate Release Impact Metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RestorePackagesWithLockFile: "false"
+        run: dotnet run .ci/scripts/validate-release-impact-pr.cs -- "$GITHUB_EVENT_PATH"

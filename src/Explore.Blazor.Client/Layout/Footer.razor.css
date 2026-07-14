@@ -1,0 +1,223 @@
+/*
+ * Footer Component Styles - BEM Methodology
+ * Block: site-footer
+ *
+ * Shared element styles that cascade into template components via ::deep.
+ * Grid/layout-specific styles live in each template's scoped CSS file.
+ *
+ * Structure:
+ * .site-footer
+ *   .site-footer__brand
+ *     .site-footer__brand-icon
+ *     .site-footer__brand-text
+ *       .site-footer__brand-highlight
+ *   .site-footer__description
+ *   .site-footer__section
+ *     .site-footer__heading
+ *     .site-footer__link
+ *   .site-footer__bottom
+ *     .site-footer__copyright
+ *     .site-footer__bottom-links  (community guidelines + cookie settings)
+ *     .site-footer__social
+ *       .site-footer__social-btn
+ */
+
+/* ========================================
+   Block: site-footer
+   ======================================== */
+::deep .site-footer {
+    background: color-mix(in srgb, var(--mud-palette-surface) 90%, transparent);
+    backdrop-filter: blur(0.75rem);
+    -webkit-backdrop-filter: blur(0.75rem);
+    border-top: 1px solid var(--mud-palette-lines-default);
+    padding: var(--isl-space-16) 0 var(--isl-space-16);
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+::deep .site-footer .site-footer__container {
+    container-type: inline-size;
+    width: min(100%, 78rem);
+    margin-inline: auto;
+    padding-inline: clamp(var(--isl-space-6), 6vw, var(--isl-space-16));
+}
+
+/* Decorative top gradient line */
+::deep .site-footer::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    inset-inline: 0;
+    block-size: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--mud-palette-primary),
+        transparent
+    );
+    opacity: 0.5;
+}
+
+/* ========================================
+   Element: site-footer__brand
+   Brand logo and name section
+   ======================================== */
+::deep .site-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--isl-space-3);
+    margin-bottom: var(--isl-space-4);
+}
+
+/* Element: site-footer__brand-icon */
+::deep .site-footer__brand-icon {
+    /* Icon styling handled by MudBlazor */
+}
+
+/* Element: site-footer__brand-text */
+::deep .site-footer__brand-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--mud-palette-text-primary);
+}
+
+/* Element: site-footer__brand-highlight */
+::deep .site-footer__brand-highlight {
+    color: var(--mud-palette-primary);
+}
+
+/* ========================================
+   Element: site-footer__description
+   Brand tagline text
+   ======================================== */
+::deep .site-footer__description {
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.6;
+    max-width: 18.75rem;
+}
+
+/* ========================================
+   Element: site-footer__section
+   Link column container
+   ======================================== */
+::deep .site-footer__section {
+    /* Container for heading and links */
+}
+
+/* Element: site-footer__heading */
+::deep .site-footer__heading {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mud-palette-text-primary);
+    margin-bottom: var(--isl-space-5);
+}
+
+/* Element: site-footer__link */
+::deep .site-footer__link {
+    color: var(--mud-palette-text-secondary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    display: block;
+    margin-bottom: var(--isl-space-3);
+    width: fit-content;
+}
+
+::deep .site-footer__link:hover {
+    color: var(--mud-palette-primary);
+    transform: translateX(var(--isl-space-1));
+}
+
+/* ========================================
+   Element: site-footer__bottom
+   3-zone flex layout: copyright | links | social
+   ======================================== */
+::deep .site-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--isl-space-4);
+    text-align: center;
+}
+
+@media (min-width: 37.5em) {
+    ::deep .site-footer__bottom {
+        justify-content: space-between;
+        text-align: start;
+    }
+}
+
+/* Element: site-footer__copyright */
+::deep .site-footer__copyright {
+    color: var(--mud-palette-text-disabled);
+    font-size: 0.875rem;
+}
+
+/* Element: site-footer__bottom-links
+   Community guidelines, cookie settings, and other text links */
+::deep .site-footer__bottom-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--isl-space-4);
+}
+
+@media (max-width: 63.999em) {
+    ::deep .site-footer .site-footer__container {
+        padding-inline: clamp(var(--isl-space-5), 8vw, var(--isl-space-12, 3rem));
+    }
+
+    ::deep .site-footer__bottom {
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+@container (max-width: 68.999em) {
+    ::deep .site-footer__bottom {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 37.499em) {
+    ::deep .site-footer .site-footer__container {
+        padding-inline: var(--isl-space-6);
+    }
+}
+
+::deep .site-footer__bottom-links .site-footer__link {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+/* Element: site-footer__social */
+::deep .site-footer__social {
+    display: flex;
+    gap: var(--isl-space-2);
+}
+
+/* Element: site-footer__social-btn */
+::deep .site-footer__social-btn {
+    color: var(--mud-palette-text-secondary);
+    transition: all 0.2s ease;
+    border: 1px solid var(--mud-palette-lines-default);
+}
+
+::deep .site-footer__social-btn:hover {
+    color: var(--mud-palette-primary);
+    border-color: var(--mud-palette-primary);
+    background-color: color-mix(
+        in srgb,
+        var(--mud-palette-primary) 10%,
+        transparent
+    );
+    transform: translateY(-0.125rem);
+}

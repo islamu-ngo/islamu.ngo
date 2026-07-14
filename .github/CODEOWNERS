@@ -1,0 +1,27 @@
+# ABOUTME: Defines required owner review for privileged workflow, dependency, deployment, and release files.
+# ABOUTME: Keeps CI/CD, legal contribution, and operator-governance changes routed to platform maintainers.
+
+# GitHub Actions, issue templates, PR templates, CODEOWNERS, and Dependabot configuration.
+.github/** @amirakrari
+.ci/** @amirakrari
+
+# Deployable images and deterministic dependency inputs.
+**/Dockerfile @amirakrari
+docker/** @amirakrari
+docker-compose.yml @amirakrari
+Directory.Packages.props @amirakrari
+Directory.Build.props @amirakrari
+global.json @amirakrari
+**/*.csproj @amirakrari
+**/packages.lock.json @amirakrari
+
+# CI/CD, release, operations, self-hosting, and legal contribution governance.
+docs/CI_CD_GOVERNANCE.md @amirakrari
+docs/OPERATIONS.md @amirakrari
+docs/RELEASE_CHECKLIST.md @amirakrari
+docs/SELF_HOSTING.md @amirakrari
+docs/BACKUP_RESTORE_UPGRADE.md @amirakrari
+docs/CONFIGURATION.md @amirakrari
+docs/CONTRIBUTING.md @amirakrari
+docs/legal/** @amirakrari
+legal/** @amirakrari

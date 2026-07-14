@@ -1,0 +1,223 @@
+@* ABOUTME: Two-phase dialog for creating external API keys — form entry then one-time secret display. *@
+@* ABOUTME: Injects IExternalApiKeyService to create the key and show the secret before closing. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Constants
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Validators
+@using Microsoft.AspNetCore.Components.Forms
+@using Explore.Blazor.Client.Components.Forms
+@inject IExternalApiKeyService ApiKeyService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (!_created)
+        {
+            <EditForm EditContext="_editContext">
+                <FluentValidationValidator />
+                <FormSubmissionGuard State="@_submitState">
+                <AppValidationSummary />
+                <MudStack Spacing="4">
+                    <MudTextField Variant="Variant.Outlined" T="string"
+                                  @bind-Value="_dto.Name"
+                                  Label="Name"
+                                  Required="true"
+                                  RequiredError="Name is required"
+                                  MaxLength="200"
+                                  Counter="200"
+                                  HelperText="A descriptive name for this API key" />
+
+                    <MudTextField Variant="Variant.Outlined" T="string"
+                                  @bind-Value="_dto.Description"
+                                  Label="Description"
+                                  Lines="2"
+                                  MaxLength="1000"
+                                  Counter="1000"
+                                  HelperText="Optional description of what this key is used for" />
+
+                    <MudText Typo="Typo.subtitle2" Class="mt-2">Scopes</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Select the permissions this API key should have.
+                    </MudText>
+
+                    @foreach (var scopeGroup in ExternalApiKeyConstants.GetAvailableScopesForOwnerType(OwnerType).GroupBy(s => s.Category))
+                    {
+                        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mt-2">@scopeGroup.Key</MudText>
+                        @foreach (var scope in scopeGroup)
+                        {
+                            <MudCheckBox T="bool"
+                                         Value="@_selectedScopes.Contains(scope.Value)"
+                                         ValueChanged="@(v => ToggleScope(scope.Value, v))"
+                                         Label="@($"{scope.Value} — {scope.Description}")"
+                                         Dense="true"
+                                         Size="Size.Small" />
+                        }
+                    }
+
+                    <MudDatePicker Label="Expires At (optional)"
+                                   @bind-Date="_expiresAt"
+                                   MinDate="DateTime.Today.AddDays(1)"
+                                   Clearable="true"
+                                   HelperText="Leave empty for no expiration" />
+                </MudStack>
+                </FormSubmissionGuard>
+            </EditForm>
+        }
+        else
+        {
+            <MudStack Spacing="4">
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                    Copy this API key now. You will not be able to see it again.
+                </MudAlert>
+
+                <MudTextField T="string"
+                              Value="@_createdSecret"
+                              Label="API Key"
+                              ReadOnly="true"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                              OnAdornmentClick="CopyToClipboard"
+                              Style="font-family: monospace;" />
+
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    Use this key in the <code>X-API-Key</code> header for API requests.
+                </MudText>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (!_created)
+        {
+            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel" Disabled="_submitState.IsSubmitting">Cancel</MudButton>
+            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@(_submitState.IsSubmitting || !_selectedScopes.Any())">
+                @(_submitState.IsSubmitting ? "Creating..." : "Create API Key")
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Close">Done</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int OwnerType { get; set; } = 1;
+    [Parameter] public Guid? OrganizationId { get; set; }
+    [Parameter] public Guid? GroupId { get; set; }
+
+    private bool _created;
+    private string? _createdSecret;
+
+    private EditContext _editContext = default!;
+    private FormSubmitState _submitState = new();
+    private ServerValidationErrorStore _errorStore = new();
+
+    private readonly CreateExternalApiKeyDto _dto = new() { Name = string.Empty };
+    private readonly HashSet<string> _selectedScopes = new(StringComparer.OrdinalIgnoreCase);
+    private DateTime? _expiresAt;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(_dto);
+        _errorStore.Init(_editContext);
+    }
+
+    private void ToggleScope(string scope, bool selected)
+    {
+        if (selected)
+            _selectedScopes.Add(scope);
+        else
+            _selectedScopes.Remove(scope);
+    }
+
+    private async Task Submit()
+    {
+        if (_submitState.IsSubmitting) return;
+
+        if (!_editContext.Validate() || !_selectedScopes.Any())
+        {
+            if (!_selectedScopes.Any())
+            {
+                _submitState.Fail("Select at least one scope.");
+            }
+            return;
+        }
+
+        try
+        {
+            _submitState.Start();
+
+            _dto.ExternalApiKeyOwnerTypeId = OwnerType;
+            _dto.OrganizationId = OrganizationId;
+            _dto.GroupId = GroupId;
+            _dto.Scopes = _selectedScopes.OrderBy(s => s).ToList();
+            _dto.Name = _dto.Name.Trim();
+            _dto.Description = string.IsNullOrWhiteSpace(_dto.Description) ? null : _dto.Description.Trim();
+            _dto.ExpiresAt = _expiresAt.HasValue ? new DateTimeOffset(_expiresAt.Value, TimeSpan.Zero) : null;
+
+            var response = await ApiKeyService.CreateApiKeyAsync(_dto);
+
+            if (response?.Success == true && !string.IsNullOrWhiteSpace(response.ApiKey))
+            {
+                _createdSecret = response.ApiKey;
+                _created = true;
+            }
+            else
+            {
+                var msg = response?.Message ?? "Failed to create API key.";
+                if (response?.Errors?.Any() == true)
+                {
+                    msg += " " + string.Join("; ", response.Errors);
+                }
+                _submitState.Fail(msg);
+            }
+        }
+        catch (ApiException ex)
+        {
+            if (!_errorStore.HandleApiError(ex))
+            {
+                _submitState.Fail($"Failed to create API key: {ex.Message}");
+            }
+            else
+            {
+                _submitState.Fail("Please fix the validation errors below.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _submitState.Fail($"Error creating API key: {ex.Message}");
+        }
+        finally
+        {
+            if (!_submitState.HasError)
+            {
+                _submitState.Complete();
+            }
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        // Clipboard API isn't available in all render modes — best-effort
+        try
+        {
+            await DialogService.ShowMessageBoxAsync(
+                "Copied!",
+                "The API key has been shown. Please select and copy it manually if clipboard access is unavailable.",
+                yesText: "OK");
+        }
+        catch
+        {
+            // Ignore
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    private void Close() => MudDialog.Close(DialogResult.Ok(true));
+}

@@ -1,0 +1,859 @@
+@* ABOUTME: Renders instance governance controls including deployment, home-page, and runtime render policy presets. *@
+@* ABOUTME: Provides preset-first render policy UX with recommended highlighting, help tooltips, and advanced overrides. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Contracts.ControlPlane
+@using Explore.Blazor.Client.Contracts.Services.ControlPlane
+@using Explore.Blazor.Client.Services
+@inject IControlPlaneOperationsService OperationsService
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">@SectionTitle</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            @SectionDescription
+        </MudText>
+    </div>
+    <MudStack Spacing="3">
+
+
+        @if (ShowDeploymentMode)
+        {
+        @* ── Deployment Mode ──────────────────────────────────────────── *@
+        <MudDivider Class="my-4" />
+        <MudPaper Class="pa-4" Elevation="0" Style="@_deploymentModeCardStyle">
+            <MudStack Spacing="2">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default" Size="Size.Small" />
+                    <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Deployment Mode</MudText>
+                    <MudTooltip Arrow="true" Placement="Placement.Right">
+                        <TooltipContent>
+                            <MudStack Spacing="1" Style="max-width: 320px; text-align: left;">
+                                <MudText Typo="Typo.subtitle2" Style="font-weight:600;">Operator-controlled setting</MudText>
+                                <MudText Typo="Typo.body2">Deployment mode is selected from server configuration before onboarding.</MudText>
+                                <MudText Typo="Typo.body2">Use DEPLOYMENT_MODE=multi_tenant to opt into Multi-Tenant setup.</MudText>
+                                <MudText Typo="Typo.body2">Leave DEPLOYMENT_MODE unset for convention-first Single-Tenant setup.</MudText>
+                            </MudStack>
+                        </TooltipContent>
+                        <ChildContent>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                        </ChildContent>
+                    </MudTooltip>
+                </MudStack>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Current mode: <strong>@(IsSingleTenant ? "Single-Tenant" : "Multi-Tenant")</strong>
+                </MudText>
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Deployment mode is locked after onboarding. To use Multi-Tenant mode, set <code>DEPLOYMENT_MODE=multi_tenant</code> before first launch.
+                </MudAlert>
+
+                @if (!_runbookLoaded)
+                {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+                }
+                else if (_runbook is null)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" role="alert">
+                        @RunbookProblemMessage
+                    </MudAlert>
+                }
+                else if (HasRunbookDetails)
+                {
+                    <section class="instance-governance__deployment-runbook" aria-label="Deployment mode runbook">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2" Style="font-weight:600;">Deployment mode runbook</MudText>
+                            <div class="instance-governance__runbook-summary" role="list" aria-label="Deployment mode summary">
+                                <div role="listitem">
+                                    <span>Current mode</span>
+                                    <strong>@Runbook.CurrentMode</strong>
+                                </div>
+                                <div role="listitem">
+                                    <span>Active tenants</span>
+                                    <strong>@Runbook.ActiveTenantCount</strong>
+                                </div>
+                            </div>
+
+                            @if (Runbook.Steps?.Count > 0)
+                            {
+                                <ol class="instance-governance__runbook-steps" aria-label="Deployment mode runbook steps">
+                                    @foreach (var step in Runbook.Steps)
+                                    {
+                                        <li class="instance-governance__runbook-step" @key="step.Key">
+                                            <strong>@step.Title</strong>
+                                            <span>@step.Description</span>
+                                        </li>
+                                    }
+                                </ol>
+                            }
+
+                            <div class="instance-governance__deployment-targets" role="list" aria-label="Deployment mode targets">
+                                @foreach (var option in Runbook.TargetOptions ?? [])
+                                {
+                                    var canTransition = CanTransitionTo(option);
+                                    <article class="instance-governance__deployment-target" role="listitem" @key="option.TargetMode">
+                                        <div>
+                                            <span class="instance-governance__target-mode">@option.TargetMode</span>
+                                            <h3>@option.Label</h3>
+                                            <p>@option.Description</p>
+                                        </div>
+
+                                        @if (canTransition)
+                                        {
+                                            <div class="instance-governance__transition-form" role="form" aria-label="@($"Deployment mode transition to {option.TargetMode}")">
+                                                <label for="@ConfirmationInputId(option.TargetMode)">Type @option.ConfirmationText to confirm</label>
+                                                <input id="@ConfirmationInputId(option.TargetMode)"
+                                                       type="text"
+                                                       autocomplete="off"
+                                                       aria-label="Deployment mode confirmation"
+                                                       value="@_confirmationText"
+                                                       @onchange="OnConfirmationChanged"
+                                                       disabled="@_transitioning" />
+
+                                                <label for="@ReasonInputId(option.TargetMode)">Operator reason</label>
+                                                <textarea id="@ReasonInputId(option.TargetMode)"
+                                                          rows="3"
+                                                          aria-label="Deployment mode transition reason"
+                                                          @onchange="OnReasonChanged"
+                                                          disabled="@_transitioning">@_transitionReason</textarea>
+
+                                                <MudButton Variant="Variant.Filled"
+                                                           Color="Color.Warning"
+                                                           Disabled="@(!CanSubmitTransition(option))"
+                                                           OnClick="@(() => RunDeploymentModeTransitionAsync(option))"
+                                                           aria-label="@($"Run deployment mode transition to {option.TargetMode}")">
+                                                    Run transition
+                                                </MudButton>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="instance-governance__transition-message" role="alert">
+                                                @(TransitionUnavailableMessage(option))
+                                            </p>
+                                            @if (!string.IsNullOrWhiteSpace(option.Remediation))
+                                            {
+                                                <p class="instance-governance__transition-remediation">@option.Remediation</p>
+                                            }
+                                        }
+                                    </article>
+                                }
+                            </div>
+
+                            @if (_transitionResult is not null)
+                            {
+                                <div class="instance-governance__transition-result" role="@(_transitionResult.Success == true ? "status" : "alert")">
+                                    <strong>@(_transitionResult.Success == true ? "Transition accepted" : "Transition blocked")</strong>
+                                    <p>@_transitionResult.Message</p>
+                                </div>
+                            }
+                        </MudStack>
+                    </section>
+                }
+            </MudStack>
+        </MudPaper>
+        }
+
+        @if (ShowGeneralGovernance)
+        {
+        @if (ShowHomePage && !IsSingleTenant)
+        {
+            <MudSwitch T="bool" Value="Delegation.AllowTenantSelfServiceRegistration == true"
+                       ValueChanged="value => Delegation.AllowTenantSelfServiceRegistration = value"
+                       Color="Color.Primary">
+                Allow tenant self-service registration
+            </MudSwitch>
+        }
+
+        @if (!IsSingleTenant)
+        {
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Event Submission Policies</MudText>
+            <MudSwitch T="bool" Value="EventPolicy.AllowUserSubmittedEvents == true"
+                       ValueChanged="value => EventPolicy.AllowUserSubmittedEvents = value"
+                       Color="Color.Primary">
+                Allow user-submitted events
+            </MudSwitch>
+            <MudSwitch T="bool" Value="EventPolicy.AllowOrganizationSubmittedEvents == true"
+                       ValueChanged="value => EventPolicy.AllowOrganizationSubmittedEvents = value"
+                       Color="Color.Primary">
+                Allow organization-submitted events
+            </MudSwitch>
+            <MudSwitch T="bool" Value="EventPolicy.AllowGroupSubmittedEvents == true"
+                       ValueChanged="value => EventPolicy.AllowGroupSubmittedEvents = value"
+                       Color="Color.Primary">
+                Allow group-submitted events
+            </MudSwitch>
+
+            @if (EventPolicy.AllowUserSubmittedEvents == false
+                 && EventPolicy.AllowOrganizationSubmittedEvents == false
+                 && EventPolicy.AllowGroupSubmittedEvents == false)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    No entity types are allowed to submit events. Only administrators will be able to create events through entities they manage.
+                </MudAlert>
+            }
+
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Self-Registration Controls</MudText>
+            <MudSwitch T="bool" Value="OrganizationPolicy.AllowOrganizationSelfRegistration == true"
+                       ValueChanged="value => OrganizationPolicy.AllowOrganizationSelfRegistration = value"
+                       Color="Color.Primary">
+                Allow organization self-registration
+            </MudSwitch>
+            <MudSwitch T="bool" Value="OrganizationPolicy.AllowGroupSelfRegistration == true"
+                       ValueChanged="value => OrganizationPolicy.AllowGroupSelfRegistration = value"
+                       Color="Color.Primary">
+                Allow group self-registration
+            </MudSwitch>
+        }
+
+        @if (ShowHomePage)
+        {
+            <MudSelect T="string"
+                       Label="Default Public Home Page"
+                       @bind-Value="Delegation.DefaultPublicHomePage"
+                       Variant="Variant.Outlined">
+                <MudSelectItem Value="@("EventList")">Event List</MudSelectItem>
+                <MudSelectItem Value="@("LandingPage")">Landing Page</MudSelectItem>
+            </MudSelect>
+
+            @if (!IsSingleTenant)
+            {
+                <MudSwitch T="bool" Value="Delegation.LockTenantHomePagePreference == true"
+                           ValueChanged="value => Delegation.LockTenantHomePagePreference = value"
+                           Color="Color.Primary">
+                    Lock tenant home page preference
+                </MudSwitch>
+            }
+
+
+        }
+        }
+
+        @if (ShowMcpGovernance)
+        {
+            <MudDivider Class="my-4" />
+            <MudStack Spacing="2">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudText Typo="Typo.h6" Style="font-weight:600;">MCP Adapter</MudText>
+                    <MudTooltip Text="Endpoint path and stateless transport stay startup-only. Runtime settings can only enable MCP when the MCP startup ceiling is enabled.">
+                        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                    </MudTooltip>
+                </MudStack>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Controls the API-hosted MCP adapter at runtime. The endpoint path and stateless mode are configured by operators and are not editable here.
+                </MudText>
+
+                <MudSwitch T="bool" Value="Mcp.Enabled == true"
+                           ValueChanged="value => Mcp.Enabled = value"
+                           Color="Color.Primary">
+                    Enable MCP adapter at runtime
+                </MudSwitch>
+
+                <MudSwitch T="bool" Value="Mcp.EnableLegacySse == true"
+                           ValueChanged="value => Mcp.EnableLegacySse = value"
+                           Color="Color.Warning">
+                    Request legacy SSE transport
+                </MudSwitch>
+
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Legacy SSE remains unavailable at runtime until a separate SDK/session-affinity review enables it. This setting records governance intent only.
+                </MudAlert>
+
+                @if (!IsSingleTenant)
+                {
+                    <MudSwitch T="bool" Value="Mcp.LockTenantMcp == true"
+                               ValueChanged="value => Mcp.LockTenantMcp = value"
+                               Color="Color.Primary">
+                        Lock tenant MCP enablement override
+                    </MudSwitch>
+                    <MudSwitch T="bool" Value="Mcp.LockTenantMcpLegacySse == true"
+                               ValueChanged="value => Mcp.LockTenantMcpLegacySse = value"
+                               Color="Color.Primary">
+                        Lock tenant legacy SSE override
+                    </MudSwitch>
+                }
+            </MudStack>
+        }
+
+        @if (ShowRenderPolicies)
+        {
+        @if (ShowGeneralGovernance)
+        {
+            <MudDivider Class="my-2" />
+        }
+
+        <MudStack Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.h6" Style="font-weight:600;">Runtime Render Policy</MudText>
+                <MudTooltip Text="Choose a preset strategy for route rendering. All Interactive Server is recommended for most deployments.">
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                </MudTooltip>
+            </MudStack>
+
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Presets balance SEO prerendering and runtime responsiveness. You can enable advanced overrides for per-route-group control.
+            </MudText>
+
+            <div class="instance-governance__preset-grid">
+                @foreach (var option in PresetOptions)
+                {
+                    <MudPaper Class="@GetPresetCardClass(option.Value)" Elevation="0" @onclick="() => SelectPreset(option.Value)">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight:600;">@option.Label</MudText>
+                                    <MudTooltip Text="@option.HelpText">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                                    </MudTooltip>
+                                </MudStack>
+                                @if (IsRecommendedPreset(option.Value))
+                                {
+                                    <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">Recommended</MudChip>
+                                }
+                            </MudStack>
+
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">@option.Description</MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </div>
+
+            <MudSwitch T="bool"
+                       Value="RenderPolicy.EnableAdvancedRenderPolicyOverrides == true"
+                       ValueChanged="OnAdvancedOverridesChanged"
+                       Color="Color.Primary">
+                Enable advanced render-policy overrides
+            </MudSwitch>
+
+            @if (RenderPolicy.EnableAdvancedRenderPolicyOverrides == true)
+            {
+                <MudPaper Class="instance-governance__advanced-panel pa-4" Elevation="0">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.subtitle2" Style="font-weight:600;">Global Fallback</MudText>
+                            <MudTooltip Text="Used when a route-group specific override is unavailable.">
+                                <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                            </MudTooltip>
+                        </MudStack>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string"
+                                           Label="Global Render Mode"
+                                           @bind-Value="RenderPolicy.GlobalRenderMode"
+                                           Variant="Variant.Outlined">
+                                    @foreach (var mode in RenderModeOptions)
+                                    {
+                                        <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSwitch T="bool" Value="RenderPolicy.GlobalPrerenderEnabled == true"
+                                           ValueChanged="value => RenderPolicy.GlobalPrerenderEnabled = value"
+                                           Color="Color.Primary">
+                                    Global Prerender Enabled
+                                </MudSwitch>
+                            </MudItem>
+                        </MudGrid>
+
+                        @foreach (var group in RouteGroupOptions)
+                        {
+                            <MudDivider />
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle2" Style="font-weight:600;">@group.Label</MudText>
+                                <MudTooltip Text="@group.HelpText">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                                </MudTooltip>
+                            </MudStack>
+
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudSelect T="string"
+                                               Label="@($"{group.Label} Render Mode")"
+                                               Value="@GetRouteGroupMode(group.Value)"
+                                               ValueChanged="mode => SetRouteGroupMode(group.Value, mode)"
+                                               Variant="Variant.Outlined">
+                                        @foreach (var mode in RenderModeOptions.Where(x => !IsOnboardingInteractiveServerRestricted(group.Value) || x.Value != "InteractiveServer"))
+                                        {
+                                            <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudSwitch T="bool"
+                                               Value="@GetRouteGroupPrerender(group.Value)"
+                                               ValueChanged="enabled => SetRouteGroupPrerender(group.Value, enabled)"
+                                               Color="Color.Primary">
+                                        @($"{group.Label} Prerender Enabled")
+                                    </MudSwitch>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudStack>
+                </MudPaper>
+            }
+
+            @if (!IsSingleTenant)
+            {
+            @* ── Tenant Render Policy Delegation ──────────────────────────────── *@
+            <MudDivider Class="my-2" />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Tenant Render Policy Delegation</MudText>
+                <MudTooltip Text="When enabled, tenants can override render policy settings. Use per-route-group locks to restrict specific areas.">
+                    <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
+                </MudTooltip>
+            </MudStack>
+
+            <MudSwitch T="bool"
+                       Value="RenderPolicy.AllowTenantRenderPolicyOverride == true"
+                       ValueChanged="value => RenderPolicy.AllowTenantRenderPolicyOverride = value"
+                       Color="Color.Primary">
+                Allow tenants to override render policy
+            </MudSwitch>
+
+            @if (RenderPolicy.AllowTenantRenderPolicyOverride == true)
+            {
+                <MudPaper Class="pa-4" Elevation="0" Style="border: 1px solid var(--mud-palette-lines-default);">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Lock specific route groups to prevent tenant overrides. Locked groups use the instance-level setting.
+                        </MudText>
+                        <MudSwitch T="bool"
+                                   Value="RenderPolicy.LockTenantPublicSeoRenderPolicy == true"
+                                   ValueChanged="value => RenderPolicy.LockTenantPublicSeoRenderPolicy = value"
+                                   Color="Color.Warning">
+                            Lock Public/SEO render policy
+                        </MudSwitch>
+                        <MudSwitch T="bool"
+                                   Value="RenderPolicy.LockTenantOperationalRenderPolicy == true"
+                                   ValueChanged="value => RenderPolicy.LockTenantOperationalRenderPolicy = value"
+                                   Color="Color.Warning">
+                            Lock Operational render policy
+                        </MudSwitch>
+                        <MudSwitch T="bool"
+                                   Value="RenderPolicy.LockTenantAdminRenderPolicy == true"
+                                   ValueChanged="value => RenderPolicy.LockTenantAdminRenderPolicy = value"
+                                   Color="Color.Warning">
+                            Lock Admin render policy
+                        </MudSwitch>
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            Onboarding render policy is always controlled at the instance level.
+                        </MudAlert>
+                    </MudStack>
+                </MudPaper>
+            }
+            }
+        </MudStack>
+        }
+    </MudStack>
+</div>
+
+@code {
+    private const string RecommendedPreset = "AllInteractiveServer";
+
+    private static readonly IReadOnlyList<PresetOption> PresetOptions =
+    [
+        new("AllInteractiveServer", "All Interactive Server", "Best default — fast SignalR interactivity for all routes", "Uses InteractiveServer for all route groups with no prerendering. Fastest time-to-interactive via SignalR."),
+        new("SeoBalanced", "SEO Balanced", "Prerendering for SEO-sensitive public pages", "Prioritizes prerendering for SEO-sensitive public pages while keeping operational flows interactive."),
+        new("AllPrerendered", "All Prerendered", "Maximum first paint and crawler readiness", "Forces prerendering across route groups for predictable initial HTML output."),
+        new("AllInteractiveAutoNoPrerender", "All Interactive Auto", "Fast interactivity startup without prerender", "Disables prerender globally and uses InteractiveAuto for all route groups."),
+        new("CustomAdvanced", "Custom Advanced", "Fine-grained per route-group control", "Enables explicit overrides for Public SEO, Operational, Admin, and Onboarding route groups.")
+    ];
+
+    private static readonly IReadOnlyList<RenderModeOption> RenderModeOptions =
+    [
+        new("InteractiveAuto", "Interactive Auto"),
+        new("InteractiveWebAssembly", "Interactive WebAssembly"),
+        new("InteractiveServer", "Interactive Server")
+    ];
+
+    private static readonly IReadOnlyList<RouteGroupOption> RouteGroupOptions =
+    [
+        new("public-seo", "Public SEO", "Public landing and detail routes where SEO/prerender strategy matters most."),
+        new("operational", "Operational", "Authenticated user workflows and day-to-day app interactions."),
+        new("admin", "Admin", "Administrative surfaces under /admin routes."),
+        new("onboarding", "Onboarding", "Setup and onboarding routes. Always uses InteractiveServer for instant interactivity (no WASM download delay).")
+    ];
+
+    [Parameter, EditorRequired]
+    public TenantDelegationSettingsDto Delegation { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventPolicyDto EventPolicy { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public OrganizationPolicyDto OrganizationPolicy { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public RenderPolicySettingsDto RenderPolicy { get; set; } = null!;
+
+    [Parameter]
+    public McpGovernanceSettingsDto Mcp { get; set; } = new();
+
+    [Parameter]
+    public string DeploymentMode { get; set; } = "SingleTenant";
+
+    /// <summary>
+    /// Controls which subsections are visible: "full" (default), "general", or "advanced".
+    /// </summary>
+    [Parameter]
+    public string DisplayMode { get; set; } = "full";
+
+    private bool ShowDeploymentMode => DisplayMode is "full" or "advanced";
+    private bool ShowGeneralGovernance => DisplayMode is "full" or "general";
+    private bool ShowRenderPolicies => DisplayMode is "full" or "advanced";
+    private bool ShowMcpGovernance => DisplayMode is "full" or "advanced";
+    private bool ShowHomePage => DisplayMode is "full" or "general";
+
+    private HalResourceOfControlPlaneDeploymentModeRunbookDto? _runbook;
+    private BaseCommandResponseOfControlPlaneDeploymentModeTransitionDto? _transitionResult;
+    private bool _runbookLoaded;
+    private string? _confirmationText;
+    private string? _transitionReason;
+    private bool _transitioning;
+
+    private string SectionTitle => DisplayMode switch
+    {
+        "general" => "General",
+        "advanced" => "Advanced Settings",
+        _ => "Platform Governance"
+    };
+
+    private string SectionDescription => DisplayMode switch
+    {
+        "general" => IsSingleTenant
+            ? "Configure event submission policies, self-registration, and general platform behavior."
+            : "Configure tenant registration and general platform behavior.",
+        "advanced" => "Manage runtime render policies and platform deployment mode.",
+        _ => "Control deployment mode, tenant registration, and default home page behavior."
+    };
+
+    private bool IsSingleTenant => string.Equals(DeploymentMode, "SingleTenant", StringComparison.OrdinalIgnoreCase)
+                                   || string.IsNullOrWhiteSpace(DeploymentMode);
+
+    private HalResourceOfControlPlaneDeploymentModeRunbookDto Runbook => _runbook ?? new();
+
+    private bool HasRunbookDetails =>
+        !string.IsNullOrWhiteSpace(Runbook.CurrentMode) || Runbook.TargetOptions?.Count > 0 || Runbook.Steps?.Count > 0;
+
+    private string RunbookProblemMessage =>
+        "The deployment-mode runbook is unavailable.";
+
+    private string _deploymentModeCardStyle => "border: 1px solid var(--mud-palette-lines-default);";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ShowDeploymentMode)
+        {
+            try
+            {
+                _runbook = await OperationsService.GetDeploymentModeRunbookAsync();
+            }
+            finally
+            {
+                _runbookLoaded = true;
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Mcp is null)
+        {
+            Mcp = new();
+        }
+        if (RenderPolicy is null)
+        {
+            RenderPolicy = new();
+        }
+        if (Delegation is null)
+        {
+            Delegation = new();
+        }
+        if (EventPolicy is null)
+        {
+            EventPolicy = new();
+        }
+        if (OrganizationPolicy is null)
+        {
+            OrganizationPolicy = new();
+        }
+    }
+
+    private string GetPresetCardClass(string preset)
+    {
+        var className = "instance-governance__preset-card";
+
+        if (IsRecommendedPreset(preset))
+        {
+            className += " instance-governance__preset-card--recommended";
+        }
+
+        if (string.Equals(EffectiveRenderPolicyPreset, preset, StringComparison.OrdinalIgnoreCase))
+        {
+            className += " instance-governance__preset-card--selected";
+        }
+
+        return className;
+    }
+
+    private static bool IsRecommendedPreset(string preset)
+    {
+        return preset.Equals(RecommendedPreset, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string EffectiveRenderPolicyPreset =>
+        PresetOptions.FirstOrDefault(option => string.Equals(
+            option.Value,
+            RenderPolicy.RenderPolicyPreset,
+            StringComparison.OrdinalIgnoreCase))?.Value ?? RecommendedPreset;
+
+    private static string? TransitionRelation(string targetMode) => targetMode switch
+    {
+        "MultiTenant" => ControlPlaneLinkRelations.TransitionToMultiTenant,
+        "SingleTenant" => ControlPlaneLinkRelations.TransitionToSingleTenant,
+        _ => null
+    };
+
+    private bool HasTransitionLink(string targetMode)
+    {
+        var relation = TransitionRelation(targetMode);
+        return relation is not null && ControlPlaneHal.HasLink(Runbook._links, relation);
+    }
+
+    private bool CanTransitionTo(ControlPlaneDeploymentModeTargetOptionDto option) =>
+        option.Allowed == true && HasTransitionLink(option.TargetMode ?? string.Empty);
+
+    private bool CanSubmitTransition(ControlPlaneDeploymentModeTargetOptionDto option) =>
+        CanTransitionTo(option)
+        && string.Equals(_confirmationText?.Trim(), option.ConfirmationText, StringComparison.Ordinal)
+        && !_transitioning;
+
+    private static string TransitionUnavailableMessage(ControlPlaneDeploymentModeTargetOptionDto option) =>
+        option.Allowed == true
+            ? "Transition requires a server-provided HAL affordance."
+            : option.BlockingReason ?? "This transition is not available.";
+
+    private static string ConfirmationInputId(string targetMode) => $"deployment-mode-confirmation-{targetMode}";
+
+    private static string ReasonInputId(string targetMode) => $"deployment-mode-reason-{targetMode}";
+
+    private void OnConfirmationChanged(ChangeEventArgs args)
+    {
+        _confirmationText = args.Value?.ToString();
+    }
+
+    private void OnReasonChanged(ChangeEventArgs args)
+    {
+        _transitionReason = args.Value?.ToString();
+    }
+
+    private async Task RunDeploymentModeTransitionAsync(ControlPlaneDeploymentModeTargetOptionDto option)
+    {
+        if (!CanSubmitTransition(option))
+        {
+            return;
+        }
+
+        _transitioning = true;
+        _transitionResult = null;
+
+        try
+        {
+            _transitionResult = await OperationsService.TransitionDeploymentModeAsync(
+                option.TargetMode ?? string.Empty,
+                _confirmationText?.Trim() ?? string.Empty,
+                _transitionReason);
+
+            if (_transitionResult.Success == true)
+            {
+                _confirmationText = string.Empty;
+                _transitionReason = string.Empty;
+                _runbook = await OperationsService.GetDeploymentModeRunbookAsync();
+            }
+        }
+        finally
+        {
+            _transitioning = false;
+        }
+    }
+
+    private void SelectPreset(string preset)
+    {
+        RenderPolicy.RenderPolicyPreset = preset;
+
+        switch (preset)
+        {
+            case "AllInteractiveServer":
+                RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
+                RenderPolicy.GlobalRenderMode = "InteractiveServer";
+                RenderPolicy.GlobalPrerenderEnabled = false;
+                break;
+            case "AllPrerendered":
+                RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
+                RenderPolicy.GlobalRenderMode = "InteractiveAuto";
+                RenderPolicy.GlobalPrerenderEnabled = true;
+                break;
+            case "AllInteractiveAutoNoPrerender":
+                RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
+                RenderPolicy.GlobalRenderMode = "InteractiveAuto";
+                RenderPolicy.GlobalPrerenderEnabled = false;
+                break;
+            case "CustomAdvanced":
+                RenderPolicy.EnableAdvancedRenderPolicyOverrides = true;
+                RenderPolicy.GlobalRenderMode = NormalizeRenderMode(RenderPolicy.GlobalRenderMode);
+                break;
+            default:
+                RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
+                RenderPolicy.GlobalRenderMode = "InteractiveServer";
+                RenderPolicy.GlobalPrerenderEnabled = false;
+                break;
+        }
+
+        if (RenderPolicy.EnableAdvancedRenderPolicyOverrides != true)
+        {
+            ApplyGlobalFallbackToAllGroups();
+            if (string.Equals(RenderPolicy.RenderPolicyPreset, "SeoBalanced", StringComparison.OrdinalIgnoreCase))
+            {
+                RenderPolicy.PublicSeoPrerenderEnabled = true;
+            }
+        }
+
+        EnsureOnboardingGuardrail();
+    }
+
+    private void OnAdvancedOverridesChanged(bool enabled)
+    {
+        if (enabled)
+        {
+            SelectPreset("CustomAdvanced");
+            return;
+        }
+
+        SelectPreset(RecommendedPreset);
+    }
+
+    private string GetRouteGroupMode(string group)
+    {
+        return group switch
+        {
+            "public-seo" => NormalizeRenderMode(RenderPolicy.PublicSeoRenderMode),
+            "operational" => NormalizeRenderMode(RenderPolicy.OperationalRenderMode),
+            "admin" => NormalizeRenderMode(RenderPolicy.AdminRenderMode),
+            "onboarding" => NormalizeOnboardingRenderMode(RenderPolicy.OnboardingRenderMode),
+            _ => "InteractiveAuto"
+        };
+    }
+
+    private void SetRouteGroupMode(string group, string mode)
+    {
+        var normalizedMode = NormalizeRenderMode(mode);
+
+        switch (group)
+        {
+            case "public-seo":
+                RenderPolicy.PublicSeoRenderMode = normalizedMode;
+                break;
+            case "operational":
+                RenderPolicy.OperationalRenderMode = normalizedMode;
+                break;
+            case "admin":
+                RenderPolicy.AdminRenderMode = normalizedMode;
+                break;
+            case "onboarding":
+                RenderPolicy.OnboardingRenderMode = NormalizeOnboardingRenderMode(normalizedMode);
+                break;
+        }
+
+        EnsureOnboardingGuardrail();
+    }
+
+    private bool GetRouteGroupPrerender(string group)
+    {
+        return group switch
+        {
+            "public-seo" => RenderPolicy.PublicSeoPrerenderEnabled == true,
+            "operational" => RenderPolicy.OperationalPrerenderEnabled == true,
+            "admin" => RenderPolicy.AdminPrerenderEnabled == true,
+            "onboarding" => RenderPolicy.OnboardingPrerenderEnabled == true,
+            _ => false
+        };
+    }
+
+    private void SetRouteGroupPrerender(string group, bool enabled)
+    {
+        switch (group)
+        {
+            case "public-seo":
+                RenderPolicy.PublicSeoPrerenderEnabled = enabled;
+                break;
+            case "operational":
+                RenderPolicy.OperationalPrerenderEnabled = enabled;
+                break;
+            case "admin":
+                RenderPolicy.AdminPrerenderEnabled = enabled;
+                break;
+            case "onboarding":
+                RenderPolicy.OnboardingPrerenderEnabled = enabled;
+                break;
+        }
+    }
+
+    private static bool IsOnboardingInteractiveServerRestricted(string group)
+    {
+        // InteractiveServer is no longer restricted for onboarding — it's the forced default.
+        return false;
+    }
+
+    private void ApplyGlobalFallbackToAllGroups()
+    {
+        var mode = NormalizeRenderMode(RenderPolicy.GlobalRenderMode);
+        var prerender = RenderPolicy.GlobalPrerenderEnabled == true;
+
+        RenderPolicy.PublicSeoRenderMode = mode;
+        RenderPolicy.PublicSeoPrerenderEnabled = prerender;
+        RenderPolicy.OperationalRenderMode = mode;
+        RenderPolicy.OperationalPrerenderEnabled = prerender;
+        RenderPolicy.AdminRenderMode = mode;
+        RenderPolicy.AdminPrerenderEnabled = prerender;
+        RenderPolicy.OnboardingRenderMode = NormalizeOnboardingRenderMode(mode);
+        RenderPolicy.OnboardingPrerenderEnabled = prerender;
+    }
+
+    private void EnsureOnboardingGuardrail()
+    {
+        // Onboarding is always InteractiveServer for best first-impression UX.
+        RenderPolicy.DisallowInteractiveServerOnOnboarding = false;
+        RenderPolicy.OnboardingRenderMode = "InteractiveServer";
+    }
+
+    private static string NormalizeRenderMode(string? mode)
+    {
+        if (string.Equals(mode, "InteractiveWebAssembly", StringComparison.OrdinalIgnoreCase))
+        {
+            return "InteractiveWebAssembly";
+        }
+
+        if (string.Equals(mode, "InteractiveServer", StringComparison.OrdinalIgnoreCase))
+        {
+            return "InteractiveServer";
+        }
+
+        return "InteractiveAuto";
+    }
+
+    private static string NormalizeOnboardingRenderMode(string? mode)
+    {
+        // Onboarding always uses InteractiveServer regardless of input.
+        return "InteractiveServer";
+    }
+
+    private sealed record PresetOption(string Value, string Label, string Description, string HelpText);
+    private sealed record RenderModeOption(string Value, string Label);
+    private sealed record RouteGroupOption(string Value, string Label, string HelpText);
+}

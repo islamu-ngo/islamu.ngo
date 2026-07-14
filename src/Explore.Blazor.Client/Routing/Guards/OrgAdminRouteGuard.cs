@@ -1,0 +1,78 @@
+// ABOUTME: Route guard that restricts org admin routes to org-scoped administrators for the specific org.
+// ABOUTME: Requires organization admin claims derived from OrganizationMember role assignments.
+
+using System.Text.RegularExpressions;
+using Blazouter.Interfaces;
+using Blazouter.Models;
+using Microsoft.AspNetCore.Components.Authorization;
+
+namespace Explore.Blazor.Client.Routing.Guards;
+
+/// <summary>
+/// Guards organization admin routes by verifying the user has admin authority for the
+/// specific organization in the route.
+/// Requires a matching organization-admin claim for the targeted organization ID.
+/// The organization ID is extracted from the route path via regex.
+/// </summary>
+public sealed partial class OrgAdminRouteGuard(AuthenticationStateProvider authStateProvider) : IRouteGuard
+{
+    // Claim names are part of the authenticated API/BFF protocol.
+    // Duplicated here because Blazor.Client does not reference Application.
+    private const string OrgAdminClaim = "explore:admin:organization";
+
+    public async Task<bool> CanActivateAsync(RouteMatch match)
+    {
+        if (authStateProvider is null)
+        {
+            return false;
+        }
+
+        var authState = await authStateProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        // Extract organization ID from the route path (e.g., /admin/organization/{guid}/settings)
+        var orgId = ExtractOrgIdFromPath(match.MatchedPath);
+        if (orgId is null)
+        {
+            return false;
+        }
+
+        return user.HasClaim(c => c.Type == OrgAdminClaim
+                                  && string.Equals(c.Value, orgId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public async Task<string?> GetRedirectPathAsync(RouteMatch match)
+    {
+        if (authStateProvider is not null)
+        {
+            var authState = await authStateProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
+            if (authState?.User?.Identity?.IsAuthenticated == true)
+            {
+                return "/";
+            }
+        }
+
+        var returnUrl = string.IsNullOrWhiteSpace(match.MatchedPath)
+            ? "/"
+            : match.MatchedPath;
+
+        return $"/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
+    private static string? ExtractOrgIdFromPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
+
+        // Match GUID segment after /organization/ in the path
+        var match = OrgIdPattern().Match(path);
+        return match.Success ? match.Groups[1].Value : null;
+    }
+
+    [GeneratedRegex(@"/organization/([0-9a-fA-F\-]{36})", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex OrgIdPattern();
+}

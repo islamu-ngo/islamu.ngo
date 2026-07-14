@@ -1,0 +1,158 @@
+@using MudBlazor
+@using Explore.Blazor.Client.Clients;
+@using Explore.Blazor.Client.Services
+@using Microsoft.AspNetCore.Components
+@using Blazouter.Services
+@using Microsoft.Extensions.Logging
+@attribute [StreamRendering]
+
+<PageTitle>@(Organization?.FullName ?? "Organization Details")</PageTitle>
+
+<div class="admin-list-details">
+    @if (_isLoading)
+    {
+        <MudPaper Class="admin-list-details__hero" Elevation="0">
+            <div class="admin-list-details__loading">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                <MudText Typo="Typo.body1">Loading Organization details…</MudText>
+                <MudText Typo="Typo.caption" style="opacity:0.7;">Please wait a moment.</MudText>
+            </div>
+        </MudPaper>
+    }
+    else if (Organization != null)
+    {
+        <!-- HERO HEADER -->
+        <MudPaper Class="admin-list-details__hero" Elevation="0">
+            <div class="admin-list-details__hero-title">
+                <div class="admin-list-details__hero-badge">
+                    <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Primary" Size="Size.Large" />
+                </div>
+                <div>
+                    <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight:800; letter-spacing:.2px;">
+                        @Organization.FullName
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="admin-list-details__hero-meta">
+                        Organization ID: @Organization.Id.ToString()[..8]…
+                    </MudText>
+                </div>
+            </div>
+
+            <!-- STATUS BADGE IN HERO -->
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="1" Style="margin-top:16px;">
+                <MudChip T="string"
+                         Color="@StatusColor(Organization.ApprovalStatusId ?? 0)"
+                         Variant="Variant.Filled"
+                         Style="border-radius:999px; padding:8px 16px; font-weight:600;">
+                    @GetStatusName(Organization.ApprovalStatusId ?? 0)
+                </MudChip>
+            </MudStack>
+        </MudPaper>
+
+        <!-- BASIC INFORMATION -->
+        <MudPaper Class="admin-list-details__panel" Elevation="0">
+            <div class="admin-list-details__section-header">
+                <div class="admin-list-details__section-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Primary" />
+                </div>
+                <MudText Typo="Typo.h6" Class="admin-list-details__section-title">Basic Information</MudText>
+            </div>
+
+            <div class="admin-list-details__field-row">
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">Organization Name</div>
+                    <MudText Class="admin-list-details__field-text">@Organization.FullName</MudText>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- CONTACT INFORMATION -->
+        <MudPaper Class="admin-list-details__panel" Elevation="0">
+            <div class="admin-list-details__section-header">
+                <div class="admin-list-details__section-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.ContactMail" Color="Color.Primary" />
+                </div>
+                <MudText Typo="Typo.h6" Class="admin-list-details__section-title">Contact Information</MudText>
+            </div>
+
+            <div class="admin-list-details__field-row">
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">Email</div>
+                    <MudLink Href="@($"mailto:{Organization.Email}")" Target="_blank">
+                        @Organization.Email
+                    </MudLink>
+                </div>
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">Website</div>
+                    @if (!string.IsNullOrWhiteSpace(Organization.WebsiteUrl))
+                    {
+                        <MudLink Href="@Organization.WebsiteUrl" Target="_blank">
+                            @Organization.WebsiteUrl
+                        </MudLink>
+                    }
+                    else
+                    {
+                        <MudText Class="admin-list-details__not-provided">Not provided</MudText>
+                    }
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- ADDRESS INFORMATION -->
+        <MudPaper Class="admin-list-details__panel" Elevation="0">
+            <div class="admin-list-details__section-header">
+                <div class="admin-list-details__section-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.LocationOn" Color="Color.Primary" />
+                </div>
+                <MudText Typo="Typo.h6" Class="admin-list-details__section-title">Address Information</MudText>
+            </div>
+
+            <div class="admin-list-details__field-row">
+                <div class="admin-list-details__field-value" style="grid-column: 1 / -1;">
+                    <div class="admin-list-details__field-label">Street Address</div>
+                    <MudText Class="admin-list-details__field-text">@(Organization.Address ?? "Not provided")</MudText>
+                </div>
+            </div>
+
+            <div class="admin-list-details__field-row">
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">City</div>
+                    <MudText Class="admin-list-details__field-text">@(Organization.City ?? "Not provided")</MudText>
+                </div>
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">Country</div>
+                    <MudText Class="admin-list-details__field-text">@(Organization.Country ?? "Not provided")</MudText>
+                </div>
+                <div class="admin-list-details__field-value">
+                    <div class="admin-list-details__field-label">Postal Code</div>
+                    <MudText Class="admin-list-details__field-text">@(string.IsNullOrEmpty(Organization.Postcode) ? "Not provided" : Organization.Postcode)</MudText>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- FOOTER ACTIONS -->
+        <div class="admin-list-details__footer">
+            <MudButton Elevation="0" Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="NavigateBack"
+                       Style="border-radius:999px;">
+                Back to List
+            </MudButton>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="admin-list-details__error" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Warning" />
+            <MudText Typo="Typo.h6" Style="font-weight:800;">Organization not found</MudText>
+            <MudText Typo="Typo.body2">The Organization you're looking for doesn't exist or has been deleted.</MudText>
+            <MudButton Elevation="0" Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.ArrowBack"
+                       OnClick="NavigateBack"
+                       Style="border-radius:999px; margin-top:16px;">
+                Back to List
+            </MudButton>
+        </MudPaper>
+    }
+</div>

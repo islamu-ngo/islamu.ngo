@@ -1,0 +1,110 @@
+/* ABOUTME: Scoped layout styles for the Standard 3-column footer template.
+   ABOUTME: Uses CSS Grid auto-fit for naturally responsive link columns — no inline styles needed. */
+
+/* ========================================
+   Main grid: brand column + links area
+   ======================================== */
+.footer-std3__main {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) minmax(0, 3fr);
+    gap: var(--isl-space-10);
+    align-items: start;
+}
+
+/* ========================================
+   Links area: auto-fit grid (max ~4 cols)
+   Wraps naturally without media queries.
+   ======================================== */
+::deep .footer-std3__links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--isl-space-8);
+}
+
+/* ========================================
+   Tablet and narrow desktop (<=1024px): single column layout
+   ======================================== */
+@media (max-width: 63.999em) {
+    ::deep .footer-std3__brand {
+        text-align: center;
+    }
+
+    ::deep .footer-std3__brand .site-footer__brand {
+        justify-content: center;
+    }
+
+    ::deep .footer-std3__brand .site-footer__description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    ::deep .footer-std3__links {
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 12rem));
+        justify-content: center;
+        text-align: center;
+        gap: var(--isl-space-8) clamp(var(--isl-space-8), 8vw, var(--isl-space-12, 3rem));
+    }
+
+    ::deep .footer-std3__links .site-footer__section {
+        min-width: 10rem;
+    }
+
+    ::deep .footer-std3__links .site-footer__link {
+        margin-inline: auto;
+    }
+}
+
+@container (max-width: 68.999em) {
+    .footer-std3__main {
+        grid-template-columns: 1fr;
+        gap: var(--isl-space-8);
+    }
+
+    ::deep .footer-std3__brand {
+        text-align: center;
+    }
+
+    ::deep .footer-std3__brand .site-footer__brand {
+        justify-content: center;
+    }
+
+    ::deep .footer-std3__brand .site-footer__description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    ::deep .footer-std3__links {
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 12rem));
+        justify-content: center;
+        text-align: center;
+        gap: var(--isl-space-8) clamp(var(--isl-space-8), 8cqw, var(--isl-space-12, 3rem));
+    }
+
+    ::deep .footer-std3__links .site-footer__section {
+        min-width: 10rem;
+    }
+
+    ::deep .footer-std3__links .site-footer__link {
+        margin-inline: auto;
+    }
+}
+
+/* ========================================
+   Mobile (<=600px): links stack vertically
+   ======================================== */
+@media (max-width: 37.499em) {
+    ::deep .footer-std3__links {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    ::deep .footer-std3__links .site-footer__section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    ::deep .footer-std3__links .site-footer__link {
+        width: auto;
+    }
+}

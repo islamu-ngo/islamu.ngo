@@ -1,0 +1,8 @@
+namespace Explore.Application.DTOs.TagType;
+
+public class TagTypeListDto
+{
+    public int Id { get; set; }
+    public required string MasterCode { get; set; } // For i18n with Tolgee
+    public required string FullName { get; set; } // Fallback default
+}

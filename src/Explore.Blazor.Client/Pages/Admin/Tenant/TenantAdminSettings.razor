@@ -1,0 +1,61 @@
+@* ABOUTME: Page wrapper for the Tenant Admin Settings sidebar layout. *@
+@* ABOUTME: Resolves deployment mode before rendering tenant settings or redirecting single-tenant admins. *@
+
+@page "/admin/tenant/settings"
+@using MudBlazor
+@using Microsoft.AspNetCore.Authorization
+@using Explore.Blazor.Client.Pages.Admin.Tenant.Components
+@using Explore.Blazor.Client.Services
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject NavigationManager Navigation
+
+<PageTitle>Tenant Settings</PageTitle>
+
+@if (_errorMessage is not null)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+        <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+    </MudContainer>
+}
+else if (_checkingMode)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+        <MudStack AlignItems="AlignItems.Center" Class="py-12">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        </MudStack>
+    </MudContainer>
+}
+else if (!_redirecting)
+{
+    <TenantAdminSettingsLayout />
+}
+
+@code {
+    private bool _checkingMode = true;
+    private bool _redirecting;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var deploymentMode = await InstanceOnboardingService.GetDeploymentModeAsync();
+            if (deploymentMode.Mode is null or DeploymentMode.SingleTenant)
+            {
+                _redirecting = true;
+                Navigation.NavigateTo("/admin/instance/settings", replace: true);
+                return;
+            }
+        }
+        catch
+        {
+            _errorMessage = "Unable to determine deployment mode. Please refresh or contact support.";
+        }
+        finally
+        {
+            _checkingMode = false;
+        }
+    }
+}

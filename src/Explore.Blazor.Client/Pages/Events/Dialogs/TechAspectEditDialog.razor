@@ -1,0 +1,230 @@
+@* ABOUTME: Dialog for creating or editing the Tech aspect of an event. *@
+@* Allows setting skill level, GitHub repo, hackathon details, tech stack, and competition info. *@
+
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Contracts.Services.Events
+@using MudBlazor
+
+@using Microsoft.AspNetCore.Components.Forms
+@using Explore.Blazor.Client.Components.Forms
+
+@inject IEventAspectService EventAspectService
+@inject ILogger<TechAspectEditDialog> Logger
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Code" Color="Color.Secondary" />
+            <MudText Typo="Typo.h6">@(IsNew ? "Add Tech Characteristics" : "Edit Tech Characteristics")</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FormSubmissionGuard State="@_submitState">
+            <AppValidationSummary />
+            <MudGrid Spacing="3">
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="SkillLevel?"
+                               Label="Skill Level"
+                               @bind-Value="_model.SkillLevel"
+                               Variant="Variant.Outlined">
+                        <MudSelectItem T="SkillLevel?" Value="SkillLevel.AllLevels">All Levels</MudSelectItem>
+                        <MudSelectItem T="SkillLevel?" Value="SkillLevel.Beginner">Beginner</MudSelectItem>
+                        <MudSelectItem T="SkillLevel?" Value="SkillLevel.Intermediate">Intermediate</MudSelectItem>
+                        <MudSelectItem T="SkillLevel?" Value="SkillLevel.Advanced">Advanced</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" T="string"
+                                  Label="GitHub Repository URL"
+                                  @bind-Value="_model.GithubRepoUrl"
+                                  Placeholder="https://github.com/org/repo"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Custom.Brands.GitHub" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" T="string"
+                                  Label="Hackathon Track"
+                                  @bind-Value="_model.HackathonTrack"
+                                  Placeholder="e.g., AI/ML, Web3, Healthcare"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" T="string"
+                                  Label="Tech Stack Tags"
+                                  @bind-Value="_model.TechStackTags"
+                                  Placeholder="e.g., .NET, React, PostgreSQL"
+                                  HelperText="Comma-separated list of technologies"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudCheckBox T="bool?"
+                                 @bind-Value="_model.RequiresLaptop"
+                                 Label="Requires Laptop"
+                                 Color="Color.Warning" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudCheckBox T="bool?"
+                                 @bind-Value="_model.IsCodingCompetition"
+                                 Label="Is Coding Competition"
+                                 Color="Color.Success" />
+                </MudItem>
+
+                @if (_model.IsCodingCompetition == true)
+                {
+                    <MudItem xs="12">
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Competition Details</MudText>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="int?"
+                                         Label="Max Team Size"
+                                         @bind-Value="_model.MaxTeamSize"
+                                         Min="1"
+                                         Max="20"
+                                         HelperText="Leave empty for individual"
+                                         Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="4">
+                        <MudNumericField T="double?"
+                                         Label="Prize Pool"
+                                         @bind-Value="_model.PrizePool"
+                                         Min="0"
+                                         Format="N0"
+                                         Variant="Variant.Outlined" />
+                    </MudItem>
+
+                    <MudItem xs="12" sm="4">
+                        <MudTextField T="string" T="string"
+                                      Label="Currency"
+                                      @bind-Value="_model.PrizeCurrencyCode"
+                                      Placeholder="USD"
+                                      MaxLength="3"
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+                }
+            </MudGrid>
+            </FormSubmissionGuard>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" OnClick="Cancel" Variant="Variant.Text" Disabled="_submitState.IsSubmitting">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync"
+                   Disabled="_submitState.IsSubmitting">
+            @if (_submitState.IsSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Saving...</span>
+            }
+            else
+            {
+                <span>Save</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    [Parameter]
+    public EventTechAspectDto? ExistingAspect { get; set; }
+
+    private bool IsNew => ExistingAspect == null;
+
+    private EditContext _editContext = default!;
+    private FormSubmitState _submitState = new();
+    private ServerValidationErrorStore _errorStore = new();
+
+    private CreateUpdateTechAspectDto _model = new();
+
+    protected override void OnInitialized()
+    {
+        if (ExistingAspect != null)
+        {
+            _model = new CreateUpdateTechAspectDto
+            {
+                SkillLevel = ExistingAspect.SkillLevel,
+                GithubRepoUrl = ExistingAspect.GithubRepoUrl,
+                HackathonTrack = ExistingAspect.HackathonTrack,
+                TechStackTags = ExistingAspect.TechStackTags,
+                RequiresLaptop = ExistingAspect.RequiresLaptop,
+                IsCodingCompetition = ExistingAspect.IsCodingCompetition,
+                MaxTeamSize = ExistingAspect.MaxTeamSize,
+                PrizePool = ExistingAspect.PrizePool,
+                PrizeCurrencyCode = ExistingAspect.PrizeCurrencyCode
+            };
+        }
+
+        _editContext = new EditContext(_model);
+        _errorStore.Init(_editContext);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_submitState.IsSubmitting) return;
+        if (!_editContext.Validate()) return;
+
+        _submitState.Start();
+
+        try
+        {
+            // Clear competition fields if not a competition
+            if (_model.IsCodingCompetition != true)
+            {
+                _model.MaxTeamSize = null;
+                _model.PrizePool = null;
+                _model.PrizeCurrencyCode = null;
+            }
+
+            var response = await EventAspectService.UpsertTechAspectAsync(EventId, _model);
+
+            if (response?.Success == true)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var errorMessage = response?.Errors?.FirstOrDefault() ?? "Failed to save Tech characteristics";
+                _submitState.Fail(errorMessage);
+            }
+        }
+        catch (ApiException ex)
+        {
+            if (!_errorStore.HandleApiError(ex))
+            {
+                _submitState.Fail($"Failed to save aspect: {ex.Message}");
+            }
+            else
+            {
+                _submitState.Fail("Please fix the validation errors below.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error saving Tech aspect for event {EventId}", EventId);
+            _submitState.Fail("An error occurred while saving");
+        }
+        finally
+        {
+            if (!_submitState.HasError)
+            {
+                _submitState.Complete();
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

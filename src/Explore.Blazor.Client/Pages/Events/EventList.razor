@@ -1,0 +1,314 @@
+@* ABOUTME: Event discovery page that renders filters, cards, and docked event previews. *@
+@* ABOUTME: Delegates the details sidebar chrome to the shared EventDetailsSidebar component. *@
+
+@page "/events"
+
+@rendermode InteractiveServer
+
+@using MudBlazor
+
+@using Explore.Blazor.Client.Components.Docking
+
+@using Explore.Blazor.Client.Components.Events
+
+@using Explore.Blazor.Client.Clients
+
+@using Explore.Blazor.Client.Models
+
+@using Explore.Blazor.Client.Services
+
+@using Explore.Blazor.Client.Services.Docking
+
+@using Explore.Blazor.Client.Pages.Events.Components
+
+@using Explore.Blazor.Client.Helpers
+
+@using Microsoft.AspNetCore.Components
+
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@using Microsoft.Extensions.Logging
+
+
+
+<PageTitle>Explore Events</PageTitle>
+<HeadContent>
+    <link rel="canonical" href="@CanonicalUrlHelper.Build(Navigation, "/events")" />
+</HeadContent>
+
+<MudText Typo="Typo.h1" HtmlTag="h1" Class="sr-only">Explore Events</MudText>
+
+
+
+<div class="event-list__dock-container">
+
+        @* ── Main Content Area (workspace dock host owns customization panel track) ── *@
+        <DockLayoutHost Scope="@DockScope.Workspace"
+                        Class="event-list__workspace"
+                        DataTestId="event-list-workspace-dock-host"
+                        ContentDataTestId="event-list-workspace-content">
+        <div class="event-list__page">
+
+        <main class="event-list__main">
+
+        <MudContainer Class="event-list-container pb-4" MaxWidth="MaxWidth.False" Gutters="false">
+
+
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+
+            {
+
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="@(() => _errorMessage = null)">
+
+                    @_errorMessage
+
+                </MudAlert>
+
+            }
+
+            @if (!string.IsNullOrEmpty(_successMessage))
+
+            {
+
+                <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="@(() => _successMessage = null)">
+
+                    @_successMessage
+
+                </MudAlert>
+
+            }
+
+
+
+            @if (CuratedEventSections.Count > 0)
+            {
+                <section class="event-list__presets" aria-labelledby="event-list-presets-heading">
+                    <div class="event-list__presets-header">
+                        <MudText Typo="Typo.h6" HtmlTag="h2" Id="event-list-presets-heading">
+                            Featured @EventCatalogLabel
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Choose a curated section to update the event filters.
+                        </MudText>
+                    </div>
+
+                    <div class="event-list__preset-list" role="list" aria-label="Curated event filters">
+                        @foreach (var curatedSection in CuratedEventSections)
+                        {
+                            <MudButton Href="@curatedSection.Url"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       StartIcon="@ResolvePresetIcon(curatedSection.Icon)"
+                                       Class="@GetPresetChipClass(curatedSection)"
+                                       aria-current="@(IsCurrentPreset(curatedSection) ? "page" : null)"
+                                       aria-label="@GetPresetAriaLabel(curatedSection)">
+                                @curatedSection.Label
+                            </MudButton>
+                        }
+                    </div>
+                </section>
+            }
+
+
+
+            <EventFilterBar @ref="_filterBar"
+
+                            IsIslamicModuleEnabled="@_isIslamicModuleEnabled"
+
+                            IsTechModuleEnabled="@_isTechModuleEnabled"
+
+                            OnSearchRequested="@RefreshList"
+
+                            CurrentLayout="@_currentLayout"
+
+                            CurrentLayoutChanged="@OnLayoutModeChanged"
+
+                            ResultCount="@_totalCount"
+
+                            ShowResultCount="@(_eventsLoaded && HasActiveFilters())"
+
+                            EventTypes="@eventTypes"
+
+                            Categories="@categories"
+
+                            CategoryGroups="@categoryGroups"
+
+                            Locations="@locations"
+
+                            EventFormats="@eventFormats"
+
+                            Madhabs="@madhabs"
+
+                            RegistrationModes="@registrationModes"
+
+                            Languages="@languages"
+
+                            Tags="@tags"
+
+                            AudienceGenders="@audienceGenders"
+
+                            AudienceAges="@audienceAges"
+
+                            TagGroups="@tagGroups"
+
+                            ShowCustomizationButton="@_showCustomizationButton"
+
+                            OnCustomizationRequested="OpenCustomizationDrawer" />
+
+
+
+            @{ var bp = GetGridBreakpoints(); }
+
+            @if (_isLoadingPage)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
+            }
+
+            <MudGrid Spacing="0" Justify="Justify.FlexStart" Class="@GetGridCssClass()">
+                @if (!_eventsLoaded)
+                {
+                    @for (int i = 0; i < (_currentLayout == LayoutMode.SingleRow ? 3 : 8); i++)
+                    {
+                        <MudItem xs="@bp.Xs" sm="@bp.Sm" md="@bp.Md" lg="@bp.Lg" xl="@bp.Xl">
+                            <EventCardSkeleton Layout="@_currentLayout" />
+                        </MudItem>
+                    }
+                }
+                else if (_browseMode == BrowseMode.Pagination)
+                {
+                    @foreach (var evt in _pagedEvents)
+                    {
+                        <MudItem @key="evt.Id" xs="@bp.Xs" sm="@bp.Sm" md="@bp.Md" lg="@bp.Lg">
+                            <EventCard Event="@evt"
+                                       Layout="@_currentLayout"
+                                       IsSelected="@(_selectedEvent?.Id == evt.Id && _detailDrawerOpen)"
+                                       CardFieldVisibility="@_cardFieldVisibility"
+                                        OnClick="SelectEvent"
+                                        OnEditRequested="NavigateToEdit"
+                                        OnDeleteRequested="OpenDeleteDialog"
+                                        OnShareRequested="ShareEventAsync" />
+                        </MudItem>
+                    }
+                }
+                else
+                {
+                    <Virtualize @ref="_virtualize" ItemsProvider="LoadEventsAsync" ItemSize="350" OverscanCount="4" Context="evt">
+                        <ItemContent>
+                            <MudItem @key="evt.Id" xs="@bp.Xs" sm="@bp.Sm" md="@bp.Md" lg="@bp.Lg">
+                                <EventCard Event="@evt"
+                                           Layout="@_currentLayout"
+                                           IsSelected="@(_selectedEvent?.Id == evt.Id && _detailDrawerOpen)"
+                                           CardFieldVisibility="@_cardFieldVisibility"
+                                            OnClick="SelectEvent"
+                                            OnEditRequested="NavigateToEdit"
+                                            OnDeleteRequested="OpenDeleteDialog"
+                                            OnShareRequested="ShareEventAsync" />
+                            </MudItem>
+                        </ItemContent>
+                        <Placeholder>
+                            <MudItem xs="@bp.Xs" sm="@bp.Sm" md="@bp.Md" lg="@bp.Lg" xl="@bp.Xl">
+                                <EventCardSkeleton Layout="@_currentLayout" />
+                            </MudItem>
+                        </Placeholder>
+                    </Virtualize>
+                }
+            </MudGrid>
+
+            @if (_browseMode == BrowseMode.Pagination && _eventsLoaded && _totalCount > 0)
+            {
+                <EventListPagination CurrentPage="@_currentPage"
+                                     TotalPages="@((_totalCount + _pageSize - 1) / _pageSize)"
+                                     PageSize="@_pageSize"
+                                     TotalCount="@_totalCount"
+                                     IsLoading="@_isLoadingPage"
+                                     CurrentPageChanged="OnPageChanged"
+                                     PageSizeChanged="OnPageSizeChanged" />
+            }
+
+
+
+            @if (_eventsLoaded && _totalCount == 0)
+
+            {
+
+                <div class="d-flex flex-column align-center justify-center py-16">
+
+                    <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+
+                    <MudText Typo="Typo.h5" Color="Color.Secondary" Align="Align.Center">@EmptyStateTitle</MudText>
+
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Align="Align.Center" Class="mt-2">
+
+                        @EmptyStateMessage
+
+                    </MudText>
+
+                </div>
+
+            }
+
+
+
+            @* Result count moved to filter bar layout row *@
+
+
+
+        </MudContainer>
+
+    </main>
+
+        </div> @* .event-list__page *@
+        </DockLayoutHost>
+
+    </div> @* .event-list__dock-container *@
+
+@code {
+    private RenderFragment RenderEventPreviewPanel => @<text>
+        <EventDetailsSidebar SelectedEvent="@_selectedEvent"
+                             EventDetail="@_selectedEventDetail"
+                             EventSessions="@_selectedEventSessions"
+                             IsLoadingDetail="@_isLoadingDetail"
+                             DetailImageLoadFailed="@_detailImageLoadFailed"
+                             IsDetailImageLoading="@_isDetailImageLoading"
+                             CanNavigatePrevious="@CanNavigatePrevEvent()"
+                             CanNavigateNext="@CanNavigateNextEvent()"
+                             IsUserRegistered="@IsUserRegistered(_selectedEvent?.Id ?? Guid.Empty)"
+                             ShowInlineRegistration="@_showInlineRegistration"
+                             RegIsLoading="@_regIsLoading"
+                             RegIsSubmitting="@_regIsSubmitting"
+                             RegIsComplete="@_regIsComplete"
+                             RegIsAlreadyRegistered="@_regIsAlreadyRegistered"
+                             RegIsWaitlisted="@_regIsWaitlisted"
+                             RegShowConsentOption="@_regShowConsentOption"
+                             RegShareEmail="@_regShareEmail"
+                             RegShareEmailChanged="SetRegShareEmailAsync"
+                             RegOrganizerName="@_regOrganizerName"
+                             RegAvailableSessions="@_regAvailableSessions"
+                             RegSelectedSessionIds="@_regSelectedSessionIds"
+                             RegAllSessionsSelected="@_regAllSessionsSelected"
+                             TagCategoryPopupVisible="@_showTagCatPopup"
+                             TagCategoryMode="@_tagCatMode"
+                             TagCategoryInitialAppliedIds="@_tagCatInitialIds"
+                             TagCategoryPopupVisibleChanged="SetTagCategoryPopupVisibleAsync"
+                             OnTagCategorySaved="HandleTagCatSaved"
+                             OnClose="CloseDetailDrawer"
+                             OnNavigatePrevious="NavigatePrevEvent"
+                             OnNavigateNext="NavigateNextEvent"
+                             OnOpenEventPage="NavigateToSelectedEventPage"
+                             OnCopyEventLink="CopyEventLinkAsync"
+                             OnDetailImageLoaded="HandleDetailImageLoaded"
+                             OnDetailImageError="HandleDetailImageError"
+                             OnEditRequested="NavigateToEdit"
+                             OnDeleteRequested="OpenDeleteDialog"
+                             OnOpenInlineRegistration="OpenInlineRegistration"
+                             OnCloseInlineRegistration="CloseInlineRegistration"
+                             OnSubmitInlineRegistration="HandleInlineRegistrationSubmit"
+                             OnShareSelectedEvent="ShareSelectedEventAsync"
+                             OnToggleRegAllSessions="ToggleRegAllSessions"
+                             OnToggleRegSession="ToggleRegSession"
+                             OnOpenTagManagement="OpenTagManagement"
+                             OnOpenCategoryManagement="OpenCategoryManagement" />
+    </text>;
+}

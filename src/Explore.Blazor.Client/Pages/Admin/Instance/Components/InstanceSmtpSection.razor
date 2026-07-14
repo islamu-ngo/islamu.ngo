@@ -1,0 +1,135 @@
+@* ABOUTME: Renders SMTP settings fields for Instance Admin Settings. *@
+@* ABOUTME: Includes host, auth, sender identity, TLS mode, timeout, and connection test action. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">SMTP Configuration</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            Configure SMTP credentials used for transactional emails and notifications.
+        </MudText>
+    </div>
+    <MudStack Spacing="3">
+        <MudTextField T="string" Label="SMTP Host"
+                      Variant="Variant.Outlined"
+                      @bind-Value="Model.Host"
+                      Placeholder="smtp.example.com" />
+
+        <MudNumericField T="int?" Label="SMTP Port"
+                         Variant="Variant.Outlined"
+                         @bind-Value="Model.Port"
+                         Min="1"
+                         Max="65535" />
+
+        <MudTextField T="string" Label="Username"
+                      Variant="Variant.Outlined"
+                      @bind-Value="Model.Username" />
+
+        <MudTextField T="string" Label="Password"
+                      Variant="Variant.Outlined"
+                      @bind-Value="Model.Password"
+                      InputType="InputType.Password" />
+
+        <MudSelect T="string"
+                   Label="Security Mode"
+                   Variant="Variant.Outlined"
+                   @bind-Value="Model.Security">
+            <MudSelectItem Value="@("None")">None</MudSelectItem>
+            <MudSelectItem Value="@("StartTls")">Start TLS</MudSelectItem>
+            <MudSelectItem Value="@("SslOnConnect")">SSL on connect</MudSelectItem>
+            <MudSelectItem Value="@("Auto")">Auto</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField T="string" Label="From Address"
+                      Variant="Variant.Outlined"
+                      @bind-Value="Model.FromAddress"
+                      Placeholder="noreply@example.com" />
+
+        <MudTextField T="string" Label="From Name"
+                      Variant="Variant.Outlined"
+                      @bind-Value="Model.FromName"
+                      Placeholder="Community Events" />
+
+        <MudNumericField T="int?" Label="Timeout (seconds)"
+                         Variant="Variant.Outlined"
+                         @bind-Value="Model.TimeoutSeconds"
+                         Min="1"
+                         Max="300" />
+
+        <MudSwitch T="bool"
+                   Value="Model.SkipCertificateValidation == true"
+                   ValueChanged="@(value => Model.SkipCertificateValidation = value)"
+                   Color="Color.Warning">
+            Skip certificate validation (development only)
+        </MudSwitch>
+
+        <MudDivider Class="my-2" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudButton Elevation="0" Variant="Variant.Outlined"
+                       Color="Color.Info"
+                       OnClick="TestConnectionAsync"
+                       Disabled="_isTesting"
+                       StartIcon="@(_isTesting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.NetworkCheck)">
+                @(_isTesting ? "Testing..." : "Test Connection")
+            </MudButton>
+
+            @if (_testResult != null)
+            {
+                <MudAlert Severity="@(_testResult.Success == true ? Severity.Success : Severity.Error)"
+                          Dense="true"
+                          NoIcon="false"
+                          Class="flex-grow-1">
+                    @_testResult.Message
+                </MudAlert>
+            }
+        </MudStack>
+        @if (!IsSingleTenant)
+        {
+            <MudDivider Class="my-3" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">Tenant Delegation</MudText>
+            <MudSwitch T="bool" Value="LockForTenants"
+                       ValueChanged="LockForTenantsChanged"
+                       Color="Color.Warning">
+                Lock SMTP settings — tenants cannot configure their own email delivery
+            </MudSwitch>
+        }
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public InstanceSmtpSettingsDto Model { get; set; } = null!;
+
+    [Parameter]
+    public IInstanceOnboardingService? OnboardingService { get; set; }
+
+    [Parameter]
+    public bool IsSingleTenant { get; set; }
+
+    [Parameter]
+    public bool LockForTenants { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> LockForTenantsChanged { get; set; }
+
+    private bool _isTesting;
+    private SmtpConnectionTestResultDto? _testResult;
+
+    private async Task TestConnectionAsync()
+    {
+        if (OnboardingService == null)
+        {
+            return;
+        }
+
+        _isTesting = true;
+        _testResult = null;
+        StateHasChanged();
+
+        _testResult = await OnboardingService.TestSmtpConnectionAsync();
+        _isTesting = false;
+    }
+}

@@ -1,0 +1,45 @@
+using Explore.Domain;
+
+namespace Explore.Application.Contracts.Persistence;
+
+public interface IActorRepository : IGenericRepository<Actor, Guid>
+{
+    Task<Actor?> GetActorWithDetails(Guid id);
+    Task<Actor?> GetActorByDid(string did);
+    Task<Actor?> GetActorByHandle(string handle);
+    Task<List<Actor>> GetActorsByTenant(Guid tenantId);
+    Task<bool> DidExists(string did);
+    Task<(List<Actor> Items, int TotalCount)> GetActorsWithDetailsPaged(int pageNumber, int pageSize);
+
+    Task<IReadOnlyList<Actor>> SearchAiReferenceActorsAsync(
+        string searchTerm,
+        int limit,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the Actor associated with a specific User (personal actor).
+    /// </summary>
+    Task<Actor?> GetActorByUserId(Guid userId);
+
+    /// <summary>
+    /// Gets the tenant-scoped Actor associated with a specific User.
+    /// </summary>
+    Task<Actor?> GetActorByUserIdAndTenantId(Guid userId, Guid tenantId);
+
+    /// <summary>
+    /// Gets the Actor associated with a specific Organization.
+    /// </summary>
+    Task<Actor?> GetActorByOrganizationId(Guid organizationId);
+
+    /// <summary>
+    /// Gets the Actor associated with a specific Group.
+    /// </summary>
+    Task<Actor?> GetActorByGroupId(Guid groupId);
+
+    /// <summary>
+    /// Permanently deletes PII data for an actor (GDPR erasure).
+    /// Uses ExecuteDeleteAsync for efficient bulk deletion without loading entities.
+    /// </summary>
+    /// <returns>Number of PII records deleted.</returns>
+    Task<int> ForgetPiiAsync(Guid actorId);
+}

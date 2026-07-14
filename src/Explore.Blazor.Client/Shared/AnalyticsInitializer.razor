@@ -1,0 +1,333 @@
+@* ABOUTME: Consent-aware analytics initializer driven by a 7-state machine (Amendment 4). *@
+@* ABOUTME: Banner shown only when CookieBannerEnabled. Decline → cookieless or disabled per policy. *@
+@using Explore.Blazor.Client.Contracts.Interop
+@using Explore.Blazor.Client.Models.Analytics
+@using Explore.Blazor.Client.Services
+@inject IPublicExperienceService PublicExperienceService
+@inject IAnalyticsInterop AnalyticsInterop
+@inject ICookieConsentInterop CookieConsentInterop
+@inject CookieConsentStateService CookieConsentState
+@inject NavigationManager NavigationManager
+@inject ILogger<AnalyticsInitializer> Logger
+@implements IDisposable
+
+<CookieConsentBanner Visible="@_showBanner" OnAccept="HandleAcceptAsync" OnDecline="HandleDeclineAsync" />
+
+@code {
+    private const string NavigationSourceProperty = "navigation_source";
+    private const string TenantIdProperty = "tenant_id";
+    private const string PageReferrerProperty = "page_referrer";
+    private const string InitialLoadNavigationSource = "initial_load";
+    private const string InterceptedNavigationSource = "intercepted_navigation";
+    private const string ProgrammaticNavigationSource = "programmatic_navigation";
+
+    private bool _initialized;
+    private bool _analyticsEnabled;
+    private string? _lastTrackedPath;
+    private string? _tenantId;
+
+    private ConsentState _consentState = ConsentState.Uninitialized;
+    private bool _showBanner;
+    private PublicExperienceSettingsDto? _settings;
+    private AnalyticsConsentBootstrapDto? _consent;
+    private string ConsentCookieKey => _consent?.ConsentCookieKey ?? "explore_cc_default";
+    private int ConsentCookieLifetimeDays => _consent?.ConsentCookieLifetimeDays ?? 180;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
+
+        CookieConsentState.OnReopenRequested += HandleReopenRequestedAsync;
+
+        try
+        {
+            _settings = await PublicExperienceService.GetSettingsAsync();
+            if (_settings is null)
+            {
+                return;
+            }
+
+            _consent = _settings.AnalyticsConsent;
+            _analyticsEnabled = _settings.AnalyticsEnabled == true;
+            _tenantId = _settings.TenantId is { } tenantId && tenantId != Guid.Empty
+                ? tenantId.ToString()
+                : null;
+
+            if (!_analyticsEnabled)
+            {
+                return;
+            }
+
+            await DetermineInitialStateAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Analytics initializer failed");
+        }
+    }
+
+    private async Task DetermineInitialStateAsync()
+    {
+        if (_consent?.CookieBannerEnabled != true)
+        {
+            await TransitionToAsync(ConsentState.NoBannerImmediateInit);
+            return;
+        }
+
+        var existingConsent = await CookieConsentInterop.ReadConsentAsync(ConsentCookieKey);
+
+        if (string.Equals(existingConsent, "accepted", StringComparison.OrdinalIgnoreCase))
+        {
+            await TransitionToAsync(ConsentState.Accepted);
+            return;
+        }
+
+        if (string.Equals(existingConsent, "declined", StringComparison.OrdinalIgnoreCase))
+        {
+            var declineState = _consent.DeclineBehavior == "cookieless"
+                ? ConsentState.DeclinedCookieless
+                : ConsentState.DeclinedDisabled;
+            await TransitionToAsync(declineState);
+            return;
+        }
+
+        // No cookie yet — show banner
+        if (_consent.CanRunBeforeConsent == true)
+        {
+            await TransitionToAsync(ConsentState.BannerPendingCookieless);
+        }
+        else
+        {
+            await TransitionToAsync(ConsentState.BannerPendingBlocked);
+        }
+    }
+
+    private async Task TransitionToAsync(ConsentState newState)
+    {
+        _consentState = newState;
+
+        switch (newState)
+        {
+            case ConsentState.NoBannerImmediateInit:
+                _showBanner = false;
+                await InitAnalyticsFullAsync();
+                await StartTrackingAsync();
+                break;
+
+            case ConsentState.BannerPendingCookieless:
+                _showBanner = true;
+                await InitAnalyticsCookielessAsync();
+                await StartTrackingAsync();
+                StateHasChanged();
+                break;
+
+            case ConsentState.BannerPendingBlocked:
+                _showBanner = true;
+                StateHasChanged();
+                break;
+
+            case ConsentState.Accepted:
+                _showBanner = false;
+                await AnalyticsInterop.OptInCapturingAsync();
+                await InitAnalyticsFullAsync();
+                await StartTrackingAsync();
+                StateHasChanged();
+                break;
+
+            case ConsentState.DeclinedCookieless:
+                _showBanner = false;
+                await AnalyticsInterop.OptOutCapturingAsync();
+                await StartTrackingAsync();
+                StateHasChanged();
+                break;
+
+            case ConsentState.DeclinedDisabled:
+                _showBanner = false;
+                _analyticsEnabled = false;
+                StateHasChanged();
+                break;
+        }
+    }
+
+    private async Task HandleAcceptAsync()
+    {
+        if (_consent is not null)
+        {
+            await CookieConsentInterop.WriteConsentAsync(
+                ConsentCookieKey, "accepted", ConsentCookieLifetimeDays);
+        }
+        await TransitionToAsync(ConsentState.Accepted);
+    }
+
+    private async Task HandleDeclineAsync()
+    {
+        if (_consent is not null)
+        {
+            await CookieConsentInterop.WriteConsentAsync(
+                ConsentCookieKey, "declined", ConsentCookieLifetimeDays);
+        }
+
+        var declineState = _consent?.DeclineBehavior == "cookieless"
+            ? ConsentState.DeclinedCookieless
+            : ConsentState.DeclinedDisabled;
+        await TransitionToAsync(declineState);
+    }
+
+    /// <summary>Reopens the consent banner (called from footer "Cookie Settings" link).</summary>
+    public async Task ReopenConsentAsync()
+    {
+        if (_consent?.CookieBannerEnabled != true)
+        {
+            return;
+        }
+
+        await CookieConsentInterop.ClearConsentAsync(ConsentCookieKey);
+
+        if (_consent.CanRunBeforeConsent == true)
+        {
+            await TransitionToAsync(ConsentState.BannerPendingCookieless);
+        }
+        else
+        {
+            await TransitionToAsync(ConsentState.BannerPendingBlocked);
+        }
+    }
+
+    private async Task HandleReopenRequestedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            await ReopenConsentAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task InitAnalyticsFullAsync()
+    {
+        if (_settings is null) return;
+        await AnalyticsInterop.InitAsync(
+            _settings.AnalyticsProvider ?? "none",
+            _settings.AnalyticsEnabled == true,
+            _settings.AnalyticsConsentMode ?? "pseudonymous",
+            _settings.AnalyticsTransportMode ?? "direct",
+            _settings.AnalyticsAllowIdentify == true,
+            _settings.AnalyticsPublicApiKey,
+            _settings.AnalyticsEndpointUrl,
+            ToInteropOptions(_consent?.Posthog));
+    }
+
+    private async Task InitAnalyticsCookielessAsync()
+    {
+        if (_settings is null) return;
+        var cookielessPosthog = _consent?.Posthog is not null
+            ? new PosthogClientBootstrapModel
+            {
+                CookielessMode = "always",
+                PersonProfiles = _consent.Posthog.PersonProfiles ?? "identified_only",
+                SessionReplay = false,
+                Autocapture = _consent.Posthog.Autocapture == true,
+                Heatmaps = false,
+                Toolbar = false
+            }
+            : null;
+
+        await AnalyticsInterop.InitAsync(
+            _settings.AnalyticsProvider ?? "none",
+            _settings.AnalyticsEnabled == true,
+            _settings.AnalyticsConsentMode ?? "pseudonymous",
+            _settings.AnalyticsTransportMode ?? "direct",
+            _settings.AnalyticsAllowIdentify == true,
+            _settings.AnalyticsPublicApiKey,
+            _settings.AnalyticsEndpointUrl,
+            cookielessPosthog);
+    }
+
+    private static PosthogClientBootstrapModel? ToInteropOptions(PosthogClientBootstrapDto? options)
+    {
+        return options is null
+            ? null
+            : new PosthogClientBootstrapModel
+            {
+                CookielessMode = options.CookielessMode ?? "off",
+                PersonProfiles = options.PersonProfiles ?? "identified_only",
+                SessionReplay = options.SessionReplay == true,
+                Autocapture = options.Autocapture == true,
+                Heatmaps = options.Heatmaps == true,
+                Toolbar = options.Toolbar == true
+            };
+    }
+
+    private async Task StartTrackingAsync()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
+        await TrackPageViewAsync(NormalizePagePath(NavigationManager.Uri), InitialLoadNavigationSource);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                var navigationSource = e.IsNavigationIntercepted
+                    ? InterceptedNavigationSource
+                    : ProgrammaticNavigationSource;
+
+                await TrackPageViewAsync(NormalizePagePath(e.Location), navigationSource);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Analytics pageview tracking failed for {Location}", e.Location);
+            }
+        });
+    }
+
+    private async Task TrackPageViewAsync(string pagePath, string navigationSource)
+    {
+        if (!_analyticsEnabled || string.Equals(_lastTrackedPath, pagePath, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var properties = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            [NavigationSourceProperty] = navigationSource
+        };
+
+        if (!string.IsNullOrWhiteSpace(_tenantId))
+        {
+            properties[TenantIdProperty] = _tenantId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_lastTrackedPath))
+        {
+            properties[PageReferrerProperty] = _lastTrackedPath;
+        }
+
+        await AnalyticsInterop.PageViewAsync(pagePath, properties);
+        _lastTrackedPath = pagePath;
+    }
+
+    private static string NormalizePagePath(string location)
+    {
+        if (!Uri.TryCreate(location, UriKind.Absolute, out var absoluteUri))
+        {
+            return string.IsNullOrWhiteSpace(location) ? "/" : location;
+        }
+
+        var path = absoluteUri.AbsolutePath;
+        return string.IsNullOrWhiteSpace(path) ? "/" : path;
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        CookieConsentState.OnReopenRequested -= HandleReopenRequestedAsync;
+    }
+}

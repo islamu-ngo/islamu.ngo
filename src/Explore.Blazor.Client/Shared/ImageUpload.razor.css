@@ -1,0 +1,78 @@
+/* ABOUTME: Scoped styles for the accessible ImageUpload picker component. */
+/* ABOUTME: Uses BEM classes, logical properties, and stable preview/action dimensions. */
+
+.image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: var(--isl-space-2);
+}
+
+.image-upload__preview {
+    align-items: center;
+    background-color: var(--mud-palette-background-grey);
+    border: 0.125rem dashed var(--mud-palette-lines-default);
+    border-radius: var(--isl-radius-md);
+    display: flex;
+    inline-size: 100%;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.image-upload__preview:hover {
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 5%, var(--mud-palette-background-grey));
+    border-color: var(--mud-palette-primary);
+}
+
+.image-upload__preview--has-image {
+    border-color: var(--mud-palette-lines-default);
+    border-style: solid;
+}
+
+.image-upload__image {
+    block-size: 100%;
+    inline-size: 100%;
+    object-fit: cover;
+}
+
+.image-upload__placeholder {
+    align-items: center;
+    color: var(--mud-palette-text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: var(--isl-space-2);
+    justify-content: center;
+    padding-block: var(--isl-space-4);
+    padding-inline: var(--isl-space-4);
+    text-align: center;
+}
+
+.image-upload__alert {
+    margin-block: var(--isl-space-1);
+}
+
+.image-upload__actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--isl-space-2);
+    justify-content: center;
+    min-block-size: var(--isl-target-min);
+}
+
+.image-upload__hint {
+    display: block;
+}
+
+.image-upload__loading {
+    align-items: center;
+    background: var(--isl-overlay-scrim);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    position: absolute;
+    z-index: 1;
+}

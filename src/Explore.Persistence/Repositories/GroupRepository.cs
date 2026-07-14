@@ -1,0 +1,262 @@
+using Explore.Application.Contracts.Persistence;
+using Explore.Domain;
+using Microsoft.EntityFrameworkCore;
+
+namespace Explore.Persistence.Repositories;
+
+public class GroupRepository : GenericRepository<Group, Guid>, IGroupRepository
+{
+    private static readonly Func<ExploreDbContext, Guid, Task<Group?>> GetByIdCompiled =
+        EF.CompileAsyncQuery((ExploreDbContext ctx, Guid id) =>
+            ctx.Groups
+                .AsNoTracking()
+                .FirstOrDefault(g => g.Id == id));
+
+    private readonly ExploreDbContext _dbContext;
+
+    public GroupRepository(ExploreDbContext dbContext) : base(dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public new async Task<Group?> GetById(Guid id)
+    {
+        return await GetByIdCompiled(_dbContext, id);
+    }
+
+    public async Task<List<Group>> GetGroupsWithDetails()
+    {
+        return await _dbContext.Groups
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(g => g.ApprovalStatus)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.Pii)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.ProfilePicture)
+            .Include(g => g.Tenant)
+            .ToListAsync();
+    }
+
+    public async Task<Group?> GetGroupWithDetails(Guid id)
+    {
+        return await _dbContext.Groups
+            .AsNoTrackingWithIdentityResolution()
+            .AsSplitQuery()
+            .Include(g => g.ApprovalStatus)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.Pii)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.ProfilePicture)
+            .Include(g => g.Tenant)
+            .Include(g => g.Members)
+                .ThenInclude(m => m.User)
+            .Include(g => g.Members)
+                .ThenInclude(m => m.User)
+                .ThenInclude(u => u!.Pii)
+            .Include(g => g.Members)
+                .ThenInclude(m => m.Role)
+            .FirstOrDefaultAsync(g => g.Id == id);
+    }
+
+    public async Task<List<Group>> GetMyGroups(Guid userId)
+    {
+        return await _dbContext.Groups
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(g => g.ApprovalStatus)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.Pii)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.ProfilePicture)
+            .Include(g => g.Members)
+                .ThenInclude(m => m.Role)
+            .Where(g => g.Members.Any(m => m.UserId == userId))
+            .ToListAsync();
+    }
+
+    public async Task<(List<Group> Items, int TotalCount)> GetGroupsWithDetailsPaged(int pageNumber, int pageSize)
+    {
+        var query = _dbContext.Groups
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(g => g.ApprovalStatus)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.Pii)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.ProfilePicture)
+            .Include(g => g.Tenant)
+            .OrderBy(g => g.FullName);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<(List<Group> Items, int TotalCount)> GetMyGroupsPaged(Guid userId, int pageNumber, int pageSize)
+    {
+        var query = _dbContext.Groups
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(g => g.ApprovalStatus)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.Pii)
+            .Include(g => g.Actor)
+                .ThenInclude(a => a!.ProfilePicture)
+            .Include(g => g.Members)
+                .ThenInclude(m => m.Role)
+            .Where(g => g.Members.Any(m => m.UserId == userId))
+            .OrderBy(g => g.FullName);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<bool> OrganizationExistsInTenant(Guid organizationId, Guid tenantId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Organizations
+            .AsNoTracking()
+            .AnyAsync(o => o.Id == organizationId && o.TenantId == tenantId, cancellationToken);
+    }
+
+    public async Task<bool> GroupExistsInTenant(Guid groupId, Guid tenantId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Groups
+            .AsNoTracking()
+            .AnyAsync(g => g.Id == groupId && g.TenantId == tenantId, cancellationToken);
+    }
+
+    public async Task<bool> WouldCreateHierarchyCycle(Guid groupId, Guid parentGroupId, Guid tenantId, CancellationToken cancellationToken)
+    {
+        var result = await _dbContext.Database
+            .SqlQueryRaw<bool>(
+                """
+                WITH RECURSIVE ancestors AS (
+                    SELECT id, parent_group_id, 1 AS depth
+                    FROM groups
+                    WHERE id = {0} AND tenant_id = {1}
+
+                    UNION ALL
+
+                    SELECT g.id, g.parent_group_id, a.depth + 1
+                    FROM groups g
+                    INNER JOIN ancestors a ON g.id = a.parent_group_id
+                    WHERE g.tenant_id = {1} AND a.depth < {2}
+                )
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM ancestors
+                    WHERE id = {3}
+                ) AS "Value"
+                """,
+                parentGroupId,
+                tenantId,
+                GroupHierarchyRules.MaxDepth + 1,
+                groupId)
+            .SingleAsync(cancellationToken);
+
+        return result;
+    }
+
+    public async Task<bool> WouldExceedHierarchyDepth(Guid? parentGroupId, Guid tenantId, int maxDepth, CancellationToken cancellationToken)
+    {
+        if (!parentGroupId.HasValue)
+        {
+            return false;
+        }
+
+        var depth = await _dbContext.Database
+            .SqlQueryRaw<int>(
+                """
+                WITH RECURSIVE ancestors AS (
+                    SELECT id, parent_group_id, 1 AS depth
+                    FROM groups
+                    WHERE id = {0} AND tenant_id = {1}
+
+                    UNION ALL
+
+                    SELECT g.id, g.parent_group_id, a.depth + 1
+                    FROM groups g
+                    INNER JOIN ancestors a ON g.id = a.parent_group_id
+                    WHERE g.tenant_id = {1} AND a.depth < {2}
+                )
+                SELECT COALESCE(MAX(depth), 0) AS "Value"
+                FROM ancestors
+                """,
+                parentGroupId.Value,
+                tenantId,
+                maxDepth + 1)
+            .SingleAsync(cancellationToken);
+
+        return depth >= maxDepth;
+    }
+
+    public async Task<bool> WouldExceedHierarchyDepthForMove(Guid groupId, Guid? parentGroupId, Guid tenantId, int maxDepth, CancellationToken cancellationToken)
+    {
+        var wouldExceedDepth = await _dbContext.Database
+            .SqlQueryRaw<bool>(
+                """
+                WITH RECURSIVE ancestors AS (
+                    SELECT id, parent_group_id, 1 AS depth
+                    FROM groups
+                    WHERE id = {1} AND tenant_id = {2}
+
+                    UNION ALL
+
+                    SELECT g.id, g.parent_group_id, a.depth + 1
+                    FROM groups g
+                    INNER JOIN ancestors a ON g.id = a.parent_group_id
+                    WHERE g.tenant_id = {2} AND a.depth < {4}
+                ),
+                descendants AS (
+                    SELECT id, 1 AS depth
+                    FROM groups
+                    WHERE id = {0} AND tenant_id = {2}
+
+                    UNION ALL
+
+                    SELECT g.id, d.depth + 1
+                    FROM groups g
+                    INNER JOIN descendants d ON g.parent_group_id = d.id
+                    WHERE g.tenant_id = {2} AND d.depth < {4}
+                ),
+                depth_summary AS (
+                    SELECT
+                        CASE WHEN {1} IS NULL THEN 0 ELSE COALESCE((SELECT MAX(depth) FROM ancestors), 0) END AS parent_depth,
+                        COALESCE((SELECT MAX(depth) FROM descendants), 1) AS subtree_depth
+                )
+                SELECT (parent_depth + subtree_depth) > {3} AS "Value"
+                FROM depth_summary
+                """,
+                groupId,
+                parentGroupId,
+                tenantId,
+                maxDepth,
+                maxDepth + 1)
+            .SingleAsync(cancellationToken);
+
+        return wouldExceedDepth;
+    }
+
+    public async Task<T> ExecuteWithHierarchyMutationLock<T>(Guid tenantId, Func<CancellationToken, Task<T>> operation, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        await _dbContext.Database.ExecuteSqlRawAsync(
+            "SELECT pg_advisory_xact_lock(hashtext({0}))",
+            $"group-hierarchy:{tenantId}");
+
+        var result = await operation(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+}

@@ -1,0 +1,94 @@
+@* ABOUTME: Routes users from the startup entry point after instance onboarding status resolves. *@
+@* ABOUTME: Rejects unknown deployment modes and sends completed multi-tenant admins to the control plane. *@
+@page "/startup"
+@using Explore.Blazor.Client.Routing.ControlPlane
+@using MudBlazor
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject NavigationManager Navigation
+@inject ILogger<StartupGate> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Startup Routing</PageTitle>
+
+<MudText Typo="Typo.h1" HtmlTag="h1" Class="sr-only">Startup Routing</MudText>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div role="alert">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                @_error
+            </MudAlert>
+        </div>
+    }
+    else
+    {
+        <MudPaper Class="pa-6">
+            <MudStack Spacing="3">
+                <MudSkeleton Width="60%" Height="32px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="20px" />
+                <MudSkeleton Width="80%" Height="20px" Class="mb-4" />
+                <MudSkeleton Width="100%" Height="56px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="56px" />
+            </MudStack>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ResolveStartupRouteAsync();
+    }
+
+    private async Task ResolveStartupRouteAsync()
+    {
+        try
+        {
+            var instanceStatus = await InstanceOnboardingService.GetStatusAsync();
+            if (instanceStatus == null)
+            {
+                _error = "Could not determine onboarding status. Try refreshing.";
+                return;
+            }
+
+            if (instanceStatus.IsCompleted != true)
+            {
+                Navigation.NavigateTo("/setup");
+                return;
+            }
+
+            var isSingleTenant = string.Equals(
+                instanceStatus.SelectedDeploymentMode,
+                "SingleTenant",
+                StringComparison.OrdinalIgnoreCase);
+            var isMultiTenant = string.Equals(
+                instanceStatus.SelectedDeploymentMode,
+                "MultiTenant",
+                StringComparison.OrdinalIgnoreCase);
+
+            if (!isSingleTenant && !isMultiTenant)
+            {
+                _error = "Could not determine deployment mode. Try refreshing.";
+                return;
+            }
+
+            if (isMultiTenant &&
+                instanceStatus.IsAuthenticated == true &&
+                instanceStatus.IsCurrentUserInstanceAdmin == true)
+            {
+                Navigation.NavigateTo(ControlPlaneRoutes.Overview);
+                return;
+            }
+
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Startup routing failed.");
+            _error = "Startup routing failed. Try refreshing.";
+        }
+    }
+}

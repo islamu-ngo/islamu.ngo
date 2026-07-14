@@ -1,0 +1,20 @@
+# ABOUTME: Cerbos resource policy for instance-level settings.
+# ABOUTME: Restricts every instance-setting action to the instance-admin derived role.
+
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "islamuevent_instance_setting"
+  version: "default"
+  importDerivedRoles:
+    - islamuevent_explore_admin_roles
+  schemas:
+    principalSchema:
+      ref: cerbos:///islamuevent_principal.json
+    resourceSchema:
+      ref: cerbos:///islamuevent_instance_setting.json
+  rules:
+    # Instance admins can do everything with instance settings
+    - actions: ["view", "update", "delete", "lock", "unlock"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - islamuevent_instance_admin

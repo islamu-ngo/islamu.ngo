@@ -1,0 +1,685 @@
+# ABOUTME: Docker Compose topology for the ISLAMU Event platform.
+# ABOUTME: Uses explicit env mappings, health-gated dependencies, and profiles for optional infrastructure.
+
+name: islamu-event-platform
+
+x-keycloak-env: &keycloak-env
+  KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ISLAMU}
+  KEYCLOAK_ENDPOINT: ${KEYCLOAK_ENDPOINT:-http://keycloak.localhost:8080}
+  KEYCLOAK_BLAZOR_CLIENT_ID: ${KEYCLOAK_BLAZOR_CLIENT_ID:-islamu-event-blazor}
+  KEYCLOAK_BLAZOR_CLIENT_SECRET: ${KEYCLOAK_BLAZOR_CLIENT_SECRET:-}
+  KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+  Keycloak__RequireHttpsMetadata: ${KEYCLOAK_REQUIRE_HTTPS_METADATA:-false}
+
+# Secret management bootstrap configuration (optional).
+# If Infisical__* values are non-empty, AddInfisicalCompatibility loads raw Infisical secrets.
+# If SecretProvider__Provider=Infisical, ISecretResolver also uses the Infisical provider.
+x-secrets-env: &secrets-env
+  SecretProvider__Provider: ${SECRET_PROVIDER:-None}
+  SecretProvider__Infisical__Url: ${INFISICAL_URL:-}
+  SecretProvider__Infisical__ProjectId: ${INFISICAL_PROJECT_ID:-}
+  SecretProvider__Infisical__ClientId: ${INFISICAL_CLIENT_ID:-}
+  SecretProvider__Infisical__ClientSecret: ${INFISICAL_CLIENT_SECRET:-}
+  SecretProvider__Infisical__Environment: ${INFISICAL_ENV:-dev}
+  Infisical__Url: ${INFISICAL_URL:-}
+  Infisical__ProjectId: ${INFISICAL_PROJECT_ID:-}
+  Infisical__ClientId: ${INFISICAL_CLIENT_ID:-}
+  Infisical__ClientSecret: ${INFISICAL_CLIENT_SECRET:-}
+  Infisical__Environment: ${INFISICAL_ENV:-dev}
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRESQL_USERNAME:-explore}
+  POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD:-explore}
+  POSTGRES_DB: ${POSTGRESQL_DATABASE:-islamu_event_db}
+
+# Discrete Postgres credentials consumed by BootstrapSecretLoader.
+# Never pre-build ConnectionStrings__DefaultConnection here - the loader composes the string.
+x-postgres-bootstrap-env: &postgres-bootstrap-env
+  POSTGRESQL_HOST: ${POSTGRESQL_HOST:-postgres}
+  POSTGRESQL_PORT: ${POSTGRESQL_PORT:-5432}
+  POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE:-islamu_event_db}
+  POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME:-explore}
+  POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD:-explore}
+
+x-s3-env: &s3-env
+  STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-http://minio:9000}
+  STORAGE_S3_PUBLIC_ENDPOINT: ${STORAGE_S3_PUBLIC_ENDPOINT:-http://minio.localhost:9005}
+  STORAGE_S3_REGION: ${STORAGE_S3_REGION:-us-east-1}
+  STORAGE_S3_BUCKET_NAME: ${STORAGE_S3_BUCKET_NAME:-explore}
+  STORAGE_S3_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID:-minioadmin}
+  STORAGE_S3_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY:-minioadmin}
+  S3Settings__Endpoint: ${STORAGE_S3_ENDPOINT:-http://minio:9000}
+  S3Settings__PublicEndpoint: ${STORAGE_S3_PUBLIC_ENDPOINT:-http://minio.localhost:9005}
+  S3Settings__Region: ${STORAGE_S3_REGION:-us-east-1}
+  S3Settings__BucketName: ${STORAGE_S3_BUCKET_NAME:-explore}
+  S3Settings__AccessKeyId: ${STORAGE_S3_ACCESS_KEY_ID:-minioadmin}
+  S3Settings__SecretAccessKey: ${STORAGE_S3_SECRET_ACCESS_KEY:-minioadmin}
+
+x-api-runtime-env: &api-runtime-env
+  DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:-}
+  CONTROL_PLANE_PUBLIC_ORIGIN: ${CONTROL_PLANE_PUBLIC_ORIGIN:-http://admin.localhost:7002}
+  SETUP_SECRET: ${SETUP_SECRET:-}
+  SETUP_SECRET_REQUIRED: ${SETUP_SECRET_REQUIRED:-true}
+  USE_COMMERCIAL_LUCKYPENNY: ${USE_COMMERCIAL_LUCKYPENNY:-false}
+  LUCKYPENNY_LICENSE_KEY: ${LUCKYPENNY_LICENSE_KEY:-}
+  AUTOMAPPER_COMMERCIAL_VERSION: ${AUTOMAPPER_COMMERCIAL_VERSION:-false}
+  MEDIATR_COMMERCIAL_VERSION: ${MEDIATR_COMMERCIAL_VERSION:-false}
+
+x-ai-env: &ai-env
+  AI_PROVIDER: ${AI_PROVIDER:-none}
+  AI_ENDPOINT: ${AI_ENDPOINT:-}
+  AI_MODEL_ID: ${AI_MODEL_ID:-}
+  AI_API_KEY: ${AI_API_KEY:-}
+  AI_TOOL_PROPOSALS_ENABLED: ${AI_TOOL_PROPOSALS_ENABLED:-false}
+
+x-mcp-env: &mcp-env
+  MCP_ENABLED: ${MCP_ENABLED:-true}
+  MCP_ENDPOINT_PATH: ${MCP_ENDPOINT_PATH:-/mcp}
+  MCP_STATELESS: ${MCP_STATELESS:-true}
+  MCP_ENABLE_LEGACY_SSE: ${MCP_ENABLE_LEGACY_SSE:-true}
+
+x-smtp-env: &smtp-env
+  MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-mailpit}
+  MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-1025}
+  MAIL_SMTP_USERNAME: ${MAIL_SMTP_USERNAME:-}
+  MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
+  MAIL_SMTP_ENCRYPTION: ${MAIL_SMTP_ENCRYPTION:-None}
+  MAIL_SMTP_FROM_ADDRESS: ${MAIL_SMTP_FROM_ADDRESS:-noreply@localhost}
+  MAIL_SMTP_FROM_NAME: ${MAIL_SMTP_FROM_NAME:-ISLAMU Event Dev}
+  SMTP_HOST: ${SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_SECURITY: ${SMTP_SECURITY:-None}
+  SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-noreply@localhost}
+  SMTP_FROM_NAME: ${SMTP_FROM_NAME:-ISLAMU Event Dev}
+
+x-email-dispatch-rabbitmq-env: &email-dispatch-rabbitmq-env
+  ConnectionStrings__messaging: ${MESSAGING_URI:-}
+  EmailDispatchRabbitMq__Enabled: ${EMAIL_DISPATCH_RABBITMQ_ENABLED:-true}
+  EmailDispatchRabbitMq__ConnectionStringName: ${EMAIL_DISPATCH_RABBITMQ_CONNECTION_STRING_NAME:-messaging}
+  EmailDispatchRabbitMq__ConnectionString: ${EMAIL_DISPATCH_RABBITMQ_CONNECTION_STRING:-}
+  EmailDispatchRabbitMq__ExchangeName: ${EMAIL_DISPATCH_RABBITMQ_EXCHANGE_NAME:-explore.email-dispatch}
+  EmailDispatchRabbitMq__DispatchQueueName: ${EMAIL_DISPATCH_RABBITMQ_DISPATCH_QUEUE_NAME:-explore.email-dispatch.dispatch}
+  EmailDispatchRabbitMq__DispatchRoutingKey: ${EMAIL_DISPATCH_RABBITMQ_DISPATCH_ROUTING_KEY:-email-dispatch.dispatch}
+  EmailDispatchRabbitMq__DeadLetterExchangeName: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_EXCHANGE_NAME:-explore.email-dispatch.dlx}
+  EmailDispatchRabbitMq__DeadLetterQueueName: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_QUEUE_NAME:-explore.email-dispatch.dead-letter}
+  EmailDispatchRabbitMq__DeadLetterRoutingKey: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_ROUTING_KEY:-email-dispatch.dead-letter}
+  EmailDispatchRabbitMq__ParkingQueueName: ${EMAIL_DISPATCH_RABBITMQ_PARKING_QUEUE_NAME:-explore.email-dispatch.parking}
+  EmailDispatchRabbitMq__ParkingRoutingKey: ${EMAIL_DISPATCH_RABBITMQ_PARKING_ROUTING_KEY:-email-dispatch.parking}
+  EmailDispatchRabbitMq__ClientProvidedName: ${EMAIL_DISPATCH_RABBITMQ_CLIENT_PROVIDED_NAME:-explore-email-dispatch-rabbitmq}
+  EmailDispatchRabbitMq__ConsumerId: ${EMAIL_DISPATCH_RABBITMQ_CONSUMER_ID:-explore-email-dispatch-rabbitmq-consumer}
+  EmailDispatchRabbitMq__PrefetchCount: ${EMAIL_DISPATCH_RABBITMQ_PREFETCH_COUNT:-10}
+  EmailDispatchRabbitMq__DeadLetterReplayEnabled: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_REPLAY_ENABLED:-false}
+  EmailDispatchRabbitMq__DeadLetterReplayConsumerId: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_REPLAY_CONSUMER_ID:-explore-email-dispatch-dlq-replay}
+  EmailDispatchRabbitMq__DeadLetterReplayPrefetchCount: ${EMAIL_DISPATCH_RABBITMQ_DEAD_LETTER_REPLAY_PREFETCH_COUNT:-5}
+  EmailDispatchRabbitMq__PublishTimeoutSeconds: ${EMAIL_DISPATCH_RABBITMQ_PUBLISH_TIMEOUT_SECONDS:-15}
+  EmailDispatchRabbitMq__PublisherPollingIntervalSeconds: ${EMAIL_DISPATCH_RABBITMQ_PUBLISHER_POLLING_INTERVAL_SECONDS:-5}
+  EmailDispatchRabbitMq__PublisherBatchSize: ${EMAIL_DISPATCH_RABBITMQ_PUBLISHER_BATCH_SIZE:-100}
+  EmailDispatchRabbitMq__PublisherRetryDelaySeconds: ${EMAIL_DISPATCH_RABBITMQ_PUBLISHER_RETRY_DELAY_SECONDS:-30}
+
+x-web-push-env: &web-push-env
+  WebPush__Enabled: ${WEB_PUSH_ENABLED:-false}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+
+x-reporting-env: &reporting-env
+  Reporting__Enabled: ${REPORTING_ENABLED:-true}
+  Reporting__Mode: ${REPORTING_MODE:-Coop}
+  Reporting__SyncReports: ${REPORTING_SYNC_REPORTS:-true}
+  Reporting__EvaluateSignals: ${REPORTING_EVALUATE_SIGNALS:-false}
+  Reporting__MirrorReviewQueue: ${REPORTING_MIRROR_REVIEW_QUEUE:-true}
+  Reporting__ExecuteDecisions: ${REPORTING_EXECUTE_DECISIONS:-true}
+  Reporting__Osprey__Enabled: ${REPORTING_OSPREY_ENABLED:-false}
+  Reporting__Osprey__EndpointUrl: ${REPORTING_OSPREY_ENDPOINT_URL:-}
+  Reporting__Osprey__ApiKey: ${REPORTING_OSPREY_API_KEY:-}
+  Reporting__Osprey__AllowLocalProviderEndpoints: ${REPORTING_OSPREY_ALLOW_LOCAL_PROVIDER_ENDPOINTS:-true}
+  Reporting__Coop__Enabled: ${REPORTING_COOP_ENABLED:-true}
+  Reporting__Coop__EndpointUrl: ${REPORTING_COOP_ENDPOINT_URL:-http://coop:8080}
+  Reporting__Coop__ApiKey: ${REPORTING_COOP_API_KEY:-local-dev-coop-api-key}
+  Reporting__Coop__AllowLocalProviderEndpoints: ${REPORTING_COOP_ALLOW_LOCAL_PROVIDER_ENDPOINTS:-true}
+  Reporting__Coop__WebhookSecret: ${REPORTING_COOP_WEBHOOK_SECRET:-local-dev-coop-webhook-secret}
+
+x-webhooks-env: &webhooks-env
+  Webhooks__Enabled: ${WEBHOOKS_ENABLED:-true}
+  Webhooks__Provider: ${WEBHOOKS_PROVIDER:-Svix}
+  Webhooks__Svix__BaseUrl: ${WEBHOOKS_SVIX_BASE_URL:-http://svix:8071}
+  Webhooks__Svix__Environment: ${WEBHOOKS_SVIX_ENVIRONMENT:-self-hosted}
+  Webhooks__Svix__ProviderVersion: ${WEBHOOKS_SVIX_PROVIDER_VERSION:-1.96.1}
+  Webhooks__Svix__CapabilityPolicyVersion: ${WEBHOOKS_SVIX_CAPABILITY_POLICY_VERSION:-svix-self-hosted-1.96.1-v1}
+  Webhooks__Svix__AuthTokenSecretRef: ${WEBHOOKS_SVIX_AUTH_TOKEN_SECRET_REF:-webhooks.svix.auth_token}
+  Webhooks__Svix__OperationalWebhookSecretRef: ${WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET_REF:-webhooks.svix.operational_webhook_secret}
+  WEBHOOKS_SVIX_AUTH_TOKEN: ${WEBHOOKS_SVIX_AUTH_TOKEN:-}
+  WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET: ${WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET:-}
+
+x-listmonk-env: &listmonk-env
+  LISTMONK_ENABLED: ${LISTMONK_ENABLED:-false}
+  LISTMONK_INSTANCE_URL: ${LISTMONK_INSTANCE_URL:-}
+  LISTMONK_DEFAULT_LIST_ID: ${LISTMONK_DEFAULT_LIST_ID:-0}
+  LISTMONK_PRECONFIRM_SUBSCRIPTIONS: ${LISTMONK_PRECONFIRM_SUBSCRIPTIONS:-true}
+  LISTMONK_SYNC_ON_REGISTRATION: ${LISTMONK_SYNC_ON_REGISTRATION:-false}
+  LISTMONK_API_USERNAME: ${LISTMONK_API_USERNAME:-}
+  LISTMONK_API_KEY: ${LISTMONK_API_KEY:-}
+
+x-local-storage-env: &local-storage-env
+  Storage__Local__RootPath: ${LOCAL_STORAGE_ROOT_PATH:-/app/storage-data/local}
+  Storage__Local__CreateRootIfMissing: ${LOCAL_STORAGE_CREATE_ROOT_IF_MISSING:-true}
+  StorageReconciliation__Enabled: ${STORAGE_RECONCILIATION_ENABLED:-true}
+  StorageReconciliation__DryRun: ${STORAGE_RECONCILIATION_DRY_RUN:-true}
+  StorageReconciliation__QuarantineMissingObjects: ${STORAGE_RECONCILIATION_QUARANTINE_MISSING_OBJECTS:-false}
+  StorageReconciliation__QuarantineOrphanLocalFiles: ${STORAGE_RECONCILIATION_QUARANTINE_ORPHAN_LOCAL_FILES:-false}
+  StorageReconciliation__DeleteQuarantinedObjects: ${STORAGE_RECONCILIATION_DELETE_QUARANTINED_OBJECTS:-false}
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      <<: *postgres-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:${MAILPIT_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: ${MAILPIT_MAX_MESSAGES:-5000}
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      MP_DISABLE_VERSION_CHECK: "true"
+    volumes:
+      - mailpit_data:/data
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
+  keycloak-db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${KEYCLOAK_DB_USERNAME:-keycloak}
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak}
+      POSTGRES_DB: ${KEYCLOAK_DB_DATABASE:-keycloak}
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.2
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm", "--http-port=8080"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DB_DATABASE:-keycloak}
+      KC_DB_USERNAME: ${KEYCLOAK_DB_USERNAME:-keycloak}
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak}
+      KC_HOSTNAME: ${KEYCLOAK_ENDPOINT:-http://keycloak.localhost:8080}
+      KC_HOSTNAME_URL: ${KEYCLOAK_ENDPOINT:-http://keycloak.localhost:8080}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    volumes:
+      # Repository-owned realm export. Keycloak imports JSON files from this
+      # directory on startup; existing realms are not overwritten automatically.
+      - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "${KEYCLOAK_HTTP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080'"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  keycloak-init:
+    image: quay.io/keycloak/keycloak:26.1.2
+    restart: "no"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ISLAMU}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_BLAZOR_CLIENT_ID: ${KEYCLOAK_BLAZOR_CLIENT_ID:-islamu-event-blazor}
+      KEYCLOAK_BLAZOR_CLIENT_SECRET: ${KEYCLOAK_BLAZOR_CLIENT_SECRET:-}
+      KEYCLOAK_API_CLIENT_ID: islamu-event-api
+      KEYCLOAK_API_CLIENT_SECRET: ${KEYCLOAK_API_CLIENT_SECRET:-}
+      KEYCLOAK_INIT_ALLOW_DEFAULT_LOCAL_SECRET: ${KEYCLOAK_INIT_ALLOW_DEFAULT_LOCAL_SECRET:-false}
+      KEYCLOAK_SMTP_HOST: ${KEYCLOAK_SMTP_HOST:-}
+      KEYCLOAK_SMTP_PORT: ${KEYCLOAK_SMTP_PORT:-}
+      KEYCLOAK_SMTP_FROM: ${KEYCLOAK_SMTP_FROM:-}
+      KEYCLOAK_SMTP_FROM_DISPLAY_NAME: ${KEYCLOAK_SMTP_FROM_DISPLAY_NAME:-}
+      KEYCLOAK_SMTP_AUTH: ${KEYCLOAK_SMTP_AUTH:-false}
+      KEYCLOAK_SMTP_SSL: ${KEYCLOAK_SMTP_SSL:-false}
+      KEYCLOAK_SMTP_STARTTLS: ${KEYCLOAK_SMTP_STARTTLS:-false}
+      KEYCLOAK_SMTP_REPLY_TO: ${KEYCLOAK_SMTP_REPLY_TO:-}
+      KEYCLOAK_SMTP_REPLY_TO_DISPLAY_NAME: ${KEYCLOAK_SMTP_REPLY_TO_DISPLAY_NAME:-}
+      KEYCLOAK_SMTP_ENVELOPE_FROM: ${KEYCLOAK_SMTP_ENVELOPE_FROM:-}
+      KEYCLOAK_SMTP_USER: ${KEYCLOAK_SMTP_USER:-}
+      KEYCLOAK_SMTP_PASSWORD: ${KEYCLOAK_SMTP_PASSWORD:-}
+    volumes:
+      - ./docker/keycloak/keycloak-init.sh:/opt/keycloak/bin/keycloak-init.sh:ro
+    entrypoint: ["/bin/bash", "/opt/keycloak/bin/keycloak-init.sh"]
+
+  islamu-event-api:
+    build:
+      context: .
+      dockerfile: src/Explore.API/Dockerfile
+    environment:
+      <<: [*keycloak-env, *s3-env, *local-storage-env, *secrets-env, *postgres-bootstrap-env, *api-runtime-env, *ai-env, *mcp-env, *smtp-env, *email-dispatch-rabbitmq-env, *web-push-env, *reporting-env, *webhooks-env, *listmonk-env]
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      Keycloak__MetadataAddress: ${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-ISLAMU}/.well-known/openid-configuration
+      Keycloak__Authority: ${KEYCLOAK_ENDPOINT:-http://keycloak.localhost:8080}/realms/${KEYCLOAK_REALM:-ISLAMU}
+      ConnectionStrings__cache: ${REDIS_CONNECTION_STRING:-redis:6379}
+      AUTHORIZATION_PROVIDER: ${AUTHORIZATION_PROVIDER:-}
+      Cerbos__GrpcEndpoint: ${CERBOS_GRPC_ENDPOINT:-http://cerbos:3593}
+      Cerbos__HttpEndpoint: ${CERBOS_HTTP_ENDPOINT:-http://cerbos:3592}
+      Cerbos__UseTls: ${CERBOS_USE_TLS:-false}
+      Cerbos__PlaintextMode: ${CERBOS_PLAINTEXT_MODE:-true}
+      Cerbos__PolicyPackagePath: /app/cerbos/policies
+      Cerbos__AdminApi__Endpoints__0: ${CERBOS_HTTP_ENDPOINT:-http://cerbos:3592}
+      Cerbos__AdminApi__AdminUsername: ${CERBOS_ADMIN_USERNAME:-cerbos}
+      Cerbos__AdminApi__AdminPassword: ${CERBOS_ADMIN_PASSWORD:-}
+      Cerbos__AdminUsername: ${CERBOS_ADMIN_USERNAME:-cerbos}
+      Cerbos__AdminPasswordHash: ${CERBOS_ADMIN_PASSWORD_HASH:-}
+    ports:
+      - "${API_HTTP_PORT:-7039}:8080"
+    extra_hosts:
+      - "keycloak.localhost:host-gateway"
+      - "minio.localhost:host-gateway"
+    volumes:
+      - ./cerbos/policies:/app/cerbos/policies:ro
+      - local_storage_data:/app/storage-data/local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      keycloak-init:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+      minio:
+        condition: service_healthy
+        required: false
+      svix:
+        condition: service_healthy
+        required: false
+      weblate:
+        condition: service_started
+        required: false
+      coop:
+        condition: service_started
+        required: false
+      osprey:
+        condition: service_started
+        required: false
+
+  islamu-event-ui:
+    build:
+      context: .
+      dockerfile: src/Explore.Blazor/Dockerfile
+    environment:
+      <<: [*keycloak-env, *secrets-env, *postgres-bootstrap-env]
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      API_ENDPOINT: ${API_ENDPOINT:-http://islamu-event-api:8080/}
+      Keycloak__Authority: ${KEYCLOAK_ENDPOINT:-http://keycloak.localhost:8080}/realms/${KEYCLOAK_REALM:-ISLAMU}
+      Keycloak__MetadataAddress: ${KEYCLOAK_INTERNAL_URL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-ISLAMU}/.well-known/openid-configuration
+      Keycloak__Realm: ${KEYCLOAK_REALM:-ISLAMU}
+      Keycloak__ClientId: ${KEYCLOAK_BLAZOR_CLIENT_ID:-islamu-event-blazor}
+      Keycloak__ClientSecret: ${KEYCLOAK_BLAZOR_CLIENT_SECRET:-}
+      Bff__AdminHosts__0: ${CONTROL_PLANE_PUBLIC_ORIGIN:-http://admin.localhost:7002}
+      ConnectionStrings__cache: ${REDIS_CONNECTION_STRING:-redis:6379}
+    ports:
+      - "${UI_HTTP_PORT:-7002}:8080"
+    extra_hosts:
+      - "keycloak.localhost:host-gateway"
+      - "minio.localhost:host-gateway"
+    depends_on:
+      islamu-event-api:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+      keycloak-init:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+        required: false
+
+  minio:
+    image: ghcr.io/coollabsio/minio:latest
+    profiles: ["storage"] # Opt-in only
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_S3_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_S3_SECRET_ACCESS_KEY:-minioadmin}
+      MINIO_SERVER_URL: ${STORAGE_S3_PUBLIC_ENDPOINT:-http://minio.localhost:9005}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_API_PORT:-9005}:9000"
+      - "${MINIO_CONSOLE_PORT:-9006}:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:latest
+    profiles: ["storage"] # Only runs if storage is enabled
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${STORAGE_S3_ACCESS_KEY_ID:-minioadmin} ${STORAGE_S3_SECRET_ACCESS_KEY:-minioadmin};
+      mc mb --ignore-existing local/${STORAGE_S3_BUCKET_NAME:-explore};
+      mc anonymous set public local/${STORAGE_S3_BUCKET_NAME:-explore};
+      "
+
+  cerbos-db:
+    image: postgres:18-alpine
+    profiles: ["authz"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${CERBOS_POSTGRES_USER:-cerbos_user}
+      POSTGRES_PASSWORD: ${CERBOS_POSTGRES_PASSWORD:-cerbos_password}
+      POSTGRES_DB: ${CERBOS_POSTGRES_DB:-cerbos}
+    volumes:
+      - cerbos_data:/var/lib/postgresql
+      # Repository-owned Cerbos PostgreSQL schema used by local infrastructure.
+      - ./cerbos/init/cerbos-schema.sql:/docker-entrypoint-initdb.d/cerbos-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cerbos:
+    image: ghcr.io/cerbos/cerbos:0.53.0
+    profiles: ["authz"] # Opt-in only (use: docker compose --profile authz up)
+    restart: unless-stopped
+    command: ["server", "--config=/config/.cerbos.yaml"]
+    environment:
+      CERBOS_ADMIN_USER: ${CERBOS_ADMIN_USERNAME:-cerbos}
+      CERBOS_ADMIN_PASSWORD_HASH: ${CERBOS_ADMIN_PASSWORD_HASH:-}
+      CERBOS_PG_URL: ${CERBOS_PG_URL:-postgres://cerbos_user:cerbos_password@cerbos-db:5432/cerbos?search_path=cerbos&sslmode=disable}
+    volumes:
+      # Repository-owned Cerbos runtime config and bundled policies/schemas.
+      - ./cerbos/config/.cerbos.yaml:/config/.cerbos.yaml:ro
+      - ./cerbos/policies:/policies:ro
+    ports:
+      - "${CERBOS_HTTP_PORT:-3592}:3592"
+      - "${CERBOS_GRPC_PORT:-3593}:3593"
+    depends_on:
+      cerbos-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3592/_cerbos/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cerbos-policy-sync:
+    image: ghcr.io/cerbos/cerbosctl:0.53.0
+    profiles: ["authz"]
+    depends_on:
+      cerbos:
+        condition: service_healthy
+    environment:
+      CERBOS_USERNAME: ${CERBOS_ADMIN_USERNAME:-cerbos}
+      CERBOS_PASSWORD: ${CERBOS_ADMIN_PASSWORD:-}
+    volumes:
+      # Sync the same repository policy bundle that local Cerbos reads from disk.
+      - ./cerbos/policies:/policies:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        cerbosctl --server=http://cerbos:3592 put policy --recursive /policies &&
+        cerbosctl --server=http://cerbos:3592 put schema --recursive /policies/_schemas &&
+        cerbosctl --server=http://cerbos:3592 store reload --wait
+
+  svix-db:
+    image: postgres:13.4
+    profiles: ["webhooks"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${SVIX_DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${SVIX_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${SVIX_DB_DATABASE:-postgres}
+    volumes:
+      - svix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  svix:
+    image: svix/svix-server:${SVIX_TAG:-v1.96.1}
+    profiles: ["webhooks"]
+    restart: unless-stopped
+    environment:
+      WAIT_FOR: "true"
+      SVIX_DB_DSN: ${SVIX_DB_DSN:-postgresql://postgres:postgres@svix-db:5432/postgres}
+      SVIX_REDIS_DSN: ${SVIX_REDIS_DSN:-redis://redis:6379}
+      SVIX_QUEUE_TYPE: ${SVIX_QUEUE_TYPE:-redis}
+      SVIX_CACHE_TYPE: ${SVIX_CACHE_TYPE:-redis}
+      SVIX_JWT_SECRET: ${SVIX_JWT_SECRET:-local-dev-svix-jwt-secret-change-me}
+    ports:
+      - "${SVIX_HTTP_PORT:-8071}:8071"
+    depends_on:
+      svix-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "svix-server healthcheck http://localhost:8071"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  weblate-db:
+    image: postgres:18-alpine
+    profiles: ["localization"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${WEBLATE_POSTGRES_USER:-weblate}
+      POSTGRES_PASSWORD: ${WEBLATE_POSTGRES_PASSWORD:-weblate_password}
+      POSTGRES_DB: ${WEBLATE_POSTGRES_DB:-weblate}
+    volumes:
+      - weblate_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  weblate:
+    image: ${WEBLATE_IMAGE:-weblate/weblate:latest}
+    profiles: ["localization"]
+    restart: unless-stopped
+    environment:
+      WEBLATE_SITE_DOMAIN: ${WEBLATE_SITE_DOMAIN:-localhost:8083}
+      WEBLATE_ADMIN_NAME: ${WEBLATE_ADMIN_NAME:-Admin}
+      WEBLATE_ADMIN_EMAIL: ${WEBLATE_ADMIN_EMAIL:-admin@openislamu.org}
+      WEBLATE_ADMIN_PASSWORD: ${WEBLATE_ADMIN_PASSWORD:-admin}
+      POSTGRES_HOST: weblate-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${WEBLATE_POSTGRES_USER:-weblate}
+      POSTGRES_PASSWORD: ${WEBLATE_POSTGRES_PASSWORD:-weblate_password}
+      POSTGRES_DB: ${WEBLATE_POSTGRES_DB:-weblate}
+      VALKEY_HOST: redis
+      VALKEY_PORT: "6379"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    volumes:
+      - weblate_data:/app/data
+    ports:
+      - "${WEBLATE_HTTP_PORT:-8083}:8080"
+    depends_on:
+      weblate-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  coop:
+    image: ${COOP_IMAGE:-ghcr.io/roostorg/coop-server:latest}
+    profiles: ["moderation"]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${COOP_NODE_ENV:-development}
+      OTEL_SERVICE_NAME: ${COOP_OTEL_SERVICE_NAME:-coop}
+      PORT: "8080"
+      UI_URL: ${COOP_UI_URL:-http://localhost:3001}
+      SESSION_SECRET: ${COOP_SESSION_SECRET:-local-dev-coop-session-secret}
+      DATABASE_HOST: coop-db
+      DATABASE_READ_ONLY_HOST: coop-db
+      DATABASE_PORT: "5432"
+      DATABASE_USER: ${COOP_DATABASE_USER:-coop}
+      DATABASE_PASSWORD: ${COOP_DATABASE_PASSWORD:-coop_password}
+      DATABASE_NAME: ${COOP_DATABASE_NAME:-coop}
+      WAREHOUSE_ADAPTER: ${COOP_WAREHOUSE_ADAPTER:-noop}
+      ANALYTICS_ADAPTER: ${COOP_ANALYTICS_ADAPTER:-noop}
+      SCYLLA_HOSTS: ${COOP_SCYLLA_HOSTS:-coop-scylla}
+      SCYLLA_USERNAME: ${COOP_SCYLLA_USERNAME:-cassandra}
+      SCYLLA_PASSWORD: ${COOP_SCYLLA_PASSWORD:-cassandra}
+      SCYLLA_LOCAL_DATACENTER: ${COOP_SCYLLA_LOCAL_DATACENTER:-datacenter1}
+      SCYLLA_SSL: ${COOP_SCYLLA_SSL:-false}
+      REDIS_USE_CLUSTER: "false"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    ports:
+      - "${COOP_HTTP_PORT:-8082}:8080"
+    depends_on:
+      coop-migrations:
+        condition: service_completed_successfully
+      coop-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  coop-migrations:
+    image: ${COOP_MIGRATIONS_IMAGE:-ghcr.io/roostorg/coop-migrations:latest}
+    profiles: ["moderation"]
+    restart: "no"
+    environment:
+      DATABASE_HOST: coop-db
+      DATABASE_READ_ONLY_HOST: coop-db
+      DATABASE_PORT: "5432"
+      DATABASE_USER: ${COOP_DATABASE_USER:-coop}
+      DATABASE_PASSWORD: ${COOP_DATABASE_PASSWORD:-coop_password}
+      DATABASE_NAME: ${COOP_DATABASE_NAME:-coop}
+      API_SERVER_DATABASE_HOST: coop-db
+      API_SERVER_DATABASE_PORT: "5432"
+      API_SERVER_DATABASE_USER: ${COOP_DATABASE_USER:-coop}
+      API_SERVER_DATABASE_PASSWORD: ${COOP_DATABASE_PASSWORD:-coop_password}
+      API_SERVER_DATABASE_NAME: ${COOP_DATABASE_NAME:-coop}
+      SCYLLA_HOSTS: ${COOP_SCYLLA_HOSTS:-coop-scylla}
+      SCYLLA_USERNAME: ${COOP_SCYLLA_USERNAME:-cassandra}
+      SCYLLA_PASSWORD: ${COOP_SCYLLA_PASSWORD:-cassandra}
+      SCYLLA_LOCAL_DATACENTER: ${COOP_SCYLLA_LOCAL_DATACENTER:-datacenter1}
+      SCYLLA_SSL: ${COOP_SCYLLA_SSL:-false}
+    entrypoint: ["sh", "-c", "npm run db:create -- --db api-server-pg --env staging && npm run db:update -- --db api-server-pg --env staging"]
+    depends_on:
+      coop-db:
+        condition: service_healthy
+
+  coop-client:
+    image: ${COOP_CLIENT_IMAGE:-ghcr.io/roostorg/coop-client:latest}
+    profiles: ["moderation"]
+    restart: unless-stopped
+    volumes:
+      - ./src/Explore.AppHost/Config/coop/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${COOP_CLIENT_HTTP_PORT:-3001}:80"
+    depends_on:
+      coop:
+        condition: service_started
+
+  coop-db:
+    image: postgres:18-alpine
+    profiles: ["moderation"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${COOP_DATABASE_USER:-coop}
+      POSTGRES_PASSWORD: ${COOP_DATABASE_PASSWORD:-coop_password}
+      POSTGRES_DB: ${COOP_DATABASE_NAME:-coop}
+    volumes:
+      - coop_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${COOP_DATABASE_USER:-coop} -d ${COOP_DATABASE_NAME:-coop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  osprey:
+    image: ${OSPREY_IMAGE:-ghcr.io/roostorg/osprey/osprey-coordinator:latest}
+    profiles: ["osprey"]
+    restart: unless-stopped
+    environment:
+      RUST_LOG: ${OSPREY_RUST_LOG:-info}
+      OSPREY_COORDINATOR_BIDI_STREAM_PORT: "19950"
+      OSPREY_COORDINATOR_SYNC_ACTION_PORT: "19951"
+      POD_IP: ${OSPREY_POD_IP:-osprey}
+    ports:
+      - "${OSPREY_BIDI_STREAM_PORT:-19950}:19950"
+      - "${OSPREY_SYNC_ACTION_PORT:-19951}:19951"
+
+volumes:
+  postgres_data:
+  redis_data:
+  keycloak_data:
+  mailpit_data:
+  local_storage_data:
+  minio_data:
+  cerbos_data:
+  svix_postgres_data:
+  weblate_data:
+  weblate_postgres_data:
+  coop_postgres_data:

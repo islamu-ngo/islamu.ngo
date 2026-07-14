@@ -1,0 +1,10 @@
+@* ABOUTME: Hosts the current user's notification preference matrix inside account settings. *@
+@* ABOUTME: Delegates all save and mute affordance checks to the HAL-aware matrix component. *@
+
+@using Explore.Blazor.Client.Components.Notifications
+
+<div class="settings-notifications">
+    <NotificationPreferenceMatrix Title="Notifications"
+                                  Description="Choose which notification categories can reach you by channel."
+                                  UnavailableMessage="Notification preference metadata is not available yet." />
+</div>

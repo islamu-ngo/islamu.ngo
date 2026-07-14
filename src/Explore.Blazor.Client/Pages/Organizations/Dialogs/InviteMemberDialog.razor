@@ -1,0 +1,56 @@
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Services
+@using MudBlazor
+@inject IOrganizationMemberService MemberService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="model.Email" Label="Email" Required="true" RequiredError="Email is required" InputType="InputType.Email" />
+        <MudSelect T="RoleEnum?" Label="Role" @bind-Value="model.Role" AnchorOrigin="Origin.BottomCenter">
+            <MudSelectItem T="RoleEnum?" Value="@((RoleEnum)2)">Co-Owner</MudSelectItem>
+            <MudSelectItem T="RoleEnum?" Value="@((RoleEnum)3)">Admin</MudSelectItem>
+            <MudSelectItem T="RoleEnum?" Value="@((RoleEnum)4)">Member</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Invite</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudBlazor.IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Guid OrganizationId { get; set; }
+
+    private AddOrganizationMemberDto model = new();
+
+    protected override void OnInitialized()
+    {
+        model.OrganizationId = OrganizationId;
+        model.Role = (RoleEnum)4; // Member role
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(model.Email))
+        {
+            Snackbar.Add("Email is required", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await MemberService.InviteMemberAsync(model);
+            Snackbar.Add("Member invited successfully", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error inviting member: {ex.Message}", Severity.Error);
+        }
+    }
+}
+

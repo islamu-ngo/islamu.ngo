@@ -1,0 +1,168 @@
+ABOUTME: Documents provider-neutral storage configuration, API boundaries, UI affordances, and operational impact.
+ABOUTME: Covers local-first runtime storage, optional S3-compatible mode, reconciliation, and recovery impact.
+
+# Storage
+
+> **Audience:** Operators | Admins | Contributors
+> **Status:** Mixed
+> **Owner:** Platform/Ops
+> **Last Verified:** 2026-06-23
+> **Source Anchors:** `Explore.Infrastructure/Storage/`, `Explore.Infrastructure/StorageObjectDeletionService.cs`, `Explore.Infrastructure/Services/ObjectStorageService.cs`, `Explore.API/Controllers/StorageObjectController.cs`, `Explore.API/Controllers/TenantStorageSettingsController.cs`, `Explore.Blazor.Client/Services/ImageStorageService.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+
+Storage is moving to a local-first, provider-neutral model. New upload/read flows use metadata-backed `StorageObject` records and the selected `IFileStorageProvider`; S3-compatible storage remains optional for instances that select and configure it.
+
+## What Is Implemented
+
+| Area | Implemented Behavior |
+|---|---|
+| Runtime storage | Provider-neutral upload sessions and metadata-backed reads are implemented for local-first storage; `ObjectStorageService` remains only for legacy S3-compatible presigned flows. |
+| Configuration resolution | `S3ConfigResolver` resolves tenant-aware settings from persisted settings first, then `IConfiguration`, with a five-minute cache. |
+| Public reads | `StorageObjectController` streams file content by `StorageObject.Id`; public images use the same metadata reader with public-image visibility checks. Caller-supplied object-key read and presign routes are removed. |
+| Authenticated writes | Upload URL generation requires authentication; `StorageObject` create/update/delete operations require authentication and `storage_object` resource authorization. |
+| Admin settings | Instance admins can read/update provider policy, quotas, max-upload ceilings, delegation lock, usage, and redacted optional S3 settings through instance settings endpoints. Provider test and usage recalculation actions are API-backed. Tenant admins can read effective tenant policy, usage, lock state, and redacted optional S3 overrides through tenant settings endpoints; writes are accepted only when instance delegation is unlocked and values stay within instance ceilings and allowed providers. |
+| Blazor client boundary | Browser uploads use BFF upload sessions and proxy streaming. Trusted direct provider uploads use a provider-neutral `DirectStorageUpload` client only when the server issued the destination URL. Public image/content display resolves from `StorageObject.Id` or existing `/api/storageobject/...` API paths, not raw provider object keys. |
+| Blazor admin UI | Instance and tenant storage dashboards consume service models mapped from HAL settings resources. Action buttons are driven by `_links` and read-only state, not client-side role checks. |
+| Local self-hosting | Docker Compose mounts a durable `local_storage_data` volume for local-first storage by default. MinIO remains optional through the `storage` profile for instances that select S3-compatible storage. |
+| Reconciliation | API hosts a dry-run-first reconciliation worker that checks metadata/object drift, reports missing backing objects and local orphan files, and performs quarantine/delete mutations only when explicit policy flags are enabled. |
+| Moderation image deletion | Heavy event redaction marks referenced event image metadata as `delete_requested` with the owning event resource id, commits the redaction, then deletes provider objects through `IFileStorageProvider`. Failures leave metadata retryable and do not log object keys, filenames, paths, endpoints, buckets, or raw provider errors. |
+
+The API delete endpoint exists, but `Explore.Blazor.Client/Services/ImageStorageService.cs` still returns `false` from `DeleteImageAsync`. Do not document a completed Blazor client delete flow until that helper is implemented.
+
+## Configuration
+
+Local storage is the default provider. Its filesystem root is deployment-managed and bound from `Storage:Local:*`; it is never saved as a tenant/admin-editable setting. Optional S3-compatible storage still uses the current `S3Settings:*` naming family.
+
+| Purpose | Key Shape | Notes |
+|---|---|---|
+| Local provider root | `Storage:Local:RootPath` / `Storage__Local__RootPath` | Deployment-managed filesystem directory or mounted volume used by the API process. Compose defaults this to `/app/storage-data/local`; Aspire uses `storage-data/aspire-local` under the repository root. |
+| Local root creation | `Storage:Local:CreateRootIfMissing` / `Storage__Local__CreateRootIfMissing` | Allows the local provider to create the root directory during startup/health checks when the deployment intentionally grants that permission. |
+| .NET configuration | `S3Settings:*` | Bound by runtime configuration. |
+| Environment variables | `S3Settings__*` | Double-underscore form for .NET configuration providers. |
+| Persisted settings | `s3.endpoint`, `s3.public_endpoint`, `s3.bucket_name`, `s3.region`, `s3.force_path_style`, `s3.upload_url_expiration_minutes` | Defined by storage setting definitions and surfaced through admin settings. |
+| Secrets | `s3.access_key_id`, `s3.secret_access_key` | Sensitive values; see [SECRETS.md](SECRETS.md). |
+| Tenant delegation | `governance.lock_tenant_storage` | Controls whether tenant-level storage overrides are locked. |
+
+For external secret providers, keep the naming distinction from [SECRETS.md](SECRETS.md): provider-side optional S3 names map into runtime `S3Settings:*` values. `Storage__Local__*` keys are deployment/runtime configuration only and must not contain tenant-controlled paths.
+
+### Reconciliation Settings
+
+`StorageReconciliation:*` is validated on startup and defaults to enabled dry-run mode. Dry-run mode reports drift without mutating metadata or backing objects.
+
+| Key | Default | Description |
+|---|---:|---|
+| `StorageReconciliation:Enabled` | `true` | Enables the API hosted reconciliation loop and its health posture check. |
+| `StorageReconciliation:DryRun` | `true` | Counts/report-only mode. Keep enabled until operators review logs, metrics, and backup posture. |
+| `StorageReconciliation:InitialDelaySeconds` | `45` | Delay before the first pass after API startup. |
+| `StorageReconciliation:PollingIntervalMinutes` | `360` | Delay between reconciliation passes. |
+| `StorageReconciliation:BatchSize` | `500` | Maximum metadata rows or local inventory objects processed per pass. |
+| `StorageReconciliation:MissingObjectQuarantineGraceHours` | `24` | Active metadata older than this grace window can be quarantined when its backing object is missing. |
+| `StorageReconciliation:OrphanFileQuarantineGraceHours` | `24` | Local files older than this grace window can be quarantined when no metadata row exists. |
+| `StorageReconciliation:DeleteGraceHours` | `720` | Quarantined/delete-requested metadata older than this window can be physically deleted and soft-deleted. |
+| `StorageReconciliation:QuarantineMissingObjects` | `false` | Allows metadata quarantine for missing backing objects, only when `DryRun=false`. |
+| `StorageReconciliation:QuarantineOrphanLocalFiles` | `false` | Allows local orphan files to be moved into provider quarantine, only when `DryRun=false`. |
+| `StorageReconciliation:DeleteQuarantinedObjects` | `false` | Allows idempotent provider delete plus metadata soft-delete for eligible rows, only when `DryRun=false`. |
+
+Destructive cleanup requires both `DryRun=false` and the specific mutation flag. This prevents a single configuration typo from turning reporting mode into data deletion.
+
+## Upload And Download Flow
+
+1. Browser callers ask the Blazor BFF for an upload session with filename, content type, and expected byte count.
+2. The BFF calls the provider-neutral API upload-session endpoint. The API resolves tenant policy, max upload size, provider, quota, and reservation state.
+3. The BFF stores only the API upload-session id, owner, content type, expected size, and expiry in distributed cache, then returns an opaque `uploadSessionId` to the browser.
+4. Browser uploads send `uploadSessionId`, `contentType`, and `file` to `/bff/storage/upload-proxy`; the proxy rejects raw destination fields, enforces session owner/content type/exact size, and streams bytes to `/api/storageobject/upload-sessions/{id}/content`.
+5. Server/non-browser helper paths may still upload directly to a trusted provider URL generated for that request while older S3-compatible flows remain.
+6. The application stores or updates `StorageObject` metadata through authenticated write endpoints.
+7. Readers use metadata-backed content endpoints (`/api/storageobject/{id}/content`), public image endpoints (`/api/storageobject/{id}/public`), or the ID-based S3-compatible presigned download endpoint depending on the caller path.
+
+`GetFileStream` translates S3 404 responses into `KeyNotFoundException`, which is useful when diagnosing broken metadata-to-object references.
+
+Direct object-key read routes are not part of the local-first contract. The removed `file/{fileKey}` and `presigned-url-by-key/{objectKey}` endpoints bypassed metadata visibility and owner checks; clients must carry a `StorageObject.Id` instead of raw provider keys.
+
+## Blazor Client Boundary
+
+The Blazor client must treat metadata-backed API URLs as the display contract. `StorageObjectUrlResolver` accepts a storage object `Guid`, an existing `/api/storageobject/...` path, or an absolute application URL whose path is already metadata-backed. It rejects provider object keys such as bucket-relative paths because those bypass storage metadata, lifecycle, and visibility decisions.
+
+`DirectStorageUploadMessageHandler` configures cross-origin browser requests for trusted server-issued provider URLs with CORS mode and credentials omitted. Browser-first upload UI should still use `/bff/storage/upload-session` and `/bff/storage/upload-proxy`; direct provider PUTs are compatibility helpers, not the default browser upload contract.
+
+`StorageImage` is the provider-neutral display component for metadata-backed images. It resolves a stable storage-object id or existing API path through `ImageStorageService`, renders explicit loading/error states, and never requires raw S3/provider object keys. `ImageUpload` accepts caller-provided content-type, accepted-format, and max-size policy inputs, validates browser file metadata before opening the stream, and still relies on `IBrowserFile.OpenReadStream(maxFileSize)` through the storage service for the hard read limit.
+
+The instance storage dashboard reads `HalResourceOfInstanceStorageSettingsDto` through `InstanceOnboardingService` and maps it into `InstanceStorageSettingsModel`. The model exposes `CanUpdate`, `CanTestProvider`, and `CanRecalculateUsage` from HAL link presence. The component uses those flags for save/test/recalculate affordances, shows local provider status without exposing filesystem paths, and shows S3-compatible credential fields only when that provider is selected.
+
+The tenant storage dashboard reads `HalResourceOfTenantStorageSettingsDto` through `TenantStorageSettingsAdminService` and maps it into `TenantStorageSettingsModel`. The UI is read-only when the tenant `edit` link is absent, delegation is locked, or the effective policy says the settings are read-only. Tenant overrides stay bounded by the server-provided effective policy and instance ceilings; server validation remains authoritative.
+
+The Phase 5.2-5.4 implementation was verified with Blazor client/host/test Release builds and focused bUnit/service tests. A real authenticated browser smoke for keyboard-only upload/admin paths remains a Phase 5.5 validation item.
+
+## API Surface
+
+| Endpoint Group | Authentication Boundary |
+|---|---|
+| List/read storage objects | Public read behavior is implemented in `StorageObjectController`. |
+| Get file/public image/presigned download URL | Public file and image reads resolve by `StorageObject.Id`; arbitrary object-key read/presign endpoints are removed. |
+| Generate upload URL | Requires authentication. |
+| Create/update/delete storage object metadata | Requires authentication and `storage_object` resource authorization. |
+| Instance storage settings read/update/test/recalculate | Instance-admin/setup-secret boundaries are handled by instance settings endpoints. Read responses redact S3 secrets and expose configured flags instead. |
+| Tenant storage settings read/update | Requires tenant-admin or instance-admin authority for the current tenant. `GET/PUT /api/tenant/settings/storage` returns effective policy, read-only lock state, usage, and redacted optional S3 overrides; updates are rejected while delegation is locked or when max-upload/provider validation fails. |
+
+HAL links are the client source of truth for storage UI affordances. Storage object collection/detail responses expose public read links (`content`, `public-image`, `presigned-download`) only for active objects and expose mutation links (`create`, `create-upload-session`, `edit`, `delete`) through server-side authorization metadata. Instance storage settings expose `edit`, `provider-test`, and `recalculate-usage` affordances for authorized instance administrators. Tenant storage settings expose `edit` only when instance delegation allows tenant overrides and the effective policy is not read-only. Treat link presence as an authorization hint, not as a replacement for server-side enforcement.
+
+## Backup And Restore Impact
+
+Object storage is always part of the backup set when users can upload files.
+
+- Back up local object data from the Compose `local_storage_data` volume or the deployment-managed `Storage:Local:RootPath`.
+- Back up Aspire development object data from `storage-data/aspire-local` when preserving a local developer environment matters.
+- Back up optional S3-compatible object data from `minio_data` when the Compose `storage` profile is enabled, or from the external provider bucket when S3-compatible storage is selected.
+- Back up storage secrets and environment configuration with the same release manifest as the database backup.
+- Restore object storage before reopening user traffic, then verify representative object metadata resolves to actual objects.
+- During rollback, verify the application version still understands the stored `StorageObject` metadata and key layout.
+
+See [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) for the full operational runbook.
+
+## Reconciliation And Quarantine
+
+The reconciliation worker compares `StorageObject` metadata with provider backing objects:
+
+- active metadata with missing backing objects is reported first, then optionally moved to `quarantined` lifecycle state;
+- local provider inventory reports files that are present on disk but absent from metadata, then optionally moves them under the provider quarantine area;
+- delete-eligible quarantined or delete-requested metadata can be physically deleted from the selected provider and then soft-deleted in metadata.
+
+The local provider intentionally skips temporary files and existing quarantine files during inventory. Metrics, logs, and health data expose only bounded categories/counts; they do not include object keys, filenames, filesystem paths, tenant IDs, user IDs, endpoints, bucket names, access keys, or secrets.
+
+## Heavy Moderation Image Deletion
+
+Heavy event moderation uses the same provider-neutral delete boundary as normal storage cleanup, but it does not wait for the dry-run-first reconciliation schedule. The event redaction transaction clears event/session/day image foreign keys and marks the affected `StorageObject` rows as `delete_requested` with `OwningResourceKind=event` and the redacted event id. After commit, `StorageObjectDeletionService` loads those rows for the tenant/event, calls the selected `IFileStorageProvider.DeleteAsync`, then soft-deletes the storage metadata when the provider delete succeeds or when metadata has no object key.
+
+If a local or S3-compatible delete fails, the redaction remains committed and public APIs cannot use the image metadata, but the command reports a pending retry failure instead of full success. The rows stay in `delete_requested` so a repeated heavy-redaction command or the reconciliation worker can retry idempotently. Local deletion is idempotent for already-missing files, and S3-compatible deletion issues the provider delete request through the AWS SDK adapter.
+
+Operational evidence for this path must remain bounded. Logs and metrics may include provider name, tenant id, owning resource kind/id, storage object id, outcome, and failure category. They must not include object keys, filenames, filesystem paths, S3 endpoints, bucket names, credentials, raw provider response bodies, or raw exception text.
+
+## Troubleshooting
+
+| Symptom | First Checks |
+|---|---|
+| Upload session or direct URL generation fails | Confirm selected storage provider policy, local provider readiness, and optional S3 settings when the instance selected S3-compatible storage. |
+| Reads return missing-object behavior | Check whether `StorageObject` metadata points to a backing object that exists in the selected provider. |
+| Local uploads fail or readiness is unhealthy | Verify the API process can create/write to `Storage:Local:RootPath` or the Compose `local_storage_data` volume. Do not expose the host path through admin settings. |
+| Reconciliation reports drift but does not mutate | Confirm `StorageReconciliation:DryRun=false` and the specific mutation flag are set; dry-run is the default. Verify backups before enabling destructive flags. |
+| Settings update appears ignored | Wait for the resolver cache window or trigger the settings path that invalidates `S3ConfigResolver`; cache invalidation is tenant-scoped when a tenant id is available. |
+| Tenant storage settings are read-only | Instance policy has locked tenant storage delegation through `governance.lock_tenant_storage`; an instance administrator must unlock delegation before tenant overrides can be saved. |
+| Optional MinIO unavailable | Confirm Docker Compose was started with `--profile storage` and that bucket initialization completed. Local-first storage does not require MinIO. |
+| Tenant override confusion | Check `governance.lock_tenant_storage` and whether the runtime is single-tenant or multi-tenant. |
+
+The `storage` readiness check and admin connection test both resolve the currently selected `IFileStorageProvider` and return provider-neutral status snapshots. Local mode validates the deployment-managed data root is writable without requiring S3. S3-compatible mode reports unavailable status only when selected and incomplete or unreachable. Readiness payloads expose bounded provider/status/failure-code fields, not filesystem paths, endpoints, bucket names, object keys, access keys, or secrets. Usage recalculation rebuilds used/quarantined object totals from metadata while preserving active reserved-byte counters.
+
+## Metrics
+
+Storage emits provider-neutral OpenTelemetry metrics through the `Explore.Business` meter. The current metric family covers upload-session create/finalize/cancel events, upload bytes, metadata-backed read outcomes and bytes, delete outcomes, quota reservation/release/commit events and bytes, admin provider-test outcomes, and reconciliation run/object outcomes.
+
+Reconciliation counters are `explore.storage.reconciliation_runs` and `explore.storage.reconciliation_objects`. Labels are bounded to mode, provider, category, action, outcome, and failure category.
+
+All storage metric dimensions are bounded to provider, operation, outcome, failure category, and visibility where relevant. They intentionally do not include tenant IDs, user IDs, storage-object IDs, upload-session IDs, object keys, filesystem paths, filenames, endpoints, bucket names, access keys, secrets, raw exception text, or provider response bodies. Use admin APIs and logs for targeted object investigation instead of adding high-cardinality metric labels.
+
+## Related Documentation
+
+- [CONFIGURATION.md](CONFIGURATION.md) - runtime configuration keys.
+- [SECRETS.md](SECRETS.md) - secret-provider naming and sensitive value handling.
+- [SELF_HOSTING.md](SELF_HOSTING.md) - Compose local storage volume, optional `storage` profile, and MinIO ports.
+- [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) - object storage backup and restore runbook.
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - symptom-first operator triage.

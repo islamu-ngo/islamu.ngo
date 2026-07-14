@@ -1,0 +1,61 @@
+@using Explore.Blazor.Client.Services.Docking
+@using Explore.Blazor.Client.Components.Docking
+@using Explore.Blazor.Client.Components.Shell
+@inherits LayoutComponentBase
+
+<MudThemeProvider @ref="_mudThemeProvider" Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider DefaultFocus="DefaultFocus.FirstChild" />
+<MudSnackbarProvider />
+<AnalyticsInitializer />
+
+@* Skip-to-content link — first focusable element on every page (WCAG 2.4.1) *@
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="main-layout-root @(_hideChrome ? "main-layout-root--hide-chrome" : "")">
+<MudRTLProvider RightToLeft="@_isRtl">
+    <MudLayout class="main-layout">
+        @if (!_hideChrome)
+        {
+            <header class="main-layout__header">
+                <AnnouncementBar OnVisibilityChanged="OnAnnouncementVisibilityChanged" />
+                <nav aria-label="Sidebar navigation">
+                    <NavMenu />
+                </nav>
+                <SupportAccessBanner OnVisibilityChanged="OnSupportAccessBannerVisibilityChanged" />
+            </header>
+        }
+        else
+        {
+            @* Floating switchers for onboarding/setup pages where navbar is hidden *@
+            <div style="position:fixed;top:20px;inset-inline-end:20px;z-index:9999;pointer-events:all;">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="pa-1 px-4 rounded-pill mud-elevation-6 mud-surface" Style="border:1px solid var(--mud-palette-lines-default); color: var(--mud-palette-text-primary);">
+                    <LanguagePicker Enabled="@_languagePickerEnabled" />
+                    <MudDivider Vertical="true" FlexItem="true" Style="height:24px;margin:0 4px; border-color: var(--mud-palette-divider);" />
+                    <MudIconButton Icon="@DarkLightModeButtonIcon"
+                                   Color="Color.Inherit"
+                                   OnClick="DarkModeToggle"
+                                   Size="Size.Medium"
+                                   aria-label="Toggle dark mode" />
+                </MudStack>
+            </div>
+        }
+
+        <DockLayoutHost Scope="@DockScope.Shell">
+            <MudMainContent Class="main-layout__main" Style="padding-top: 0 !important;">
+                <main id="main-content" tabindex="-1" class="@MainContentClass" style="@MainContentStyle">
+                    @Body
+                </main>
+                @if (!_hideChrome)
+                {
+                    <Footer />
+                }
+            </MudMainContent>
+        </DockLayoutHost>
+    </MudLayout>
+</MudRTLProvider>
+</div>
+
+@* ARIA live regions for screen reader announcements — must exist in DOM at all times *@
+<div id="aria-live-polite" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+<div id="aria-live-assertive" aria-live="assertive" aria-atomic="true" class="sr-only"></div>

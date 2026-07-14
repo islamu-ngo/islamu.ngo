@@ -1,0 +1,86 @@
+@* ABOUTME: Explains account privacy controls currently governed by instance policy. *@
+@* ABOUTME: Keeps the disabled preview controls aligned with operator analytics and consent policy. *@
+@using MudBlazor
+
+<div class="settings-section">
+    <!-- Section Header -->
+    <div class="settings-section-header mb-6">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Privacy</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Control who can see your information and activity</MudText>
+    </div>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Construction" Class="mb-6">
+        Privacy settings are governed by the current instance and tenant policies. The disabled controls below show the planned control areas without overriding operator-managed analytics and consent behavior.
+    </MudAlert>
+
+    <!-- Profile Visibility Section -->
+    <div class="settings-form-section mb-8" style="opacity: 0.5; pointer-events: none;">
+        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-4">Profile Visibility</MudText>
+        <MudStack Spacing="3">
+            <MudPaper Elevation="0" Class="pa-4 bg-surface border-solid border-1 mud-border-lines-default rounded-lg">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Public Profile</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Anyone can view your profile and activity</MudText>
+                    </div>
+                    <MudSwitch T="bool" Checked="true" Color="Color.Primary" Disabled="true" />
+                </div>
+            </MudPaper>
+
+            <MudPaper Elevation="0" Class="pa-4 bg-surface border-solid border-1 mud-border-lines-default rounded-lg">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Show Email Address</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Display your email on your profile</MudText>
+                    </div>
+                    <MudSwitch T="bool" Checked="false" Color="Color.Primary" Disabled="true" />
+                </div>
+            </MudPaper>
+
+            <MudPaper Elevation="0" Class="pa-4 bg-surface border-solid border-1 mud-border-lines-default rounded-lg">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Show Activity Status</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Let others see when you're online</MudText>
+                    </div>
+                    <MudSwitch T="bool" Checked="true" Color="Color.Primary" Disabled="true" />
+                </div>
+            </MudPaper>
+        </MudStack>
+    </div>
+
+    <!-- Divider -->
+    <MudDivider Class="my-6" />
+
+    <!-- Data & Privacy Section -->
+    <div class="settings-form-section" style="opacity: 0.5; pointer-events: none;">
+        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-4">Data & Privacy</MudText>
+        <MudAlert Severity="Severity.Info" Variant="Variant.Text" Dense="true" Class="mb-3">
+            Future analytics controls will reflect operator policy and the current consent mode instead of acting as ad hoc client-only toggles.
+        </MudAlert>
+        <MudStack Spacing="3">
+            <MudPaper Elevation="0" Class="pa-4 bg-surface border-solid border-1 mud-border-lines-default rounded-lg">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Allow Analytics</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Help us improve by sharing usage data</MudText>
+                    </div>
+                    <MudSwitch T="bool" Checked="true" Color="Color.Primary" Disabled="true" />
+                </div>
+            </MudPaper>
+
+            <MudPaper Elevation="0" Class="pa-4 bg-surface border-solid border-1 mud-border-lines-default rounded-lg">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Marketing Communications</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Receive emails about new features and updates</MudText>
+                    </div>
+                    <MudSwitch T="bool" Checked="false" Color="Color.Primary" Disabled="true" />
+                </div>
+            </MudPaper>
+        </MudStack>
+    </div>
+</div>
+
+@code {
+}

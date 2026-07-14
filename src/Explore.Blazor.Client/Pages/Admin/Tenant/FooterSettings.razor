@@ -1,0 +1,18 @@
+@page "/admin/tenant/footer"
+@using Microsoft.AspNetCore.Authorization
+@using Explore.Blazor.Client.Pages.Admin.Tenant.Components
+@using MudBlazor
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Footer Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <div class="settings-header mb-8">
+        <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">Footer Settings</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Customize footer appearance, content, and link groups</MudText>
+    </div>
+
+    <TenantFooterSection />
+</MudContainer>

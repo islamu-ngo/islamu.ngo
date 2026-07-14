@@ -1,0 +1,383 @@
+@* ABOUTME: Login provider selection page that queries BFF for enabled auth providers. *@
+@* ABOUTME: Supports Keycloak/Google button flows and AT Protocol handle-input flow before challenge. *@
+
+@page "/login"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@inject NavigationManager Navigation
+@inject IBffAuthApi BffAuthApi
+@inject ILogger<LoginRedirect> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Sign in</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="login-page py-8">
+    <MudPaper Class="login-page__card pa-6">
+        <MudText Typo="Typo.h4" HtmlTag="h1" Class="login-page__title mb-2">Sign in</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="login-page__subtitle mb-4">
+            Choose an authentication provider to continue.
+        </MudText>
+
+        @if (!string.IsNullOrWhiteSpace(_challengeErrorMessage))
+        {
+            <div role="alert">
+                <MudAlert Severity="Severity.Warning" Class="mb-4">@_challengeErrorMessage</MudAlert>
+            </div>
+        }
+
+        @if (_isLoading || _isAutoRedirecting)
+        {
+            <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="py-4">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                <MudText Typo="Typo.h6">@(_isAutoRedirecting ? "Redirecting to sign-in..." : "Loading providers...")</MudText>
+            </MudStack>
+        }
+        else if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <div role="alert">
+                <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+            </div>
+            <MudButton Elevation="0" Variant="Variant.Outlined" Color="Color.Default" OnClick="LoadProvidersAsync">
+                Retry
+            </MudButton>
+        }
+        else
+        {
+            <MudStack Spacing="3" Class="login-page__providers">
+                @foreach (var provider in _providers)
+                {
+                    <div class="login-page__provider" @key="provider.Name">
+                        <div class="login-page__provider-header">
+                            <MudText Typo="Typo.subtitle2">@GetProviderDisplayName(provider)</MudText>
+                            @if (provider.Recommended)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Class="login-page__recommended-chip">
+                                    Recommended
+                                </MudChip>
+                            }
+                        </div>
+
+                        <MudButton Elevation="0" Variant="@(provider.Recommended ? Variant.Filled : Variant.Outlined)"
+                                   Color="@(provider.Recommended ? Color.Primary : Color.Default)"
+                                   FullWidth="true"
+                                   Size="Size.Large"
+                                   StartIcon="@GetProviderIcon(provider)"
+                                   OnClick="@(() => StartProvider(provider))"
+                                   Class="login-page__provider-button">
+                            Continue with @GetProviderDisplayName(provider)
+                        </MudButton>
+
+                        @if (IsAtproto(provider) && string.Equals(_expandedProviderName, provider.Name, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <EditForm Model="@this" OnValidSubmit="StartAtprotoChallenge" class="login-page__handle-panel">
+                                <MudTextField Variant="Variant.Outlined" T="string"
+                                              Label="ATProto handle"
+                                              Placeholder="user.bsky.social"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.AlternateEmail"
+                                              Immediate="true"
+                                              @bind-Value="_atprotoHandle" />
+
+                                <MudButton Elevation="0" Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           FullWidth="true"
+                                           Size="Size.Large"
+                                           ButtonType="ButtonType.Submit"
+                                           Disabled="@string.IsNullOrWhiteSpace(_atprotoHandle)"
+                                           Class="login-page__handle-submit">
+                                    Continue
+                                </MudButton>
+                            </EditForm>
+                        }
+                    </div>
+                }
+            </MudStack>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private bool _isLoading = true;
+    private bool _isAutoRedirecting;
+    private bool _hasTriggeredRedirect;
+    private string? _errorMessage;
+    private string? _challengeErrorMessage;
+    private string _returnUrl = "/";
+    private string _forcedProviderQuery = string.Empty;
+    private string _atprotoHandle = string.Empty;
+    private string? _expandedProviderName;
+    private List<BffAuthProviderItem> _providers = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReadQueryParameters();
+        await LoadProvidersAsync();
+    }
+
+    private async Task LoadProvidersAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            var response = await BffAuthApi.GetProvidersAsync(CancellationToken.None);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"Authentication providers returned HTTP {(int)response.StatusCode}.");
+            }
+
+            var providers = response.Content?.Providers ?? [];
+
+            if (providers.Count == 0)
+            {
+                _errorMessage = "No authentication providers are configured. Ask an instance administrator to configure at least one provider.";
+                _isLoading = false;
+                return;
+            }
+
+            _providers = providers
+                .OrderBy(GetProviderSortOrder)
+                .ThenBy(p => GetProviderDisplayName(p), StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var hintedAtproto = _providers.FirstOrDefault(IsAtproto);
+            if (hintedAtproto is not null && !string.IsNullOrWhiteSpace(_atprotoHandle))
+            {
+                _expandedProviderName = hintedAtproto.Name;
+            }
+
+            _isLoading = false;
+
+            await TryAutoRedirectAsync(providers);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load authentication providers from /auth/providers");
+            _errorMessage = "Could not load authentication providers. Please try again.";
+            _isLoading = false;
+        }
+    }
+
+    private async Task TryAutoRedirectAsync(List<BffAuthProviderItem> providers)
+    {
+        if (_hasTriggeredRedirect)
+        {
+            return;
+        }
+
+        // Don't auto-redirect when the last challenge failed — let user see the error
+        if (!string.IsNullOrWhiteSpace(_challengeErrorMessage))
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_forcedProviderQuery))
+        {
+            var forcedProvider = providers.FirstOrDefault(provider =>
+                string.Equals(MapProviderNameToQueryValue(provider.Name), _forcedProviderQuery, StringComparison.OrdinalIgnoreCase));
+
+            if (forcedProvider is not null)
+            {
+                if (IsButtonProvider(forcedProvider))
+                {
+                    _isAutoRedirecting = true;
+                    _hasTriggeredRedirect = true;
+                    await Task.Yield();
+                    StartButtonProviderChallenge(forcedProvider);
+                    return;
+                }
+
+                if (IsAtproto(forcedProvider)
+                    && !string.IsNullOrWhiteSpace(_atprotoHandle))
+                {
+                    _isAutoRedirecting = true;
+                    _hasTriggeredRedirect = true;
+                    await Task.Yield();
+                    StartAtprotoChallenge();
+                    return;
+                }
+            }
+        }
+
+        if (providers.Count != 1)
+        {
+            return;
+        }
+
+        var provider = providers[0];
+
+        if (IsButtonProvider(provider))
+        {
+            _isAutoRedirecting = true;
+            _hasTriggeredRedirect = true;
+            await Task.Yield();
+            StartButtonProviderChallenge(provider);
+            return;
+        }
+
+        if (IsAtproto(provider) && !string.IsNullOrWhiteSpace(_atprotoHandle))
+        {
+            _isAutoRedirecting = true;
+            _hasTriggeredRedirect = true;
+            await Task.Yield();
+            StartAtprotoChallenge();
+        }
+    }
+
+    private void StartButtonProviderChallenge(BffAuthProviderItem provider)
+    {
+        var providerKey = MapProviderNameToQueryValue(provider.Name);
+        var challengeUrl = $"/auth/challenge?provider={Uri.EscapeDataString(providerKey)}&returnUrl={Uri.EscapeDataString(_returnUrl)}";
+        Navigation.NavigateTo(challengeUrl, forceLoad: true);
+    }
+
+    private void StartProvider(BffAuthProviderItem provider)
+    {
+        if (IsAtproto(provider))
+        {
+            _expandedProviderName = provider.Name;
+            return;
+        }
+
+        StartButtonProviderChallenge(provider);
+    }
+
+    private void StartAtprotoChallenge()
+    {
+        if (string.IsNullOrWhiteSpace(_atprotoHandle))
+        {
+            return;
+        }
+
+        var challengeUrl = $"/auth/challenge?provider=atproto&returnUrl={Uri.EscapeDataString(_returnUrl)}";
+        challengeUrl += $"&login_hint={Uri.EscapeDataString(_atprotoHandle.Trim())}";
+
+        Navigation.NavigateTo(challengeUrl, forceLoad: true);
+    }
+
+    // HandleAtprotoKeyUp removed in favor of EditForm submission
+
+    private static bool IsButtonProvider(BffAuthProviderItem provider)
+    {
+        return string.Equals(provider.Type, "button", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsAtproto(BffAuthProviderItem provider)
+    {
+        return string.Equals(provider.Type, "handle_input", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(MapProviderNameToQueryValue(provider.Name), "atproto", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int GetProviderSortOrder(BffAuthProviderItem provider)
+    {
+        return MapProviderNameToQueryValue(provider.Name) switch
+        {
+            "keycloak" => 0,
+            "google" => 1,
+            "atproto" => 2,
+            _ => 100
+        };
+    }
+
+    private static string GetProviderDisplayName(BffAuthProviderItem provider)
+    {
+        return IsAtproto(provider) ? "ATProto" : provider.DisplayName;
+    }
+
+    private static string GetProviderIcon(BffAuthProviderItem provider)
+    {
+        return MapProviderNameToQueryValue(provider.Name) switch
+        {
+            "google" => Icons.Material.Filled.AccountCircle,
+            "atproto" => Icons.Material.Filled.AlternateEmail,
+            _ => Icons.Material.Filled.Login
+        };
+    }
+
+    private void ReadQueryParameters()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = ParseQuery(uri.Query);
+
+        if (query.TryGetValue("returnUrl", out var returnUrlValue))
+        {
+            _returnUrl = GetSafeReturnUrl(returnUrlValue);
+        }
+
+        if (query.TryGetValue("provider", out var providerValue))
+        {
+            _forcedProviderQuery = providerValue.Trim().ToLowerInvariant();
+        }
+
+        if (query.TryGetValue("login_hint", out var loginHintValue))
+        {
+            _atprotoHandle = loginHintValue;
+        }
+
+        if (query.TryGetValue("challengeError", out var challengeErrorValue)
+            && (string.Equals(challengeErrorValue, "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(challengeErrorValue, "true", StringComparison.OrdinalIgnoreCase)))
+        {
+            _challengeErrorMessage = "The last login attempt failed. Please choose a provider and try again.";
+        }
+    }
+
+    private static Dictionary<string, string> ParseQuery(string queryString)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(queryString))
+        {
+            return result;
+        }
+
+        var trimmed = queryString.StartsWith('?') ? queryString[1..] : queryString;
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return result;
+        }
+
+        var pairs = trimmed.Split('&', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var pair in pairs)
+        {
+            var separatorIndex = pair.IndexOf('=');
+            if (separatorIndex <= 0)
+            {
+                continue;
+            }
+
+            var key = Uri.UnescapeDataString(pair[..separatorIndex]);
+            var value = Uri.UnescapeDataString(pair[(separatorIndex + 1)..]);
+            result[key] = value;
+        }
+
+        return result;
+    }
+
+    private static string GetSafeReturnUrl(string? rawReturnUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawReturnUrl))
+        {
+            return "/";
+        }
+
+        return rawReturnUrl.StartsWith('/') &&
+               !rawReturnUrl.StartsWith("//", StringComparison.Ordinal) &&
+               !rawReturnUrl.StartsWith("/\\", StringComparison.Ordinal)
+            ? rawReturnUrl
+            : "/";
+    }
+
+    private static string MapProviderNameToQueryValue(string providerName)
+    {
+        return providerName.ToLowerInvariant() switch
+        {
+            "keycloak" => "keycloak",
+            "google" => "google",
+            "atproto" => "atproto",
+            _ => providerName.ToLowerInvariant()
+        };
+    }
+
+}

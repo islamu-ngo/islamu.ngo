@@ -1,0 +1,186 @@
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Blazouter.Services
+@using Microsoft.Extensions.Logging
+@inject IOrganizationService OrganizationService
+@inject IOrganizationReviewService OrganizationReviewService
+@inject NavigationManager Navigation
+@inject RouterStateService RouterState
+@inject ILogger<OrganizationReviews> Logger
+@rendermode InteractiveServer
+
+<PageTitle>Organization Reviews</PageTitle>
+<MudContainer Class="organization-reviews">
+    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" Class="mb-4">Back to Profile</MudButton>
+
+    @if (_isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (_organization == null)
+    {
+        <MudAlert Severity="Severity.Error">Organization not found.</MudAlert>
+    }
+    else
+    {
+        <MudText Typo="Typo.h4" HtmlTag="h1" Class="mb-2">Reviews for @_organization.FullName</MudText>
+        <MudText Typo="Typo.subtitle1" Class="mb-6" Color="Color.Secondary">
+            @_reviews.Count reviews • @(_reviews.Any() && _reviews.Any(r => r.Rating.HasValue) ? _reviews.Where(r => r.Rating.HasValue).Average(r => r.Rating!.Value).ToString("0.0") : "0.0")★ average rating
+        </MudText>
+
+        @if (!_reviews.Any())
+        {
+            <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary">No reviews yet.</MudText>
+        }
+        else
+        {
+            <MudGrid>
+                <Virtualize Items="@_reviews" Context="review" OverscanCount="4">
+                    <ItemContent>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-4 organization-reviews__card" Elevation="0">
+                                <MudStack Spacing="2">
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudAvatar Size="Size.Medium" Color="Color.Primary">
+                                            <MudText>@(string.IsNullOrEmpty(review.UserFullName) ? "?" : review.UserFullName.Substring(0, 1).ToUpper())</MudText>
+                                        </MudAvatar>
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle2">@review.UserFullName</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@(review.CreatedAt?.DateTime.ToShortDateString() ?? "Unknown")</MudText>
+                                        </MudStack>
+                                    </MudStack>
+
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <div class="organization-reviews__rating">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= review.Rating)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.Star" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Outlined.StarBorder" />
+                                                }
+                                            }
+                                        </div>
+                                    </MudStack>
+
+                                    <MudText Typo="Typo.body2">
+                                        @review.Comment
+                                    </MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    </ItemContent>
+                    <Placeholder>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-4" Elevation="0">
+                                <MudStack Spacing="2">
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" />
+                                        <MudStack Spacing="0">
+                                            <MudSkeleton Width="120px" />
+                                            <MudSkeleton Width="80px" />
+                                        </MudStack>
+                                    </MudStack>
+                                    <MudSkeleton Width="100px" />
+                                    <MudSkeleton Width="100%" />
+                                    <MudSkeleton Width="70%" />
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    </Placeholder>
+                </Virtualize>
+            </MudGrid>
+        }
+    }
+</MudContainer>
+
+@code {
+    private Guid Id { get; set; }
+
+    private OrganizationDto? _organization;
+    private List<OrganizationReviewDto> _reviews = new();
+    private bool _isLoading = true;
+    [PersistentState]
+    public OrganizationReviewsState? PersistedState { get; set; }
+
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get route parameter from Blazouter
+        var idStr = RouterState.GetParam("id");
+        if (Guid.TryParse(idStr, out var id))
+        {
+            Id = id;
+        }
+
+        if (TryRestoreState())
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            // Load organization and its reviews from API (client-side)
+            _organization = await OrganizationService.GetOrganizationByIdAsync(Id);
+            _reviews = (await OrganizationReviewService.GetReviewsByOrganizationId(Id)).ToList();
+            Logger.LogDebug("Loaded organization {OrganizationId} with {ReviewCount} reviews", Id, _reviews.Count);
+
+            PersistState();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load reviews: {ex.Message}";
+            Logger.LogError(ex, "Failed to load organization reviews for {OrganizationId}", Id);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo($"/organization/profile/{Id}");
+    }
+
+    private bool TryRestoreState()
+    {
+        if (PersistedState == null || PersistedState.OrganizationId != Id)
+        {
+            return false;
+        }
+
+        _organization = PersistedState.Organization;
+        _reviews = PersistedState.Reviews;
+        _isLoading = false;
+        _errorMessage = null;
+        return true;
+    }
+
+    private void PersistState()
+    {
+        PersistedState = new OrganizationReviewsState
+        {
+            OrganizationId = Id,
+            Organization = _organization,
+            Reviews = _reviews.ToList()
+        };
+    }
+
+    public sealed class OrganizationReviewsState
+    {
+        public Guid OrganizationId { get; init; }
+        public OrganizationDto? Organization { get; init; }
+        public List<OrganizationReviewDto> Reviews { get; init; } = new();
+    }
+}

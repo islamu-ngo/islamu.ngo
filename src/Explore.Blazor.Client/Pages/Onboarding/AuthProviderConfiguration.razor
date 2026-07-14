@@ -1,0 +1,559 @@
+@* ABOUTME: Auth provider configuration page shown after setup token validation, before login. *@
+@* ABOUTME: Lets instance admin enable/configure Keycloak, ATProto Login, and Google SSO providers. *@
+
+@page "/onboarding/auth-provider"
+@rendermode InteractiveServer
+@layout SetupLayout
+@using Explore.Blazor.Client.Components.Forms
+@using Explore.Blazor.Client.Contracts.Services.Accessibility
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject NavigationManager Navigation
+@inject IAccessibilityFocusService AccessibilityFocusService
+@inject IAccessibilityAnnouncerService AccessibilityAnnouncer
+@inject IBffAuthApi BffAuthApi
+@inject ILogger<AuthProviderConfiguration> Logger
+
+<PageTitle>Authentication Providers</PageTitle>
+
+<div class="auth-provider-configuration" dir="auto">
+    <MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+        <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h4" HtmlTag="h1" Class="mb-2">Authentication Providers</MudText>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Choose how users will authenticate. At least one provider must be enabled.
+        </MudText>
+
+        @if (_isLoading)
+        {
+            <MudStack Spacing="3">
+                <MudSkeleton Width="60%" Height="20px" Class="mb-1" />
+                <MudSkeleton Width="100%" Height="56px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="56px" Class="mb-2" />
+                <MudSkeleton Width="100%" Height="56px" Class="mb-2" />
+                <MudSkeleton Width="120px" Height="40px" />
+            </MudStack>
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(_errorMessage))
+            {
+                <div role="alert">
+                    <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_successMessage))
+            {
+                <MudAlert Severity="Severity.Success" Class="mb-4">@_successMessage</MudAlert>
+            }
+
+            @if (_model.KeycloakDetectedFromEnvironment == true && !_showAdvancedConfig)
+            {
+                <MudPaper Class="pa-8 mb-4 d-flex flex-column align-center text-center" Outlined="true">
+                    <MudIcon Icon="@Icons.Material.Filled.Key" Color="Color.Primary" Style="font-size: 4rem;" Class="mb-4" />
+                    <MudText Typo="Typo.h5" Class="mb-2">Keycloak Detected</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-6">We've automatically configured Keycloak from your environment variables.</MudText>
+                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large" Disabled="@(!CanSave)" OnClick="SaveAndContinueAsync" Class="mb-4 px-8">
+                        @if (_submitState.IsSubmitting)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            @:Continuing...
+                        }
+                        else
+                        {
+                            @:Continue with Keycloak
+                        }
+                    </MudButton>
+                    <MudButton Elevation="0" Variant="Variant.Text" Color="Color.Default" OnClick="ShowAdvancedConfiguration">
+                        Configure Authentication Providers
+                    </MudButton>
+                </MudPaper>
+            }
+            else
+            {
+                <div class="auth-provider-configuration__providers">
+                    @* ── Keycloak ── *@
+                    <details class="auth-provider-configuration__provider" open>
+                        <summary id="keycloak-provider-summary"
+                                 class="auth-provider-configuration__provider-summary"
+                                 aria-labelledby="keycloak-provider-title"
+                                 aria-describedby="keycloak-provider-description"
+                                 title="Self-hosted identity provider. Full control over user accounts, passwords, and SSO. Requires running a separate Keycloak server."
+                                 data-testid="keycloak-provider-header">
+                            <h2 class="auth-provider-configuration__provider-heading">
+                                <span id="keycloak-provider-title">Keycloak (OIDC)</span>
+                                @if (_model.KeycloakDetectedFromEnvironment == true)
+                                {
+                                    <span class="auth-provider-configuration__provider-badge">
+                                        Auto-detected
+                                    </span>
+                                }
+                                <span id="keycloak-provider-description" class="sr-only">
+                                    Self-hosted identity provider. Full control over user accounts, passwords, and SSO. Requires running a separate Keycloak server.
+                                </span>
+                            </h2>
+                        </summary>
+                        <div class="auth-provider-configuration__provider-content">
+                            <MudStack Spacing="2">
+                                <div class="auth-provider-configuration__enable-switch" data-testid="keycloak-enable-switch">
+                                    <MudSwitch T="bool"
+                                               Value="@(_model.KeycloakEnabled == true)"
+                                               ValueChanged="OnKeycloakToggled"
+                                               Color="Color.Primary"
+                                               Disabled="@(_model.KeycloakDetectedFromEnvironment == true)">
+                                        Enable Keycloak
+                                    </MudSwitch>
+                                </div>
+
+                                @if (_model.KeycloakEnabled == true)
+                                {
+                                    @if (_model.KeycloakDetectedFromEnvironment == true)
+                                    {
+                                        <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
+                                            <MudText Typo="Typo.caption">
+                                                Keycloak runtime values were detected from deployment configuration and prefilled below. You can still patch the external realm during setup before the first admin account exists.
+                                            </MudText>
+                                        </MudAlert>
+                                    }
+
+                                    <MudRadioGroup T="KeycloakConfigurationMode" @bind-Value="_keycloakConfigurationMode">
+                                        <MudRadio T="KeycloakConfigurationMode" Value="KeycloakConfigurationMode.Manual" Color="Color.Primary" Dense="true">
+                                            Use an already configured Keycloak realm
+                                        </MudRadio>
+                                        <MudRadio T="KeycloakConfigurationMode" Value="KeycloakConfigurationMode.Bootstrap" Color="Color.Primary" Dense="true">
+                                            Let ISLAMU configure Keycloak clients now
+                                        </MudRadio>
+                                    </MudRadioGroup>
+
+                                    @if (_keycloakConfigurationMode == KeycloakConfigurationMode.Manual)
+                                    {
+                                        <MudTextField Variant="Variant.Outlined" T="string"
+                                                      Label="Authority URL (Required)"
+                                                      @bind-Value="_model.KeycloakAuthority"
+                                                      Placeholder="https://keycloak.example.com/realms/myrealm"
+                                                      HelperText="The Keycloak realm URL used for OIDC discovery." />
+                                        <MudTextField Variant="Variant.Outlined" T="string"
+                                                      Label="Client ID (Required)"
+                                                      @bind-Value="_model.KeycloakClientId"
+                                                      Placeholder="my-client" />
+                                        <MudTextField Variant="Variant.Outlined" T="string"
+                                                      Label="Client Secret"
+                                                      InputType="InputType.Password"
+                                                      @bind-Value="_model.KeycloakClientSecret"
+                                                      HelperText="Optional for public clients. Required for confidential clients." />
+                                    }
+                                    else
+                                    {
+                                        <div data-testid="keycloak-bootstrap-fields">
+                                             <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                                                  The platform will use the bootstrap admin credential one time to create or patch Keycloak clients. The admin credential is not stored after this request.
+                                             </MudAlert>
+                                            <MudSelect T="KeycloakBootstrapMode?" Variant="Variant.Outlined"
+                                                       Label="Bootstrap action"
+                                                       @bind-Value="_keycloakBootstrap.Mode"
+                                                       HelperText="Choose whether the platform should create the realm when it is missing, or only patch an existing realm.">
+                                                <MudSelectItem T="KeycloakBootstrapMode?" Value="@KeycloakBootstrapMode.PatchExistingRealm">Patch existing realm</MudSelectItem>
+                                                <MudSelectItem T="KeycloakBootstrapMode?" Value="@KeycloakBootstrapMode.CreateRealm">Create realm if missing</MudSelectItem>
+                                            </MudSelect>
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="Keycloak base URL (Required)"
+                                                           @bind-Value="_keycloakBootstrap.KeycloakBaseUrl"
+                                                           Immediate="true"
+                                                           Placeholder="https://keycloak.example.com"
+                                                           HelperText="The root Keycloak URL, without /realms/{realm}." />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="Realm (Required)"
+                                                           @bind-Value="_keycloakBootstrap.Realm"
+                                                           Immediate="true"
+                                                            Placeholder="events" />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="Blazor BFF client ID (Required)"
+                                                           @bind-Value="_keycloakBootstrap.BlazorClientId"
+                                                           Immediate="true"
+                                                           Placeholder="islamu-event-blazor" />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="BFF client secret (Required)"
+                                                           aria-label="Blazor BFF client secret (required)"
+                                                           InputType="InputType.Password"
+                                                           @bind-Value="_keycloakBootstrap.BlazorClientSecret"
+                                                           Immediate="true"
+                                                           HelperText="Stored as the runtime BFF client secret after bootstrap succeeds." />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="API client ID (Optional)"
+                                                           @bind-Value="_keycloakBootstrap.ApiClientId"
+                                                           Immediate="true"
+                                                           Placeholder="islamu-event-api" />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="API client secret (Optional)"
+                                                           InputType="InputType.Password"
+                                                           @bind-Value="_keycloakBootstrap.ApiClientSecret"
+                                                           Immediate="true"
+                                                            HelperText="Only sent when you want the platform to synchronize the API resource-server client secret." />
+                                             <MudTextField Variant="Variant.Outlined" T="string"
+                                                           Label="Admin username (Required)"
+                                                           aria-label="One-time Keycloak admin username (required)"
+                                                           @bind-Value="_keycloakBootstrap.BootstrapAdminUsername"
+                                                           Immediate="true"
+                                                            HelperText="Used only for this bootstrap request and never stored by the platform." />
+                                              <MudTextField Variant="Variant.Outlined" T="string"
+                                                            Label="Admin password (Required)"
+                                                            aria-label="One-time Keycloak admin password (required)"
+                                                            InputType="InputType.Password"
+                                                            @bind-Value="_keycloakBootstrap.BootstrapAdminPassword"
+                                                            Immediate="true"
+                                                            HelperText="Cleared from this form after submit, whether bootstrap succeeds or fails." />
+                                        </div>
+                                    }
+                                }
+                            </MudStack>
+                        </div>
+                    </details>
+
+                    @* ── ATProto Login ── *@
+                    <details class="auth-provider-configuration__provider">
+                        <summary class="auth-provider-configuration__provider-summary"
+                                 aria-labelledby="atproto-provider-title"
+                                 aria-describedby="atproto-provider-description"
+                                 title="Users authenticate with their AT Protocol identity (for example, a Bluesky account). No external server is needed.">
+                            <h2 class="auth-provider-configuration__provider-heading">
+                                <span id="atproto-provider-title">AT Protocol Login</span>
+                                <span id="atproto-provider-description" class="sr-only">
+                                    Users authenticate with their AT Protocol identity, such as a Bluesky account. No external server is needed.
+                                </span>
+                            </h2>
+                        </summary>
+                        <div class="auth-provider-configuration__provider-content">
+                            <MudStack Spacing="2">
+                                <MudSwitch T="bool?" @bind-Value="_model.AtprotoLoginEnabled" Color="Color.Primary">
+                                    Enable AT Protocol Login
+                                </MudSwitch>
+
+                                @if (_model.AtprotoLoginEnabled == true)
+                                {
+                                    <MudTextField Variant="Variant.Outlined" T="string"
+                                                  Label="Public URL (Required)"
+                                                  @bind-Value="_model.AtprotoPublicUrl"
+                                                  Placeholder="https://event.example.com"
+                                                  HelperText="Must be publicly accessible. AT Protocol OAuth requires a reachable client metadata URL." />
+
+                                    @if (IsPrivateUrl(_model.AtprotoPublicUrl))
+                                    {
+                                        <MudAlert Severity="Severity.Warning" Dense="true">
+                                            This URL appears to be a local or private address. AT Protocol OAuth requires a publicly
+                                            accessible URL. If you're using a tunneling tool (e.g., ngrok, Cloudflare Tunnel),
+                                            this may still work.
+                                        </MudAlert>
+                                    }
+                                }
+                            </MudStack>
+                        </div>
+                    </details>
+
+                    @* ── Google SSO ── *@
+                    <details class="auth-provider-configuration__provider">
+                        <summary class="auth-provider-configuration__provider-summary"
+                                 aria-labelledby="google-provider-title"
+                                 aria-describedby="google-provider-description"
+                                 title="Users authenticate with their Google account. Requires a Google Cloud project with OAuth credentials configured.">
+                            <h2 class="auth-provider-configuration__provider-heading">
+                                <span id="google-provider-title">Google SSO</span>
+                                <span id="google-provider-description" class="sr-only">
+                                    Users authenticate with their Google account. Requires a Google Cloud project with OAuth credentials configured.
+                                </span>
+                            </h2>
+                        </summary>
+                        <div class="auth-provider-configuration__provider-content">
+                            <MudStack Spacing="2">
+                                <MudSwitch T="bool?" @bind-Value="_model.GoogleSsoEnabled" Color="Color.Primary">
+                                    Enable Google SSO
+                                </MudSwitch>
+
+                                @if (_model.GoogleSsoEnabled == true)
+                                {
+                                    <MudTextField Variant="Variant.Outlined" T="string"
+                                                  Label="Google Client ID (Required)"
+                                                  @bind-Value="_model.GoogleClientId"
+                                                  Placeholder="123456789.apps.googleusercontent.com" />
+                                    <MudTextField Variant="Variant.Outlined" T="string"
+                                                  Label="Google Client Secret (Required)"
+                                                  InputType="InputType.Password"
+                                                  @bind-Value="_model.GoogleClientSecret" />
+                                }
+                            </MudStack>
+                        </div>
+                    </details>
+                </div>
+
+                @* ── Validation message ── *@
+                @if (!HasAnyProviderEnabled)
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mb-4">
+                        At least one authentication provider must be enabled.
+                    </MudAlert>
+                }
+
+                @* ── Actions ── *@
+                <MudStack Row="true" Spacing="2" Class="mt-2">
+                    <AppButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(!CanSave)"
+                               OnClick="SaveAndContinueAsync">
+                        @if (_submitState.IsSubmitting)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                            @:Saving...
+                        }
+                        else
+                        {
+                            @:Save & Continue to Login
+                        }
+                    </AppButton>
+                </MudStack>
+            }
+        }
+        </MudPaper>
+    </MudContainer>
+</div>
+
+@code {
+    private AuthProviderConfigurationDto _model = new();
+    private KeycloakBootstrapRequestDto _keycloakBootstrap = new();
+    private KeycloakConfigurationMode _keycloakConfigurationMode = KeycloakConfigurationMode.Manual;
+    private bool _isLoading = true;
+    private FormSubmitState _submitState = new();
+    private string? _errorMessage;
+    private string? _successMessage;
+    private bool _showAdvancedConfig = false;
+    private bool _focusAdvancedConfiguration;
+    private bool _googleSecretAlreadyConfigured;
+    private bool HasAnyProviderEnabled =>
+        _model.KeycloakEnabled == true || _model.AtprotoLoginEnabled == true || _model.GoogleSsoEnabled == true;
+
+    private bool HasKeycloakCredentials =>
+        _keycloakConfigurationMode == KeycloakConfigurationMode.Manual
+            ? _model.KeycloakDetectedFromEnvironment == true ||
+              (!string.IsNullOrWhiteSpace(_model.KeycloakAuthority) && !string.IsNullOrWhiteSpace(_model.KeycloakClientId))
+            : HasKeycloakBootstrapCredentials;
+
+    private bool HasKeycloakBootstrapCredentials =>
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.KeycloakBaseUrl) &&
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.Realm) &&
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.BlazorClientId) &&
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.BlazorClientSecret) &&
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.BootstrapAdminUsername) &&
+        !string.IsNullOrWhiteSpace(_keycloakBootstrap.BootstrapAdminPassword);
+
+    private bool HasAtprotoCredentials =>
+        !string.IsNullOrWhiteSpace(_model.AtprotoPublicUrl);
+
+    private bool HasGoogleCredentials =>
+        !string.IsNullOrWhiteSpace(_model.GoogleClientId) &&
+        (_googleSecretAlreadyConfigured || !string.IsNullOrWhiteSpace(_model.GoogleClientSecret));
+
+    private bool CanSave =>
+        !_submitState.IsSubmitting &&
+        HasAnyProviderEnabled &&
+        (_model.KeycloakEnabled != true || HasKeycloakCredentials) &&
+        (_model.AtprotoLoginEnabled != true || HasAtprotoCredentials) &&
+        (_model.GoogleSsoEnabled != true || HasGoogleCredentials);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var status = await InstanceOnboardingService.GetStatusAsync();
+        if (status?.IsCompleted == true)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        _model = await InstanceOnboardingService.GetAuthProviderConfigurationAsync();
+        _googleSecretAlreadyConfigured = _model.GoogleSsoEnabled == true;
+        _model.KeycloakClientSecret = string.Empty;
+        _model.GoogleClientSecret = string.Empty;
+        SeedKeycloakBootstrapDefaults();
+
+        // Pre-fill the ATProto public URL from the current browser request if not already set
+        if (string.IsNullOrWhiteSpace(_model.AtprotoPublicUrl))
+        {
+            var baseUri = new Uri(Navigation.BaseUri);
+            _model.AtprotoPublicUrl = $"{baseUri.Scheme}://{baseUri.Host}" +
+                (baseUri.IsDefaultPort ? "" : $":{baseUri.Port}");
+        }
+
+        _isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusAdvancedConfiguration)
+        {
+            return;
+        }
+
+        _focusAdvancedConfiguration = false;
+        await AccessibilityFocusService.FocusByIdAsync("keycloak-provider-summary");
+        await AccessibilityAnnouncer.AnnouncePoliteAsync("Authentication provider configuration opened.");
+    }
+
+    private void ShowAdvancedConfiguration()
+    {
+        _showAdvancedConfig = true;
+        _focusAdvancedConfiguration = true;
+    }
+
+    private void OnKeycloakToggled(bool enabled)
+    {
+        _model.KeycloakEnabled = enabled;
+        if (!enabled)
+        {
+            // Clear credentials when disabled (unless env-detected)
+            if (_model.KeycloakDetectedFromEnvironment != true)
+            {
+                _model.KeycloakAuthority = string.Empty;
+                _model.KeycloakClientId = string.Empty;
+                _model.KeycloakClientSecret = string.Empty;
+                ClearKeycloakBootstrapSecrets();
+            }
+        }
+    }
+
+    private async Task SaveAndContinueAsync()
+    {
+        _submitState.Start();
+        _errorMessage = null;
+        _successMessage = null;
+
+        var usingKeycloakBootstrap = ShouldBootstrapKeycloak;
+        BaseCommandResponseOfGuid response;
+        try
+        {
+            response = usingKeycloakBootstrap
+                ? await BootstrapKeycloakWithSecretCleanupAsync()
+                : await InstanceOnboardingService.SaveAuthProviderConfigurationAsync(_model);
+        }
+        catch (Exception)
+        {
+            Logger.LogWarning("Failed to save authentication provider configuration.");
+            _submitState.Complete();
+            _errorMessage = "Could not save authentication provider configuration. Try again.";
+            return;
+        }
+
+        if (response.Success != true)
+        {
+            _submitState.Complete();
+            _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+                ? "Failed to save auth provider configuration."
+                : response.Message;
+
+            if (response.Errors?.Count > 0)
+            {
+                _errorMessage += " " + string.Join(" ", response.Errors);
+            }
+            return;
+        }
+
+        if (!usingKeycloakBootstrap)
+        {
+            // Trigger dynamic auth scheme registration in the BFF. Bootstrap calls do this in the service.
+            try
+            {
+                var refreshResponse = await BffAuthApi.RefreshSchemesAsync(CancellationToken.None);
+                if (!refreshResponse.IsSuccessStatusCode)
+                {
+                    Logger.LogWarning(
+                        "Failed to refresh auth schemes after saving config. Status: {StatusCode}. Login may require app restart.",
+                        (int)refreshResponse.StatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to refresh auth schemes after saving config. Login may require app restart.");
+            }
+        }
+
+        _submitState.Complete();
+
+        var skipAuthorizationProvider = await InstanceOnboardingService.ShouldSkipAuthorizationProviderStepAsync();
+        Navigation.NavigateTo(
+            skipAuthorizationProvider ? "/onboarding/instance" : "/onboarding/authz-provider",
+            forceLoad: true);
+    }
+
+    private async Task<BaseCommandResponseOfGuid> BootstrapKeycloakWithSecretCleanupAsync()
+    {
+        try
+        {
+            return await InstanceOnboardingService.BootstrapKeycloakRealmAsync(_keycloakBootstrap);
+        }
+        finally
+        {
+            ClearKeycloakBootstrapSecrets();
+        }
+    }
+
+    private bool ShouldBootstrapKeycloak =>
+        _model.KeycloakEnabled == true &&
+        _keycloakConfigurationMode == KeycloakConfigurationMode.Bootstrap;
+
+    private void SeedKeycloakBootstrapDefaults()
+    {
+        if (!string.IsNullOrWhiteSpace(_model.KeycloakAuthority) &&
+            Uri.TryCreate(_model.KeycloakAuthority, UriKind.Absolute, out var authorityUri))
+        {
+            var realmPrefix = "/realms/";
+            var realmIndex = authorityUri.AbsolutePath.IndexOf(realmPrefix, StringComparison.OrdinalIgnoreCase);
+            if (realmIndex >= 0)
+            {
+                var basePath = authorityUri.AbsolutePath[..realmIndex].TrimEnd('/');
+                _keycloakBootstrap.KeycloakBaseUrl = authorityUri.GetLeftPart(UriPartial.Authority) + basePath;
+                _keycloakBootstrap.Realm = Uri.UnescapeDataString(authorityUri.AbsolutePath[(realmIndex + realmPrefix.Length)..].Trim('/'));
+            }
+            else
+            {
+                _keycloakBootstrap.KeycloakBaseUrl = authorityUri.ToString().TrimEnd('/');
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(_model.KeycloakClientId))
+        {
+            _keycloakBootstrap.BlazorClientId = _model.KeycloakClientId;
+        }
+
+    }
+
+    private void ClearKeycloakBootstrapSecrets()
+    {
+        _keycloakBootstrap.BlazorClientSecret = string.Empty;
+        _keycloakBootstrap.ApiClientSecret = string.Empty;
+        _keycloakBootstrap.BootstrapAdminUsername = string.Empty;
+        _keycloakBootstrap.BootstrapAdminPassword = string.Empty;
+    }
+
+    private static bool IsPrivateUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return false;
+
+        var host = uri.Host.ToLowerInvariant();
+        return host is "localhost" or "127.0.0.1" or "0.0.0.0"
+            || host.StartsWith("192.168.")
+            || host.StartsWith("10.")
+            || host.StartsWith("172.16.")
+            || host.StartsWith("172.17.")
+            || host.StartsWith("172.18.")
+            || host.StartsWith("172.19.")
+            || host.StartsWith("172.2")
+            || host.StartsWith("172.30.")
+            || host.StartsWith("172.31.")
+            || host.EndsWith(".local")
+            || host.EndsWith(".internal");
+    }
+
+    private enum KeycloakConfigurationMode
+    {
+        Manual,
+        Bootstrap
+    }
+}

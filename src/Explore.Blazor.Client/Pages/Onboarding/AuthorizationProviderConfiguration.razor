@@ -1,0 +1,641 @@
+@* ABOUTME: Authorization provider onboarding step for choosing Local RBAC or Cerbos PDP authorization. *@
+@* ABOUTME: Keeps provider choice first while separating PDP reachability, secret ownership, and policy package readiness. *@
+
+@page "/onboarding/authz-provider"
+@rendermode InteractiveServer
+@layout SetupLayout
+@using Explore.Blazor.Client.Components.Forms
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject ILogger<AuthorizationProviderConfiguration> Logger
+
+<PageTitle>Authorization Provider</PageTitle>
+
+<div class="authz-page" dir="auto">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+        <div class="authz-page__content" aria-busy="@_isLoading">
+            <header class="authz-page__header">
+                <MudText Typo="Typo.h3" HtmlTag="h1">Authorization</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="authz-page__intro">
+                    Use built-in authorization, or connect Cerbos when your deployment needs an external policy decision point.
+                </MudText>
+            </header>
+
+            @if (_isLoading)
+            {
+                <div class="authz-page__loading" role="status" aria-label="Loading authorization settings">
+                    <MudSkeleton Width="42%" Height="28px" />
+                    <MudSkeleton Width="100%" Height="76px" />
+                    <MudSkeleton Width="100%" Height="48px" />
+                </div>
+            }
+            else
+            {
+                <div class="authz-page__announcements" aria-live="polite" aria-atomic="true">
+                    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_successMessage))
+                    {
+                        <MudAlert Severity="Severity.Success">@_successMessage</MudAlert>
+                    }
+                </div>
+
+                @if (IsDeploymentProvider)
+                {
+                    <section class="authz-page__section" aria-labelledby="deployment-authorization-heading">
+                        <MudText Typo="Typo.h5" HtmlTag="h2" id="deployment-authorization-heading">
+                            Cerbos needs attention
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Cerbos remains the active fail-closed provider. Fix the deployment settings, then retry the server-side check and policy synchronization.
+                        </MudText>
+                        <MudAlert Severity="Severity.Warning" Dense="true">
+                            @(_model.AuthorizationProviderBootstrapMessage ?? "Automatic Cerbos setup has not completed.")
+                        </MudAlert>
+                    </section>
+                }
+                else
+                {
+                    <section class="authz-page__section" aria-labelledby="provider-choice-heading">
+                        <MudText Typo="Typo.h5" HtmlTag="h2" id="provider-choice-heading">Authorization provider</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Local RBAC is selected by default and requires no external infrastructure.
+                        </MudText>
+
+                        <MudRadioGroup T="string" @bind-Value="SelectedProvider" Class="authz-page__provider-group">
+                            <div class="authz-page__local-choice @(IsSelected(LocalProvider) ? "authz-page__local-choice--selected" : string.Empty)">
+                                <MudRadio T="string" Value="@LocalProvider" Color="Color.Primary" Dense="true">
+                                    Local RBAC
+                                </MudRadio>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="authz-page__choice-copy">
+                                    Authorize with the platform's built-in roles and permissions.
+                                </MudText>
+                            </div>
+
+                            <details class="authz-page__advanced" open="@IsSelected(CerbosProvider)">
+                                <summary>Advanced: use Cerbos PDP</summary>
+                                <div class="authz-page__advanced-body">
+                                    <MudRadio T="string" Value="@CerbosProvider" Color="Color.Primary" Dense="true">
+                                        Use Cerbos PDP
+                                    </MudRadio>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="authz-page__choice-copy">
+                                        Connect an external policy engine for centrally governed authorization decisions.
+                                    </MudText>
+                                </div>
+                            </details>
+                        </MudRadioGroup>
+                    </section>
+                }
+
+                @if (ShowCerbosConfiguration)
+                {
+                    <section class="authz-page__section" aria-labelledby="cerbos-connection-heading">
+                        <MudText Typo="Typo.h5" HtmlTag="h2" id="cerbos-connection-heading">Cerbos connection</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Runtime checks use the PDP endpoint. Admin API credentials stay on the server and are used only for policy synchronization.
+                        </MudText>
+
+                        <MudAlert Severity="@OwnershipAlertSeverity(EndpointOwnership)" Dense="true">
+                            <MudText Typo="Typo.subtitle2">@SourceLabel</MudText>
+                            <MudText Typo="Typo.body2">@EndpointOwnership.Description</MudText>
+                        </MudAlert>
+
+                        <div class="authz-page__endpoint-row">
+                            <MudTextField Variant="Variant.Outlined" T="string"
+                                          Label="Runtime PDP endpoint"
+                                          Value="_model.CerbosGrpcEndpoint"
+                                          ValueChanged="OnCerbosEndpointChanged"
+                                          Placeholder="https://cerbosgrpc.example.com:443"
+                                          Disabled="@IsEndpointLocked"
+                                          HelperText="@EndpointHelperText" />
+                            @if (!IsDeploymentProvider)
+                            {
+                                <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Outlined"
+                                           Disabled="@(!CanVerify)"
+                                           OnClick="VerifyCerbosEndpointAsync"
+                                           StartIcon="@Icons.Material.Filled.NetworkPing">
+                                    @(_isVerifying ? "Testing..." : "Test endpoint")
+                                </MudButton>
+                            }
+                        </div>
+
+                        @if (_model.CerbosDetectedFromEnvironment == true && _model.CerbosEndpointVerified != true && !IsEndpointLocked)
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                <MudText Typo="Typo.subtitle2">Endpoint detected from environment</MudText>
+                                <MudText Typo="Typo.body2">
+                                    A Cerbos endpoint was found in your deployment configuration and pre-filled above.
+                                    Test it to unlock policy sync and the continue button, or click <strong>Sync policies now</strong> — it will test the endpoint automatically.
+                                </MudText>
+                            </MudAlert>
+                        }
+
+                        <dl class="authz-page__status-list" aria-label="Cerbos readiness">
+                            <div>
+                                <dt>Runtime PDP</dt>
+                                <dd><MudChip T="string" Size="Size.Small" Color="@RuntimeStatusColor" Variant="Variant.Outlined">@RuntimeStatusLabel</MudChip></dd>
+                            </div>
+                            <div>
+                                <dt>Policy package</dt>
+                                <dd><MudChip T="string" Size="Size.Small" Color="@PolicyReadinessColor" Variant="Variant.Outlined">@PolicyReadinessLabel</MudChip></dd>
+                            </div>
+                            <div>
+                                <dt>Server-side sync</dt>
+                                <dd><MudChip T="string" Size="Size.Small" Color="@SyncStatusColor" Variant="Variant.Outlined">@SyncStatusLabel</MudChip></dd>
+                            </div>
+                        </dl>
+
+                        @if (!PolicyPackageReady && !IsDeploymentProvider)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                Install the bundled policies before launch. Server-side sync is preferred; confirm manual installation only when the Admin API is unavailable.
+                            </MudAlert>
+                            <MudCheckBox T="bool"
+                                         @bind-Value="_manualPolicyPackageInstalled"
+                                         Color="Color.Primary"
+                                         Label="I have manually installed the Cerbos policy package." />
+                        }
+
+                        <div class="authz-page__package">
+                            <MudText Typo="Typo.h6" HtmlTag="h3">Policy package</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Download the policies and schemas used by this platform version.
+                            </MudText>
+                            <div class="authz-page__secondary-actions">
+                                <MudButton Elevation="0"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Href="/api/InstanceOnboarding/authz-provider-configuration/package"
+                                           Target="_blank"
+                                           StartIcon="@Icons.Material.Filled.Download">
+                                    Download ZIP
+                                </MudButton>
+
+                                @if (!IsDeploymentProvider)
+                                {
+                                    <MudButton Elevation="0"
+                                               Variant="Variant.Text"
+                                               Color="Color.Default"
+                                               OnClick="CopyComposeCommandAsync"
+                                               StartIcon="@Icons.Material.Filled.ContentCopy">
+                                        Copy Compose command
+                                    </MudButton>
+                                }
+                            </div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @PolicySyncGuidance
+                            </MudText>
+                        </div>
+                    </section>
+                }
+
+                <footer class="authz-page__footer">
+                        <AppButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large"
+                                   FullWidth="true"
+                                   Disabled="@(!CanPrimaryAction)"
+                                   OnClick="PrimaryActionAsync">
+                            @if (_submitState.IsSubmitting || _isSyncing || _isVerifying)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                @:Working...
+                            }
+                            else
+                            {
+                                @PrimaryActionLabel
+                            }
+                        </AppButton>
+
+                        @if (!IsDeploymentProvider && IsSelected(CerbosProvider) && _model.CerbosEndpointVerified != true
+                             && _model.CerbosDetectedFromEnvironment != true)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Test the runtime PDP endpoint before continuing with Cerbos.
+                            </MudText>
+                        }
+                </footer>
+            }
+        </div>
+    </MudContainer>
+</div>
+
+@code {
+    private const string LocalProvider = "local";
+    private const string CerbosProvider = "cerbos";
+    private const string DockerComposeSyncCommand = "docker compose --profile authz run --rm cerbos-policy-sync";
+
+    private AuthorizationProviderConfigurationDto _model = new();
+    private bool _isLoading = true;
+    private FormSubmitState _submitState = new();
+    private bool _isVerifying;
+    private string? _errorMessage;
+    private string? _successMessage;
+    private bool _shouldLoadConfiguration = true;
+    private bool _isSyncing;
+    private bool _manualPolicyPackageInstalled;
+    private bool _policyPackageSynced;
+
+    private SecretOwnershipDto EndpointOwnership => _model.CerbosEndpointOwnership ??= new();
+    private SecretOwnershipDto AdminCredentialsOwnership => _model.CerbosAdminCredentialsOwnership ??= new();
+
+    private string SelectedProvider
+    {
+        get => _model.Provider;
+        set => SelectProvider(value);
+    }
+
+    private bool IsDeploymentProvider => _model.AuthorizationProviderManagedByDeployment == true;
+    private bool IsDeploymentFailed => IsDeploymentProvider
+        && string.Equals(_model.AuthorizationProviderBootstrapStatus, "failed", StringComparison.OrdinalIgnoreCase);
+    private bool ShowCerbosConfiguration => IsSelected(CerbosProvider);
+    private bool IsEndpointLocked => EndpointOwnership.Editable != true;
+    private bool PolicyPackageReady =>
+        _model.CerbosPoliciesSynchronized == true || _policyPackageSynced || _manualPolicyPackageInstalled;
+
+    private string EndpointHelperText => IsEndpointLocked
+        ? "Deployment-managed endpoint. Change it in the environment, secret provider, or appsettings and redeploy/restart."
+        : EndpointOwnership.BootstrapAvailable == true
+            ? "Modify before saving if needed. This checks runtime PDP health only; policy installation is tracked below."
+            : "This checks runtime PDP health only. Policy installation is tracked below.";
+
+    private bool HasServerSideAdminApiCredentials =>
+        _model.CerbosAdminUsernameConfigured == true && _model.CerbosAdminPasswordConfigured == true;
+
+    private bool CanShowPolicySync =>
+        !IsDeploymentProvider && IsSelected(CerbosProvider) && HasServerSideAdminApiCredentials && !PolicyPackageReady;
+
+    private bool CanSyncPolicies =>
+        !_isSyncing && !_submitState.IsSubmitting && CanShowPolicySync &&
+        _model.CerbosEndpointVerified == true;
+
+    private bool CanVerify =>
+        !_isVerifying &&
+        !string.IsNullOrWhiteSpace(_model.CerbosGrpcEndpoint);
+
+    private bool CanSave =>
+        !_submitState.IsSubmitting &&
+        (IsSelected(LocalProvider) ||
+         (!string.IsNullOrWhiteSpace(_model.CerbosGrpcEndpoint) && _model.CerbosEndpointVerified == true && PolicyPackageReady));
+
+    private bool CanPrimaryAction =>
+        IsDeploymentProvider
+            ? IsDeploymentFailed && !_isSyncing
+            : IsSelected(CerbosProvider) && CanShowPolicySync
+            ? CanSyncPolicies
+            : CanSave;
+
+    private string PrimaryActionLabel => IsDeploymentProvider
+        ? IsSelected(LocalProvider) ? "Continue setup" : "Retry automatic setup"
+        : IsSelected(LocalProvider)
+        ? "Continue with Local RBAC"
+        : _model.CerbosEndpointVerified != true
+            ? "Continue with Cerbos"
+            : CanShowPolicySync
+                ? "Sync policies now"
+                : PolicyPackageReady
+                    ? "Continue with Cerbos"
+                    : "Confirm manual policy installation";
+
+    private string RuntimeStatusLabel => _model.CerbosEndpointVerified == true
+        ? "Reachable"
+        : string.IsNullOrWhiteSpace(_model.CerbosGrpcEndpoint) ? "Not configured" : "Not verified";
+
+    private Color RuntimeStatusColor => _model.CerbosEndpointVerified == true ? Color.Success : Color.Warning;
+
+    private string PolicyReadinessLabel => PolicyPackageReady ? "Policies confirmed" : "Policies not verified";
+
+    private Color PolicyReadinessColor => PolicyPackageReady ? Color.Success : Color.Warning;
+
+    private string SyncStatusLabel => PolicyPackageReady
+        ? "Synchronized"
+        : HasServerSideAdminApiCredentials ? "Available" : "Not configured";
+
+    private Color SyncStatusColor => PolicyPackageReady
+        ? Color.Success
+        : HasServerSideAdminApiCredentials ? Color.Info : Color.Default;
+
+    private string SourceLabel => string.Equals(EndpointOwnership.Mode, "deployment-managed", StringComparison.OrdinalIgnoreCase)
+        ? "Deployment-managed"
+        : EndpointOwnership.BootstrapAvailable == true ? "From deployment" : "Application-managed";
+
+    private string PolicySyncGuidance => IsDeploymentProvider
+        ? "Endpoint checks and policy synchronization use deployment-managed server settings. No Cerbos credential is sent to the browser."
+        : HasServerSideAdminApiCredentials
+            ? $"Sync uses {AdminCredentialsOwnership.Badge?.ToLowerInvariant() ?? "configured"} Admin API credentials held by the server."
+            : "Server-side sync requires Cerbos Admin API credentials. This page never collects the Admin API password.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var status = await InstanceOnboardingService.GetStatusAsync();
+        if (status?.IsCompleted == true)
+        {
+            _shouldLoadConfiguration = false;
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_shouldLoadConfiguration)
+        {
+            return;
+        }
+
+        try
+        {
+            _model = await InstanceOnboardingService.GetAuthorizationProviderConfigurationAsync();
+            ApplyProviderDefault();
+
+            if (IsDeploymentProvider && !IsDeploymentFailed)
+            {
+                Navigation.NavigateTo("/onboarding/instance", forceLoad: true);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                "Failed to load authorization provider configuration. FailureType={FailureType}",
+                ex.GetType().Name);
+            _errorMessage = "Could not load authorization provider configuration. Please refresh and try again.";
+            _model = new AuthorizationProviderConfigurationDto();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelectProvider(string provider)
+    {
+        if (IsDeploymentProvider)
+        {
+            return;
+        }
+
+        _model.Provider = provider;
+        _errorMessage = null;
+        _successMessage = null;
+        _manualPolicyPackageInstalled = false;
+        _policyPackageSynced = false;
+    }
+
+    private void ApplyProviderDefault()
+    {
+        if (!string.IsNullOrWhiteSpace(_model.Provider))
+        {
+            return;
+        }
+
+        _model.Provider = LocalProvider;
+    }
+
+    private bool IsSelected(string provider) =>
+        string.Equals(_model.Provider, provider, StringComparison.OrdinalIgnoreCase);
+
+    private static Severity OwnershipAlertSeverity(SecretOwnershipDto ownership) =>
+        string.Equals(ownership.Mode, "deployment-managed", StringComparison.OrdinalIgnoreCase)
+            ? Severity.Warning
+            : ownership.BootstrapAvailable == true
+                ? Severity.Info
+                : Severity.Success;
+
+    private void OnCerbosEndpointChanged(string value)
+    {
+        if (IsEndpointLocked)
+        {
+            return;
+        }
+
+        var endpointChanged = !string.Equals(_model.CerbosGrpcEndpoint, value, StringComparison.Ordinal);
+        _model.CerbosGrpcEndpoint = value;
+
+        if (endpointChanged)
+        {
+            _model.CerbosEndpointVerified = false;
+            _policyPackageSynced = false;
+            _manualPolicyPackageInstalled = false;
+        }
+    }
+
+    private async Task VerifyCerbosEndpointAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_model.CerbosGrpcEndpoint))
+        {
+            return;
+        }
+
+        _isVerifying = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var response = await InstanceOnboardingService.VerifyCerbosEndpointAsync(_model.CerbosGrpcEndpoint);
+            if (response.Success != true)
+            {
+                _model.CerbosEndpointVerified = false;
+                _policyPackageSynced = false;
+                _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+                    ? "Failed to verify the Cerbos PDP endpoint."
+                    : response.Message;
+
+                if (response.Errors?.Count > 0)
+                {
+                    _errorMessage += " " + string.Join(" ", response.Errors);
+                }
+
+                return;
+            }
+
+            _model.CerbosEndpointVerified = true;
+            _successMessage = response.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("Cerbos endpoint test failed. FailureType={FailureType}", ex.GetType().Name);
+            _model.CerbosEndpointVerified = false;
+            _errorMessage = "Failed to test the Cerbos PDP endpoint.";
+        }
+        finally
+        {
+            _isVerifying = false;
+        }
+    }
+
+    private async Task SyncPolicyPackageAsync()
+    {
+        if (!CanShowPolicySync)
+        {
+            return;
+        }
+
+        // If the endpoint has not been verified yet (e.g. it was pre-filled from env vars
+        // but the user has not clicked "Test endpoint"), verify it first before syncing.
+        // This keeps "Test endpoint" as an optional standalone action while making
+        // "Sync policies now" self-sufficient.
+        if (_model.CerbosEndpointVerified != true)
+        {
+            await VerifyCerbosEndpointAsync();
+            if (_model.CerbosEndpointVerified != true)
+            {
+                // Verification failed — error message already set by VerifyCerbosEndpointAsync.
+                return;
+            }
+
+            // Verification passed — clear any previous success message so the sync result
+            // is shown cleanly.
+            _successMessage = null;
+        }
+
+        if (!CanSyncPolicies)
+        {
+            return;
+        }
+
+        _isSyncing = true;
+        _errorMessage = null;
+        _successMessage = null;
+        _manualPolicyPackageInstalled = false;
+
+        var syncResponse = await InstanceOnboardingService.SyncAuthorizationPolicyPackageAsync();
+        _isSyncing = false;
+
+        if (syncResponse.Success != true)
+        {
+            _model.CerbosAdminPassword = null;
+            _policyPackageSynced = false;
+            _errorMessage = string.IsNullOrWhiteSpace(syncResponse.Message)
+                ? "Authorization policy package sync failed."
+                : syncResponse.Message;
+
+            if (syncResponse.Errors?.Count > 0)
+            {
+                _errorMessage += " " + string.Join(" ", syncResponse.Errors);
+            }
+
+            return;
+        }
+
+        _model.CerbosAdminPassword = null;
+        _policyPackageSynced = true;
+        _successMessage = string.IsNullOrWhiteSpace(syncResponse.Message)
+            ? "Policies synced. You can continue with Cerbos."
+            : syncResponse.Message;
+    }
+
+    private async Task PrimaryActionAsync()
+    {
+        if (IsDeploymentProvider)
+        {
+            if (IsSelected(LocalProvider))
+            {
+                Navigation.NavigateTo("/onboarding/instance", forceLoad: true);
+                return;
+            }
+
+            await RetryDeploymentReconciliationAsync();
+            return;
+        }
+
+        if (IsSelected(CerbosProvider) && CanShowPolicySync)
+        {
+            await SyncPolicyPackageAsync();
+            return;
+        }
+
+        await SaveAndContinueAsync();
+    }
+
+    private async Task SaveAndContinueAsync()
+    {
+        _submitState.Start();
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var response = await InstanceOnboardingService.SaveAuthorizationProviderConfigurationAsync(_model);
+            if (response.Success != true)
+            {
+                _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+                    ? "Failed to save authorization provider configuration."
+                    : response.Message;
+
+                if (response.Errors?.Count > 0)
+                {
+                    _errorMessage += " " + string.Join(" ", response.Errors);
+                }
+
+                return;
+            }
+
+            _model.CerbosAdminPassword = null;
+            _successMessage = response.Message;
+
+            Navigation.NavigateTo("/onboarding/instance", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("Authorization provider save failed. FailureType={FailureType}", ex.GetType().Name);
+            _errorMessage = "Failed to save authorization provider configuration.";
+        }
+        finally
+        {
+            _submitState.Complete();
+        }
+    }
+
+    private async Task RetryDeploymentReconciliationAsync()
+    {
+        _isSyncing = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var response = await InstanceOnboardingService.SyncAuthorizationPolicyPackageAsync();
+            _model = await InstanceOnboardingService.GetAuthorizationProviderConfigurationAsync();
+
+            if (response.Success == true && _model.AuthorizationProviderConfigured == true)
+            {
+                Navigation.NavigateTo("/onboarding/instance", forceLoad: true);
+                return;
+            }
+
+            _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+                ? _model.AuthorizationProviderBootstrapMessage ?? "Automatic Cerbos setup did not complete."
+                : response.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("Authorization provider reconciliation retry failed. FailureType={FailureType}", ex.GetType().Name);
+            _errorMessage = "Automatic Cerbos setup did not complete.";
+        }
+        finally
+        {
+            _isSyncing = false;
+        }
+    }
+
+    private async Task CopyComposeCommandAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", DockerComposeSyncCommand);
+            _successMessage = "Docker Compose sync command copied.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("Could not copy Cerbos policy sync command. FailureType={FailureType}", ex.GetType().Name);
+            _errorMessage = "Could not copy the command. Use: " + DockerComposeSyncCommand;
+        }
+    }
+
+}

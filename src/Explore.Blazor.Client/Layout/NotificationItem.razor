@@ -1,0 +1,108 @@
+@* ABOUTME: Individual notification row showing type icon, scope badge, title, body, relative time.
+    ABOUTME: Click navigates to entity; archive/snooze/delete actions on hover. Unread items have highlight. *@
+
+<div class="notification-item @(IsUnread ? "notification-item--unread" : "") @(IsArchived ? "notification-item--archived" : "") @(IsSnoozed ? "notification-item--snoozed" : "")"
+     @onclick="() => OnClick.InvokeAsync(Notification)"
+     @onkeydown="HandleKeyDown"
+     role="button"
+     tabindex="0"
+     aria-label="@GetAccessibleLabel()">
+
+    <div class="notification-item__icon">
+        <MudIcon Icon="@GetTypeIcon()" Size="Size.Small" Color="@GetScopeColor()" />
+    </div>
+
+    <div class="notification-item__content">
+        <div class="notification-item__header">
+            <span class="notification-item__title">@Notification.Title</span>
+            @if (!string.IsNullOrEmpty(Notification.NotificationScopeName))
+            {
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Outlined"
+                         Color="@GetScopeColor()"
+                         Class="notification-item__scope">
+                    @Notification.NotificationScopeName
+                </MudChip>
+            }
+            @if (!string.IsNullOrEmpty(Notification.NotificationReasonName))
+            {
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Text"
+                         Color="Color.Default"
+                         Class="notification-item__reason">
+                    @GetReasonLabel()
+                </MudChip>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Notification.Body))
+        {
+            <p class="notification-item__body">@TruncateBody(Notification.Body)</p>
+        }
+
+        <div class="notification-item__meta">
+            @if (!string.IsNullOrEmpty(Notification.SourceActorName))
+            {
+                <span class="notification-item__source">From @Notification.SourceActorName</span>
+                <span class="notification-item__dot">·</span>
+            }
+            @if (!string.IsNullOrEmpty(GetContextLabel()))
+            {
+                <span class="notification-item__context">@GetContextLabel()</span>
+                <span class="notification-item__dot">·</span>
+            }
+            <span class="notification-item__time">@FormatRelativeTime(Notification.CreatedAt)</span>
+            @if (IsSnoozed)
+            {
+                <span class="notification-item__dot">·</span>
+                <MudIcon Icon="@Icons.Material.Outlined.Snooze" Size="Size.Small" Class="notification-item__snooze-icon" />
+                <span class="notification-item__snooze-until">until @FormatSnoozeTime(Notification.SnoozedUntil)</span>
+            }
+            @if (IsArchived)
+            {
+                <span class="notification-item__dot">·</span>
+                <MudIcon Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" Class="notification-item__archive-icon" />
+                <span class="notification-item__archive-label">Archived</span>
+            }
+        </div>
+    </div>
+
+    <div class="notification-item__actions">
+        @if (IsArchived)
+        {
+            <button class="notification-item__action-btn"
+                    @onclick="HandleUnarchive"
+                    @onclick:stopPropagation
+                    aria-label="Unarchive notification"
+                    title="Unarchive">
+                <MudIcon Icon="@Icons.Material.Outlined.Unarchive" Size="Size.Small" />
+            </button>
+        }
+        else
+        {
+            <button class="notification-item__action-btn"
+                    @onclick="HandleArchive"
+                    @onclick:stopPropagation
+                    aria-label="Archive notification"
+                    title="Archive">
+                <MudIcon Icon="@Icons.Material.Outlined.Archive" Size="Size.Small" />
+            </button>
+            <button class="notification-item__action-btn"
+                    @onclick="HandleSnooze"
+                    @onclick:stopPropagation
+                    aria-label="Snooze notification"
+                    title="Snooze">
+                <MudIcon Icon="@Icons.Material.Outlined.Snooze" Size="Size.Small" />
+            </button>
+        }
+        <button class="notification-item__action-btn notification-item__action-btn--delete"
+                @onclick="HandleDelete"
+                @onclick:stopPropagation
+                aria-label="Delete notification"
+                title="Delete">
+            <MudIcon Icon="@Icons.Material.Outlined.Close" Size="Size.Small" />
+        </button>
+    </div>
+</div>

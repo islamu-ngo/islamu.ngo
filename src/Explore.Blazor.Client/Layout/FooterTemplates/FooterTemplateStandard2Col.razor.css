@@ -1,0 +1,98 @@
+/* ABOUTME: Scoped styles for the Standard 2-column footer template layout.
+   ABOUTME: Two-column grid with brand left and all link groups combined on the right. */
+
+/* Desktop: two-column grid (brand left, links right) */
+.footer-std2__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: var(--isl-space-10);
+}
+
+/* Links column: stack link groups vertically with spacing */
+::deep .footer-std2__links-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--isl-space-8);
+}
+
+/* Tablet and narrow desktop (<=1024px): single column, brand centered on top */
+@media (max-width: 63.999em) {
+    ::deep .footer-std2__brand-col {
+        text-align: center;
+    }
+
+    ::deep .footer-std2__brand-col .site-footer__brand {
+        justify-content: center;
+    }
+
+    ::deep .footer-std2__brand-col .site-footer__description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    ::deep .footer-std2__links-col {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+        gap: var(--isl-space-8) clamp(var(--isl-space-8), 8vw, var(--isl-space-12, 3rem));
+    }
+
+    ::deep .footer-std2__links-col .site-footer__section {
+        min-width: 10rem;
+    }
+
+    ::deep .footer-std2__links-col .site-footer__link {
+        margin-inline: auto;
+    }
+}
+
+@container (max-width: 68.999em) {
+    .footer-std2__grid {
+        grid-template-columns: 1fr;
+        gap: var(--isl-space-8);
+    }
+
+    ::deep .footer-std2__brand-col {
+        text-align: center;
+    }
+
+    ::deep .footer-std2__brand-col .site-footer__brand {
+        justify-content: center;
+    }
+
+    ::deep .footer-std2__brand-col .site-footer__description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    ::deep .footer-std2__links-col {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+        gap: var(--isl-space-8) clamp(var(--isl-space-8), 8cqw, var(--isl-space-12, 3rem));
+    }
+
+    ::deep .footer-std2__links-col .site-footer__section {
+        min-width: 10rem;
+    }
+
+    ::deep .footer-std2__links-col .site-footer__link {
+        margin-inline: auto;
+    }
+}
+
+/* Mobile (<=599px): stack everything, center */
+@media (max-width: 37.499em) {
+    ::deep .footer-std2__links-col {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    ::deep .footer-std2__links-col .site-footer__section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+}

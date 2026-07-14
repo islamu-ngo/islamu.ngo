@@ -1,0 +1,285 @@
+# ABOUTME: Production CI/CD — builds Docker images and deploys to Coolify on push to main or version tags.
+# ABOUTME: Uses change detection to only build/test/deploy API or UI when their source code changes.
+
+name: Build and Deploy to Coolify (Production)
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      override_reason:
+        description: Required only when DEPLOYMENT_FREEZE is true; explain the production override.
+        required: false
+        type: string
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore:
+      # AI / tool configuration directories
+      - ".claude/**"
+      - ".codex/**"
+      - ".copilot/**"
+      - ".gemini/**"
+      - ".opencode/**"
+      - ".repomix/**"
+      - ".sisyphus/**"
+      - ".taskmaster/**"
+      - ".ci/**"
+      # BMAD framework
+      - "_bmad/**"
+      - "_bmad-output/**"
+      # Documentation & metadata
+      - "docs/**"
+      - "schemas/**"
+      - "assets/**"
+      - "dev/**"
+      # Project management (Plane)
+      - "event/**"
+      # Cerbos policies (has own workflow)
+      - "cerbos/**"
+      # Local dev infrastructure
+      - "docker/**"
+      - "docker-compose.yml"
+      - "src/Explore.AppHost/**"
+      - "tests/Event.Benchmarks/**"
+      # Empty / unused directories
+      - "amp/**"
+      # Test projects (test-only changes don't affect deployed artifacts)
+      - "tests/Event.Application.UnitTests/**"
+      - "tests/Event.Domain.UnitTests/**"
+      - "tests/Event.Architecture.Tests/**"
+      - "tests/Event.Persistence.IntegrationTests/**"
+      - "tests/Event.API.IntegrationTests/**"
+      - "tests/Explore.Secrets.UnitTests/**"
+      - "tests/Explore.Blazor.Client.Tests/**"
+      - "tests/Explore.Blazor.IntegrationTests/**"
+      - "tests/Explore.Blazor.Client.E2ETests/**"
+      # Markdown & root meta files
+      - "**.md"
+      - "LICENSE"
+      - ".editorconfig"
+      - ".dockerignore"
+      - ".mcp.json"
+      - "repomix.config.json"
+      - "opencode.json"
+      - "jean.json"
+      # GitHub config (except this workflow)
+      - ".github/**"
+      - "!.github/workflows/_container-build.yml"
+      - "!.github/workflows/deploy-coolify.yml"
+
+env:
+  REGISTRY: atcr.io
+  REGISTRY_USER: amirakrari.bsky.social
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # JOB 1: Detect Changes
+  detect-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      ui: ${{ steps.filter.outputs.ui }}
+      both_changed: ${{ steps.check-both.outputs.both_changed }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Check for file changes
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          base: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          filters: |
+            ui:
+              - 'src/Explore.Blazor/**'
+              - 'src/Explore.Blazor.Client/**'
+              - 'src/Explore.ServiceDefaults/**'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'Explore.sln'
+
+            api:
+              - 'src/Explore.API/**'
+              - 'src/Explore.Application/**'
+              - 'src/Explore.Domain/**'
+              - 'src/Explore.Infrastructure/**'
+              - 'src/Explore.Persistence/**'
+              - 'src/Explore.Diagnostic/**'
+              - 'src/Explore.Secrets/**'
+              - 'src/Event.MigrationService/**'
+              - 'src/Explore.ServiceDefaults/**'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'Explore.sln'
+
+      - name: Check if both changed
+        id: check-both
+        env:
+          API_CHANGED: ${{ steps.filter.outputs.api }}
+          UI_CHANGED: ${{ steps.filter.outputs.ui }}
+          IS_TAG_REF: ${{ github.ref_type == 'tag' }}
+        run: |
+          # Both changed if: (api AND ui) OR it's a tag push
+          if [ "$IS_TAG_REF" == "true" ] || { [ "$API_CHANGED" == "true" ] && [ "$UI_CHANGED" == "true" ]; }; then
+            echo "both_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "both_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate Dynamic Build Matrix
+        id: set-matrix
+        env:
+          API_CHANGED: ${{ steps.filter.outputs.api }}
+          UI_CHANGED: ${{ steps.filter.outputs.ui }}
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          MATRIX_JSON="[]"
+
+          if [ "$API_CHANGED" == "true" ] || [ "$REF_TYPE" == "tag" ]; then
+            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-event-api", "dockerfile": "src/Explore.API/Dockerfile", "context": "."}]')
+          fi
+
+          if [ "$UI_CHANGED" == "true" ] || [ "$REF_TYPE" == "tag" ]; then
+            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-event-ui", "dockerfile": "src/Explore.Blazor/Dockerfile", "context": "."}]')
+          fi
+
+          echo "matrix=$(echo "$MATRIX_JSON" | tr -d '\n')" >> "$GITHUB_OUTPUT"
+
+  # JOB 2: Run Tests (Unified)
+  run-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.ui == 'true' || github.ref_type == 'tag'
+    uses: ./.github/workflows/_build-test.yml
+    with:
+      run-integration-tests: true
+      configuration: Release
+
+  # JOB 3: Build & Push
+  build-and-push:
+    needs: [detect-changes, run-tests]
+    if: always() && needs.run-tests.result == 'success' && needs.detect-changes.outputs.matrix != '[]'
+    uses: ./.github/workflows/_container-build.yml
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      artifact-metadata: write
+      id-token: write
+
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    with:
+      image-name: ${{ matrix.image-name }}
+      dockerfile: ${{ matrix.dockerfile }}
+      context: ${{ matrix.context }}
+      registry: atcr.io
+      registry-user: amirakrari.bsky.social
+      build-configuration: Release
+      metadata-tags: |
+        type=raw,value=latest
+        type=raw,value=sha-${{ github.sha }}
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+    secrets:
+      ATCR_PASSWORD: ${{ secrets.ATCR_PASSWORD }}
+
+  # JOB 4: Deploy to Production
+  deploy:
+    needs: [detect-changes, build-and-push]
+    if: always() && needs.build-and-push.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Checkout local deployment action
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Download container build evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: container-build-*
+          path: artifacts/container-build
+          merge-multiple: true
+
+      - name: Resolve API deploy image evidence
+        id: api-evidence
+        if: ${{ needs.detect-changes.outputs.api == 'true' || github.ref_type == 'tag' }}
+        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-api sha-
+
+      - name: Resolve UI deploy image evidence
+        id: ui-evidence
+        if: ${{ needs.detect-changes.outputs.ui == 'true' || github.ref_type == 'tag' }}
+        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-ui sha-
+
+      - name: Trigger Coolify Deployment (API)
+        if: ${{ needs.detect-changes.outputs.api == 'true' || github.ref_type == 'tag' }}
+        uses: ./.ci/actions/deploy-coolify
+        with:
+          environment-name: production
+          component: API
+          coolify-webhook: ${{ secrets.COOLIFY_DEPLOY_API_WEBHOOK }}
+          coolify-token: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+          smoke-base-url: ${{ vars.PRODUCTION_API_URL }}
+          registry: atcr.io
+          registry-user: amirakrari.bsky.social
+          image-name: islamu-event-api
+          immutable-tag-prefix: sha-
+          expected-image-digest: ${{ steps.api-evidence.outputs.expected-image-digest }}
+          promotion-evidence-path: ${{ steps.api-evidence.outputs.promotion-evidence-path }}
+          deployment-freeze: ${{ vars.DEPLOYMENT_FREEZE }}
+          override-reason: ${{ inputs.override_reason }}
+          require-smoke-check: "true"
+
+      - name: Trigger Coolify Deployment (UI)
+        if: ${{ needs.detect-changes.outputs.ui == 'true' || github.ref_type == 'tag' }}
+        uses: ./.ci/actions/deploy-coolify
+        with:
+          environment-name: production
+          component: UI
+          coolify-webhook: ${{ secrets.COOLIFY_DEPLOY_UI_WEBHOOK }}
+          coolify-token: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+          smoke-base-url: ${{ vars.PRODUCTION_UI_URL }}
+          registry: atcr.io
+          registry-user: amirakrari.bsky.social
+          image-name: islamu-event-ui
+          immutable-tag-prefix: sha-
+          expected-image-digest: ${{ steps.ui-evidence.outputs.expected-image-digest }}
+          promotion-evidence-path: ${{ steps.ui-evidence.outputs.promotion-evidence-path }}
+          deployment-freeze: ${{ vars.DEPLOYMENT_FREEZE }}
+          override-reason: ${{ inputs.override_reason }}
+          require-smoke-check: "true"
+
+      - name: Upload Deployment Evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deployment-production-evidence
+          path: artifacts/deploy/**
+          if-no-files-found: warn
+          retention-days: 90

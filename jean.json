@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "setup": null,
+    "teardown": null,
+    "run": "dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile https"
+  },
+  "ports": [
+    {
+      "port": 7177,
+      "label": "Blazor"
+    },
+    {
+      "port": 17071,
+      "label": "Aspire"
+    }
+  ]
+}

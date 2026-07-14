@@ -1,0 +1,115 @@
+@* ABOUTME: Public group profile with banner, subscription affordance, and group-hosted events. *@
+@* ABOUTME: Reuses shared EventList cards and the event preview workspace for group event browsing. *@
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Components.Notifications
+@using Explore.Blazor.Client.Components.Events
+@using Explore.Blazor.Client.Helpers
+@using Explore.Blazor.Client.Shared
+@using Blazouter.Services
+@attribute [StreamRendering]
+
+<PageTitle>@(_group?.FullName ?? "Group Profile")</PageTitle>
+
+@if (_isLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (_group == null)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+        <div role="alert">
+            <MudAlert Severity="Severity.Error">Group not found.</MudAlert>
+        </div>
+    </MudContainer>
+}
+else
+{
+    <div class="group-profile">
+        @* ── Banner Section ── *@
+        <div class="group-profile__banner" style="@_bannerStyle"></div>
+
+        <MudContainer MaxWidth="MaxWidth.Large" Class="group-profile__container">
+            @* ── Header: Avatar + Info + Subscribe ── *@
+            <div class="group-profile__header">
+                <div class="group-profile__avatar-wrapper">
+                    @if (!string.IsNullOrEmpty(_group.ActorProfilePictureUri))
+                    {
+                        <MudImage Src="@_group.ActorProfilePictureUri"
+                                  Alt="@($"{_group.FullName} Logo")"
+                                  Class="group-profile__avatar"
+                                  ObjectFit="ObjectFit.Cover" />
+                    }
+                    else
+                    {
+                        <MudImage Src="@GetGroupPlaceholder()"
+                                  Alt="Group Logo"
+                                  Class="group-profile__avatar"
+                                  ObjectFit="ObjectFit.Cover" />
+                    }
+                </div>
+
+                <div class="group-profile__header-right">
+                    <ActorSubscriptionButton TargetActorId="@_group.ActorId"
+                                             TargetName="@_group.FullName"
+                                             CanSubscribe="@_group.HasHalLink("subscribe")"
+                                             CanViewSubscription="@_group.HasHalLink("subscription")"
+                                             CssClass="group-profile__subscribe-btn" />
+                </div>
+            </div>
+
+            @* ── Name + Description ── *@
+            <div class="group-profile__identity">
+                <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 700;" Class="mb-1">@_group.FullName</MudText>
+
+                @if (!string.IsNullOrEmpty(_group.Description))
+                {
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-1">@_group.Description</MudText>
+                }
+            </div>
+
+            <MudDivider Class="my-6" />
+
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-6 bg-transparent" Class="mt-6 bg-transparent" Color="Color.Transparent" SliderColor="Color.Primary">
+                <MudTabPanel Text="Posts">
+                    <ProfileEventSections IsLoading="@_isLoadingEvents"
+                                          NavigationEvents="@PostEvents"
+                                          UpcomingEvents="@_upcomingEvents"
+                                          PastEventsByDate="@_pastEventsByDate"
+                                          CssPrefix="group-profile"
+                                          UpcomingTitle="Upcoming Events"
+                                          PastTitle="Past Events"
+                                          UpcomingAriaLabel="Upcoming group events"
+                                          PastAriaLabelPrefix="Past group events on"
+                                          EmptyTitle="No upcoming events"
+                                          EmptyCopy="Subscribe to get notified when new events are posted." />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Registration">
+                    <ProfileEventSections IsLoading="@_isLoadingRegistrationEvents"
+                                          NavigationEvents="@RegistrationEvents"
+                                          UpcomingEvents="@_upcomingRegistrationEvents"
+                                          PastEventsByDate="@_pastRegistrationEventsByDate"
+                                          CssPrefix="group-profile"
+                                          UpcomingTitle="Upcoming Events"
+                                          PastTitle="Past Events"
+                                          UpcomingAriaLabel="Upcoming group registration events"
+                                          PastAriaLabelPrefix="Past group registration events on"
+                                          EmptyTitle="No registered events"
+                                          EmptyCopy="Events this group attends will appear here." />
+                </MudTabPanel>
+
+                <MudTabPanel Text="Notifications">
+                    <NotificationPreferenceMatrix Scope="group"
+                                                  GroupId="@Id"
+                                                  Title="Notification preferences"
+                                                  Description="Choose which group notifications can reach members by channel."
+                                                  UnavailableMessage="Notification preferences are available to authorized group managers." />
+                </MudTabPanel>
+            </MudTabs>
+        </MudContainer>
+    </div>
+}

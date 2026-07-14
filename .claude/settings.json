@@ -1,0 +1,77 @@
+{
+  "permissions": {
+    "allow": ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash(git *)", "Bash(dotnet *)"],
+    "defaultMode": "acceptEdits"
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["sequential-thinking", "playwright", "context7"],
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet .claude/hooks/SkillTrigger.cs"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet .claude/hooks/SecurityCheck.cs"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet .claude/hooks/ContextTracker.cs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet .claude/hooks/FormatCode.cs"
+          },
+          {
+            "type": "command",
+            "command": "dotnet .claude/hooks/BuildCheck.cs"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "github@claude-plugins-official": false,
+    "serena@claude-plugins-official": false,
+    "commit-commands@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true,
+    "llm-council@the-llm-council": true,
+    "claude-mem@thedotmack": false
+  },
+  "commands": {
+    "build": "dotnet build",
+    "test": "dotnet test",
+    "format": "dotnet format",
+    "run": "dotnet run"
+  },
+  "trusted_domains": [
+    "localhost",
+    "github.com",
+    "islamu.ngo",
+    "event.islamu.ngo"
+  ]
+}

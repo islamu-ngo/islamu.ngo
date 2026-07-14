@@ -1,0 +1,67 @@
+@* ABOUTME: Renders module and policy default fields for the Instance Admin Settings sidebar. *@
+@* ABOUTME: Includes module toggles, user submission policy, and organization verification controls. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Modules &amp; Policy Defaults</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            Enable or disable platform modules and configure default policies for event submissions and verification.
+        </MudText>
+    </div>
+    <MudStack Spacing="3">
+        <MudSwitch T="bool"
+                   Value="Model.EnableIslamicModule == true"
+                   ValueChanged="@(value => Model.EnableIslamicModule = value)"
+                   Color="Color.Primary">
+            Enable Islamic module
+        </MudSwitch>
+
+        <MudSwitch T="bool"
+                   Value="Model.EnableTechModule == true"
+                   ValueChanged="@(value => Model.EnableTechModule = value)"
+                   Color="Color.Primary">
+            Enable Tech module
+        </MudSwitch>
+
+        <MudSwitch T="bool"
+                   Value="EventPolicy.AllowUserSubmittedEvents == true"
+                   ValueChanged="@(value => EventPolicy.AllowUserSubmittedEvents = value)"
+                   Color="Color.Primary">
+            Allow user-submitted events
+        </MudSwitch>
+
+        <MudSwitch T="bool"
+                   Value="OrganizationPolicy.RequireOrganizationVerification == true"
+                   ValueChanged="@(value => OrganizationPolicy.RequireOrganizationVerification = value)"
+                   Color="Color.Primary">
+            Require organization verification
+        </MudSwitch>
+
+        @if (!IsSingleTenant)
+        {
+            <MudSwitch T="bool"
+                       Value="OrganizationPolicy.AllowTenantToOmitVerification == true"
+                       ValueChanged="@(value => OrganizationPolicy.AllowTenantToOmitVerification = value)"
+                       Color="Color.Primary">
+                Allow tenant admins to omit organization verification
+            </MudSwitch>
+        }
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ModuleSettingsDto Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventPolicyDto EventPolicy { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public OrganizationPolicyDto OrganizationPolicy { get; set; } = null!;
+
+    [Parameter]
+    public bool IsSingleTenant { get; set; }
+}

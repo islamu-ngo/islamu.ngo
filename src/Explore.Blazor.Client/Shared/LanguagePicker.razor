@@ -1,0 +1,126 @@
+@* ABOUTME: Dropdown language picker using MudMenu; delegates persistence to ILanguagePreferenceService. *@
+@* ABOUTME: Hides itself when the `Enabled` parameter is false (governance kill-switch wired by parent). *@
+
+@using Explore.Blazor.Client.Contracts.Services.Accessibility
+@using Explore.Blazor.Client.Localization
+@using Explore.Blazor.Client.Models
+@inject ITranslationService TranslationService
+@inject ILanguagePreferenceService LanguagePreferenceService
+@inject IAccessibilityAnnouncerService AccessibilityAnnouncer
+@inject ISnackbar Snackbar
+@inject ILogger<LanguagePicker> Logger
+
+@if (!Enabled)
+{
+    return;
+}
+
+@{
+    var currentLanguage = LanguageContext.ForLanguage(_currentLang);
+}
+
+<MudMenu @bind-Open="_isOpen"
+         AnchorOrigin="Origin.BottomCenter"
+         TransformOrigin="Origin.TopCenter"
+         Dense="true"
+         Class="language-picker">
+    <ActivatorContent>
+        <MudButton Elevation="0" Variant="Variant.Text"
+                   Color="Color.Inherit"
+                   OnClick="ToggleMenu"
+                   EndIcon="@(_isOpen ? Icons.Material.Filled.ArrowDropUp : Icons.Material.Filled.ArrowDropDown)"
+                   aria-label="@GetAriaLabel()"
+                   Class="language-picker__button">
+            <span class="language-picker__button-content">
+                <span class="language-picker__flag">@currentLanguage.Flag</span>
+                <span class="language-picker__current-language">@currentLanguage.LanguageCode.ToUpperInvariant()</span>
+            </span>
+        </MudButton>
+    </ActivatorContent>
+    <ChildContent>
+        @if (_cultures.Count > 0)
+        {
+            @foreach (var culture in _cultures)
+            {
+                var entry = culture;
+                <MudMenuItem OnClick="@(() => SelectLanguageAsync(entry.Code))"
+                             Class="@(entry.Code == _currentLang ? "language-picker__item language-picker__item--active" : "language-picker__item")"
+                             aria-pressed="@(entry.Code == _currentLang)">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText Typo="Typo.body2">@entry.Flag</MudText>
+                        <MudText Typo="Typo.body2">@entry.NativeName (@entry.Code.ToUpperInvariant())</MudText>
+                    </MudStack>
+                </MudMenuItem>
+            }
+        }
+        else
+        {
+            <MudMenuItem Disabled="true">
+                <MudText Typo="Typo.body2">Loading...</MudText>
+            </MudMenuItem>
+        }
+    </ChildContent>
+</MudMenu>
+
+@code {
+    [CascadingParameter(Name = "Language")]
+    private LanguageContext? Language { get; set; }
+
+    /// <summary>
+    /// Governance kill-switch. When false, the picker is not rendered at all.
+    /// Defaults to true; parent layouts should pass the value resolved from
+    /// <c>localization.client_picker_enabled</c> (via BFF/bootstrap state).
+    /// </summary>
+    [Parameter]
+    public bool Enabled { get; set; } = true;
+
+    private IReadOnlyList<CultureEntry> _cultures = Array.Empty<CultureEntry>();
+    private string _currentLang = "en";
+    private bool _isOpen;
+
+    protected override void OnInitialized()
+    {
+        _currentLang = Language?.LanguageCode ?? "en";
+        // The picker surfaces the compile-time allowlist directly. The TMS-discovered
+        // languages (GetAvailableLanguagesAsync) are REPORTING-only per D12 and are
+        // NEVER authoritative for what the picker shows.
+        _cultures = CultureRegistry.GetAll();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Language is not null && !string.IsNullOrEmpty(Language.LanguageCode))
+        {
+            _currentLang = Language.LanguageCode;
+        }
+    }
+
+    private void ToggleMenu() => _isOpen = !_isOpen;
+
+    private async Task SelectLanguageAsync(string languageCode)
+    {
+        if (string.Equals(languageCode, _currentLang, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var success = await LanguagePreferenceService.SetLanguageAsync(languageCode);
+        if (!success)
+        {
+            Snackbar.Add("Unable to change language. Please try again.", Severity.Error);
+            await AccessibilityAnnouncer.AnnounceAssertiveAsync("Language change failed.");
+            Logger.LogWarning("[LANGUAGE_PICKER] Persist failed for {Code}", languageCode);
+            return;
+        }
+
+        await TranslationService.ChangeLanguageAsync(languageCode);
+        _currentLang = languageCode;
+
+        var entry = LanguageContext.ForLanguage(languageCode);
+        Snackbar.Add($"Language changed to {entry.LanguageName}", Severity.Success);
+    }
+
+    private string GetAriaLabel()
+    {
+        var currentName = Language?.LanguageName ?? "English";
+        return $"Change language. Current: {currentName}";
+    }
+}

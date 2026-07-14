@@ -1,0 +1,69 @@
+@* ABOUTME: Bottom theme studio tray for advanced Create Event visual styling. *@
+@* ABOUTME: Replaces the inline Event Appearance accordion with focused, dismissible composer chrome. *@
+
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+
+@if (IsOpen)
+{
+    <div class="theme-studio-tray" role="dialog" aria-modal="true" aria-labelledby="theme-studio-title" tabindex="-1" @onkeydown="HandleKeyDownAsync">
+        <button type="button"
+                class="theme-studio-tray__backdrop"
+                aria-label="Close theme studio"
+                @onclick="CloseAsync"></button>
+        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+            <section class="theme-studio-tray__panel">
+                <header class="theme-studio-tray__header">
+                    <div>
+                        <MudText Typo="Typo.h6" HtmlTag="h2" id="theme-studio-title">Theme studio</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Tune the event look without crowding the main composer.</MudText>
+                    </div>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                   aria-label="Close theme studio"
+                                   OnClick="CloseAsync" />
+                </header>
+
+                <div class="theme-studio-tray__body">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Use this tray for precise styling. Common presets and simple effects stay in the page-level theme quick bar.
+                    </MudText>
+
+                    <MudExpansionPanels Elevation="0" Class="theme-studio-tray__advanced-panel">
+                        <MudExpansionPanel Text="Advanced styling controls" MaxHeight="760" IsInitiallyExpanded="true">
+                              <AppearanceEditor BackgroundColor="@BackgroundColor"
+                                                BackgroundColorChanged="BackgroundColorChanged"
+                                                BackgroundEffect="@BackgroundEffect"
+                                               BackgroundEffectChanged="BackgroundEffectChanged"
+                                               ShowImageField="false"
+                                               ShowPreview="true"
+                                               PreviewAdditionalCss="aspect-ratio: 16/9; position: relative" />
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                </div>
+            </section>
+        </MudFocusTrap>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string BackgroundColor { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> BackgroundColorChanged { get; set; }
+    [Parameter] public string BackgroundEffect { get; set; } = "None";
+    [Parameter] public EventCallback<string> BackgroundEffectChanged { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task HandleKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            await CloseAsync();
+        }
+    }
+
+    private Task CloseAsync()
+    {
+        return OnClose.InvokeAsync();
+    }
+
+}

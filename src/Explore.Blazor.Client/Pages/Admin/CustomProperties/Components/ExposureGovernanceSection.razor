@@ -1,0 +1,370 @@
+@* ABOUTME: Exposure / searchability / exportability governance grid for Layer 3 custom-property definitions. *@
+@* ABOUTME: Implements Phase 9 tasks 9.7 (flag grid + bulk ops) and 9.9 (tooltips + doc link). *@
+
+@using Explore.Blazor.Client.Contracts.Services.CustomProperties
+@using Explore.Blazor.Client.Models
+@using Explore.Blazor.Client.Models.CustomProperties
+@using Explore.Blazor.Client.Pages.Admin.CustomProperties.Dialogs
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Components.Forms
+@using MudBlazor
+@inject ICustomPropertyAdminService AdminService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<div class="exposure-governance">
+    <div class="exposure-governance__toolbar mb-4">
+        <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudSelect T="EntityTypeName"
+                       @bind-Value="_entityType"
+                       @bind-Value:after="ReloadAsync"
+                       Label="Scope"
+                       Dense="true"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Style="min-width: 180px;">
+                <MudSelectItem Value="EntityTypeName.Event">Event</MudSelectItem>
+                <MudSelectItem Value="EntityTypeName.Organization">Organization</MudSelectItem>
+                <MudSelectItem Value="EntityTypeName.Group">Group</MudSelectItem>
+            </MudSelect>
+
+            <MudTextField T="string"
+                          @bind-Value="_search"
+                          @bind-Value:after="StateHasChanged"
+                          Placeholder="Filter by key, namespace, display name..."
+                          Immediate="true"
+                          Clearable="true"
+                          Margin="Margin.Dense"
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="flex-grow-1"
+                          Style="min-width: 260px;" />
+
+            <MudSpacer />
+
+            @if (_selected.Count > 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @_selected.Count selected
+                </MudText>
+                <MudButton StartIcon="@Icons.Material.Filled.EditNote"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="OpenBulkEditDialogAsync"
+                           Disabled="@(_selected.Count == 0 || _submitState.IsSubmitting)">
+                    Bulk edit flags
+                </MudButton>
+            }
+
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Default"
+                           OnClick="ReloadAsync"
+                           aria-label="Reload definitions"
+                           Disabled="_isLoading" />
+        </MudStack>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-3" ShowCloseIcon="true" CloseIconClicked="() => _errorMessage = null">
+            @_errorMessage
+        </MudAlert>
+    }
+
+    @if (_isLoading)
+    {
+        <MudStack AlignItems="AlignItems.Center" Class="py-8">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Loading definitions…</MudText>
+        </MudStack>
+    }
+    else
+    {
+        <MudDataGrid T="CustomPropertyDefinitionListDto"
+                     Items="FilteredDefinitions"
+                     Dense="true"
+                     Hover="true"
+                     Bordered="false"
+                     MultiSelection="true"
+                     @bind-SelectedItems="_selected"
+                     SortMode="SortMode.Multiple"
+                     Filterable="false"
+                     QuickFilter="@(x => true)"
+                     RowsPerPage="25">
+            <Columns>
+                <SelectColumn T="CustomPropertyDefinitionListDto" />
+
+                <PropertyColumn Property="x => x.Namespace" Title="Namespace" />
+                <PropertyColumn Property="x => x.Key" Title="Key" />
+                <PropertyColumn Property="x => x.DisplayName" Title="Display Name" />
+                <PropertyColumn Property="x => x.PropertyType" Title="Type">
+                    <CellTemplate>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                            @((PropertyType)(context.Item.PropertyType ?? 0))
+                        </MudChip>
+                    </CellTemplate>
+                </PropertyColumn>
+
+                <TemplateColumn Title="Exposure" Sortable="false">
+                    <HeaderTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <span>Exposure</span>
+                            <MudTooltip Text="@GovernanceTooltips.ExposureLevel" Placement="Placement.Top">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info" />
+                            </MudTooltip>
+                        </MudStack>
+                    </HeaderTemplate>
+                    <CellTemplate>
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Variant="Variant.Filled"
+                                 Color="@GovernanceTooltips.ExposureColor((ExposureLevel)(context.Item.ExposureLevel ?? 0))">
+                            @((ExposureLevel)(context.Item.ExposureLevel ?? 0))
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Searchable" Sortable="false">
+                    <HeaderTemplate>@FlagHeader("Searchable", GovernanceTooltips.Searchable)</HeaderTemplate>
+                    <CellTemplate>@FlagCell(context.Item.IsSearchable == true)</CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Filterable" Sortable="false">
+                    <HeaderTemplate>@FlagHeader("Filterable", GovernanceTooltips.Filterable)</HeaderTemplate>
+                    <CellTemplate>@FlagCell(context.Item.IsFilterable == true)</CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Exportable" Sortable="false">
+                    <HeaderTemplate>@FlagHeader("Exportable", GovernanceTooltips.Exportable)</HeaderTemplate>
+                    <CellTemplate>@FlagCell(context.Item.IsExportable == true)</CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Moderation" Sortable="false">
+                    <HeaderTemplate>@FlagHeader("Moderation", GovernanceTooltips.Moderation)</HeaderTemplate>
+                    <CellTemplate>@FlagCell(context.Item.IsModerationRelevant == true)</CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Analytics" Sortable="false">
+                    <HeaderTemplate>@FlagHeader("Analytics", GovernanceTooltips.Analytics)</HeaderTemplate>
+                    <CellTemplate>@FlagCell(context.Item.IsAnalyticsRelevant == true)</CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Actions" Sortable="false">
+                    <CellTemplate>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Size="Size.Small"
+                                       Color="Color.Primary"
+                                       Disabled="@(context.Item.IsSystemOwned == true || _submitState.IsSubmitting)"
+                                       OnClick="@(() => OpenEditDialogAsync(context.Item))"
+                                       aria-label="@($"Edit governance flags for {context.Item.DisplayName}")" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="CustomPropertyDefinitionListDto" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</div>
+
+@code {
+    private bool _isLoading;
+    private FormSubmitState _submitState = new();
+    private string? _errorMessage;
+    private string? _search;
+    private EntityTypeName _entityType = EntityTypeName.Event;
+    private List<CustomPropertyDefinitionListDto> _definitions = new();
+    private HashSet<CustomPropertyDefinitionListDto> _selected = new();
+
+    private IEnumerable<CustomPropertyDefinitionListDto> FilteredDefinitions
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _definitions;
+            var term = _search.Trim();
+            return _definitions.Where(d =>
+                d.Key.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                d.Namespace.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                d.DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        _selected.Clear();
+        try
+        {
+            var page = await AdminService.GetDefinitionsAsync(_entityType, 1, 200);
+            _definitions = page.Items.OrderBy(d => d.Namespace).ThenBy(d => d.Key).ToList();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load definitions: {ex.Message}";
+            _definitions = new List<CustomPropertyDefinitionListDto>();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenEditDialogAsync(CustomPropertyDefinitionListDto definition)
+    {
+        if (definition.IsSystemOwned == true)
+        {
+            Snackbar.Add("System-owned definitions cannot be edited here.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<EditDefinitionFlagsDialog>
+        {
+            { x => x.Definitions, new List<CustomPropertyDefinitionListDto> { definition } }
+        };
+
+        var result = await EditDefinitionFlagsDialog.ShowAsync(
+            DialogService,
+            $"Edit flags: {definition.DisplayName}",
+            parameters,
+            DialogOptionsFactory.Medium());
+
+        var dialogResult = await result.Result;
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        if (dialogResult.Data is DefinitionFlagUpdateModel update)
+        {
+            await ApplySingleUpdateAsync(update);
+        }
+    }
+
+    private async Task OpenBulkEditDialogAsync()
+    {
+        if (_selected.Count == 0)
+            return;
+
+        var parameters = new DialogParameters<EditDefinitionFlagsDialog>
+        {
+            { x => x.Definitions, _selected.ToList() },
+            { x => x.IsBulkMode, true }
+        };
+
+        var result = await EditDefinitionFlagsDialog.ShowAsync(
+            DialogService,
+            $"Bulk edit flags ({_selected.Count} definitions)",
+            parameters,
+            DialogOptionsFactory.Medium());
+
+        var dialogResult = await result.Result;
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        if (dialogResult.Data is DefinitionFlagUpdateModel bulkUpdate)
+        {
+            await ApplyBulkUpdateAsync(bulkUpdate);
+        }
+    }
+
+    private async Task ApplySingleUpdateAsync(DefinitionFlagUpdateModel update)
+    {
+        _submitState.Start();
+        try
+        {
+            var response = await AdminService.UpdateDefinitionFlagsAsync(update);
+            if (response?.Success is not true)
+            {
+                _errorMessage = response?.Message ?? "Failed to update definition flags.";
+                Snackbar.Add(_errorMessage, Severity.Error);
+                return;
+            }
+            Snackbar.Add("Governance flags updated.", Severity.Success);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Update failed: {ex.Message}";
+            Snackbar.Add(_errorMessage, Severity.Error);
+        }
+        finally
+        {
+            _submitState.Complete();
+        }
+    }
+
+    private async Task ApplyBulkUpdateAsync(DefinitionFlagUpdateModel template)
+    {
+        _submitState.Start();
+        try
+        {
+            var updates = _selected.Select(d => new DefinitionFlagUpdateModel
+            {
+                DefinitionId = d.Id ?? Guid.Empty,
+                ExposureLevel = template.ExposureLevel,
+                IsSearchable = template.IsSearchable,
+                IsFilterable = template.IsFilterable,
+                IsExportable = template.IsExportable,
+                IsModerationRelevant = template.IsModerationRelevant,
+                IsAnalyticsRelevant = template.IsAnalyticsRelevant
+            }).ToList();
+
+            var response = await AdminService.UpdateManyDefinitionFlagsAsync(updates);
+            if (response.Success is not true)
+            {
+                _errorMessage = response.Message ?? "Bulk update completed with failures.";
+                Snackbar.Add(_errorMessage, Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add($"Updated {updates.Count} definitions.", Severity.Success);
+            }
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Bulk update failed: {ex.Message}";
+            Snackbar.Add(_errorMessage, Severity.Error);
+        }
+        finally
+        {
+            _submitState.Complete();
+        }
+    }
+
+    private static RenderFragment FlagHeader(string label, string tooltip) => builder =>
+    {
+        builder.OpenComponent<MudStack>(0);
+        builder.AddAttribute(1, "Row", true);
+        builder.AddAttribute(2, "AlignItems", AlignItems.Center);
+        builder.AddAttribute(3, "Spacing", 1);
+        builder.AddAttribute(4, "ChildContent", (RenderFragment)(inner =>
+        {
+            inner.OpenElement(0, "span");
+            inner.AddContent(1, label);
+            inner.CloseElement();
+            inner.OpenComponent<MudTooltip>(2);
+            inner.AddAttribute(3, "Text", tooltip);
+            inner.AddAttribute(4, "Placement", Placement.Top);
+            inner.AddAttribute(5, "ChildContent", (RenderFragment)(tip =>
+            {
+                tip.OpenComponent<MudIcon>(0);
+                tip.AddAttribute(1, "Icon", Icons.Material.Filled.Info);
+                tip.AddAttribute(2, "Size", Size.Small);
+                tip.AddAttribute(3, "Color", Color.Info);
+                tip.CloseComponent();
+            }));
+            inner.CloseComponent();
+        }));
+        builder.CloseComponent();
+    };
+
+    private static RenderFragment FlagCell(bool value) => builder =>
+    {
+        builder.OpenComponent<MudIcon>(0);
+        builder.AddAttribute(1, "Icon", value ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.RemoveCircleOutline);
+        builder.AddAttribute(2, "Color", value ? Color.Success : Color.Default);
+        builder.AddAttribute(3, "Size", Size.Small);
+        builder.AddAttribute(4, "aria-label", value ? "Enabled" : "Disabled");
+        builder.CloseComponent();
+    };
+}

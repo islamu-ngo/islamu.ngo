@@ -1,0 +1,752 @@
+@* ABOUTME: Sidebar layout component for Instance Admin Settings with context-aware sections. *@
+@* ABOUTME: In single-tenant mode shows unified settings; in multi-tenant mode shows tenant management. *@
+
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Components.Forms
+@using Explore.Blazor.Client.Constants
+
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject IUserService UserService
+@inject IPublicExperienceService PublicExperienceService
+@inject ITenantPublicExperienceAdminService TenantPublicExperienceAdminService
+@inject AiAssistantState AiAssistantState
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<div class="settings-layout">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+        <!-- Header -->
+        <div class="settings-header mb-8">
+            <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">
+                @(IsSingleTenantMode ? "Administration" : "Instance Administration")
+            </MudText>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+        }
+
+        @if (_isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="py-12">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Loading settings...</MudText>
+            </MudStack>
+        }
+        else if (!_canEdit)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                You do not have instance administrator permissions to view or modify these settings.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- Main Layout: Sidebar + Content -->
+            <MudGrid Spacing="4">
+                <!-- Sidebar Navigation -->
+                <MudItem xs="12" md="3" Class="@(_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-sidebar pa-0" Style="background-color: transparent;">
+                        <MudList T="string" Dense="true" DisablePadding="true">
+                            @{
+                                string? renderedGroup = null;
+                            }
+                            @foreach (var navItem in BuildNavItems(IsSingleTenantMode))
+                            {
+                                if (navItem.Group != renderedGroup)
+                                {
+                                    renderedGroup = navItem.Group;
+                                    if (renderedGroup is not null)
+                                    {
+                                        <div class="settings-nav-separator">
+                                            <MudText Typo="Typo.overline" Color="Color.Secondary" Class="settings-nav-separator__label">@renderedGroup</MudText>
+                                        </div>
+                                    }
+                                }
+                                <MudListItem Icon="@navItem.Icon"
+                                             IconColor="@navItem.IconColor"
+                                             Text="@navItem.Label"
+                                             Class="@GetNavItemClass(navItem.Key)"
+                                             OnClick="@(() => SelectSection(navItem.Key))" />
+                            }
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Content Area -->
+                <MudItem xs="12" md="9" Class="@(!_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-content pa-6" Style="background-color: transparent;">
+                        <div class="d-md-none mb-4">
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToMenu">
+                                Settings Menu
+                            </MudButton>
+                        </div>
+                        @if (_currentSection == "governance")
+                        {
+                            <InstanceGovernanceSection Delegation="_delegation" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="general" />
+                            @if (IsSingleTenantMode)
+                            {
+                                <MudDivider Class="my-6" />
+                                <InstanceBrandingSection Model="_branding" IsSingleTenant="true" />
+                            }
+                        }
+                        else if (_currentSection == "domain")
+                        {
+                        <InstanceDomainSection Model="_domain" IsMultiTenantMode="!IsSingleTenantMode" />
+                        }
+                        else if (_currentSection == "branding" && !IsSingleTenantMode)
+                        {
+                            <InstanceBrandingSection Model="_branding" IsSingleTenant="false" />
+                        }
+                        else if (_currentSection == "themes")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Components.UiThemeCatalogSection IsPlatformCatalog="true" />
+                        }
+                        else if (_currentSection == "auth-providers")
+                        {
+                            <InstanceAuthProviderSection Model="_authProviderModel"
+                                                         AuthorizationModel="_authorizationProviderModel"
+                                                         OnboardingService="InstanceOnboardingService"
+                                                         IsSingleTenant="IsSingleTenantMode" />
+                        }
+                        else if (_currentSection == "modules")
+                        {
+                            <InstanceModulesSection Model="_modules" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" IsSingleTenant="IsSingleTenantMode" />
+                        }
+                        else if (_currentSection == "storage")
+                        {
+                            <InstanceStorageSection Model="_storageModel" OnboardingService="InstanceOnboardingService"
+                                                   IsSingleTenant="IsSingleTenantMode"
+                                                   LockForTenants="_delegation.LockTenantStorage == true"
+                                                   LockForTenantsChanged="@(v => _delegation.LockTenantStorage = v)" />
+                        }
+                        else if (_currentSection == "smtp")
+                        {
+                            <InstanceSmtpSection Model="_smtpModel" OnboardingService="InstanceOnboardingService"
+                                               IsSingleTenant="IsSingleTenantMode"
+                                               LockForTenants="_delegation.LockTenantSmtp == true"
+                                               LockForTenantsChanged="@(v => _delegation.LockTenantSmtp = v)" />
+                        }
+                        else if (_currentSection == "analytics-privacy")
+                        {
+                            <InstanceAnalyticsPrivacySection Model="_analyticsModel"
+                                                           IsSingleTenant="IsSingleTenantMode"
+                                                           LockForTenants="_delegation.LockTenantAnalytics == true"
+                                                           LockForTenantsChanged="@(v => _delegation.LockTenantAnalytics = v)" />
+                        }
+                        else if (_currentSection == "footer-governance" && !IsSingleTenantMode)
+                        {
+                            <InstanceFooterGovernanceSection Model="_footerGovernance" IsSingleTenant="IsSingleTenantMode" />
+                        }
+                        else if (_currentSection == "footer" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantFooterSection />
+                        }
+                        else if (_currentSection == "localization")
+                        {
+                            <InstanceLocalizationSection />
+                        }
+                        else if (_currentSection == "listmonk")
+                        {
+                            <InstanceListmonkIntegrationSection />
+                        }
+                        else if (_currentSection == "members" && IsSingleTenantMode)
+                        {
+                            <TenantMembersSection />
+                        }
+                        else if (_currentSection == "ai")
+                        {
+                            <InstanceAiSection AiAssistant="_aiAssistant" DeploymentMode="_deploymentMode" />
+                        }
+                        else if (_currentSection == "policies" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantPoliciesSection Model="_tenantModel" IsSingleTenant="true" />
+                        }
+                        else if (_currentSection == "announcement-bar" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantAnnouncementBarSection Model="_tenantModel" HasExistingAnnouncementBar="_hasAnnouncementBar" />
+                        }
+                        else if (_currentSection == "public-experience" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantPublicExperienceSection @ref="_publicExperienceSection" Model="_publicExperienceModel" />
+                        }
+                        else if (_currentSection == "organizations" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantOrganizationsSection />
+                        }
+                        else if (_currentSection == "lookups" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantLookupTablesSection />
+                        }
+                        else if (_currentSection == "advanced")
+                        {
+                            <InstanceGovernanceSection Delegation="_delegation" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="advanced" />
+                        }
+                        else if (_currentSection == "access-tokens")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Components.ApiKeysSection OwnerType="5" Title="Platform API Keys" Description="Create and manage instance-level API keys for platform-wide programmatic access." />
+                        }
+                        else if (_currentSection == "support-access")
+                        {
+                            <SupportAccessConsoleSection />
+                        }
+                        else if (_currentSection == "support-access-evidence")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantSupportAccessEvidenceSection TenantId="TenantConstants.DefaultTenantId" />
+                        }
+                        else if (_currentSection == "webhooks" && IsSingleTenantMode)
+                        {
+                            <Explore.Blazor.Client.Components.Webhooks.WebhookManagementPanel />
+                        }
+                        else if (_currentSection == "tenants" && !IsSingleTenantMode)
+                        {
+                            <InstanceTenantsSection TenantCount="_tenantCount" TenantCountChanged="OnTenantCountChanged" />
+                        }
+
+                        @* Only show Save button for settings sections, not for org/lookup/tenants which have their own actions *@
+                        @if (IsSettingsSection(_currentSection))
+                        {
+                            <MudDivider Class="my-4" />
+
+                            @if (_currentSection == "announcement-bar" && IsSingleTenantMode)
+                            {
+                                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                                    @if (_hasAnnouncementBar)
+                                    {
+                                        <MudButton Elevation="0" Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   OnClick="RemoveAnnouncementBarAsync"
+                                                   Disabled="_submitState.IsSubmitting"
+                                                   StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Delete)">
+                                            @(_submitState.IsSubmitting ? "Saving..." : "Remove Announcement Bar")
+                                        </MudButton>
+                                    }
+                                    @if (_hasAnnouncementBar && HasUsableAnnouncementBar(_tenantModel))
+                                    {
+                                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Outlined"
+                                                   OnClick="@(() => SaveAsync(false))"
+                                                   Disabled="_submitState.IsSubmitting"
+                                                   StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Save)">
+                                            @(_submitState.IsSubmitting ? "Saving..." : "Save Text Update")
+                                        </MudButton>
+                                    }
+                                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => SaveAsync(true))"
+                                               Disabled="_submitState.IsSubmitting"
+                                               StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Campaign)">
+                                        @(_submitState.IsSubmitting ? "Saving..." : "Save and Show to Everyone")
+                                    </MudButton>
+                                </MudStack>
+                            }
+                            else
+                            {
+                                <MudStack Row="true" Justify="Justify.FlexEnd">
+                                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync"
+                                               Disabled="_submitState.IsSubmitting || !CanSaveCurrentSection"
+                                               StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Save)">
+                                        @(_submitState.IsSubmitting ? "Saving..." : "Save Settings")
+                                    </MudButton>
+                                </MudStack>
+                            }
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudContainer>
+</div>
+
+@code {
+    private record NavItem(string Key, string Icon, string Label, Color IconColor = Color.Default, string? Group = null);
+
+    // Sub-resource models
+    private string _deploymentMode = "SingleTenant";
+    private ModuleSettingsDto _modules = new();
+    private EventPolicyDto _eventPolicy = new();
+    private OrganizationPolicyDto _orgPolicy = new();
+    private BrandingSettingsDto _branding = new();
+    private DomainSettingsDto _domain = new();
+    private TenantDelegationSettingsDto _delegation = new();
+    private RenderPolicySettingsDto _renderPolicy = new();
+    private AiAssistantGovernanceSettingsDto _aiAssistant = new();
+    private McpGovernanceSettingsDto _mcp = new();
+
+    // Infrastructure models
+    private HalResourceOfInstanceStorageSettingsDto _storageModel = new();
+    private InstanceSmtpSettingsDto _smtpModel = new();
+    private AuthProviderConfigurationDto _authProviderModel = new();
+    private AuthorizationProviderConfigurationDto _authorizationProviderModel = new();
+    private TenantPolicySettingsDto _tenantModel = new();
+    private TenantPublicExperienceAdminModel _publicExperienceModel = new();
+    private Explore.Blazor.Client.Pages.Admin.Tenant.Components.TenantPublicExperienceSection? _publicExperienceSection;
+    private AnalyticsGovernanceSettingsDto _analyticsModel = new();
+    private FooterGovernanceSettingsDto _footerGovernance = new();
+    private int _tenantCount;
+    private bool _isLoading = true;
+    private FormSubmitState _submitState = new();
+    private bool _canEdit;
+    private bool _hasAnnouncementBar;
+    private bool _lastAnnouncementSaveStartedWithExistingBar;
+    private string? _errorMessage;
+    private string _currentSection = "governance";
+    private bool _showMobileMenu = true;
+
+    private bool IsSingleTenantMode => string.Equals(_deploymentMode, "SingleTenant", StringComparison.OrdinalIgnoreCase)
+                                       || string.IsNullOrWhiteSpace(_deploymentMode);
+
+    private bool CanSaveCurrentSection => _currentSection != "storage" || _storageModel.HasLink("edit");
+
+    private static bool IsSettingsSection(string section) =>
+        section is "governance" or "domain" or "branding" or "auth-providers" or "modules" or "storage" or "smtp" or "policies" or "announcement-bar" or "public-experience" or "advanced" or "analytics-privacy" or "footer-governance" or "ai"
+            // Localization and Footer manage their own Save button
+            ;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authority = await UserService.GetAdminAuthorityAsync();
+        var status = await InstanceOnboardingService.GetStatusAsync();
+        _canEdit = authority?.IsInstanceAdmin == true
+            || (status?.IsAuthenticated == true && status.IsCurrentUserInstanceAdmin == true);
+
+        if (!_canEdit)
+        {
+            _isLoading = false;
+            return;
+        }
+
+        // Load all sub-resources in parallel
+        var deploymentTask = InstanceOnboardingService.GetDeploymentModeAsync();
+        var modulesTask = InstanceOnboardingService.GetModuleSettingsAsync();
+        var eventTask = InstanceOnboardingService.GetEventPolicyAsync();
+        var orgTask = InstanceOnboardingService.GetOrganizationPolicyAsync();
+        var brandingTask = InstanceOnboardingService.GetBrandingSettingsAsync();
+        var domainTask = InstanceOnboardingService.GetDomainSettingsAsync();
+        var delegationTask = InstanceOnboardingService.GetTenantDelegationAsync();
+        var renderTask = InstanceOnboardingService.GetRenderPolicyAsync();
+        var aiAssistantTask = InstanceOnboardingService.GetAiAssistantGovernanceSettingsAsync();
+        var mcpTask = InstanceOnboardingService.GetMcpGovernanceSettingsAsync();
+        var storageTask = InstanceOnboardingService.GetStorageSettingsAsync();
+        var smtpTask = InstanceOnboardingService.GetSmtpSettingsAsync();
+        var authTask = InstanceOnboardingService.GetAuthProviderConfigurationAsAdminAsync();
+        var authorizationTask = InstanceOnboardingService.GetAuthorizationProviderConfigurationAsAdminAsync();
+        var analyticsTask = InstanceOnboardingService.GetAnalyticsGovernanceSettingsAsync();
+        var footerGovTask = InstanceOnboardingService.GetFooterGovernanceSettingsAsync();
+        var tenantCountTask = InstanceOnboardingService.GetActiveTenantCountAsync();
+
+        await Task.WhenAll(deploymentTask, modulesTask, eventTask, orgTask, brandingTask,
+            domainTask, delegationTask, renderTask, aiAssistantTask, mcpTask, storageTask, smtpTask, authTask,
+            authorizationTask, analyticsTask, footerGovTask, tenantCountTask);
+
+        _deploymentMode = deploymentTask.Result.Mode?.ToString() ?? _deploymentMode;
+        _modules = modulesTask.Result;
+        _eventPolicy = eventTask.Result;
+        _orgPolicy = orgTask.Result;
+        _branding = brandingTask.Result;
+        _domain = domainTask.Result;
+        _delegation = delegationTask.Result;
+        _renderPolicy = renderTask.Result;
+        _aiAssistant = aiAssistantTask.Result;
+        _mcp = mcpTask.Result;
+        _storageModel = storageTask.Result;
+        _smtpModel = smtpTask.Result;
+        _authProviderModel = authTask.Result;
+        _authorizationProviderModel = authorizationTask.Result;
+        _analyticsModel = analyticsTask.Result;
+        _footerGovernance = footerGovTask.Result;
+        _tenantCount = tenantCountTask.Result;
+
+        if (IsSingleTenantMode)
+        {
+            _tenantModel = new TenantPolicySettingsDto();
+            await TenantPublicExperienceAdminService.ApplySingleTenantPolicySettingsAsync(_tenantModel);
+            await TenantPublicExperienceAdminService.ApplyAnnouncementBarSettingsAsync(_tenantModel);
+            _hasAnnouncementBar = HasUsableAnnouncementBar(_tenantModel);
+            _publicExperienceModel = await TenantPublicExperienceAdminService.GetSettingsAsync();
+        }
+
+        ApplySectionFromQuery();
+
+        _isLoading = false;
+    }
+
+    private void OnTenantCountChanged(int newCount)
+    {
+        _tenantCount = newCount;
+        StateHasChanged();
+    }
+
+    private Task SaveAsync() => SaveAsync(false);
+
+    private async Task SaveAsync(bool forceAnnouncementBarRedisplay)
+    {
+        if (_currentSection == "public-experience" && IsSingleTenantMode)
+        {
+            await SavePublicExperienceAsync();
+            return;
+        }
+
+        _submitState.Start();
+        _errorMessage = null;
+
+        if (!await EnsureFreshAuthSessionAsync())
+        {
+            _submitState.Complete();
+            return;
+        }
+
+        // Save the currently visible section's data
+        var tasks = new List<Task<BaseCommandResponseOfGuid>>();
+
+        switch (_currentSection)
+        {
+            case "governance":
+                tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
+                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
+                tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
+                if (IsSingleTenantMode)
+                {
+                    tasks.Add(InstanceOnboardingService.UpdateBrandingSettingsAsync(_branding));
+                }
+                break;
+            case "domain":
+                tasks.Add(InstanceOnboardingService.UpdateDomainSettingsAsync(_domain));
+                break;
+            case "branding":
+                tasks.Add(InstanceOnboardingService.UpdateBrandingSettingsAsync(_branding));
+                break;
+            case "auth-providers":
+                tasks.Add(InstanceOnboardingService.UpdateAuthProviderConfigurationAsAdminAsync(_authProviderModel));
+                if (_authorizationProviderModel.AuthorizationProviderManagedByDeployment != true)
+                {
+                    tasks.Add(InstanceOnboardingService.UpdateAuthorizationProviderConfigurationAsAdminAsync(_authorizationProviderModel));
+                }
+                break;
+            case "modules":
+                tasks.Add(InstanceOnboardingService.UpdateModuleSettingsAsync(_modules));
+                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
+                tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
+                break;
+            case "storage":
+                tasks.Add(InstanceOnboardingService.UpdateStorageSettingsAsync(_storageModel));
+                tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
+                break;
+            case "smtp":
+                tasks.Add(InstanceOnboardingService.UpdateSmtpSettingsAsync(_smtpModel));
+                tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
+                break;
+            case "analytics-privacy":
+                tasks.Add(InstanceOnboardingService.UpdateAnalyticsGovernanceSettingsAsync(_analyticsModel));
+                tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
+                break;
+            case "policies" when IsSingleTenantMode:
+                _eventPolicy.AllowUserSubmittedEvents = _tenantModel.AllowUserSubmittedEvents ?? _eventPolicy.AllowUserSubmittedEvents;
+                _eventPolicy.AllowOrganizationSubmittedEvents = _tenantModel.AllowOrganizationSubmittedEvents ?? _eventPolicy.AllowOrganizationSubmittedEvents;
+                _eventPolicy.AllowGroupSubmittedEvents = _tenantModel.AllowGroupSubmittedEvents ?? _eventPolicy.AllowGroupSubmittedEvents;
+                _eventPolicy.EventCardClickOpensDetailPage = _tenantModel.EventCardClickOpensDetailPage ?? _eventPolicy.EventCardClickOpensDetailPage;
+                _orgPolicy.RequireOrganizationVerification = _tenantModel.RequireOrganizationVerification ?? _orgPolicy.RequireOrganizationVerification;
+                _orgPolicy.AllowOrganizationSelfRegistration = _tenantModel.AllowOrganizationSelfRegistration ?? _orgPolicy.AllowOrganizationSelfRegistration;
+                _orgPolicy.AllowGroupSelfRegistration = _tenantModel.AllowGroupSelfRegistration ?? _orgPolicy.AllowGroupSelfRegistration;
+
+                PublicExperienceAdminSaveResult policyResponse = await TenantPublicExperienceAdminService.SaveSingleTenantPolicySettingsAsync(_tenantModel);
+                if (!policyResponse.Success)
+                {
+                    _submitState.Complete();
+                    _errorMessage = string.IsNullOrWhiteSpace(policyResponse.Message)
+                        ? "Policy settings failed."
+                        : policyResponse.Message;
+                    return;
+                }
+
+                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
+                tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
+                break;
+            case "announcement-bar" when IsSingleTenantMode:
+                var hadAnnouncementBarBeforeSave = _hasAnnouncementBar;
+                PublicExperienceAdminSaveResult announcementResponse = await TenantPublicExperienceAdminService.SaveAnnouncementBarAsync(
+                    _tenantModel,
+                    forceAnnouncementBarRedisplay);
+
+                if (!announcementResponse.Success)
+                {
+                    _submitState.Complete();
+                    _errorMessage = string.IsNullOrWhiteSpace(announcementResponse.Message)
+                        ? "Announcement bar settings failed."
+                        : announcementResponse.Message;
+                    return;
+                }
+
+                _hasAnnouncementBar = HasUsableAnnouncementBar(_tenantModel);
+                _lastAnnouncementSaveStartedWithExistingBar = hadAnnouncementBarBeforeSave;
+                break;
+            case "ai":
+                _delegation.LockTenantAiAssistant = _aiAssistant.LockTenantAiAssistant;
+                tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
+                tasks.Add(InstanceOnboardingService.UpdateAiAssistantGovernanceSettingsAsync(_aiAssistant));
+                break;
+            case "advanced":
+                tasks.Add(InstanceOnboardingService.UpdateRenderPolicyAsync(_renderPolicy));
+                tasks.Add(InstanceOnboardingService.UpdateMcpGovernanceSettingsAsync(_mcp));
+                break;
+        }
+
+        if (tasks.Count > 0)
+        {
+            var results = await Task.WhenAll(tasks);
+            var failed = results.FirstOrDefault(r => r.Success != true);
+            if (failed is not null)
+            {
+                _submitState.Complete();
+                _errorMessage = string.IsNullOrWhiteSpace(failed.Message) ? "Failed to save settings." : failed.Message;
+                return;
+            }
+        }
+
+        if (_currentSection == "auth-providers")
+        {
+            await InstanceOnboardingService.RefreshAuthSchemesAsync();
+        }
+
+        _submitState.Complete();
+        await RefreshShellExperienceAsync(openAiAssistantIfAvailable: ShouldOpenAiAssistantAfterSave());
+
+        var successMessage = _currentSection == "announcement-bar"
+            ? GetAnnouncementSaveMessage(_lastAnnouncementSaveStartedWithExistingBar, forceAnnouncementBarRedisplay)
+            : "Settings saved.";
+
+        Snackbar.Add(successMessage, Severity.Success);
+    }
+
+    private async Task RemoveAnnouncementBarAsync()
+    {
+        _tenantModel.AnnouncementBarEnabled = false;
+        _tenantModel.AnnouncementBarMessage = string.Empty;
+        _tenantModel.AnnouncementBarLinkText = string.Empty;
+        _tenantModel.AnnouncementBarLinkUrl = string.Empty;
+        _submitState.Start();
+        _errorMessage = null;
+
+        if (!await EnsureFreshAuthSessionAsync())
+        {
+            _submitState.Complete();
+            return;
+        }
+
+        PublicExperienceAdminSaveResult response = await TenantPublicExperienceAdminService.SaveAnnouncementBarAsync(
+            _tenantModel,
+            forceRedisplay: false);
+        _submitState.Complete();
+
+        if (response.Success)
+        {
+            _hasAnnouncementBar = false;
+            await RefreshShellExperienceAsync();
+            Snackbar.Add("Announcement bar removed.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to remove announcement bar."
+            : response.Message;
+    }
+
+    private static bool HasUsableAnnouncementBar(TenantPolicySettingsDto model) =>
+        model.AnnouncementBarEnabled == true && !string.IsNullOrWhiteSpace(model.AnnouncementBarMessage);
+
+    private static string GetAnnouncementSaveMessage(bool hadAnnouncementBarBeforeSave, bool forceAnnouncementBarRedisplay)
+    {
+        if (!hadAnnouncementBarBeforeSave)
+        {
+            return "Announcement bar created.";
+        }
+
+        return forceAnnouncementBarRedisplay
+            ? "Announcement bar saved. Users who dismissed it will see it again."
+            : "Announcement bar text updated.";
+    }
+
+    private async Task SavePublicExperienceAsync()
+    {
+        if (_publicExperienceSection?.HasValidJson != true)
+        {
+            _errorMessage = "Public experience JSON fields must contain valid JSON objects before saving.";
+            return;
+        }
+
+        _submitState.Start();
+        _errorMessage = null;
+
+        if (!await EnsureFreshAuthSessionAsync())
+        {
+            _submitState.Complete();
+            return;
+        }
+
+        PublicExperienceAdminSaveResult response = await TenantPublicExperienceAdminService.SaveAsync(_publicExperienceModel);
+        _submitState.Complete();
+
+        if (response.Success)
+        {
+            await RefreshShellExperienceAsync();
+            Snackbar.Add("Public experience settings saved.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to save public experience settings."
+            : response.Message;
+    }
+
+    private IReadOnlyList<NavItem> BuildNavItems(bool isSingleTenant)
+    {
+        if (isSingleTenant)
+            return
+            [
+                new("governance",       Icons.Material.Filled.Settings,        "General"),
+                new("members",          Icons.Material.Filled.People,          "Members"),
+                new("organizations",    Icons.Material.Filled.Business,        "Organizations"),
+                new("lookups",          Icons.Material.Filled.TableChart,      "Lookup Tables"),
+                new("policies",         Icons.Material.Filled.Policy,          "Policies"),
+                new("ai",               Icons.Material.Filled.SmartToy,        "AI"),
+                new("announcement-bar", Icons.Material.Filled.Announcement,    "Announcement Bar"),
+                new("public-experience",Icons.Material.Filled.HomeWork,        "Public Experience"),
+                new("themes",           Icons.Material.Filled.ColorLens,       "Themes"),
+                new("auth-providers",   Icons.Material.Filled.Key,             "Authentication and Authorization Providers"),
+                new("modules",          Icons.Material.Filled.Extension,       "Modules"),
+                new("domain",           Icons.Material.Filled.Language,        "Domain"),
+                new("storage",          Icons.Material.Filled.Cloud,           "Object Storage"),
+                new("smtp",             Icons.Material.Filled.AlternateEmail,  "SMTP"),
+                new("analytics-privacy",Icons.Material.Filled.Analytics,       "Analytics & Privacy"),
+                new("footer",           Icons.Material.Filled.ViewAgenda,      "Footer"),
+                new("localization",     Icons.Material.Filled.Translate,       "Localization"),
+                new("listmonk",         Icons.Material.Filled.MarkEmailRead,   "Listmonk"),
+            new("advanced",                 Icons.Material.Filled.DisplaySettings, "Advanced"),
+            new("support-access",           Icons.Material.Filled.SupportAgent,    "Support Access",   Group: "Operations"),
+            new("support-access-evidence",  Icons.Material.Filled.ReceiptLong,     "Support Evidence", Group: "Operations"),
+            new("access-tokens",    Icons.Material.Filled.Key,             "Access Tokens",    Group: "Developer"),
+            new("webhooks",         Icons.Material.Filled.Webhook,         "Webhooks",         Group: "Developer"),
+        ];
+
+        return
+        [
+            new("governance",       Icons.Material.Filled.Gavel,           "Governance"),
+            new("tenants",          Icons.Material.Filled.DomainAdd,       "Tenants"),
+            new("domain",           Icons.Material.Filled.Language,        "Domain"),
+            new("branding",         Icons.Material.Filled.Palette,         "Branding"),
+            new("themes",           Icons.Material.Filled.ColorLens,       "Themes"),
+            new("auth-providers",   Icons.Material.Filled.Key,             "Authentication and Authorization Providers"),
+            new("modules",          Icons.Material.Filled.Extension,       "Modules"),
+            new("storage",          Icons.Material.Filled.Cloud,           "Object Storage"),
+            new("smtp",             Icons.Material.Filled.AlternateEmail,  "SMTP"),
+            new("analytics-privacy",Icons.Material.Filled.Analytics,       "Analytics & Privacy"),
+            new("footer-governance",Icons.Material.Filled.ViewAgenda,      "Footer"),
+            new("localization",     Icons.Material.Filled.Translate,       "Localization"),
+            new("listmonk",         Icons.Material.Filled.MarkEmailRead,   "Listmonk"),
+            new("ai",               Icons.Material.Filled.SmartToy,        "AI"),
+            new("advanced",         Icons.Material.Filled.DisplaySettings, "Advanced"),
+            new("support-access",   Icons.Material.Filled.SupportAgent,    "Support Access", Group: "Operations"),
+            new("support-access-evidence", Icons.Material.Filled.ReceiptLong, "Support Evidence", Group: "Operations"),
+            new("access-tokens",    Icons.Material.Filled.Key,             "Access Tokens",    Group: "Developer"),
+        ];
+    }
+
+    private void SelectSection(string section)
+    {
+        _currentSection = section;
+        _showMobileMenu = false;
+    }
+
+    private void ApplySectionFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var section = ParseSectionFromQuery(uri.Query);
+        if (section is null)
+        {
+            return;
+        }
+
+        var navItems = BuildNavItems(IsSingleTenantMode);
+        if (!navItems.Any(item => string.Equals(item.Key, section, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _currentSection = section;
+        _showMobileMenu = false;
+    }
+
+    private static string? ParseSectionFromQuery(string query)
+    {
+        if (string.IsNullOrEmpty(query))
+        {
+            return null;
+        }
+
+        var trimmed = query.StartsWith('?') ? query[1..] : query;
+        foreach (var pair in trimmed.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = pair.IndexOf('=');
+            if (eq <= 0)
+            {
+                continue;
+            }
+
+            var key = Uri.UnescapeDataString(pair[..eq]);
+            if (!string.Equals(key, "section", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var value = Uri.UnescapeDataString(pair[(eq + 1)..]);
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        return null;
+    }
+    
+    private void BackToMenu()
+    {
+        _showMobileMenu = true;
+    }
+
+    private async Task<bool> EnsureFreshAuthSessionAsync()
+    {
+        if (await InstanceOnboardingService.RefreshAuthSessionAsync())
+        {
+            return true;
+        }
+
+        _errorMessage = "Your admin session needs to be refreshed before saving. Please reload the page and try again.";
+        return false;
+    }
+
+    private bool ShouldOpenAiAssistantAfterSave() =>
+        _currentSection == "ai"
+        && _aiAssistant.Enabled == true;
+
+    private async Task RefreshShellExperienceAsync(bool openAiAssistantIfAvailable = false)
+    {
+        PublicExperienceService.ResetCache();
+
+        var settings = await PublicExperienceService.GetSettingsAsync();
+        if (settings is not null)
+        {
+            AiAssistantState.SetPolicy(
+                settings.IsAiAssistantEnabled == true,
+                settings.IsAiAssistantAvailable == true,
+                settings.AiAssistantAllowAnonymousAccess == true,
+                isAuthenticated: true);
+
+            if (openAiAssistantIfAvailable && settings.IsAiAssistantAvailable == true)
+            {
+                AiAssistantState.Open();
+            }
+        }
+    }
+
+    private string GetNavItemClass(string section)
+    {
+        return _currentSection == section ? "settings-nav-active" : "";
+    }
+}

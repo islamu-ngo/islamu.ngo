@@ -1,0 +1,134 @@
+/*
+ * LoginPromptDialog Styles - BEM Methodology
+ * Block: login-prompt
+ *
+ * Structure:
+ * .login-prompt-backdrop (dialog overlay — glassmorphism)
+ * .login-prompt
+ *   .login-prompt__container
+ *     .login-prompt__close
+ *     .login-prompt__header
+ *       .login-prompt__title
+ *     .login-prompt__message
+ *     .login-prompt__section
+ *       .login-prompt__btn--primary
+ *       .login-prompt__btn--cancel
+ */
+
+/* ========================================
+   Backdrop: glassmorphism blur overlay
+   Applied globally via BackgroundClass
+   ======================================== */
+:global(.login-prompt-backdrop) {
+    backdrop-filter: blur(1rem) saturate(1.2);
+    -webkit-backdrop-filter: blur(1rem) saturate(1.2);
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ========================================
+   Block: login-prompt
+   Dialog container with glass card effect
+   ======================================== */
+::deep .login-prompt {
+    border-radius: 1.5rem !important;
+    overflow: hidden;
+    box-shadow:
+        0 1.5rem 5rem -0.75rem rgba(0, 0, 0, 0.25),
+        0 0 0 1px color-mix(in oklch, var(--mud-palette-lines-default) 20%, transparent);
+    background: color-mix(in oklch, var(--mud-palette-surface) 95%, transparent) !important;
+    backdrop-filter: blur(1.25rem);
+    -webkit-backdrop-filter: blur(1.25rem);
+}
+
+/* ========================================
+   Element: login-prompt__container
+   Inner content wrapper
+   ======================================== */
+.login-prompt__container {
+    position: relative;
+    padding: var(--isl-space-8) 1.75rem var(--isl-space-6);
+}
+
+/* ========================================
+   Element: login-prompt__close
+   Top-right close button
+   ======================================== */
+::deep .login-prompt__close {
+    position: absolute !important;
+    top: var(--isl-space-3);
+    inset-inline-end: var(--isl-space-3);
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    z-index: 1;
+}
+
+::deep .login-prompt__close:hover {
+    opacity: 1;
+}
+
+/* ========================================
+   Element: login-prompt__header
+   Title only
+   ======================================== */
+.login-prompt__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--isl-space-2);
+    margin-bottom: var(--isl-space-6);
+}
+
+::deep .login-prompt__title {
+    font-weight: 800 !important;
+    letter-spacing: 0;
+}
+
+.login-prompt__message {
+    max-width: 24rem;
+}
+
+/* ========================================
+   Element: login-prompt__section
+   Grouped content section
+   ======================================== */
+.login-prompt__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--isl-space-4);
+}
+
+/* ========================================
+   Element: login-prompt__btn
+   Shared button styles
+   ======================================== */
+::deep .login-prompt__btn {
+    border-radius: 0.875rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0.01em;
+    padding: var(--isl-space-3) var(--isl-space-6) !important;
+    transition:
+        background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+::deep .login-prompt__btn--primary {
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+}
+
+::deep .login-prompt__btn--cancel {
+    font-weight: 600 !important;
+}
+
+/* ========================================
+   Responsive: Mobile adjustments
+   ======================================== */
+@media (max-width: 37.5em) {
+    .login-prompt__container {
+        padding: var(--isl-space-6) var(--isl-space-5) var(--isl-space-5);
+    }
+}

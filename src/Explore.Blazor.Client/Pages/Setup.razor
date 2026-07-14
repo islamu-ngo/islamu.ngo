@@ -1,0 +1,528 @@
+@* ABOUTME: Setup secret entry page for first-run bootstrap access control. *@
+@* ABOUTME: Validates secret, persists it through the BFF, then routes to onboarding/login flow. *@
+@* ABOUTME: Split-screen login-style layout with branding panel and form panel. *@
+
+@page "/setup"
+@rendermode InteractiveServer
+@layout SetupLayout
+@implements IDisposable
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject ILogger<Setup> Logger
+@using Microsoft.JSInterop
+@using Microsoft.Extensions.Logging
+@using Explore.Blazor.Client.Models.Responses
+
+<PageTitle>Setup Access</PageTitle>
+
+<div class="setup-page">
+    @* Left branding panel *@
+    <div class="setup-left-panel">
+        <div class="setup-left-content">
+            <MudText Typo="Typo.h3" Class="setup-title mb-2">Welcome to</MudText>
+            <MudText Typo="Typo.h2" Class="setup-title-brand mb-6">Event Platform</MudText>
+            <MudText Typo="Typo.h6" Class="setup-subtitle mb-6">Event Platform & Management System</MudText>
+
+            <MudDivider Class="setup-divider mb-6" />
+
+            <MudStack Spacing="3">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start">
+                    <MudIcon Icon="@Icons.Material.Filled.Rocket" Class="setup-feature-icon" />
+                    <MudText Class="setup-feature-text">
+                        Self-hostable, decentralized, multi-tenant event platform for any community or industry
+                    </MudText>
+                </MudStack>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start">
+                    <MudIcon Icon="@Icons.Material.Filled.Palette" Class="setup-feature-icon" />
+                    <MudText Class="setup-feature-text">
+                        Fully white-label — rebrand and customize for your specific use case
+                    </MudText>
+                </MudStack>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Class="setup-feature-icon" />
+                    <MudText Class="setup-feature-text">
+                        Security-first with BFF pattern, verified organizations, and enterprise architecture
+                    </MudText>
+                </MudStack>
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Start">
+                    <MudIcon Icon="@Icons.Material.Filled.Public" Class="setup-feature-icon" />
+                    <MudText Class="setup-feature-text">
+                        Federation-ready with ATProto data models and open-source AGPL-3.0 license
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </div>
+    </div>
+
+    @* Right form panel *@
+    <div class="setup-right-panel">
+        <div class="setup-form-container">
+            <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="setup-form-icon mb-4" />
+            <MudText Typo="Typo.h4" HtmlTag="h1" Class="mb-1">Setup Access</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+                Authenticate to begin instance configuration
+            </MudText>
+
+            @if (_isLoading)
+            {
+                <MudStack Spacing="2" Class="setup-form-width">
+                    <MudSkeleton Width="80%" Height="20px" Class="mb-1" />
+                    <MudSkeleton Width="100%" Height="56px" Class="mb-2" />
+                    <MudSkeleton Width="50%" Height="16px" Class="mb-3" />
+                    <MudStack Row="true" Spacing="2">
+                        <MudSkeleton Width="100px" Height="40px" />
+                        <MudSkeleton Width="120px" Height="40px" />
+                    </MudStack>
+                </MudStack>
+            }
+            else if (_setupTimedOut)
+            {
+                <div class="setup-form-width">
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
+                        @_setupSecretGuidance
+                    </MudAlert>
+                    @if (_instanceStartedAt.HasValue)
+                    {
+                        <MudText Typo="Typo.caption" Class="mt-2">
+                            Instance started at: @_instanceStartedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") UTC
+                        </MudText>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="setup-form-width">
+                    @if (_instanceStartedAt.HasValue)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4" NoIcon="true">
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" />
+                                <MudText Typo="Typo.body2">
+                                    Setup window: @_remainingTime remaining
+                                </MudText>
+                            </MudStack>
+                        </MudAlert>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_setupSecretGuidance))
+                    {
+                        <MudAlert Severity="@GetSetupSecretGuidanceSeverity()" Dense="true" Class="mb-4">
+                            @_setupSecretGuidance
+                        </MudAlert>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mb-3">@_errorMessage</MudAlert>
+                    }
+
+                    @if (_isAuthenticated && _hasStoredSecret)
+                    {
+                        @* Authenticated + validated: show success + continue to onboarding only *@
+                        <MudAlert Severity="Severity.Success" Class="mb-4">
+                            Setup secret is validated and your session is authenticated.
+                        </MudAlert>
+
+                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" FullWidth="true"
+                                   Size="Size.Large"
+                                   OnClick="ContinueToOnboardingAsync"
+                                   Class="mb-2">
+                            Continue Setup
+                        </MudButton>
+                        <MudButton Elevation="0" Variant="Variant.Text" Color="Color.Default" FullWidth="true" OnClick="ClearStoredSecretAsync">
+                            Clear Secret
+                        </MudButton>
+                    }
+                    else if (_validationSucceeded)
+                    {
+                        @* Validated but not yet authenticated: show success + provider/auth buttons *@
+                        <MudAlert Severity="Severity.Success" Class="mb-3">
+                            Secret validated successfully.
+                        </MudAlert>
+
+                        @if (_isDetectingProviders)
+                        {
+                            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
+                        }
+
+                        @foreach (var provider in _detectedProviders)
+                        {
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Login"
+                                       OnClick="@(() => ContinueToProviderLoginAsync(provider))"
+                                       Class="mb-2">
+                                Continue with @provider.DisplayName
+                            </MudButton>
+                        }
+
+                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Outlined" FullWidth="true" OnClick="ContinueToAuthConfig">
+                            Configure Authentication
+                        </MudButton>
+                    }
+                    else
+                    {
+                        @* Not yet validated: show secret input + validate button *@
+                        <form @onsubmit="ValidateAsync" @onsubmit:preventDefault="true">
+                            <MudTextField T="string"
+                                          Label="Setup Secret"
+                                          InputType="InputType.Password"
+                                          Variant="Variant.Outlined"
+                                          Immediate="true"
+                                          @bind-Value="_secret"
+                                          Disabled="_isValidating"
+                                          Class="mb-1" />
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4 d-block">
+                                @GetSetupSecretHint()
+                            </MudText>
+
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" FullWidth="true"
+                                       ButtonType="ButtonType.Submit"
+                                       Size="Size.Large"
+                                       Disabled="_isValidating || string.IsNullOrWhiteSpace(_secret)"
+                                       Class="mb-3">
+                                @if (_isValidating)
+                                {
+                                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                }
+                                Validate Secret
+                            </MudButton>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isLoading = true;
+    private bool _isValidating;
+    private bool _isAuthenticated;
+    private bool _setupTimedOut;
+    private bool _validationSucceeded;
+    private bool _hasStoredSecret;
+    private string _secret = string.Empty;
+    private string? _errorMessage;
+    private DateTimeOffset? _instanceStartedAt;
+    private string _remainingTime = string.Empty;
+    private string _setupSecretState = "Unavailable";
+    private string _setupSecretGuidance = string.Empty;
+    private Timer? _countdownTimer;
+    private bool _isSyncingSecret;
+    private bool _isSecretSyncedForAuthenticatedSession;
+    private bool _hasAttemptedAuthenticatedSecretSync;
+    private bool _isDetectingProviders;
+    private List<AuthProviderQuickAction> _detectedProviders = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshStatusAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RestorePersistedSecretAsync();
+        }
+
+        await EnsureSecretSyncedForAuthenticatedSessionAsync();
+    }
+
+    private async Task RefreshStatusAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        var status = await InstanceOnboardingService.GetStatusAsync();
+        if (status is null)
+        {
+            _errorMessage = "Could not determine setup status. Try refreshing.";
+            _isLoading = false;
+            return;
+        }
+
+        if (status.IsCompleted == true)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        _isAuthenticated = status.IsAuthenticated == true;
+        _setupTimedOut = status.SetupTimedOut == true;
+        _instanceStartedAt = status.InstanceStartedAt;
+        _setupSecretState = string.IsNullOrWhiteSpace(status.SetupSecretState) ? "Unavailable" : status.SetupSecretState;
+        _setupSecretGuidance = status.SetupSecretGuidance ?? string.Empty;
+        UpdateRemainingTime();
+        StartCountdownTimer();
+        _isLoading = false;
+    }
+
+    private async Task ValidateAsync()
+    {
+        _isValidating = true;
+        _errorMessage = null;
+
+        var result = await InstanceOnboardingService.ValidateSecretAsync(_secret.Trim());
+        _isValidating = false;
+
+        if (!result.Valid)
+        {
+            _validationSucceeded = false;
+            _errorMessage = "Secret validation failed.";
+            return;
+        }
+
+        // Persist via browser fetch so the setup-secret HttpOnly cookie is set on the browser.
+        var bffModule = await GetBffModuleAsync();
+        var persistResult = await bffModule.InvokeAsync<BffMutationResult>("persistSetupSecret", _secret.Trim());
+        if (persistResult is null || !persistResult.Ok)
+        {
+            _validationSucceeded = false;
+            _errorMessage = persistResult?.Error ?? "Secret validated but could not persist onboarding session. Try again.";
+            return;
+        }
+
+        _hasStoredSecret = true;
+        _validationSucceeded = true;
+        _secret = string.Empty;
+        _isSecretSyncedForAuthenticatedSession = false;
+        _hasAttemptedAuthenticatedSecretSync = false;
+        await LoadDetectedProvidersAsync();
+    }
+
+    private void ContinueToAuthConfig()
+    {
+        // The setup-secret cookie is set after the current Blazor Server circuit starts.
+        // Force a fresh request so BFF self-clients can forward the new HttpOnly cookie.
+        Navigation.NavigateTo("/onboarding/auth-provider", forceLoad: true);
+    }
+
+    private async Task ContinueToProviderLoginAsync(AuthProviderQuickAction provider)
+    {
+        var providerQuery = provider.Name.ToLowerInvariant() switch
+        {
+            "keycloak" => "keycloak",
+            "google" => "google",
+            _ => provider.Name.ToLowerInvariant()
+        };
+
+        var returnUrl = await GetAuthorizationProviderDestinationAsync();
+        Navigation.NavigateTo(
+            $"/login?provider={Uri.EscapeDataString(providerQuery)}&returnUrl={returnUrl}",
+            forceLoad: true);
+    }
+
+    private async Task RestorePersistedSecretAsync()
+    {
+        var bffModule = await GetBffModuleAsync();
+        var status = await bffModule.InvokeAsync<SetupSecretStatusResponse>("getSetupSecretStatus");
+
+        if (status is null || !status.HasPersistedSecret)
+        {
+            _hasStoredSecret = false;
+            _validationSucceeded = false;
+            _secret = string.Empty;
+            _detectedProviders = [];
+
+            StateHasChanged();
+            return;
+        }
+
+        if (!status.IsValid)
+        {
+            _hasStoredSecret = false;
+            _validationSucceeded = false;
+            _secret = string.Empty;
+            _detectedProviders = [];
+            _errorMessage = string.IsNullOrWhiteSpace(status.Error)
+                ? "Stored setup secret is no longer valid. Please enter the current setup secret."
+                : status.Error;
+            StateHasChanged();
+            return;
+        }
+
+        _hasStoredSecret = true;
+        _secret = string.Empty;
+        _validationSucceeded = true;
+        _isSecretSyncedForAuthenticatedSession = false;
+        _hasAttemptedAuthenticatedSecretSync = false;
+        _errorMessage = null;
+        await LoadDetectedProvidersAsync();
+        StateHasChanged();
+    }
+
+    private async Task ClearStoredSecretAsync()
+    {
+        var bffModule = await GetBffModuleAsync();
+        await bffModule.InvokeAsync<BffMutationResult>("deleteSetupSecret");
+        _hasStoredSecret = false;
+        _validationSucceeded = false;
+        _secret = string.Empty;
+        _isSecretSyncedForAuthenticatedSession = false;
+        _hasAttemptedAuthenticatedSecretSync = false;
+        _detectedProviders = [];
+    }
+
+    private async Task LoadDetectedProvidersAsync()
+    {
+        if (!_validationSucceeded)
+        {
+            _detectedProviders = [];
+            return;
+        }
+
+        _isDetectingProviders = true;
+        try
+        {
+            var bffModule = await GetBffModuleAsync();
+            var response = await bffModule.InvokeAsync<AuthProvidersResponse>("fetchJson", "/auth/providers");
+            var allProviders = response?.Providers ?? [];
+
+            Logger.LogInformation(
+                "/auth/providers returned {ProviderCount} provider(s): {Providers}",
+                allProviders.Count,
+                string.Join(", ", allProviders.Select(p => $"{p.Name}({p.Type})")));
+
+            _detectedProviders = allProviders
+                .Where(provider => provider.Type.Equals("button", StringComparison.OrdinalIgnoreCase))
+                .Where(provider =>
+                    provider.Name.Equals("Keycloak", StringComparison.OrdinalIgnoreCase)
+                    || provider.Name.Equals("Google", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            Logger.LogInformation("Filtered to {Count} quick-action provider(s)", _detectedProviders.Count);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to load auth providers");
+            _detectedProviders = [];
+        }
+        finally
+        {
+            _isDetectingProviders = false;
+        }
+    }
+
+    private async Task ContinueToOnboardingAsync()
+    {
+        if (_hasStoredSecret)
+        {
+            var bffModule = await GetBffModuleAsync();
+            var syncResult = await bffModule.InvokeAsync<BffMutationResult>("syncSetupSecret", (string?)null);
+            if (syncResult is { Ok: true })
+            {
+                _isSecretSyncedForAuthenticatedSession = true;
+            }
+
+            _hasAttemptedAuthenticatedSecretSync = true;
+        }
+
+        Navigation.NavigateTo(await GetAuthorizationProviderDestinationAsync());
+    }
+
+    private async Task<string> GetAuthorizationProviderDestinationAsync() =>
+        await InstanceOnboardingService.ShouldSkipAuthorizationProviderStepAsync()
+            ? "/onboarding/instance"
+            : "/onboarding/authz-provider";
+
+    private async Task EnsureSecretSyncedForAuthenticatedSessionAsync()
+    {
+        if (_isSyncingSecret
+            || _isSecretSyncedForAuthenticatedSession
+            || _hasAttemptedAuthenticatedSecretSync
+            || !_isAuthenticated
+            || !_hasStoredSecret)
+        {
+            return;
+        }
+
+        _isSyncingSecret = true;
+        _hasAttemptedAuthenticatedSecretSync = true;
+        try
+        {
+            var bffModule = await GetBffModuleAsync();
+            var result = await bffModule.InvokeAsync<BffMutationResult>("syncSetupSecret", (string?)null);
+            if (result is { Ok: true })
+            {
+                _isSecretSyncedForAuthenticatedSession = true;
+            }
+        }
+        finally
+        {
+            _isSyncingSecret = false;
+        }
+    }
+
+    private void UpdateRemainingTime()
+    {
+        if (!_instanceStartedAt.HasValue)
+        {
+            _remainingTime = "unknown";
+            return;
+        }
+
+        var elapsed = DateTimeOffset.UtcNow - _instanceStartedAt.Value;
+        var remaining = TimeSpan.FromMinutes(60) - elapsed;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            _remainingTime = "expired";
+            _setupTimedOut = true;
+            _countdownTimer?.Dispose();
+            _countdownTimer = null;
+            return;
+        }
+
+        _remainingTime = $"{(int)remaining.TotalMinutes}m {remaining.Seconds}s";
+    }
+
+    private void StartCountdownTimer()
+    {
+        _countdownTimer?.Dispose();
+
+        if (_setupTimedOut || !_instanceStartedAt.HasValue)
+            return;
+
+        _countdownTimer = new Timer(_ =>
+        {
+            UpdateRemainingTime();
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    private Severity GetSetupSecretGuidanceSeverity() => _setupSecretState switch
+    {
+        "Environment" => Severity.Info,
+        "Generated" => Severity.Warning,
+        _ => Severity.Info
+    };
+
+    private string GetSetupSecretHint() => _setupSecretState switch
+    {
+        "Environment" => "Check the SETUP_SECRET environment variable configured for this deployment.",
+        "Generated" => "Check the API server startup logs for the generated setup secret.",
+        _ => "Check the SETUP_SECRET environment variable or API server logs."
+    };
+
+    public void Dispose()
+    {
+        _countdownTimer?.Dispose();
+    }
+
+    // ── JS interop ────────────────────────────────────────────────────
+    // All BFF calls go through browser fetch (via bff.js) so cookies
+    // flow correctly regardless of Blazor render mode.
+
+    private IJSObjectReference? _bffModule;
+
+    private async Task<IJSObjectReference> GetBffModuleAsync()
+    {
+        _bffModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/bff.js");
+        return _bffModule;
+    }
+
+    // DTOs for JS interop are in Explore.Blazor.Client.Models.Responses.BffJsInteropResponses
+}

@@ -1,0 +1,615 @@
+@* ABOUTME: Full appearance settings page — theme mode toggle (5 pillars), preset catalog, custom theme builder, and profile management. *@
+@* ABOUTME: Uses IAppearanceThemeService for reactive state and persistence. Custom builder uses algorithmic palette generation. *@
+
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+@using MudBlazor
+@inject IAppearanceThemeService AppearanceThemeService
+@inject ISnackbar Snackbar
+@inject ILogger<SettingsAppearance> Logger
+
+<div class="settings-section settings-appearance">
+    <div class="settings-section-header mb-6">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Appearance</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Choose how the app looks and behaves for you</MudText>
+    </div>
+
+    @if (!_initialized)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="d-inline">Loading preferences...</MudText>
+    }
+    else
+    {
+        <MudStack Spacing="6">
+
+            @* ── Theme Mode Toggle ── *@
+            <div class="settings-form-section">
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Theme mode</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Match your system, stay bright, go dark, or boost contrast.
+                </MudText>
+                <MudToggleGroup T="string" Value="@_form.ThemeMode" ValueChanged="@OnThemeModeChanged" Color="Color.Primary"
+                                Outlined="true" Dense="true" CheckMark="true">
+                    <MudToggleItem Value="@("system")" Text="System" />
+                    <MudToggleItem Value="@("light")" Text="Light" />
+                    <MudToggleItem Value="@("dark")" Text="Dark" />
+                    <MudToggleItem Value="@("lighthighcontrast")" Text="Light HC" />
+                    <MudToggleItem Value="@("darkhighcontrast")" Text="Dark HC" />
+                </MudToggleGroup>
+            </div>
+
+            <MudDivider />
+
+            @* ── Direction Toggle ── *@
+            <div class="settings-form-section">
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Text direction</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Override layout direction. &ldquo;Auto&rdquo; follows the language.
+                </MudText>
+                <MudToggleGroup T="string" Value="@_form.Direction" ValueChanged="@OnDirectionChanged" Color="Color.Primary"
+                                Outlined="true" Dense="true" CheckMark="true">
+                    <MudToggleItem Value="@("auto")" Text="Auto" />
+                    <MudToggleItem Value="@("ltr")" Text="Left to Right" />
+                    <MudToggleItem Value="@("rtl")" Text="Right to Left" />
+                </MudToggleGroup>
+            </div>
+
+            <MudDivider />
+
+            @* ── Preset Catalog ── *@
+            @if (_presets.Count > 0 || _profiles.Count > 0)
+            {
+                <div class="settings-form-section">
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Theme</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                        Pick a palette. Active theme is highlighted.
+                    </MudText>
+
+                    <MudGrid Spacing="3">
+                        @if (_presets.Count > 0)
+                        {
+                            @foreach (var preset in _presets)
+                            {
+                                var p = preset;
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudPaper Elevation="0"
+                                              Class="@GetThemeCardClass(p.Id ?? Guid.Empty, isActive: IsActivePresetOrProfile(p.Id ?? Guid.Empty))"
+                                              @onclick="@(() => ActivatePresetAsync(p.Id ?? Guid.Empty))"
+                                              Style="cursor: pointer;">
+                                        <div class="settings-appearance__theme-swatch">
+                                            <span class="settings-appearance__swatch-chip"
+                                                  style="@($"background:{p.LightPalette?.Primary ?? "#CBD5E1"};")"></span>
+                                            <span class="settings-appearance__swatch-chip"
+                                                  style="@($"background:{p.DarkPalette?.Primary ?? "#1E293B"};")"></span>
+                                        </div>
+                                        <MudText Typo="Typo.body1" Style="font-weight: 600;">@p.DisplayName</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @(p.IsSystem == true ? "System preset" : p.ThemeKey)
+                                        </MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+                </div>
+
+                <MudDivider />
+            }
+
+            @* ── Custom Theme Builder ── *@
+            <div class="settings-form-section">
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Custom Theme</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Build a unique theme with your natural and brand colors.
+                </MudText>
+
+                <MudStack Spacing="4">
+                    <div>
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;" Class="mb-2">Natural Color</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2 d-block">
+                            Determines surface, background, and text colors.
+                        </MudText>
+                        <div class="settings-appearance__swatch-row">
+                            @foreach (var swatch in _naturalSwatches)
+                            {
+                                var s = swatch;
+                                <button type="button"
+                                        class="settings-appearance__preset-swatch @(s == _customNaturalColor ? "settings-appearance__preset-swatch--active" : "")"
+                                        style="@($"background:{s};")"
+                                        @onclick="@(() => SelectCustomNaturalColorAsync(s))"
+                                        aria-label="Natural color @s" />
+                            }
+                            <MudTextField T="string"
+                                          Value="@_customNaturalColorHex"
+                                          ValueChanged="@OnCustomNaturalHexChanged"
+                                          Label="Hex"
+                                          Placeholder="#64748B"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Style="max-width: 120px;" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;" Class="mb-2">Brand Color</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2 d-block">
+                            Determines primary, secondary, and interactive element colors.
+                        </MudText>
+                        <div class="settings-appearance__swatch-row">
+                            @foreach (var swatch in _brandSwatches)
+                            {
+                                var s = swatch;
+                                <button type="button"
+                                        class="settings-appearance__preset-swatch @(s == _customBrandColor ? "settings-appearance__preset-swatch--active" : "")"
+                                        style="@($"background:{s};")"
+                                        @onclick="@(() => SelectCustomBrandColorAsync(s))"
+                                        aria-label="Brand color @s" />
+                            }
+                            <MudTextField T="string"
+                                          Value="@_customBrandColorHex"
+                                          ValueChanged="@OnCustomBrandHexChanged"
+                                          Label="Hex"
+                                          Placeholder="#3B82F6"
+                                          Variant="Variant.Outlined"
+                                          Dense="true"
+                                          Style="max-width: 120px;" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;" Class="mb-2">Base Mode</MudText>
+                        <MudToggleGroup T="string" Value="@_customBaseMode" ValueChanged="@OnCustomBaseModeChangedAsync" Color="Color.Primary" Outlined="true" Dense="true">
+                            <MudToggleItem Value="@("light")" Text="Light" />
+                            <MudToggleItem Value="@("dark")" Text="Dark" />
+                        </MudToggleGroup>
+                    </div>
+
+                    @* ── Live Preview ── *@
+                    @if (_customPreviewPalette is not null)
+                    {
+                        <div class="settings-appearance__preview mt-4">
+                            <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Live Preview</MudText>
+                            <div class="settings-appearance__preview-card" style="@GetPreviewStyle(_customPreviewPalette)">
+                                <div class="settings-appearance__preview-appbar" style="@GetPreviewAppbarStyle(_customPreviewPalette)">
+                                    <span style="@GetPreviewTextStyle(_customPreviewPalette, isPrimary: false, isAppBar: true)">App Bar</span>
+                                </div>
+                                <div class="settings-appearance__preview-body" style="@GetPreviewBodyStyle(_customPreviewPalette)">
+                                    <div class="settings-appearance__preview-card-inner" style="@GetPreviewSurfaceStyle(_customPreviewPalette)">
+                                        <span style="@GetPreviewTextStyle(_customPreviewPalette, isPrimary: false, isAppBar: false)">Card Content</span>
+                                        <button class="settings-appearance__preview-btn" style="@GetPreviewButtonStyle(_customPreviewPalette)">
+                                            Button
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="SaveCustomThemeAsync"
+                               Disabled="@_savingCustom">
+                        @if (_savingCustom)
+                        {
+                            <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                        }
+                        Save Custom Theme
+                    </MudButton>
+                </MudStack>
+            </div>
+
+            @* ── Profile Management ── *@
+            @if (_profiles.Count > 0)
+            {
+                <MudDivider />
+
+                <div class="settings-form-section">
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-2">Your Profiles</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                        Manage your saved appearance profiles.
+                    </MudText>
+
+                    @foreach (var profile in _profiles)
+                    {
+                        var p = profile;
+                        <MudPaper Elevation="0" Class="settings-appearance__profile-card pa-3 mb-2">
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 600;">@p.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @p.ThemeMode
+                                        @if (p.IsDefault == true)
+                                        {
+                                            <span class="ml-2" style="color: var(--mud-palette-success);">
+                                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" /> Active
+                                            </span>
+                                        }
+                                        @if (p.SourcePresetKey is not null)
+                                        {
+                                            <span class="ml-2">from @p.SourcePresetKey</span>
+                                        }
+                                    </MudText>
+                                </div>
+                                <MudStack Row="true" Spacing="1">
+                                    @if (p.IsDefault != true)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       Title="Set active"
+                                                       OnClick="@(() => ActivateProfileAsync(p.Id ?? Guid.Empty))" />
+                                    }
+                                    @if (p.IsUserEditable == true)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                                       Size="Size.Small"
+                                                       Color="Color.Secondary"
+                                                       Title="Duplicate"
+                                                       OnClick="@(() => DuplicateProfileAsync(p.Id ?? Guid.Empty))" />
+                                    }
+                                    @if (p.IsDefault != true)
+                                    {
+                                        <MudIconButton Icon="@Icons.Material.Filled.Archive"
+                                                       Size="Size.Small"
+                                                       Color="Color.Secondary"
+                                                       Title="Archive"
+                                                       OnClick="@(() => ArchiveProfileAsync(p.Id ?? Guid.Empty))" />
+                                    }
+                                </MudStack>
+                            </div>
+                        </MudPaper>
+                    }
+                </div>
+            }
+
+            <MudDivider />
+
+            <div class="settings-appearance__actions d-flex align-center gap-3 mt-4">
+                @if (_saving)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Saving...</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Success">
+                        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Class="mr-1" /> Current mode: @(_form.ThemeMode)
+                    </MudText>
+                }
+            </div>
+        </MudStack>
+    }
+</div>
+
+@code {
+    private bool _initialized;
+    private bool _saving;
+    private bool _savingCustom;
+
+    private PreferenceForm _form = new();
+    private PreferenceForm _serverForm = new();
+
+    private IReadOnlyList<AvailablePresetDto> _presets = Array.Empty<AvailablePresetDto>();
+    private IReadOnlyList<UserAppearanceProfileDto> _profiles = Array.Empty<UserAppearanceProfileDto>();
+
+    private static readonly string[] _naturalSwatches = ["#475569", "#5C6BC0", "#78716C", "#6B7280", "#44403C"];
+    private static readonly string[] _brandSwatches = ["#3B82F6", "#6366F1", "#8B5CF6", "#F43F5E", "#F59E0B", "#10B981"];
+
+    private string _customNaturalColor = "#475569";
+    private string _customNaturalColorHex = "#475569";
+    private string _customBrandColor = "#3B82F6";
+    private string _customBrandColorHex = "#3B82F6";
+    private string _customBaseMode = "light";
+    private UiThemePaletteDto? _customPreviewPalette;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = AppearanceThemeService.Current;
+
+        if (!AppearanceThemeService.Current.IsInitialized)
+        {
+            try
+            {
+                await AppearanceThemeService.InitializeAsync(null!);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to initialize appearance service");
+            }
+        }
+
+        HydrateFromState(AppearanceThemeService.Current);
+        _presets = state.AvailablePresets;
+        _profiles = state.UserProfiles;
+        await UpdateCustomPreviewAsync();
+        _initialized = true;
+    }
+
+    private void HydrateFromState(AppearanceState state)
+    {
+        var mode = state.ThemeMode ?? "system";
+        var direction = state.Direction ?? "auto";
+        var profileId = state.ResolvedAppearance?.ActiveProfileId;
+
+        _serverForm = new PreferenceForm
+        {
+            ThemeMode = mode,
+            Direction = direction,
+            ActiveProfileId = profileId
+        };
+        _form = new PreferenceForm
+        {
+            ThemeMode = mode,
+            Direction = direction,
+            ActiveProfileId = profileId
+        };
+    }
+
+    private bool IsActivePresetOrProfile(Guid id)
+    {
+        var activeId = AppearanceThemeService.Current.ResolvedAppearance?.ActiveProfileId
+            ?? AppearanceThemeService.Current.ResolvedAppearance?.SourcePresetId;
+        return activeId == id;
+    }
+
+    private async Task ActivatePresetAsync(Guid presetId)
+    {
+        _saving = true;
+        try
+        {
+            var capabilities = AppearanceThemeService.Current.ResolvedAppearance?.Capabilities;
+            if (capabilities?.CanClonePreset == true)
+            {
+                await AppearanceThemeService.ClonePresetAndActivateAsync(presetId);
+                await RefreshStateAsync();
+            }
+            else
+            {
+                Snackbar.Add("This preset cannot be activated.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error activating preset");
+            Snackbar.Add("Could not activate theme.", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ActivateProfileAsync(Guid profileId)
+    {
+        _saving = true;
+        try
+        {
+            await AppearanceThemeService.SetActiveProfileAsync(profileId);
+            await RefreshStateAsync();
+            Snackbar.Add("Profile activated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error activating profile");
+            Snackbar.Add("Could not activate profile.", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ArchiveProfileAsync(Guid profileId)
+    {
+        try
+        {
+            await AppearanceThemeService.ArchiveProfileAsync(profileId);
+            await RefreshStateAsync();
+            Snackbar.Add("Profile archived.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error archiving profile");
+            Snackbar.Add("Could not archive profile.", Severity.Error);
+        }
+    }
+
+    private async Task DuplicateProfileAsync(Guid profileId)
+    {
+        try
+        {
+            var result = await AppearanceThemeService.DuplicateProfileAsync(profileId, null);
+            if (result is not null)
+            {
+                await RefreshStateAsync();
+                Snackbar.Add("Profile duplicated.", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error duplicating profile");
+            Snackbar.Add("Could not duplicate profile.", Severity.Error);
+        }
+    }
+
+    private async Task OnThemeModeChanged(string mode)
+    {
+        _form = _form with { ThemeMode = mode };
+        _saving = true;
+        try
+        {
+            await AppearanceThemeService.SetThemeModeAsync(mode);
+            _serverForm = _form with { };
+            Snackbar.Add("Theme mode updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error setting theme mode");
+            Snackbar.Add("Could not change theme mode.", Severity.Error);
+            _form = _serverForm with { };
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task OnDirectionChanged(string direction)
+    {
+        _form = _form with { Direction = direction };
+        _saving = true;
+        try
+        {
+            await AppearanceThemeService.SetDirectionAsync(direction);
+            _serverForm = _form with { };
+            Snackbar.Add("Text direction updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error setting text direction");
+            Snackbar.Add("Could not change text direction.", Severity.Error);
+            _form = _serverForm with { };
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task SelectCustomNaturalColorAsync(string color)
+    {
+        _customNaturalColor = color;
+        _customNaturalColorHex = color;
+        await UpdateCustomPreviewAsync();
+    }
+
+    private async Task SelectCustomBrandColorAsync(string color)
+    {
+        _customBrandColor = color;
+        _customBrandColorHex = color;
+        await UpdateCustomPreviewAsync();
+    }
+
+    private async Task OnCustomNaturalHexChanged(string value)
+    {
+        _customNaturalColorHex = value;
+        if (IsValidHex(value))
+        {
+            _customNaturalColor = value;
+            await UpdateCustomPreviewAsync();
+        }
+    }
+
+    private async Task OnCustomBrandHexChanged(string value)
+    {
+        _customBrandColorHex = value;
+        if (IsValidHex(value))
+        {
+            _customBrandColor = value;
+            await UpdateCustomPreviewAsync();
+        }
+    }
+
+    private async Task OnCustomBaseModeChangedAsync(string mode)
+    {
+        _customBaseMode = mode;
+        await UpdateCustomPreviewAsync();
+    }
+
+    private async Task UpdateCustomPreviewAsync()
+    {
+        var natural = _customNaturalColor;
+        var brand = _customBrandColor;
+        if (!IsValidHex(natural) || !IsValidHex(brand)) return;
+
+        var isDark = _customBaseMode == "dark";
+        _customPreviewPalette = await AppearanceThemeService.GeneratePalettePreviewAsync(natural, brand, isDark)
+            ?? AppearanceThemeService.GeneratePalettePreview(natural, brand, isDark);
+    }
+
+    private async Task SaveCustomThemeAsync()
+    {
+        _savingCustom = true;
+        try
+        {
+            var request = new CreateCustomProfileRequestDto
+            {
+                Name = $"Custom {(_customBaseMode.Equals("dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light")}",
+                ThemeMode = _customBaseMode,
+                NaturalColor = _customNaturalColor,
+                BrandColor = _customBrandColor
+            };
+
+            var profile = await AppearanceThemeService.CreateCustomProfileAsync(request);
+            if (profile is not null)
+            {
+                await AppearanceThemeService.SetActiveProfileAsync(profile.Id ?? Guid.Empty);
+                await RefreshStateAsync();
+                Snackbar.Add("Custom theme created and activated!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error creating custom theme");
+            Snackbar.Add("Could not create custom theme.", Severity.Error);
+        }
+        finally
+        {
+            _savingCustom = false;
+        }
+    }
+
+    private async Task RefreshStateAsync()
+    {
+        try
+        {
+            await AppearanceThemeService.RefreshProfilesAsync();
+            _profiles = AppearanceThemeService.Current.UserProfiles;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error refreshing profiles");
+        }
+    }
+
+    private string GetThemeCardClass(Guid id, bool isActive) =>
+        "settings-appearance__theme-card pa-4 rounded-lg border-solid border-1" +
+        (isActive ? " settings-appearance__theme-card--active" : " mud-border-lines-default");
+
+    private static bool IsValidHex(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        var trimmed = value.TrimStart('#');
+        return trimmed.Length is 3 or 6 && trimmed.All(c => char.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'));
+    }
+
+    private static string GetPreviewStyle(UiThemePaletteDto palette) =>
+        $"background:{palette.Background};color:{palette.TextPrimary};border-radius:12px;overflow:hidden;border:1px solid {palette.LinesDefault};";
+
+    private static string GetPreviewAppbarStyle(UiThemePaletteDto palette) =>
+        $"background:{palette.AppbarBackground};color:{palette.AppbarText};padding:12px 16px;font-weight:600;";
+
+    private static string GetPreviewBodyStyle(UiThemePaletteDto palette) =>
+        $"background:{palette.Background};padding:16px;";
+
+    private static string GetPreviewSurfaceStyle(UiThemePaletteDto palette) =>
+        $"background:{palette.Surface};border-radius:8px;padding:12px;border:1px solid {palette.LinesDefault};";
+
+    private static string GetPreviewButtonStyle(UiThemePaletteDto palette) =>
+        $"background:{palette.Primary};color:{palette.PrimaryContrastText};border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:0.875rem;margin-top:8px;display:inline-block;";
+
+    private static string GetPreviewTextStyle(UiThemePaletteDto palette, bool isPrimary, bool isAppBar) =>
+        isPrimary
+            ? $"color:{palette.Primary};font-weight:600;"
+            : isAppBar
+                ? $"color:{palette.AppbarText};"
+                : $"color:{palette.TextPrimary};";
+
+    private sealed record PreferenceForm
+    {
+        public string ThemeMode { get; set; } = "system";
+        public string Direction { get; set; } = "auto";
+        public Guid? ActiveProfileId { get; set; }
+    }
+}

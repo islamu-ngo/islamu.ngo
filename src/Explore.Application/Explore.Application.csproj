@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DTOs\EducationType\**" />
+    <Compile Remove="DTOs\Education\**" />
+    <Compile Remove="DTOs\ProgramRegistration\**" />
+    <Compile Remove="DTOs\ProgramType\**" />
+    <Compile Remove="DTOs\Program\**" />
+    <EmbeddedResource Remove="DTOs\EducationType\**" />
+    <EmbeddedResource Remove="DTOs\Education\**" />
+    <EmbeddedResource Remove="DTOs\ProgramRegistration\**" />
+    <EmbeddedResource Remove="DTOs\ProgramType\**" />
+    <EmbeddedResource Remove="DTOs\Program\**" />
+    <None Remove="DTOs\EducationType\**" />
+    <None Remove="DTOs\Education\**" />
+    <None Remove="DTOs\ProgramRegistration\**" />
+    <None Remove="DTOs\ProgramType\**" />
+    <None Remove="DTOs\Program\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="EntityFramework" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="OpenFeature" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Explore.Domain\Explore.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DTOs\AudienceAge\Validators\" />
+    <Folder Include="DTOs\AudienceGender\Validators\" />
+    <Folder Include="DTOs\EventType\Validators\" />
+    <Folder Include="DTOs\OrganizationMember\Validators\" />
+    <Folder Include="DTOs\OwnerType\" />
+    <Folder Include="DTOs\StatusType\Validators\" />
+    <Folder Include="DTOs\StorageObject\Validators\" />
+    <Folder Include="Features\AudienceGenders\Handlers\Commands\" />
+    <Folder Include="Features\AudienceGenders\Requests\Commands\" />
+    <Folder Include="Features\StorageObjects\Handlers\Queries\" />
+    <Folder Include="Features\StorageObjects\Requests\Queries\" />
+  </ItemGroup>
+
+</Project>

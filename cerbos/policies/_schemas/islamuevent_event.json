@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Resource attributes for event resources. Populated by ResourceDescriptors.Event.",
+  "type": "object",
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "description": "Owning tenant identifier. Used by islamuevent_tenant_admin derived role."
+    },
+    "eventId": {
+      "type": "string",
+      "description": "Event identifier. Used by event-role derived roles to look up principal's event assignments."
+    },
+    "actorId": {
+      "type": "string",
+      "description": "Actor (creator/owner) identifier."
+    },
+    "userId": {
+      "type": "string",
+      "description": "Owning user identifier for events published under a user actor."
+    },
+    "organizationId": {
+      "type": "string",
+      "description": "Owning organization identifier. Used by islamuevent_org_admin derived role."
+    },
+    "authorizationPhase": {
+      "type": "string",
+      "description": "Authorization phase marker. Event create checks use pre_create before an actor or event ID exists."
+    },
+    "groupId": {
+      "type": "string",
+      "description": "Owning group identifier for pre-create event requests. Publisher permissions are enforced by the handler."
+    }
+  },
+  "required": ["tenantId"]
+}

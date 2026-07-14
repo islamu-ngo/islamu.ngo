@@ -1,0 +1,2064 @@
+@* ABOUTME: Shell-level AI assistant rail hosted in MainLayout, outside page content. *@
+@* ABOUTME: Slides in from the right; persists across page navigations. Plane-style chat UI. *@
+@using Explore.Blazor.Client.Contracts.Services.Ai
+@using Explore.Blazor.Client.Components.Shell.AiAssistant
+@using Explore.Blazor.Client.Services.Ai
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Rendering
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+
+@inject IJSRuntime JsRuntime
+
+@if (AiAssistantState.IsAvailable)
+{
+    @if (!HostedInDock && AiAssistantState.IsOpen)
+    {
+        <div class="ai-rail__backdrop" @onclick="AiAssistantState.Close" aria-hidden="true"></div>
+    }
+
+    <aside id="ai-assistant-rail"
+           class="@RootClass"
+           data-testid="shell-ai-rail"
+           aria-label="AI Assistant"
+           role="complementary">
+
+        @* ── Header bar ── *@
+        <div class="ai-rail__header">
+            <div class="ai-rail__header-brand">
+                <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" Class="ai-rail__header-icon" />
+                <MudMenu @bind-Open="_modelMenuOpen"
+                         AnchorOrigin="Origin.BottomLeft"
+                         TransformOrigin="Origin.TopLeft"
+                         Dense="true"
+                         Class="ai-rail__model-menu">
+                    <ActivatorContent>
+                        <button type="button" class="ai-rail__model-picker-btn" @onclick="ToggleModelMenu">
+                            <span class="ai-rail__header-title">AI Assistant (@SelectedModelLabel)</span>
+                            <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Class="ai-rail__model-arrow" />
+                        </button>
+                    </ActivatorContent>
+                    <ChildContent>
+                        @foreach (var model in _modelOptions)
+                        {
+                            <MudMenuItem OnClick="() => SelectModel(model.Id)"
+                                         Class="@GetModelItemClass(model.Id)">
+                                @model.DisplayName
+                            </MudMenuItem>
+                        }
+                    </ChildContent>
+                </MudMenu>
+            </div>
+            <div class="ai-rail__header-actions">
+                @if (ConversationState.CanCreateConversation)
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.EditNote"
+                                   Color="Color.Inherit"
+                                   Size="Size.Small"
+                                   OnClick="CreateConversationAsync"
+                                   Disabled="@_isCommandRunning"
+                                   Title="New conversation"
+                                   aria-label="New conversation"
+                                   data-testid="ai-rail-new-conversation" />
+                }
+                <MudIconButton Icon="@Icons.Material.Filled.History"
+                               Color="@(_showConversations ? Color.Primary : Color.Inherit)"
+                               Size="Size.Small"
+                               OnClick="ToggleConversations"
+                               Title="Conversation history"
+                               aria-label="Conversation history" />
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                         Color="Color.Inherit"
+                         Size="Size.Small"
+                         AnchorOrigin="Origin.BottomRight"
+                         TransformOrigin="Origin.TopRight"
+                         Title="Close AI Assistant"
+                         aria-label="Close AI Assistant"
+                         data-testid="ai-rail-options-menu">
+                    <MudMenuItem OnClick="DeleteCurrentChatAsync" Disabled="@(ConversationState.SelectedConversation is null)">
+                        Delete chat
+                    </MudMenuItem>
+                </MudMenu>
+            </div>
+        </div>
+
+        @* Drawer removed in favor of history sidebar overlay *@
+
+        @* ── Chat body ── *@
+        <div class="ai-rail__body">
+            @if (ConversationState.IsLoading)
+            {
+                <div class="ai-rail__placeholder" role="status" aria-live="polite">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                        Loading assistant context...
+                    </MudText>
+                </div>
+            }
+            else if (ConversationState.SelectedConversation is not null)
+            {
+                var timelineItems = GetTimelineItems();
+                @if (timelineItems.Count > 0)
+                {
+                    <div class="ai-rail__timeline" role="log" aria-live="polite" aria-label="AI conversation messages and actions">
+                        @foreach (var item in timelineItems)
+                        {
+                            @if (item.Message is not null)
+                            {
+                                <article @key="item.Key" class="@GetMessageClass(item.Message.Role)" data-testid="ai-rail-message">
+                                    <span class="ai-rail__message-role">@item.Message.Role</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Message.Content))
+                                    {
+                                        <p>@item.Message.Content</p>
+                                    }
+                                    @if (GetMessageImageCount(item.Message) > 0)
+                                    {
+                                        <span class="ai-rail__message-attachments" data-testid="ai-rail-message-images">
+                                            <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Small" />
+                                            @FormatImageAttachmentCount(GetMessageImageCount(item.Message))
+                                        </span>
+                                    }
+                                </article>
+                            }
+                            else if (item.Action is not null)
+                            {
+                                <AiProposedActionCard @key="item.Key"
+                                                      Action="item.Action"
+                                                      IsBusy="@IsActionBusy(item.Action.Id)"
+                                                      ActionsEnabled="@IsBuildCapabilitySelected"
+                                                      OnConfirm="ConfirmActionAsync"
+                                                      OnReject="RejectActionAsync" />
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="ai-rail__empty-hint">
+                        No messages yet.
+                    </MudText>
+                }
+            }
+        </div>
+
+        @* ── Error ── *@
+        @if (!string.IsNullOrWhiteSpace(ConversationState.ErrorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="ai-rail__alert" data-testid="ai-rail-error">
+                @ConversationState.ErrorMessage
+            </MudAlert>
+        }
+
+        @if (GetActiveRunId() is not null)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="ai-rail__alert" data-testid="ai-rail-running">
+                <div class="d-flex align-center gap-2">
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
+                    <span>AI is thinking. You can wait here or cancel this run.</span>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               Disabled="@_isCancelRunRunning"
+                               OnClick="CancelActiveRunAsync"
+                               data-testid="ai-rail-cancel-run">
+                        Cancel
+                    </MudButton>
+                </div>
+            </MudAlert>
+        }
+
+        @* ── Composer (bottom-pinned) ── *@
+        @if (ConversationState.SelectedConversation is not null)
+        {
+            <div class="ai-rail__composer" role="form" aria-label="Send an AI assistant message">
+                @if (IsReferenceAutocompleteVisible)
+                {
+                    <div id="ai-rail-reference-results"
+                         class="ai-rail__reference-autocomplete"
+                         role="listbox"
+                         aria-label="AI reference suggestions"
+                         data-testid="ai-rail-reference-autocomplete">
+                        @if (_isReferenceSearchRunning)
+                        {
+                            <div class="ai-rail__reference-status" role="status">
+                                <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
+                            </div>
+                        }
+                        else if (ConversationState.ReferenceResults.Count == 0 && _hasSearchedReferences)
+                        {
+                            <div class="ai-rail__reference-empty" role="status">No matching references</div>
+                        }
+                        else
+                        {
+                            @for (var index = 0; index < ConversationState.ReferenceResults.Count; index++)
+                            {
+                                var reference = ConversationState.ReferenceResults[index];
+                                <button id="@GetReferenceOptionId(index)"
+                                        type="button"
+                                        class="@GetReferenceOptionClass(index)"
+                                        role="option"
+                                        aria-selected="@(index == _activeReferenceIndex)"
+                                        data-testid="ai-rail-reference-result"
+                                        @onmousedown:preventDefault="true"
+                                        @onclick="() => SelectReferenceAsync(reference)">
+                                    <MudIcon Icon="@GetReferenceIcon(reference)" Size="Size.Small" Class="ai-rail__reference-option-icon" />
+                                    <span class="ai-rail__reference-option-text">@reference.DisplayName</span>
+                                    <span class="ai-rail__reference-option-kind">@GetReferenceKindLabel(reference)</span>
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                <div class="ai-rail__composer-card">
+                    <div class="ai-rail__composer-context">
+                        <label class="ai-rail__actor-label" for="ai-rail-actor-selector">Acting as</label>
+                        <select id="ai-rail-actor-selector"
+                                class="ai-rail__actor-selector"
+                                value="@(_selectedActorId?.ToString() ?? string.Empty)"
+                                @onchange="OnActorSelectionChanged"
+                                data-testid="ai-rail-actor-selector"
+                                aria-label="AI assistant actor context"
+                                disabled="@(_actorOptions.Count == 0)">
+                            @if (_actorOptions.Count == 0)
+                            {
+                                <option value="">No actor contexts available</option>
+                            }
+                            else
+                            {
+                                @foreach (var actor in _actorOptions)
+                                {
+                                    <option value="@actor.ActorId"
+                                            data-actor-type="@actor.ActorType"
+                                            data-actor-display-name="@actor.ActorDisplayName">
+                                        @actor.ActorType · @actor.ActorDisplayName
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    @if (_selectedImages.Count > 0)
+                    {
+                        <div class="ai-rail__image-chip-list" role="list" aria-label="Selected image attachments">
+                            @foreach (var image in _selectedImages)
+                            {
+                                <div class="ai-rail__image-chip" role="listitem" data-testid="ai-rail-image-chip">
+                                    <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Small" />
+                                    <span class="ai-rail__image-chip-text">@image.FileName</span>
+                                    <span class="ai-rail__image-chip-size">@FormatFileSize(image.SizeBytes)</span>
+                                    <button type="button"
+                                            class="ai-rail__image-chip-remove"
+                                            aria-label="@($"Remove image {image.FileName}")"
+                                            @onclick="() => RemoveSelectedImage(image.Id)">
+                                        <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" />
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                                   @ref="_imageFileUpload"
+                                   FilesChanged="OnFilesSelectedAsync"
+                                   Accept="image/*"
+                                   MaximumFileCount="@MaxSelectedImages">
+                        <CustomContent Context="fileUpload"></CustomContent>
+                        <SelectedTemplate Context="files"></SelectedTemplate>
+                    </MudFileUpload>
+                    <div class="ai-rail__prompt-shell">
+                        @if (HasPromptReferenceHighlights)
+                        {
+                            <div class="ai-rail__prompt-highlights"
+                                 aria-hidden="true"
+                                 data-testid="ai-rail-prompt-highlights">@PromptReferenceHighlights</div>
+                        }
+                        <textarea id="ai-rail-prompt"
+                                  class="@PromptTextAreaClass"
+                                  @ref="_promptTextArea"
+                                  rows="1"
+                                  value="@_promptText"
+                                  @oninput="OnPromptInput"
+                                  @onchange="OnPromptChange"
+                                  placeholder="How can I help you today?"
+                                  data-testid="ai-rail-prompt"
+                                  data-reference-autocomplete-open="@ReferenceAutocompleteOpenData"
+                                  data-reference-autocomplete-selectable="@ReferenceAutocompleteSelectableData"
+                                  data-reference-mention-tokens="@ReferenceMentionTokensData"
+                                  aria-controls="ai-rail-reference-results"
+                                  aria-expanded="@ReferenceAutocompleteOpenData"
+                                  aria-autocomplete="list"
+                                  aria-activedescendant="@ActiveReferenceOptionId"></textarea>
+                    </div>
+                    <div class="ai-rail__composer-toolbar">
+                        <MudMenu @bind-Open="_referencesMenuOpen" Dense="true" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                            <ActivatorContent>
+                                <button type="button"
+                                        class="ai-rail__toolbar-btn @(_isReferenceAutocompleteOpen ? "ai-rail__toolbar-btn--active" : "")"
+                                        title="Add references"
+                                        aria-label="Add references"
+                                        @onclick="ToggleReferencesMenu">
+                                    <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+                                </button>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem OnClick="OpenReferenceSearchFromMenuAsync">Search references</MudMenuItem>
+                                <MudMenuItem OnClick="OpenFilePickerAndCloseMenu">Add files of photos</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                        <MudMenu @bind-Open="_capabilitiesMenuOpen" Dense="true" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft">
+                            <ActivatorContent>
+                                <button type="button"
+                                        class="ai-rail__capability-picker-btn"
+                                        title="AI capabilities"
+                                        aria-label="AI capabilities"
+                                        @onclick="ToggleCapabilitiesMenu">
+                                    <MudIcon Icon="@GetCapabilityIcon(_selectedCapability)" Size="Size.Small" />
+                                    <span>@_selectedCapability</span>
+                                    <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Class="ai-rail__capability-arrow" />
+                                </button>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem OnClick='() => SelectCapability("Build")'>Build</MudMenuItem>
+                                <MudMenuItem OnClick='() => SelectCapability("Ask")'>Ask</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                        <div class="ai-rail__toolbar-spacer"></div>
+                        <button type="button"
+                                class="ai-rail__send-btn"
+                                disabled="@IsSendDisabled"
+                                @onclick="SendMessageAsync"
+                                data-testid="ai-rail-send"
+                                aria-label="Send message"
+                                title="Send message">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" />
+                        </button>
+                    </div>
+                </div>
+                <span class="ai-rail__disclaimer">AI can make mistakes, please double-check responses.</span>
+            </div>
+        }
+
+        @* ── History Overlay (Plane-style right sidebar overlay) ── *@
+        <div class="@HistoryOverlayClass" aria-label="AI conversations history">
+            <div class="ai-rail__history-header">
+                <span class="ai-rail__history-title">Chat history</span>
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Color="Color.Inherit"
+                               Size="Size.Small"
+                               OnClick="ToggleConversations"
+                               Title="Close history"
+                               aria-label="Close history" />
+            </div>
+
+            <div class="ai-rail__history-search-row">
+                <button type="button" class="ai-rail__history-new-chat" @onclick="CreateConversationAsync" disabled="@_isCommandRunning">
+                    <MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Small" />
+                    <span>New chat</span>
+                </button>
+                <div class="ai-rail__history-search-btn">
+                    <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small" />
+                </div>
+            </div>
+
+            <div class="ai-rail__history-section-title">Recents</div>
+
+            <div class="ai-rail__history-body">
+                @if (ConversationState.Conversations.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="ai-rail__empty-hint">
+                        @(ConversationState.CanCreateConversation
+                            ? "Start a conversation to ask for event planning help."
+                            : "Conversation creation is not available for your account.")
+                    </MudText>
+                }
+                else
+                {
+                    <div class="ai-rail__history-list" role="list">
+                        @foreach (var conversation in ConversationState.Conversations)
+                        {
+                            <button type="button"
+                                    class="@GetConversationButtonClass(conversation.Id)"
+                                    role="listitem"
+                                    @onclick="() => SelectConversationAndCloseHistoryAsync(conversation.Id)"
+                                    data-testid="ai-rail-conversation">
+                                <span class="ai-rail__conversation-title">@GetConversationTitle(conversation)</span>
+                                <span class="ai-rail__conversation-status">@conversation.Status</span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </aside>
+}
+
+@code
+{
+    [Inject]
+    protected AiAssistantState AiAssistantState { get; set; } = null!;
+
+    [Inject]
+    protected AiAssistantConversationState ConversationState { get; set; } = null!;
+
+    [Inject]
+    protected IAiAssistantClientService ClientService { get; set; } = null!;
+
+    [Inject]
+    protected ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    protected IBffAuthApi BffAuthApi { get; set; } = null!;
+
+    [Inject]
+    protected ILogger<AiAssistantRail> Logger { get; set; } = null!;
+
+    [Inject]
+    protected NavigationManager Navigation { get; set; } = null!;
+
+    [Parameter]
+    public bool HostedInDock { get; set; }
+
+    private const int MaxSelectedImages = 4;
+    private const long MaxImageBytes = 5 * 1024 * 1024;
+    private const int MinimumReferenceSearchLength = 2;
+    private const string ActorReferenceKind = "Actor";
+    private const string ActorContextSummaryPrefix = "Actor context:";
+    private static readonly TimeSpan ReferenceSearchDebounceDelay = TimeSpan.FromMilliseconds(250);
+
+    private readonly HashSet<Guid> _busyActionIds = [];
+    private readonly List<AiRailImageAttachment> _selectedImages = [];
+    private bool _hasLoaded;
+    private bool _isLoadingConversations;
+    private bool _wasOpen;
+    private bool _hasSearchedReferences;
+    private bool _isCommandRunning;
+    private bool _isCancelRunRunning;
+    private bool _isReferenceSearchRunning;
+    private bool _showConversations;
+    private bool _isReferenceAutocompleteOpen;
+    private bool _isReferenceAutocompleteManuallyOpened;
+    private string _promptText = string.Empty;
+    private string _referenceSearchTerm = string.Empty;
+    private int _activeReferenceIndex;
+    private int? _referenceMentionStartIndex;
+    private long _referenceSearchRequestId;
+
+    private bool _modelMenuOpen;
+    private bool _referencesMenuOpen;
+    private bool _capabilitiesMenuOpen;
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _imageFileUpload;
+
+    private IReadOnlyList<AiRailModelOption> _modelOptions = [];
+    private IReadOnlyList<AiRailActorOption> _actorOptions = [];
+    private string _selectedModelId = string.Empty;
+    private Guid? _selectedActorId;
+    private string _selectedCapability = "Build";
+    private Guid? _activeRunId;
+    private ElementReference _promptTextArea;
+    private IJSObjectReference? _promptModule;
+    private DotNetObjectReference<AiAssistantRail>? _promptInteropReference;
+    private CancellationTokenSource? _referenceSearchDebounceCts;
+
+    private bool IsBuildCapabilitySelected =>
+        string.Equals(_selectedCapability, "Build", StringComparison.OrdinalIgnoreCase);
+
+    private string SelectedInteractionMode => IsBuildCapabilitySelected ? "build" : "ask";
+
+    private string SelectedModelLabel => _modelOptions
+        .FirstOrDefault(model => string.Equals(model.Id, _selectedModelId, StringComparison.OrdinalIgnoreCase))
+        ?.DisplayName ?? (_selectedModelId.Length > 0 ? _selectedModelId : "Default");
+
+    private string RootClass => string.Join(' ', new[]
+    {
+        "ai-rail",
+        AiAssistantState.IsOpen ? "ai-rail--open" : null,
+        HostedInDock ? "ai-rail--docked" : null
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string HistoryOverlayClass => string.Join(' ', new[]
+    {
+        "ai-rail__history-overlay",
+        _showConversations ? "ai-rail__history-overlay--open" : null
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private bool IsSendDisabled =>
+        _isCommandRunning
+        || ConversationState.SelectedConversation?.Id is not Guid
+        || !AiAssistantConversationState.CanSendMessage(ConversationState.SelectedConversation)
+        || (string.IsNullOrWhiteSpace(_promptText) && _selectedImages.Count == 0);
+
+    private bool IsReferenceAutocompleteVisible => _isReferenceAutocompleteOpen;
+
+    private bool HasPromptReferenceHighlights =>
+        _promptText.Length > 0
+        && GetReferenceMentionTokens().Any(token =>
+            _promptText.Contains(token, StringComparison.OrdinalIgnoreCase));
+
+    private string PromptTextAreaClass => HasPromptReferenceHighlights
+        ? "ai-rail__textarea ai-rail__textarea--with-highlights"
+        : "ai-rail__textarea";
+
+    private RenderFragment PromptReferenceHighlights => BuildPromptReferenceHighlights;
+
+    private string ReferenceAutocompleteOpenData => IsReferenceAutocompleteVisible ? "true" : "false";
+
+    private string ReferenceAutocompleteSelectableData =>
+        IsReferenceAutocompleteVisible && ConversationState.ReferenceResults.Count > 0 ? "true" : "false";
+
+    private string ReferenceMentionTokensData => System.Text.Json.JsonSerializer.Serialize(GetReferenceMentionTokens());
+
+    private string? ActiveReferenceOptionId =>
+        IsReferenceAutocompleteVisible && ConversationState.ReferenceResults.Count > 0
+            ? GetReferenceOptionId(_activeReferenceIndex)
+            : null;
+
+    protected override void OnInitialized()
+    {
+        _wasOpen = AiAssistantState.IsOpen;
+        AiAssistantState.OnChange += OnAiAssistantStateChanged;
+        ConversationState.OnChange += StateHasChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_hasLoaded && AiAssistantState.IsAvailable && (AiAssistantState.IsOpen || HostedInDock))
+        {
+            await LoadConversationsAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (ConversationState.SelectedConversation is not null)
+        {
+            await AttachPromptKeyboardHandlerAsync();
+        }
+    }
+
+    private async Task AttachPromptKeyboardHandlerAsync()
+    {
+        try
+        {
+            _promptInteropReference ??= DotNetObjectReference.Create(this);
+            _promptModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/ai-assistant-rail.js");
+            await _promptModule.InvokeVoidAsync("attachPromptKeyboardHandler", _promptTextArea, _promptInteropReference);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "AI assistant prompt keyboard shortcut could not be attached.");
+        }
+    }
+
+    private void OnAiAssistantStateChanged()
+    {
+        _ = InvokeAsync(HandleAiAssistantStateChangedAsync);
+    }
+
+    private async Task HandleAiAssistantStateChangedAsync()
+    {
+        var isOpen = AiAssistantState.IsOpen;
+        if (isOpen && !_wasOpen && AiAssistantState.IsAvailable)
+        {
+            _wasOpen = true;
+            await LoadConversationsAsync(forceStartupConversation: true);
+        }
+        else
+        {
+            _wasOpen = isOpen;
+        }
+
+        StateHasChanged();
+    }
+
+    private void ToggleConversations() => _showConversations = !_showConversations;
+
+    private async Task LoadConversationsAsync(bool forceStartupConversation = false)
+    {
+        if (_isLoadingConversations)
+        {
+            return;
+        }
+
+        _isLoadingConversations = true;
+        _hasLoaded = true;
+        ConversationState.SetLoading(true);
+        ConversationState.SetError(null);
+
+        try
+        {
+            await LoadBootstrapAsync();
+
+            var collection = await ClientService.GetConversationCollectionAsync();
+            ConversationState.SetConversationCollection(collection);
+            if (collection is null)
+            {
+                ConversationState.SetError("AI assistant conversations are not available for your account.");
+                return;
+            }
+
+            if (forceStartupConversation || ConversationState.SelectedConversation is null)
+            {
+                await SelectStartupConversationAsync();
+            }
+        }
+        finally
+        {
+            _isLoadingConversations = false;
+            ConversationState.SetLoading(false);
+        }
+    }
+
+    private async Task CreateConversationAsync()
+    {
+        if (!ConversationState.CanCreateConversation)
+        {
+            ConversationState.SetError("Conversation creation is not available for your account.");
+            return;
+        }
+
+        await RunCommandAsync(async () =>
+        {
+            await CreateAndSelectConversationAsync();
+            await LoadBootstrapAsync();
+        });
+    }
+
+    private async Task SelectStartupConversationAsync()
+    {
+        if (TryGetReusableLatestConversationId(out var reusableConversationId))
+        {
+            await SelectConversationAsync(reusableConversationId);
+            return;
+        }
+
+        if (ConversationState.CanCreateConversation)
+        {
+            await CreateAndSelectConversationAsync();
+            return;
+        }
+
+        if (ConversationState.Conversations.FirstOrDefault()?.Id is Guid fallbackConversationId)
+        {
+            await SelectConversationAsync(fallbackConversationId);
+            return;
+        }
+
+        ConversationState.SetError("Conversation creation is not available for your account.");
+    }
+
+    private bool TryGetReusableLatestConversationId(out Guid conversationId)
+    {
+        var latestConversation = ConversationState.Conversations.FirstOrDefault();
+        if (latestConversation?.Id is Guid latestConversationId && IsReusableEmptyConversation(latestConversation))
+        {
+            conversationId = latestConversationId;
+            return true;
+        }
+
+        conversationId = default;
+        return false;
+    }
+
+    private bool IsReusableEmptyConversation(HalResourceOfAiConversationSummaryDto conversation)
+    {
+        if (ConversationState.SelectedConversation is { } selectedConversation
+            && selectedConversation.Id == conversation.Id)
+        {
+            return IsEmptyConversation(selectedConversation);
+        }
+
+        return conversation.LastMessageSequence.GetValueOrDefault() <= 0;
+    }
+
+    private static bool IsEmptyConversation(HalResourceOfAiConversationDto conversation)
+    {
+        return conversation.LastMessageSequence.GetValueOrDefault() <= 0 && (conversation.Messages?.Count ?? 0) == 0;
+    }
+
+    private async Task CreateAndSelectConversationAsync()
+    {
+        var result = await ClientService.CreateConversationAsync(new CreateAiConversationRequestDto
+        {
+            Title = "AI Assistant",
+            ActorId = _selectedActorId
+        });
+
+        if (!result.Success || result.Id is not Guid conversationId)
+        {
+            ConversationState.SetError(result.Message ?? "The AI assistant conversation could not be created.");
+            return;
+        }
+
+        var newCollection = await ClientService.GetConversationCollectionAsync();
+        ConversationState.SetConversationCollection(newCollection);
+        await SelectConversationAsync(conversationId);
+    }
+
+    private async Task SelectConversationAsync(Guid? conversationId)
+    {
+        if (conversationId is not Guid id)
+        {
+            return;
+        }
+
+        ConversationState.SetLoading(true);
+        ConversationState.SetError(null);
+
+        var conversation = await ClientService.GetConversationAsync(id);
+        if (conversation is null)
+        {
+            ConversationState.SetError("The AI assistant conversation could not be loaded.");
+        }
+
+        ConversationState.SelectConversation(conversation);
+        _activeRunId = FindActiveRunId(conversation);
+        ConversationState.SetLoading(false);
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (ConversationState.SelectedConversation?.Id is not Guid conversationId
+            || (string.IsNullOrWhiteSpace(_promptText) && _selectedImages.Count == 0))
+        {
+            return;
+        }
+
+        if (!AiAssistantConversationState.CanSendMessage(ConversationState.SelectedConversation))
+        {
+            ConversationState.SetError("Sending messages is not available for this conversation.");
+            return;
+        }
+
+        var content = _promptText.Trim();
+        var images = _selectedImages.ToList();
+        var selectedReferences = ConversationState.SelectedReferences.ToList();
+        var imageInputs = images.Select(ToImageInputDto).ToList();
+        var referenceInputs = selectedReferences.Select(ToSelectedReferenceDto).ToList();
+        var idempotencyKey = $"blazor-ai-send-{Guid.CreateVersion7()}";
+
+        await RunCommandAsync(async () =>
+        {
+            _promptText = string.Empty;
+            _selectedImages.Clear();
+            CloseReferenceAutocomplete(clearResults: true);
+            ConversationState.SetSelectedReferences([]);
+            ConversationState.SetError(null);
+
+            var result = await SendAiMessageRequestAsync(
+                conversationId,
+                content,
+                idempotencyKey,
+                imageInputs,
+                referenceInputs);
+
+            if (IsAuthenticationFailure(result))
+            {
+                var authOk = await TryRefreshAuthSessionAsync();
+                if (!authOk)
+                {
+                    _promptText = content;
+                    _selectedImages.AddRange(images);
+                    ConversationState.SetSelectedReferences(selectedReferences);
+                    RedirectToLogin();
+                    return;
+                }
+
+                result = await SendAiMessageRequestAsync(
+                    conversationId,
+                    content,
+                    idempotencyKey,
+                    imageInputs,
+                    referenceInputs);
+            }
+
+            if (!result.Success)
+            {
+                _promptText = content;
+                _selectedImages.AddRange(images);
+                ConversationState.SetSelectedReferences(selectedReferences);
+                await RefreshSelectedConversationAsync(conversationId);
+                ConversationState.SetError(result.Message ?? "The AI assistant message could not be sent.");
+                return;
+            }
+
+            await RefreshSelectedConversationAsync(conversationId);
+            if (result.Id is Guid runId)
+            {
+                _activeRunId = runId;
+                await PollRunUntilCompleteAsync(conversationId, runId);
+            }
+        });
+    }
+
+    private Task<AiAssistantCommandResult> SendAiMessageRequestAsync(
+        Guid conversationId,
+        string content,
+        string idempotencyKey,
+        IReadOnlyList<AiMessageImageInputDto> images,
+        IReadOnlyList<AiSelectedReferenceDto> references)
+    {
+        return ClientService.SendMessageAsync(
+            conversationId,
+            content,
+            _selectedModelId,
+            idempotencyKey,
+            mode: SelectedInteractionMode,
+            actorId: _selectedActorId,
+            images: images,
+            references: references);
+    }
+
+    private static bool IsAuthenticationFailure(AiAssistantCommandResult result) =>
+        string.Equals(result.FailureCode, "unauthorized", StringComparison.OrdinalIgnoreCase);
+
+    [JSInvokable]
+    public async Task SendPromptFromKeyboardAsync()
+    {
+        if (!IsSendDisabled)
+        {
+            await SendMessageAsync();
+        }
+    }
+
+    [JSInvokable]
+    public PromptReferenceDeletionResult DeletePromptReferenceFromKeyboard(
+        int selectionStart,
+        int selectionEnd,
+        string key)
+    {
+        if (ConversationState.SelectedReferences.Count == 0)
+        {
+            return PromptReferenceDeletionResult.NotHandled(_promptText, selectionStart);
+        }
+
+        var deletion = FindReferenceDeletion(selectionStart, selectionEnd, key);
+        if (deletion is null)
+        {
+            return PromptReferenceDeletionResult.NotHandled(_promptText, selectionStart);
+        }
+
+        _promptText = _promptText.Remove(deletion.Start, deletion.Length);
+        SyncSelectedReferencesWithPromptText();
+        UpdateReferenceAutocompleteFromPrompt();
+        StateHasChanged();
+
+        return new PromptReferenceDeletionResult(true, _promptText, deletion.Start);
+    }
+
+    [JSInvokable]
+    public async Task SelectPromptReferenceFromKeyboardAsync()
+    {
+        if (!IsReferenceAutocompleteVisible || ConversationState.ReferenceResults.Count == 0)
+        {
+            return;
+        }
+
+        _activeReferenceIndex = Math.Clamp(_activeReferenceIndex, 0, ConversationState.ReferenceResults.Count - 1);
+        await SelectReferenceAsync(ConversationState.ReferenceResults[_activeReferenceIndex]);
+    }
+
+    [JSInvokable]
+    public Task MovePromptReferenceSelectionAsync(int delta)
+    {
+        if (!IsReferenceAutocompleteVisible || ConversationState.ReferenceResults.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        var count = ConversationState.ReferenceResults.Count;
+        _activeReferenceIndex = ((_activeReferenceIndex + delta) % count + count) % count;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task RefreshSelectedConversationAsync(Guid conversationId)
+    {
+        var conversation = await ClientService.GetConversationAsync(conversationId);
+        if (conversation is not null)
+        {
+            ConversationState.SelectConversation(conversation);
+            _activeRunId = FindActiveRunId(conversation);
+        }
+    }
+
+    private async Task PollRunUntilCompleteAsync(Guid conversationId, Guid runId)
+    {
+        const int maxAttempts = 150;
+        const int maxConsecutiveStatusLoadFailures = 3;
+        var delay = TimeSpan.FromSeconds(2);
+        var consecutiveStatusLoadFailures = 0;
+
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            if (attempt == 0 || attempt % 25 == 0)
+            {
+                var authOk = await TryRefreshAuthSessionAsync();
+                if (!authOk && attempt == 0)
+                {
+                    Logger.LogWarning("AI polling: initial auth refresh failed; redirecting to login.");
+                    RedirectToLogin();
+                    return;
+                }
+            }
+
+            var statusResult = await ClientService.GetRunStatusAsync(conversationId, runId);
+            if (statusResult.IsUnauthorized)
+            {
+                Logger.LogWarning("AI polling: received 401 during run status polling; redirecting to login.");
+                RedirectToLogin();
+                return;
+            }
+
+            if (!statusResult.Success)
+            {
+                consecutiveStatusLoadFailures++;
+                if (consecutiveStatusLoadFailures <= maxConsecutiveStatusLoadFailures)
+                {
+                    var authOk = await TryRefreshAuthSessionAsync();
+                    if (!authOk)
+                    {
+                        Logger.LogWarning("AI polling: auth refresh failed after status load failure; redirecting to login.");
+                        RedirectToLogin();
+                        return;
+                    }
+                    await Task.Delay(delay);
+                    continue;
+                }
+
+                ConversationState.SetError("The AI run status could not be loaded.");
+                return;
+            }
+
+            consecutiveStatusLoadFailures = 0;
+            var run = statusResult.Run!;
+
+            if (IsTerminalRunStatus(run.Status))
+            {
+                _activeRunId = null;
+                await RefreshSelectedConversationAsync(conversationId);
+                if (IsFailedRunStatus(run.Status))
+                {
+                    ConversationState.SetError(run.FailureMessage ?? "AI provider failed to complete the run.");
+                }
+
+                return;
+            }
+
+            await RefreshSelectedConversationAsync(conversationId);
+            await Task.Delay(delay);
+        }
+
+        await RefreshSelectedConversationAsync(conversationId);
+        ConversationState.SetError("AI is still working on this response. You can keep waiting or cancel the run.");
+    }
+
+    private async Task<bool> TryRefreshAuthSessionAsync()
+    {
+        try
+        {
+            var response = await BffAuthApi.RefreshSessionInternalAsync(CancellationToken.None);
+            if (!response.IsSuccessStatusCode)
+            {
+                Logger.LogDebug(
+                    "AI assistant auth refresh returned status {StatusCode}.",
+                    (int)response.StatusCode);
+                return false;
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "AI assistant auth refresh could not be completed.");
+            return false;
+        }
+    }
+
+    private void RedirectToLogin()
+    {
+        var returnUrl = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+        Navigation.NavigateTo($"/login?returnUrl={returnUrl}", forceLoad: true);
+    }
+
+    private Guid? GetActiveRunId()
+    {
+        if (_activeRunId is Guid activeRunId)
+        {
+            return activeRunId;
+        }
+
+        return FindActiveRunId(ConversationState.SelectedConversation);
+    }
+
+    private static Guid? FindActiveRunId(HalResourceOfAiConversationDto? conversation)
+    {
+        return conversation?.Runs?
+            .OrderByDescending(run => run.StartedAt ?? run.QueuedAt)
+            .FirstOrDefault(run => IsActiveRunStatus(run.Status))
+            ?.Id;
+    }
+
+    private async Task CancelActiveRunAsync()
+    {
+        if (_isCancelRunRunning ||
+            ConversationState.SelectedConversation?.Id is not Guid conversationId ||
+            GetActiveRunId() is not Guid runId)
+        {
+            return;
+        }
+
+        _isCancelRunRunning = true;
+        try
+        {
+            var result = await ClientService.CancelRunAsync(conversationId, runId);
+            _activeRunId = null;
+            await RefreshSelectedConversationAsync(conversationId);
+
+            if (!result.Success)
+            {
+                ConversationState.SetError(result.Message ?? "The AI assistant run could not be cancelled.");
+            }
+        }
+        finally
+        {
+            _isCancelRunRunning = false;
+        }
+    }
+
+    private async Task SearchReferencesAsync(string? searchTerm, long requestId)
+    {
+        var term = (searchTerm ?? _referenceSearchTerm).Trim();
+        _referenceSearchTerm = term;
+        var actorReferences = BuildActorReferenceResults(term);
+        if (term.Length < MinimumReferenceSearchLength)
+        {
+            SetReferenceResults(actorReferences);
+            return;
+        }
+
+        _hasSearchedReferences = true;
+        _isReferenceSearchRunning = true;
+        ConversationState.SetError(null);
+        StateHasChanged();
+
+        var references = await ClientService.SearchReferencesAsync(term);
+        if (requestId != _referenceSearchRequestId)
+        {
+            return;
+        }
+
+        SetReferenceResults(MergeReferenceResults(actorReferences, references));
+        _isReferenceSearchRunning = false;
+    }
+
+    private void SetReferenceResults(IReadOnlyList<HalResourceOfAiReferenceSearchResultDto> references)
+    {
+        _hasSearchedReferences = true;
+        _isReferenceSearchRunning = false;
+        ConversationState.SetReferenceResults(references);
+        _activeReferenceIndex = 0;
+    }
+
+    private IReadOnlyList<HalResourceOfAiReferenceSearchResultDto> BuildActorReferenceResults(string searchTerm)
+    {
+        var term = searchTerm.Trim();
+        return _actorOptions
+            .Where(actor => ActorReferenceMatches(actor, term))
+            .Select(ToActorContextReference)
+            .ToList();
+    }
+
+    private static bool ActorReferenceMatches(AiRailActorOption actor, string searchTerm)
+    {
+        return searchTerm.Length == 0
+            || actor.ActorDisplayName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            || actor.ActorType.Contains(searchTerm, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static HalResourceOfAiReferenceSearchResultDto ToActorContextReference(AiRailActorOption actor) => new()
+    {
+        Kind = ActorReferenceKind,
+        ReferenceId = actor.ActorId,
+        DisplayName = actor.ActorDisplayName,
+        Summary = $"{ActorContextSummaryPrefix} {actor.ActorType}"
+    };
+
+    private static IReadOnlyList<HalResourceOfAiReferenceSearchResultDto> MergeReferenceResults(
+        IReadOnlyList<HalResourceOfAiReferenceSearchResultDto> primary,
+        IReadOnlyList<HalResourceOfAiReferenceSearchResultDto>? secondary)
+    {
+        var merged = new List<HalResourceOfAiReferenceSearchResultDto>();
+        var seenById = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenByDisplay = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        AddRange(primary);
+        AddRange(secondary ?? []);
+        return merged;
+
+        void AddRange(IEnumerable<HalResourceOfAiReferenceSearchResultDto> references)
+        {
+            foreach (var reference in references)
+            {
+                Add(reference);
+            }
+        }
+
+        void Add(HalResourceOfAiReferenceSearchResultDto reference)
+        {
+            var referenceId = reference.ReferenceId;
+            if (referenceId == Guid.Empty
+                || string.IsNullOrWhiteSpace(reference.DisplayName))
+            {
+                return;
+            }
+
+            var idKey = $"{NormalizeSelectedReferenceKind(reference.Kind)}:{referenceId:N}";
+            var displayKey = $"{GetReferenceDisplayKind(reference)}:{reference.DisplayName.Trim()}";
+            if (!seenById.Add(idKey) || !seenByDisplay.Add(displayKey))
+            {
+                return;
+            }
+
+            merged.Add(reference);
+        }
+    }
+
+    private async Task SelectReferenceAsync(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        if (!ConversationState.SelectedReferences.Any(selected =>
+                string.Equals(selected.Kind, reference.Kind, StringComparison.OrdinalIgnoreCase)
+                && selected.ReferenceId == reference.ReferenceId))
+        {
+            ConversationState.SetSelectedReferences([.. ConversationState.SelectedReferences, reference]);
+        }
+
+        InsertReferenceMention(reference);
+        CloseReferenceAutocomplete(clearResults: true);
+        await FocusPromptAsync();
+    }
+
+    private void QueueReferenceSearch(string searchTerm)
+    {
+        _referenceSearchDebounceCts?.Cancel();
+        _referenceSearchDebounceCts?.Dispose();
+
+        var term = searchTerm.Trim();
+        _referenceSearchTerm = term;
+        _referenceSearchRequestId++;
+
+        if (term.Length < MinimumReferenceSearchLength)
+        {
+            SetReferenceResults(BuildActorReferenceResults(term));
+            return;
+        }
+
+        var requestId = _referenceSearchRequestId;
+        var cts = new CancellationTokenSource();
+        _referenceSearchDebounceCts = cts;
+        _ = RunReferenceSearchAfterDelayAsync(term, requestId, cts);
+    }
+
+    private async Task RunReferenceSearchAfterDelayAsync(
+        string searchTerm,
+        long requestId,
+        CancellationTokenSource cancellationTokenSource)
+    {
+        try
+        {
+            await Task.Delay(ReferenceSearchDebounceDelay, cancellationTokenSource.Token);
+            await InvokeAsync(async () =>
+            {
+                if (!cancellationTokenSource.IsCancellationRequested)
+                {
+                    await SearchReferencesAsync(searchTerm, requestId);
+                    StateHasChanged();
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_referenceSearchDebounceCts, cancellationTokenSource))
+            {
+                _referenceSearchDebounceCts = null;
+            }
+
+            cancellationTokenSource.Dispose();
+        }
+    }
+
+    private async Task ConfirmActionAsync(ProposedActions2 action)
+    {
+        if (!IsBuildCapabilitySelected)
+        {
+            ConversationState.SetError("Switch to Build mode to confirm proposed AI actions.");
+            return;
+        }
+
+        if (ConversationState.SelectedConversation?.Id is not Guid conversationId || action.Id is not Guid actionId)
+        {
+            return;
+        }
+
+        await RunActionAsync(actionId, async () =>
+        {
+            var result = await ClientService.ConfirmProposedActionAsync(
+                conversationId,
+                actionId,
+                $"blazor-ai-confirm-{Guid.CreateVersion7()}");
+
+            if (!result.Success)
+            {
+                ConversationState.SetError(result.Message ?? "The AI proposed action could not be confirmed.");
+                return;
+            }
+
+            await SelectConversationAsync(conversationId);
+        });
+    }
+
+    private async Task RejectActionAsync(ProposedActions2 action)
+    {
+        if (!IsBuildCapabilitySelected)
+        {
+            ConversationState.SetError("Switch to Build mode to reject proposed AI actions.");
+            return;
+        }
+
+        if (ConversationState.SelectedConversation?.Id is not Guid conversationId || action.Id is not Guid actionId)
+        {
+            return;
+        }
+
+        await RunActionAsync(actionId, async () =>
+        {
+            var result = await ClientService.RejectProposedActionAsync(conversationId, actionId);
+            if (!result.Success)
+            {
+                ConversationState.SetError(result.Message ?? "The AI proposed action could not be rejected.");
+                return;
+            }
+
+            await SelectConversationAsync(conversationId);
+        });
+    }
+
+    private async Task RunCommandAsync(Func<Task> operation)
+    {
+        if (_isCommandRunning)
+        {
+            return;
+        }
+
+        _isCommandRunning = true;
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            _isCommandRunning = false;
+        }
+    }
+
+    private async Task RunActionAsync(Guid actionId, Func<Task> operation)
+    {
+        if (!_busyActionIds.Add(actionId))
+        {
+            return;
+        }
+
+        try
+        {
+            await operation();
+        }
+        finally
+        {
+            _busyActionIds.Remove(actionId);
+        }
+    }
+
+    private bool IsActionBusy(Guid? actionId) => actionId is Guid id && _busyActionIds.Contains(id);
+
+    private IReadOnlyList<AiRailTimelineItem> GetTimelineItems()
+    {
+        var conversation = ConversationState.SelectedConversation;
+        if (conversation is null)
+        {
+            return [];
+        }
+
+        var messageSequenceById = (conversation.Messages ?? [])
+            .Where(message => message.Id is Guid)
+            .ToDictionary(message => message.Id!.Value, message => message.Sequence ?? long.MaxValue);
+
+        var items = new List<AiRailTimelineItem>();
+        foreach (var message in conversation.Messages ?? [])
+        {
+            items.Add(AiRailTimelineItem.ForMessage(message));
+        }
+
+        foreach (var action in conversation.ProposedActions ?? [])
+        {
+            items.Add(AiRailTimelineItem.ForAction(action, GetActionSequenceAnchor(action, messageSequenceById)));
+        }
+
+        return items
+            .OrderBy(item => item.SequenceAnchor)
+            .ThenBy(item => item.CreatedAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(item => item.SortKind)
+            .ThenBy(item => item.Key, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static decimal GetActionSequenceAnchor(
+        ProposedActions2 action,
+        IReadOnlyDictionary<Guid, long> messageSequenceById)
+    {
+        if (action.MessageId is Guid messageId && messageSequenceById.TryGetValue(messageId, out var messageSequence))
+        {
+            return messageSequence + 0.1m;
+        }
+
+        return decimal.MaxValue;
+    }
+
+    private static bool IsActiveRunStatus(string? status) =>
+        string.Equals(status, "Queued", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(status, "InProgress", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTerminalRunStatus(string? status) =>
+        string.Equals(status, "Succeeded", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsFailedRunStatus(string? status) =>
+        string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase);
+
+    private string GetConversationButtonClass(Guid? conversationId) => string.Join(' ', new[]
+    {
+        "ai-rail__conversation-button",
+        ConversationState.SelectedConversation?.Id == conversationId ? "ai-rail__conversation-button--selected" : null
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private static string GetConversationTitle(HalResourceOfAiConversationSummaryDto conversation) =>
+        string.IsNullOrWhiteSpace(conversation.Title) ? "Untitled conversation" : conversation.Title;
+
+    private static string GetMessageClass(string? role) => string.Join(' ', new[]
+    {
+        "ai-rail__message",
+        string.Equals(role, "User", StringComparison.OrdinalIgnoreCase) ? "ai-rail__message--user" : null,
+        string.Equals(role, "Assistant", StringComparison.OrdinalIgnoreCase) ? "ai-rail__message--assistant" : null
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private async Task LoadBootstrapAsync()
+    {
+        var bootstrap = await ClientService.GetBootstrapAsync();
+        _actorOptions = BuildActorOptions(bootstrap);
+
+        if (_actorOptions.Count == 0)
+        {
+            _selectedActorId = null;
+        }
+        else if (_selectedActorId is not Guid selectedActorId
+                 || !_actorOptions.Any(actor => actor.ActorId == selectedActorId))
+        {
+            _selectedActorId = _actorOptions[0].ActorId;
+        }
+
+        var models = bootstrap?.Models?
+            .Where(model => !string.IsNullOrWhiteSpace(model.Id))
+            .GroupBy(model => model.Id!, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .Select(model => new AiRailModelOption(model.Id!.Trim(), FormatModelDisplayName(model)))
+            .ToArray() ?? [];
+
+        _modelOptions = models;
+
+        if (_modelOptions.Count == 0)
+        {
+            _selectedModelId = string.Empty;
+            return;
+        }
+
+        var defaultModelId = bootstrap?.DefaultModelId?.Trim();
+        if (!string.IsNullOrWhiteSpace(defaultModelId)
+            && _modelOptions.Any(model => string.Equals(model.Id, defaultModelId, StringComparison.OrdinalIgnoreCase)))
+        {
+            _selectedModelId = defaultModelId;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_selectedModelId)
+            || !_modelOptions.Any(model => string.Equals(model.Id, _selectedModelId, StringComparison.OrdinalIgnoreCase)))
+        {
+            _selectedModelId = _modelOptions[0].Id;
+        }
+    }
+
+    private static IReadOnlyList<AiRailActorOption> BuildActorOptions(HalResourceOfAiAssistantBootstrapDto? bootstrap)
+    {
+        return bootstrap?.ActorContexts?
+            .Where(actor => actor.ActorId is Guid actorId && actorId != Guid.Empty)
+            .GroupBy(actor => actor.ActorId!.Value)
+            .Select(group => group.First())
+            .Select(actor => new AiRailActorOption(
+                actor.ActorId!.Value,
+                actor.ActorType?.Trim() ?? string.Empty,
+                actor.ActorDisplayName?.Trim() ?? string.Empty))
+            .Where(actor => !string.IsNullOrWhiteSpace(actor.ActorType)
+                && !string.IsNullOrWhiteSpace(actor.ActorDisplayName))
+            .ToArray() ?? [];
+    }
+
+    private void SelectModel(string modelId)
+    {
+        _selectedModelId = modelId;
+        _modelMenuOpen = false;
+    }
+
+    private string GetModelItemClass(string modelId) =>
+        string.Equals(_selectedModelId, modelId, StringComparison.OrdinalIgnoreCase)
+            ? "ai-rail__model-item--selected"
+            : "";
+
+    private static string FormatModelDisplayName(Models2 model)
+    {
+        var id = model.Id?.Trim() ?? string.Empty;
+        var displayName = model.DisplayName?.Trim();
+        return string.IsNullOrWhiteSpace(displayName) || string.Equals(displayName, id, StringComparison.OrdinalIgnoreCase)
+            ? id
+            : displayName;
+    }
+
+    private void SelectCapability(string capability)
+    {
+        _selectedCapability = capability;
+        _capabilitiesMenuOpen = false;
+    }
+
+    private string GetCapabilityIcon(string capability) =>
+        string.Equals(capability, "Build", StringComparison.OrdinalIgnoreCase)
+            ? Icons.Material.Filled.AutoFixHigh
+            : Icons.Material.Filled.HelpOutline;
+
+    private async Task OnFilesSelectedAsync(IReadOnlyList<IBrowserFile>? files)
+    {
+        if (files is null || files.Count == 0)
+        {
+            return;
+        }
+
+        var remainingSlots = MaxSelectedImages - _selectedImages.Count;
+        if (remainingSlots <= 0)
+        {
+            Snackbar.Add($"You can attach at most {MaxSelectedImages} images.", Severity.Warning);
+            return;
+        }
+
+        var addedCount = 0;
+        foreach (var file in files.Take(remainingSlots))
+        {
+            var mediaType = ResolveImageMediaType(file);
+            if (!IsImageMediaType(mediaType))
+            {
+                Snackbar.Add($"{file.Name} is not a supported image file.", Severity.Warning);
+                continue;
+            }
+
+            try
+            {
+                await using var stream = file.OpenReadStream(MaxImageBytes);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                var bytes = memoryStream.ToArray();
+                if (bytes.Length == 0)
+                {
+                    Snackbar.Add($"{file.Name} is empty and was not attached.", Severity.Warning);
+                    continue;
+                }
+
+                _selectedImages.Add(new AiRailImageAttachment(
+                    Guid.CreateVersion7(),
+                    file.Name,
+                    mediaType,
+                    bytes.LongLength,
+                    Convert.ToBase64String(bytes)));
+                addedCount++;
+            }
+            catch (IOException)
+            {
+                Snackbar.Add($"{file.Name} could not be attached. Images must be {FormatFileSize(MaxImageBytes)} or smaller.", Severity.Error);
+            }
+            catch (InvalidOperationException)
+            {
+                Snackbar.Add($"{file.Name} could not be attached. Images must be {FormatFileSize(MaxImageBytes)} or smaller.", Severity.Error);
+            }
+        }
+
+        if (files.Count > remainingSlots)
+        {
+            Snackbar.Add($"Only {remainingSlots} image(s) were attached because the limit is {MaxSelectedImages}.", Severity.Info);
+        }
+
+        if (addedCount > 0)
+        {
+            Snackbar.Add($"{addedCount} image(s) attached.", Severity.Success);
+        }
+    }
+
+    private void RemoveSelectedImage(Guid imageId)
+    {
+        var removed = _selectedImages.RemoveAll(image => image.Id == imageId);
+        if (removed > 0)
+        {
+            Snackbar.Add("Image removed.", Severity.Info);
+        }
+    }
+
+    private static AiMessageImageInputDto ToImageInputDto(AiRailImageAttachment image) => new()
+    {
+        MediaType = image.MediaType,
+        Data = image.Data,
+        FileName = image.FileName,
+        SizeBytes = image.SizeBytes
+    };
+
+    private static AiSelectedReferenceDto ToSelectedReferenceDto(HalResourceOfAiReferenceSearchResultDto reference) => new()
+    {
+        Kind = NormalizeSelectedReferenceKind(reference.Kind),
+        ReferenceId = reference.ReferenceId,
+        DisplayName = reference.DisplayName,
+        Summary = reference.Summary
+    };
+
+    private static string NormalizeSelectedReferenceKind(string? kind)
+    {
+        var normalizedKind = kind?.Trim();
+        return normalizedKind switch
+        {
+            "User" => ActorReferenceKind,
+            "Group" => ActorReferenceKind,
+            _ when string.IsNullOrWhiteSpace(normalizedKind) => ActorReferenceKind,
+            _ => normalizedKind
+        };
+    }
+
+    private static string GetReferenceOptionClass(bool active) => string.Join(' ', new[]
+    {
+        "ai-rail__reference-option",
+        active ? "ai-rail__reference-option--active" : null
+    }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string GetReferenceOptionClass(int index) => GetReferenceOptionClass(index == _activeReferenceIndex);
+
+    private static string GetReferenceOptionId(int index) => $"ai-rail-reference-option-{index}";
+
+    private static string GetReferenceIcon(HalResourceOfAiReferenceSearchResultDto reference) => GetReferenceDisplayKind(reference) switch
+    {
+        "Event" => Icons.Material.Filled.Event,
+        "Organization" => Icons.Material.Filled.Business,
+        "Actor" => Icons.Material.Filled.Person,
+        "User" => Icons.Material.Filled.Person,
+        "Group" => Icons.Material.Filled.Groups,
+        "EventSession" => Icons.Material.Filled.Schedule,
+        _ => Icons.Material.Filled.Tag
+    };
+
+    private static string GetReferenceKindLabel(HalResourceOfAiReferenceSearchResultDto reference) => GetReferenceDisplayKind(reference) switch
+    {
+        "Event" => "Event",
+        "Organization" => "Org",
+        "Actor" => "User",
+        "User" => "User",
+        "Group" => "Group",
+        "EventSession" => "Session",
+        _ => "Ref"
+    };
+
+    private static string GetReferenceDisplayKind(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        var actorContextKind = GetActorContextKind(reference);
+        return string.IsNullOrWhiteSpace(actorContextKind)
+            ? reference.Kind?.Trim() ?? string.Empty
+            : actorContextKind;
+    }
+
+    private static string? GetActorContextKind(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        var summary = reference.Summary?.Trim();
+        if (summary is null || !summary.StartsWith(ActorContextSummaryPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var kind = summary[ActorContextSummaryPrefix.Length..].Trim();
+        return string.IsNullOrWhiteSpace(kind) ? null : kind;
+    }
+
+    private static string ResolveImageMediaType(IBrowserFile file)
+    {
+        var contentType = file.ContentType?.Trim();
+        if (IsImageMediaType(contentType))
+        {
+            return contentType!.ToLowerInvariant();
+        }
+
+        return System.IO.Path.GetExtension(file.Name).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".bmp" => "image/bmp",
+            ".svg" => "image/svg+xml",
+            _ => string.Empty
+        };
+    }
+
+    private static bool IsImageMediaType(string? mediaType) =>
+        !string.IsNullOrWhiteSpace(mediaType)
+        && mediaType.Trim().StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+
+    private static int GetMessageImageCount(Messages2 message) => message.Images?.Count ?? 0;
+
+    private static string FormatImageAttachmentCount(int count) =>
+        count == 1 ? "1 image attached" : $"{count} images attached";
+
+    private static string FormatFileSize(long bytes)
+    {
+        const decimal oneMegabyte = 1024m * 1024m;
+        if (bytes >= oneMegabyte)
+        {
+            return $"{bytes / oneMegabyte:0.#} MB";
+        }
+
+        return $"{Math.Max(1, bytes / 1024)} KB";
+    }
+
+    private async Task DeleteCurrentChatAsync()
+    {
+        if (ConversationState.SelectedConversation?.Id is Guid conversationId)
+        {
+            ConversationState.RemoveConversation(conversationId);
+            var nextId = ConversationState.Conversations.FirstOrDefault()?.Id;
+            if (nextId is Guid id)
+            {
+                await SelectConversationAsync(id);
+            }
+            else
+            {
+                ConversationState.SelectConversation(null);
+                if (ConversationState.CanCreateConversation)
+                {
+                    ConversationState.SetLoading(true);
+                    var result = await ClientService.CreateConversationAsync(new CreateAiConversationRequestDto
+                    {
+                        Title = "AI Assistant",
+                        ActorId = _selectedActorId
+                    });
+
+                    if (result.Success && result.Id is Guid newConversationId)
+                    {
+                        var newCollection = await ClientService.GetConversationCollectionAsync();
+                        ConversationState.SetConversationCollection(newCollection);
+                        await SelectConversationAsync(newConversationId);
+                    }
+                    else
+                    {
+                        ConversationState.SetError(result.Message ?? "The AI assistant conversation could not be created.");
+                    }
+                    ConversationState.SetLoading(false);
+                }
+            }
+            Snackbar.Add("Conversation deleted.", Severity.Success);
+        }
+    }
+
+    private async Task SelectConversationAndCloseHistoryAsync(Guid? conversationId)
+    {
+        await SelectConversationAsync(conversationId);
+        _showConversations = false;
+    }
+
+    private void ToggleModelMenu() => _modelMenuOpen = !_modelMenuOpen;
+    private void ToggleReferencesMenu() => _referencesMenuOpen = !_referencesMenuOpen;
+    private void ToggleCapabilitiesMenu() => _capabilitiesMenuOpen = !_capabilitiesMenuOpen;
+
+    private async Task OpenReferenceSearchFromMenuAsync()
+    {
+        _referencesMenuOpen = false;
+        _isReferenceAutocompleteManuallyOpened = true;
+        _isReferenceAutocompleteOpen = true;
+        UpdateReferenceAutocompleteFromPrompt();
+        await FocusPromptAsync();
+    }
+
+    private async Task OpenFilePickerAndCloseMenu()
+    {
+        if (_imageFileUpload is not null)
+        {
+            await _imageFileUpload.OpenFilePickerAsync();
+        }
+
+        _referencesMenuOpen = false;
+    }
+
+    private void OnPromptInput(ChangeEventArgs e)
+    {
+        _promptText = e.Value?.ToString() ?? string.Empty;
+        SyncSelectedReferencesWithPromptText();
+        UpdateReferenceAutocompleteFromPrompt();
+    }
+
+    private void OnPromptChange(ChangeEventArgs e)
+    {
+        _promptText = e.Value?.ToString() ?? string.Empty;
+        SyncSelectedReferencesWithPromptText();
+        UpdateReferenceAutocompleteFromPrompt();
+    }
+
+    private void UpdateReferenceAutocompleteFromPrompt()
+    {
+        _referenceMentionStartIndex = FindActiveMentionStart(_promptText);
+        if (_referenceMentionStartIndex is int mentionStart)
+        {
+            _isReferenceAutocompleteManuallyOpened = false;
+            _isReferenceAutocompleteOpen = true;
+            QueueReferenceSearch(_promptText[(mentionStart + 1)..]);
+            return;
+        }
+
+        if (!_isReferenceAutocompleteOpen || !_isReferenceAutocompleteManuallyOpened)
+        {
+            CloseReferenceAutocomplete(clearResults: true);
+            return;
+        }
+
+        QueueReferenceSearch(GetTrailingReferenceSearchTerm(_promptText));
+    }
+
+    private async Task FocusPromptAsync()
+    {
+        try
+        {
+            _promptModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/ai-assistant-rail.js");
+            await _promptModule.InvokeVoidAsync("focusPrompt", _promptTextArea);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "AI assistant prompt could not be focused.");
+        }
+    }
+
+    private void CloseReferenceAutocomplete(bool clearResults)
+    {
+        _referenceSearchDebounceCts?.Cancel();
+        _referenceSearchDebounceCts?.Dispose();
+        _referenceSearchDebounceCts = null;
+        _referenceSearchRequestId++;
+        _isReferenceAutocompleteOpen = false;
+        _isReferenceAutocompleteManuallyOpened = false;
+        _isReferenceSearchRunning = false;
+        _referenceMentionStartIndex = null;
+        _activeReferenceIndex = 0;
+
+        if (clearResults)
+        {
+            _referenceSearchTerm = string.Empty;
+            _hasSearchedReferences = false;
+            ConversationState.SetReferenceResults([]);
+        }
+    }
+
+    private void InsertReferenceMention(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        var displayName = reference.DisplayName?.Trim();
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return;
+        }
+
+        var mention = $"@{displayName}";
+        if (_referenceMentionStartIndex is int mentionStart
+            && mentionStart >= 0
+            && mentionStart < _promptText.Length)
+        {
+            var tokenEnd = mentionStart + 1;
+            while (tokenEnd < _promptText.Length && !char.IsWhiteSpace(_promptText[tokenEnd]))
+            {
+                tokenEnd++;
+            }
+
+            var before = _promptText[..mentionStart].TrimEnd();
+            var after = _promptText[tokenEnd..].TrimStart();
+            var separator = before.Length == 0 ? string.Empty : " ";
+            _promptText = string.IsNullOrWhiteSpace(after)
+                ? $"{before}{separator}{mention} "
+                : $"{before}{separator}{mention} {after}";
+            return;
+        }
+
+        var prefix = _promptText.TrimEnd();
+        _promptText = prefix.Length == 0 ? $"{mention} " : $"{prefix} {mention} ";
+    }
+
+    private void SyncSelectedReferencesWithPromptText()
+    {
+        if (ConversationState.SelectedReferences.Count == 0)
+        {
+            return;
+        }
+
+        var retainedReferences = ConversationState.SelectedReferences
+            .Where(PromptContainsReferenceMention)
+            .ToList();
+
+        if (retainedReferences.Count != ConversationState.SelectedReferences.Count)
+        {
+            ConversationState.SetSelectedReferences(retainedReferences);
+        }
+    }
+
+    private bool PromptContainsReferenceMention(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        var token = GetReferenceMentionToken(reference);
+        return token is not null && _promptText.Contains(token, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private IReadOnlyList<string> GetReferenceMentionTokens()
+    {
+        return ConversationState.SelectedReferences
+            .Select(GetReferenceMentionToken)
+            .OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(token => token.Length)
+            .ToList();
+    }
+
+    private static string? GetReferenceMentionToken(HalResourceOfAiReferenceSearchResultDto reference)
+    {
+        var displayName = reference.DisplayName?.Trim();
+        return string.IsNullOrWhiteSpace(displayName) ? null : $"@{displayName}";
+    }
+
+    private ReferenceDeletionRange? FindReferenceDeletion(int selectionStart, int selectionEnd, string key)
+    {
+        var textLength = _promptText.Length;
+        var rangeStart = Math.Clamp(Math.Min(selectionStart, selectionEnd), 0, textLength);
+        var rangeEnd = Math.Clamp(Math.Max(selectionStart, selectionEnd), 0, textLength);
+
+        if (rangeStart == rangeEnd)
+        {
+            if (string.Equals(key, "Backspace", StringComparison.Ordinal))
+            {
+                if (rangeStart == 0)
+                {
+                    return null;
+                }
+
+                rangeStart--;
+            }
+            else if (string.Equals(key, "Delete", StringComparison.Ordinal))
+            {
+                if (rangeStart >= textLength)
+                {
+                    return null;
+                }
+
+                rangeEnd++;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        foreach (var token in GetReferenceMentionTokens())
+        {
+            var tokenStart = 0;
+            while (tokenStart < _promptText.Length)
+            {
+                tokenStart = _promptText.IndexOf(token, tokenStart, StringComparison.OrdinalIgnoreCase);
+                if (tokenStart < 0)
+                {
+                    break;
+                }
+
+                var tokenEnd = tokenStart + token.Length;
+                if (RangesIntersect(rangeStart, rangeEnd, tokenStart, tokenEnd))
+                {
+                    return ExpandReferenceDeletionRange(tokenStart, tokenEnd);
+                }
+
+                tokenStart = tokenEnd;
+            }
+        }
+
+        return null;
+    }
+
+    private ReferenceDeletionRange ExpandReferenceDeletionRange(int tokenStart, int tokenEnd)
+    {
+        var deleteStart = tokenStart;
+        var deleteEnd = tokenEnd;
+
+        if (deleteEnd < _promptText.Length && char.IsWhiteSpace(_promptText[deleteEnd]))
+        {
+            while (deleteEnd < _promptText.Length && char.IsWhiteSpace(_promptText[deleteEnd]))
+            {
+                deleteEnd++;
+            }
+        }
+        else if (deleteStart > 0 && char.IsWhiteSpace(_promptText[deleteStart - 1]))
+        {
+            while (deleteStart > 0 && char.IsWhiteSpace(_promptText[deleteStart - 1]))
+            {
+                deleteStart--;
+            }
+        }
+
+        return new ReferenceDeletionRange(deleteStart, deleteEnd - deleteStart);
+    }
+
+    private static bool RangesIntersect(int firstStart, int firstEnd, int secondStart, int secondEnd) =>
+        firstStart < secondEnd && firstEnd > secondStart;
+
+    private void BuildPromptReferenceHighlights(RenderTreeBuilder builder)
+    {
+        var tokens = GetReferenceMentionTokens();
+        if (_promptText.Length == 0 || tokens.Count == 0)
+        {
+            return;
+        }
+
+        var sequence = 0;
+        var index = 0;
+        while (index < _promptText.Length)
+        {
+            var match = tokens.FirstOrDefault(token =>
+                index + token.Length <= _promptText.Length
+                && string.Compare(
+                    _promptText,
+                    index,
+                    token,
+                    0,
+                    token.Length,
+                    StringComparison.OrdinalIgnoreCase) == 0);
+
+            if (match is not null)
+            {
+                var text = _promptText.Substring(index, match.Length);
+                builder
+                    .OpenElement(sequence++, "span");
+                builder.AddAttribute(sequence++, "class", "ai-rail__prompt-reference-token");
+                builder.AddAttribute(sequence++, "data-testid", "ai-rail-prompt-reference-token");
+                builder.AddContent(sequence++, text);
+                builder.CloseElement();
+                index += match.Length;
+                continue;
+            }
+
+            builder.AddContent(sequence++, _promptText[index].ToString());
+            index++;
+        }
+    }
+
+    private static int? FindActiveMentionStart(string text)
+    {
+        var start = text.LastIndexOf('@');
+        if (start < 0)
+        {
+            return null;
+        }
+
+        for (var index = start + 1; index < text.Length; index++)
+        {
+            if (char.IsWhiteSpace(text[index]))
+            {
+                return null;
+            }
+        }
+
+        return start;
+    }
+
+    private static string GetTrailingReferenceSearchTerm(string text)
+    {
+        var trimmed = text.TrimEnd();
+        if (trimmed.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var lastWhitespace = trimmed.LastIndexOfAny([' ', '\t', '\r', '\n']);
+        var term = lastWhitespace < 0 ? trimmed : trimmed[(lastWhitespace + 1)..];
+        return term.TrimStart('@');
+    }
+
+    private void OnActorSelectionChanged(ChangeEventArgs e)
+    {
+        _selectedActorId = Guid.TryParse(e.Value?.ToString(), out var actorId) && _actorOptions.Any(actor => actor.ActorId == actorId)
+            ? actorId
+            : null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        AiAssistantState.OnChange -= OnAiAssistantStateChanged;
+        ConversationState.OnChange -= StateHasChanged;
+
+        if (_promptModule is not null)
+        {
+            try
+            {
+                await _promptModule.InvokeVoidAsync("detachPromptKeyboardHandler", _promptTextArea);
+                await _promptModule.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug(ex, "AI assistant prompt keyboard shortcut cleanup failed.");
+            }
+        }
+
+        _referenceSearchDebounceCts?.Cancel();
+        _referenceSearchDebounceCts?.Dispose();
+        _promptInteropReference?.Dispose();
+    }
+
+    private sealed record AiRailModelOption(string Id, string DisplayName);
+    private sealed record AiRailActorOption(Guid ActorId, string ActorType, string ActorDisplayName);
+    private sealed record AiRailImageAttachment(Guid Id, string FileName, string MediaType, long SizeBytes, string Data);
+    public sealed record PromptReferenceDeletionResult(bool Handled, string Text, int SelectionStart)
+    {
+        public static PromptReferenceDeletionResult NotHandled(string text, int selectionStart) =>
+            new(false, text, selectionStart);
+    }
+
+    private sealed record ReferenceDeletionRange(int Start, int Length);
+
+    private sealed record AiRailTimelineItem(
+        string Key,
+        Messages2? Message,
+        ProposedActions2? Action,
+        decimal SequenceAnchor,
+        DateTimeOffset? CreatedAt,
+        int SortKind)
+    {
+        public static AiRailTimelineItem ForMessage(Messages2 message) => new(
+            $"message:{message.Id?.ToString() ?? message.Sequence?.ToString() ?? message.CreatedAt?.ToUnixTimeMilliseconds().ToString() ?? message.Content ?? string.Empty}",
+            message,
+            null,
+            message.Sequence ?? long.MaxValue,
+            message.CreatedAt,
+            0);
+
+        public static AiRailTimelineItem ForAction(ProposedActions2 action, decimal sequenceAnchor) => new(
+            $"action:{action.Id?.ToString() ?? action.CreatedAt?.ToUnixTimeMilliseconds().ToString() ?? action.PayloadJson ?? string.Empty}",
+            null,
+            action,
+            sequenceAnchor,
+            action.CreatedAt ?? action.ConfirmedAt ?? action.RejectedAt,
+            1);
+    }
+}

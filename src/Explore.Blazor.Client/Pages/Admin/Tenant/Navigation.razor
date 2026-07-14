@@ -1,0 +1,21 @@
+@* ABOUTME: Standalone page for tenant navigation link management. *@
+@* ABOUTME: Thin wrapper that delegates all CRUD to the TenantNavigationLinksSection component. *@
+
+@page "/admin/tenant/navigation"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Tenant Navigation Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <div class="settings-header mb-8">
+        <MudText Typo="Typo.h4" Style="font-weight: 800;">Navigation Links</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Manage custom navigation links in the navbar</MudText>
+    </div>
+
+    <MudPaper Elevation="0" Class="pa-6 rounded-lg border-solid border-1 mud-border-lines-default">
+        <TenantNavigationLinksSection />
+    </MudPaper>
+</MudContainer>

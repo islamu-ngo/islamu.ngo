@@ -1,0 +1,335 @@
+@* ABOUTME: Authenticated organization management/details page with HAL-gated edit affordances. *@
+@* ABOUTME: Reuses shared EventList cards and preview workspace for organization-owned event sections. *@
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Components.Events
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Explore.Blazor.Client.Components.Forms
+@using Explore.Blazor.Client.Helpers
+@using Blazouter.Services
+@using Microsoft.Extensions.Logging
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Organization Details</PageTitle>
+<HeadContent>
+    <link rel="canonical" href="@CanonicalUrlHelper.Build(NavigationManager, Id == Guid.Empty ? null : $"/organization/{Id}")" />
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-8">
+    @if (isLoading)
+    {
+        <div class="d-flex flex-column align-center justify-center py-16">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.body1" Class="mt-4" Color="Color.Secondary">Loading organization...</MudText>
+        </div>
+    }
+    else if (organization == null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Organization not found.</MudAlert>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => NavigationManager.NavigateTo("/my/organizations"))" Class="mt-4 rounded-pill">
+            Back to My Organizations
+        </MudButton>
+    }
+    else
+    {
+        <div class="d-flex justify-space-between align-center flex-wrap gap-4 mb-6">
+            <MudButton Elevation="0" StartIcon="@Icons.Material.Filled.ArrowBack"
+                       Color="Color.Secondary"
+                       Variant="Variant.Text"
+                       OnClick="@(() => NavigationManager.NavigateTo("/my/organizations"))"
+                       Class="rounded-pill">
+                Back to List
+            </MudButton>
+
+            <div class="d-flex gap-2">
+                @if (canEdit && !isEditMode)
+                {
+                    <MudButton Elevation="0" Variant="Variant.Filled" Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.Event"
+                               OnClick="@(() => NavigationManager.NavigateTo($"/organizations/{Id}/events/create"))"
+                               Class="rounded-pill">
+                        Create Event
+                    </MudButton>
+                    <MudButton Elevation="0" Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.People"
+                               OnClick="@(() => NavigationManager.NavigateTo($"/organization/{Id}/members"))"
+                               Class="rounded-pill">
+                        Members
+                    </MudButton>
+                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit"
+                               OnClick="ToggleEditMode"
+                               Class="rounded-pill">
+                        Edit
+                    </MudButton>
+                }
+                else if (canEdit && isEditMode)
+                {
+                    <MudButton Elevation="0" Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               OnClick="ToggleEditMode"
+                               StartIcon="@Icons.Material.Filled.Cancel"
+                               Class="rounded-pill">
+                        Cancel
+                    </MudButton>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="@(() => errorMessage = string.Empty)">
+                @errorMessage
+            </MudAlert>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="@(() => successMessage = string.Empty)">
+                @successMessage
+            </MudAlert>
+        }
+
+        <MudCard Elevation="0" Class="rounded-xl border-solid border-1 mud-border-lines-default overflow-hidden">
+            <div class="pa-6 border-b-1 mud-border-lines-default bg-surface">
+                <div class="d-flex align-center gap-4">
+                    <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled" Rounded="true">
+                        @organization.FullName.Substring(0, 1).ToUpper()
+                    </MudAvatar>
+                    <div>
+                        <div class="d-flex align-center gap-3">
+                            <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">@organization.FullName</MudText>
+                            <MudChip T="string" Color="@GetStatusColor(organization.ApprovalStatusId ?? 0)" Size="Size.Small" Variant="Variant.Filled">
+                                @(organization.ApprovalStatusFullName ?? "Pending")
+                            </MudChip>
+                        </div>
+                        <MudText Typo="Typo.body1" Color="Color.Secondary">Registered Organization</MudText>
+                    </div>
+                </div>
+            </div>
+
+            <MudCardContent Class="pa-6">
+                @if (!isEditMode)
+                {
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700;">General Information</MudText>
+                            <MudStack Spacing="3">
+                                <div class="d-flex align-center gap-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Email" Color="Color.Primary" Size="Size.Small" />
+                                    <div>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Contact Email</MudText>
+                                        <MudText Typo="Typo.body1">@organization.Email</MudText>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-center gap-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Language" Color="Color.Primary" Size="Size.Small" />
+                                    <div>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Website</MudText>
+                                        @if (!string.IsNullOrEmpty(organization.WebsiteUrl))
+                                        {
+                                            <MudLink Href="@organization.WebsiteUrl" Target="_blank" Typo="Typo.body1">@organization.WebsiteUrl</MudLink>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body1" Color="Color.Secondary">Not provided</MudText>
+                                        }
+                                    </div>
+                                </div>
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.h6" Class="mb-4" Style="font-weight: 700;">Address</MudText>
+                            <div class="d-flex gap-3">
+                                <MudIcon Icon="@Icons.Material.Filled.LocationOn" Color="Color.Primary" Size="Size.Small" />
+                                <div>
+                                    <MudText Typo="Typo.body1">@organization.Address</MudText>
+                                    <MudText Typo="Typo.body1">@organization.Postcode @organization.City</MudText>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 600;">@organization.Country</MudText>
+                                </div>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                }
+                else
+                {
+                    <EditForm EditContext="_editContext" OnValidSubmit="SaveChanges">
+                        <FormSubmissionGuard State="@_submitState">
+                        <AppValidationSummary />
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12">
+                                <MudTextField T="string" @bind-Value="editModel.FullName"
+                                              Label="Organization Name"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Business"
+                                              Required="true"
+                                              RequiredError="Organization name is required" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" @bind-Value="editModel.Email"
+                                              Label="Email"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Email"
+                                              Required="true"
+                                              RequiredError="Email is required"
+                                              Validation="@(new Func<string, string?>(ValidateEmail))" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" @bind-Value="editModel.WebsiteUrl"
+                                              Label="Website (Optional)"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Language" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2" Color="Color.Primary" Style="font-weight: 700;">Location Details</MudText>
+                                <MudDivider Class="mb-4"/>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" @bind-Value="editModel.Address"
+                                              Label="Address"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Home"
+                                              Required="true"
+                                              RequiredError="Address is required" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="editModel.Postcode"
+                                                 Label="Postcode"
+                                                 Variant="Variant.Outlined"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentIcon="@Icons.Material.Filled.Pin"
+                                                 Required="true"
+                                                 RequiredError="Postcode is required"
+                                                 HideSpinButtons="true"
+                                                 Min="1000" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" @bind-Value="editModel.City"
+                                              Label="City"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.LocationCity"
+                                              Required="true"
+                                              RequiredError="City is required" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string" @bind-Value="editModel.Country"
+                                              Label="Country"
+                                              Variant="Variant.Outlined"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Public"
+                                              Required="true"
+                                              RequiredError="Country is required" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle1" Class="mt-4 mb-2" Color="Color.Primary" Style="font-weight: 700;">Organization Page Appearance</MudText>
+                                <MudDivider Class="mb-4" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
+                                <MudTextField T="string" @bind-Value="_appearance.BackgroundColor"
+                                              Label="Background Color"
+                                              Variant="Variant.Outlined"
+                                              InputType="InputType.Color"
+                                              HelperText="Used when no media URL is provided." />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="8">
+                                <MudTextField T="string" @bind-Value="_appearance.ImageUri"
+                                              Label="Banner Picture URL"
+                                              Variant="Variant.Outlined"
+                                              Placeholder="https://... (image or GIF)" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudSelect T="string"
+                                           Label="Background Effect"
+                                           Variant="Variant.Outlined"
+                                           @bind-Value="_appearance.BackgroundEffect">
+                                    <MudSelectItem Value="@("None")">None</MudSelectItem>
+                                    <MudSelectItem Value="@("SoftOverlay")">Soft Overlay</MudSelectItem>
+                                    <MudSelectItem Value="@("StrongOverlay")">Strong Overlay</MudSelectItem>
+                                    <MudSelectItem Value="@("Blur")">Blur</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" Class="d-flex justify-end gap-3 mt-6">
+                                <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" ButtonType="ButtonType.Submit"
+                                           StartIcon="@Icons.Material.Filled.Save"
+                                           Disabled="@_submitState.IsSubmitting"
+                                           Class="rounded-pill px-8">
+                                    @if (_submitState.IsSubmitting)
+                                    {
+                                        <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                                        <span>Saving...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Save Changes</span>
+                                    }
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                        </FormSubmissionGuard>
+                    </EditForm>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        @* ── Events by this organization ── *@
+        @if (_orgEvents.Any())
+        {
+            <MudDivider Class="my-8" />
+            <EventPreviewWorkspace @ref="_eventPreviewWorkspace"
+                                   NavigationEvents="@_orgEvents"
+                                   OnEventDeleted="HandleEventDeleted">
+                <section>
+                    <MudText Typo="Typo.h5" Style="font-weight: 800;" Class="mb-6">Events</MudText>
+
+                    @if (UpcomingEvents.Any())
+                    {
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;" Color="Color.Primary" Class="mb-3">Upcoming</MudText>
+                        <EventCardList Events="@UpcomingEvents"
+                                       SelectedEventId="@(_eventPreviewWorkspace?.SelectedEventId)"
+                                       Class="mb-6"
+                                       AriaLabel="Upcoming organization events"
+                                       OnEventSelected="HandleEventSelected"
+                                       OnEditRequested="HandleEventEdit"
+                                       OnDeleteRequested="HandleEventDelete"
+                                       OnShareRequested="HandleEventShare" />
+                    }
+
+                    @if (PastEvents.Any())
+                    {
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;" Color="Color.Secondary" Class="mb-3">Past Events</MudText>
+                        <EventCardList Events="@PastEvents.Take(6)"
+                                       SelectedEventId="@(_eventPreviewWorkspace?.SelectedEventId)"
+                                       AriaLabel="Past organization events"
+                                       OnEventSelected="HandleEventSelected"
+                                       OnEditRequested="HandleEventEdit"
+                                       OnDeleteRequested="HandleEventDelete"
+                                       OnShareRequested="HandleEventShare" />
+                    }
+                </section>
+            </EventPreviewWorkspace>
+        }
+    }
+</MudContainer>

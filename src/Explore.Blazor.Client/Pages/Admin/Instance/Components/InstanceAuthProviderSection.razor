@@ -1,0 +1,928 @@
+@* ABOUTME: Instance admin settings section for authentication and authorization provider management. *@
+@* ABOUTME: Uses explicit enable/disable actions while preserving onboarding provider configuration state. *@
+
+@using Explore.Blazor.Client.Contracts.Interop
+@using Explore.Blazor.Client.Services
+@using MudBlazor
+
+@inject IDialogService DialogService
+@inject IBrowserActionInterop BrowserActionInterop
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Authentication and Authorization Providers</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            Configure how users sign in and how protected operations are authorized on this instance.
+        </MudText>
+    </div>
+
+    <MudStack Spacing="4">
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Authentication Providers</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        At least one authentication provider must remain enabled. Multiple providers may be enabled.
+                    </MudText>
+                </div>
+
+                @if (!HasAnyAuthenticationProviderEnabled)
+                {
+                    <MudAlert Severity="Severity.Warning">
+                        At least one authentication provider must remain enabled.
+                    </MudAlert>
+                }
+
+                <MudPaper Outlined="true" Class="pa-4">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Keycloak</MudText>
+                                <MudTooltip Text="Self-hosted OIDC provider for full identity management control.">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                </MudTooltip>
+                                @if (Model.KeycloakDetectedFromEnvironment == true)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Auto-detected</MudChip>
+                                }
+                                @ProviderStatusChip(Model.KeycloakEnabled == true)
+                            </MudStack>
+                            @AuthenticationProviderButton("Keycloak", Model.KeycloakEnabled == true, () => SetAuthenticationProviderAsync("Keycloak", v => Model.KeycloakEnabled = v, Model.KeycloakEnabled == true))
+                        </MudStack>
+
+                        @if (Model.KeycloakEnabled == true)
+                        {
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Authority URL" @bind-Value="Model.KeycloakAuthority" />
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Client ID" @bind-Value="Model.KeycloakClientId" />
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Client Secret" InputType="InputType.Password" @bind-Value="Model.KeycloakClientSecret" />
+
+                            <MudPaper Outlined="true" Class="pa-4 mt-2">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                                        <div>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudText Typo="Typo.subtitle2">Keycloak client-secret rotation</MudText>
+                                                <MudChip T="string" Size="Size.Small" Color="@OwnershipChipColor(Model.KeycloakClientSecretOwnership)" Variant="Variant.Outlined">
+                                                    @(Model.KeycloakClientSecretOwnership?.Badge ?? "Unknown")
+                                                </MudChip>
+                                            </MudStack>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Rotates only the configured confidential Blazor client secret. Secret values and temporary admin credentials are cleared after submit and never returned.
+                                            </MudText>
+                                        </div>
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Warning"
+                                                   StartIcon="@(_isRotatingKeycloakClientSecret ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.VpnKey)"
+                                                   Disabled="@(!CanRotateKeycloakClientSecret)"
+                                                   OnClick="RotateKeycloakClientSecretAsync">
+                                            @(_isRotatingKeycloakClientSecret ? "Rotating..." : "Rotate Client Secret")
+                                        </MudButton>
+                                    </MudStack>
+
+                                    <MudAlert Severity="@OwnershipAlertSeverity(Model.KeycloakClientSecretOwnership)" Dense="true">
+                                        @Model.KeycloakClientSecretOwnership?.Description
+                                    </MudAlert>
+
+                                    @if (IsKeycloakSecretApplicationManaged)
+                                    {
+                                        <MudTextField Variant="Variant.Outlined" T="string" Label="New client secret" InputType="InputType.Password" @bind-Value="_newKeycloakClientSecret" />
+                                        <MudTextField Variant="Variant.Outlined" T="string" Label="Temporary admin username" @bind-Value="_rotationKeycloakAdminUsername" />
+                                        <MudTextField Variant="Variant.Outlined" T="string" Label="Temporary admin password" InputType="InputType.Password" @bind-Value="_rotationKeycloakAdminPassword" />
+                                        <MudCheckBox T="bool" @bind-Value="_confirmApplicationManagedKeycloakSecret" Color="Color.Warning">
+                                            I understand the platform will store this new application-managed Keycloak client secret and refresh authentication schemes after rotation.
+                                        </MudCheckBox>
+                                    }
+                                    else
+                                    {
+                                        <MudAlert Severity="Severity.Warning" Dense="true">
+                                            Deployment-managed secrets must be rotated in the deployment secret provider and the matching Keycloak client. The application will not store or overwrite them.
+                                        </MudAlert>
+                                    }
+
+                                    @if (_keycloakSecretRotationResult is not null)
+                                    {
+                                        <MudAlert Severity="@PlanSeverity(_keycloakSecretRotationResult.Status)" Dense="true">
+                                            @_keycloakSecretRotationResult.Message
+                                        </MudAlert>
+                                        @if (!string.IsNullOrWhiteSpace(_keycloakSecretRotationResult.OperatorInstructions))
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@_keycloakSecretRotationResult.OperatorInstructions</MudText>
+                                        }
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-4 mt-2">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle2">Keycloak realm doctor</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Runs read-only diagnostics against the configured realm. Temporary admin credentials are used only for this request and are cleared after the run.
+                                            </MudText>
+                                        </div>
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@(_isRunningKeycloakDoctor ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.HealthAndSafety)"
+                                                   Disabled="@(!CanRunKeycloakDoctor)"
+                                                   OnClick="RunKeycloakDoctorAsync">
+                                            @(_isRunningKeycloakDoctor ? "Running..." : "Run Doctor")
+                                        </MudButton>
+                                    </MudStack>
+
+                                    <MudSwitch T="bool" @bind-Value="_useTemporaryKeycloakAdmin" Color="Color.Primary">
+                                        Include temporary admin read-only inspection
+                                    </MudSwitch>
+
+                                    @if (_useTemporaryKeycloakAdmin)
+                                    {
+                                        <MudTextField Variant="Variant.Outlined" T="string" Label="Temporary admin username" @bind-Value="_temporaryKeycloakAdminUsername" />
+                                        <MudTextField Variant="Variant.Outlined" T="string" Label="Temporary admin password" InputType="InputType.Password" @bind-Value="_temporaryKeycloakAdminPassword" />
+                                    }
+
+                                    @if (_keycloakDoctorResult is not null)
+                                    {
+                                        <MudAlert Severity="@DoctorSeverity(_keycloakDoctorResult.OverallStatus)" Dense="true">
+                                            @_keycloakDoctorResult.Message
+                                        </MudAlert>
+
+                                        <MudStack Spacing="1">
+                                            @foreach (var check in _keycloakDoctorResult.Checks ?? [])
+                                            {
+                                                <MudAlert Severity="@DoctorSeverity(check.Status)" Dense="true" NoIcon="true">
+                                                    <MudStack Spacing="1">
+                                                        <MudText Typo="Typo.subtitle2">@check.Name</MudText>
+                                                        <MudText Typo="Typo.body2">@check.Message</MudText>
+                                                        @if (!string.IsNullOrWhiteSpace(check.Remediation))
+                                                        {
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@check.Remediation</MudText>
+                                                        }
+                                                    </MudStack>
+                                                </MudAlert>
+                                            }
+                                        </MudStack>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-4 mt-2">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle2">Keycloak sync preview</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Builds a read-only additive sync plan from the configured realm, then applies only backup-confirmed additive repairs.
+                                            </MudText>
+                                        </div>
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@(_isPreviewingKeycloakSync ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Preview)"
+                                                   Disabled="@(!CanPreviewKeycloakSync)"
+                                                   OnClick="PreviewKeycloakSyncAsync">
+                                            @(_isPreviewingKeycloakSync ? "Previewing..." : "Preview Sync")
+                                        </MudButton>
+                                     </MudStack>
+
+                                     <MudAlert Severity="Severity.Info" Dense="true">
+                                        Preview is read-only. Apply requires a confirmed Keycloak backup, uses the temporary admin fields above, clears the password after the request, and never deletes realms, users, groups, or unrelated clients.
+                                     </MudAlert>
+
+                                     <MudCheckBox T="bool" @bind-Value="_keycloakBackupConfirmed" Color="Color.Warning">
+                                          I have a current Keycloak backup and understand apply only adds or updates platform-owned realm settings.
+                                     </MudCheckBox>
+
+                                     <MudButton Variant="Variant.Filled"
+                                                Color="Color.Warning"
+                                                StartIcon="@(_isApplyingKeycloakSync ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Build)"
+                                                Disabled="@(!CanApplyKeycloakSync)"
+                                                OnClick="ApplyKeycloakSyncAsync">
+                                         @(_isApplyingKeycloakSync ? "Applying..." : "Apply Additive Repairs")
+                                     </MudButton>
+
+                                     @if (_keycloakSyncPlan is not null)
+                                     {
+                                        <MudAlert Severity="@PlanSeverity(_keycloakSyncPlan.Status)" Dense="true">
+                                            @_keycloakSyncPlan.Message
+                                        </MudAlert>
+
+                                        <MudStack Spacing="1">
+                                            @foreach (var operation in _keycloakSyncPlan.Operations ?? [])
+                                            {
+                                                <MudAlert Severity="@PlanSeverity(operation.Status)" Dense="true" NoIcon="true">
+                                                    <MudStack Spacing="1">
+                                                        <MudText Typo="Typo.subtitle2">@operation.Summary</MudText>
+                                                        <MudText Typo="Typo.body2">@operation.Reason</MudText>
+                                                        @if (operation.Changes?.Count > 0)
+                                                        {
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@string.Join("; ", operation.Changes!)</MudText>
+                                                        }
+                                                    </MudStack>
+                                                </MudAlert>
+                                            }
+                                        </MudStack>
+
+                                        @if (_keycloakSyncPlan.DesiredState?.Clients?.Count > 0)
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                Desired clients: @string.Join(", ", _keycloakSyncPlan.DesiredState.Clients.Select(client => client.ClientId))
+                                            </MudText>
+                                        }
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        }
+
+                        @if (!IsSingleTenant)
+                        {
+                            <MudSwitch T="bool" Value="@(Model.LockKeycloakEnabled == true)" ValueChanged="@(value => Model.LockKeycloakEnabled = value)" Color="Color.Warning">
+                                Lock Keycloak setting for tenants
+                            </MudSwitch>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Class="pa-4">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">AT Protocol Login</MudText>
+                                <MudTooltip Text="Users authenticate with AT Protocol identities; optionally link decentralization separately.">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                </MudTooltip>
+                                @ProviderStatusChip(Model.AtprotoLoginEnabled == true)
+                            </MudStack>
+                            @AuthenticationProviderButton("AT Protocol Login", Model.AtprotoLoginEnabled == true, () => SetAuthenticationProviderAsync("AT Protocol Login", v => Model.AtprotoLoginEnabled = v, Model.AtprotoLoginEnabled == true))
+                        </MudStack>
+
+                        @if (Model.AtprotoLoginEnabled == true)
+                        {
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Public URL" @bind-Value="Model.AtprotoPublicUrl" HelperText="Used to serve ATProto OAuth client metadata." />
+                        }
+
+                        @if (!IsSingleTenant)
+                        {
+                            <MudSwitch T="bool" Value="@(Model.LockAtprotoLoginEnabled == true)" ValueChanged="@(value => Model.LockAtprotoLoginEnabled = value)" Color="Color.Warning">
+                                Lock AT Protocol setting for tenants
+                            </MudSwitch>
+                        }
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Class="pa-4">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Google SSO</MudText>
+                                <MudTooltip Text="OAuth sign-in using Google accounts.">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                </MudTooltip>
+                                @ProviderStatusChip(Model.GoogleSsoEnabled == true)
+                            </MudStack>
+                            @AuthenticationProviderButton("Google SSO", Model.GoogleSsoEnabled == true, () => SetAuthenticationProviderAsync("Google SSO", v => Model.GoogleSsoEnabled = v, Model.GoogleSsoEnabled == true))
+                        </MudStack>
+
+                        @if (Model.GoogleSsoEnabled == true)
+                        {
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Client ID" @bind-Value="Model.GoogleClientId" />
+                            <MudTextField Variant="Variant.Outlined" T="string" Label="Client Secret" InputType="InputType.Password" @bind-Value="Model.GoogleClientSecret" />
+                        }
+
+                        @if (!IsSingleTenant)
+                        {
+                            <MudSwitch T="bool" Value="@(Model.LockGoogleSsoEnabled == true)" ValueChanged="@(value => Model.LockGoogleSsoEnabled = value)" Color="Color.Warning">
+                                Lock Google setting for tenants
+                            </MudSwitch>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        </MudPaper>
+
+        <MudPaper Outlined="true" Class="pa-4">
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Authorization Providers</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Exactly one authorization provider is active. Cerbos mode fails closed when the external PDP is unavailable.
+                    </MudText>
+                </div>
+
+                @if (IsDeploymentAuthorizationProvider)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        Authorization is managed by deployment configuration. Change <code>AUTHORIZATION_PROVIDER</code> and related Cerbos settings at the deployment source; authentication-provider management remains available here.
+                    </MudAlert>
+                }
+
+                <MudPaper Outlined="true" Class="pa-4" Style="@GetAuthorizationCardStyle(LocalProvider)">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Local (Built-in RBAC)</MudText>
+                                <MudTooltip Text="Use the built-in authorization implementation with no external Cerbos dependency.">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                </MudTooltip>
+                                @ProviderStatusChip(IsAuthorizationProviderSelected(LocalProvider))
+                            </MudStack>
+                            @if (!IsDeploymentAuthorizationProvider)
+                            {
+                                <MudButton Variant="@(IsAuthorizationProviderSelected(LocalProvider) ? Variant.Outlined : Variant.Filled)"
+                                           Color="Color.Primary"
+                                           Disabled="@IsAuthorizationProviderSelected(LocalProvider)"
+                                           OnClick="@(() => SelectAuthorizationProviderAsync(LocalProvider))">
+                                    @(IsAuthorizationProviderSelected(LocalProvider) ? "Enabled" : "Enable Local Authorization")
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Class="pa-4" Style="@GetAuthorizationCardStyle(CerbosProvider)">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Cerbos (External PDP)</MudText>
+                                <MudTooltip Text="Route protected authorization checks to Cerbos. When selected, authorized requests are denied if Cerbos is unavailable.">
+                                    <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                </MudTooltip>
+                                @if (AuthorizationModel.CerbosDetectedFromEnvironment == true)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Auto-detected</MudChip>
+                                }
+                                <MudChip T="string" Size="Size.Small" Color="@OwnershipChipColor(AuthorizationModel.CerbosEndpointOwnership)" Variant="Variant.Outlined">@(AuthorizationModel.CerbosEndpointOwnership?.Badge ?? "Unknown")</MudChip>
+                                @if (AuthorizationModel.CerbosEndpointVerified == true)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">Verified</MudChip>
+                                }
+                                @ProviderStatusChip(IsAuthorizationProviderSelected(CerbosProvider))
+                            </MudStack>
+                            @if (!IsDeploymentAuthorizationProvider)
+                            {
+                                <MudButton Variant="@(IsAuthorizationProviderSelected(CerbosProvider) ? Variant.Outlined : Variant.Filled)"
+                                           Color="Color.Primary"
+                                           Disabled="@IsAuthorizationProviderSelected(CerbosProvider)"
+                                           OnClick="@(() => SelectAuthorizationProviderAsync(CerbosProvider))">
+                                    @(IsAuthorizationProviderSelected(CerbosProvider) ? "Enabled" : "Enable Cerbos Authorization")
+                                </MudButton>
+                            }
+                        </MudStack>
+
+                        @if (IsAuthorizationProviderSelected(CerbosProvider))
+                        {
+                            @if (AuthorizationModel.CerbosDetectedFromEnvironment == true && AuthorizationModel.CerbosEndpointVerified == true)
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true" NoIcon="true">
+                                    Cerbos was detected from environment and verified successfully during setup.
+                                </MudAlert>
+                            }
+                            else if (AuthorizationModel.CerbosDetectedFromEnvironment == true)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true">
+                                    A Cerbos endpoint was detected from environment, but it is not currently marked verified. Saving Cerbos will verify the endpoint before applying it.
+                                </MudAlert>
+                            }
+
+                            <MudAlert Severity="@OwnershipAlertSeverity(AuthorizationModel.CerbosEndpointOwnership)" Dense="true">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.subtitle2">@(AuthorizationModel.CerbosEndpointOwnership?.Badge ?? "Unknown")</MudText>
+                                    <MudText Typo="Typo.body2">@AuthorizationModel.CerbosEndpointOwnership?.Description</MudText>
+                                </MudStack>
+                            </MudAlert>
+
+                            <MudTextField Variant="Variant.Outlined" T="string"
+                                          Label="Cerbos gRPC Endpoint"
+                                          Value="AuthorizationModel.CerbosGrpcEndpoint"
+                                          ValueChanged="OnCerbosEndpointChanged"
+                                          Placeholder="https://cerbosgrpc.example.com:443 or cerbosgrpc.example.com:443"
+                                          Disabled="@IsCerbosEndpointReadOnly"
+                                          HelperText="@CerbosEndpointHelperText" />
+
+                            @if (AuthorizationModel.CerbosEndpointVerified != true)
+                            {
+                                <MudAlert Severity="Severity.Warning" Dense="true">
+                                    Saving with Cerbos enabled will test the endpoint before changing the active authorization provider.
+                                </MudAlert>
+                            }
+
+                            <MudPaper Outlined="true" Class="pa-4 mt-2">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Spacing="2">
+                                        <div>
+                                            <MudText Typo="Typo.subtitle2">Policy package sync</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Publish the latest embedded authorization policy bundle through the BFF using @((AuthorizationModel.CerbosAdminCredentialsOwnership?.Badge ?? "configured").ToLowerInvariant()) server-side credentials, or download the same package for manual cerbosctl put installation. The browser never owns the Admin API password.
+                                            </MudText>
+                                        </div>
+                                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Secondary"
+                                                       StartIcon="@(_isDownloadingPackage ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Download)"
+                                                       Disabled="@(!CanDownloadCerbosPackage)"
+                                                       OnClick="DownloadCerbosPolicyPackageAsync">
+                                                @(_isDownloadingPackage ? "Preparing ZIP..." : "Download ZIP")
+                                            </MudButton>
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Primary"
+                                                       StartIcon="@(_isSyncing ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Sync)"
+                                                       Disabled="@(!CanSyncCerbosPolicies)"
+                                                       OnClick="SyncCerbosPoliciesAsync">
+                                                @(_isSyncing ? "Syncing..." : IsDeploymentAuthorizationProvider ? "Retry Authorization Setup" : "Sync Policies")
+                                            </MudButton>
+                                        </MudStack>
+                                    </MudStack>
+
+                                    @if (AuthorizationModel.CerbosEndpointVerified != true)
+                                    {
+                                        <MudAlert Severity="Severity.Info" Dense="true">
+                                            @(IsDeploymentAuthorizationProvider
+                                                ? "Fix the deployment-managed Cerbos settings, then retry endpoint verification and policy synchronization."
+                                                : "Save and verify the Cerbos endpoint before syncing authorization policies.")
+                                        </MudAlert>
+                                    }
+
+                                    @if (_syncResult is not null)
+                                    {
+                                        <MudAlert Severity="@(_syncResult.Success == true ? Severity.Success : Severity.Error)" Dense="true">
+                                            @_syncResult.Message
+                                        </MudAlert>
+                                    }
+
+                                    @if (_downloadResult is not null)
+                                    {
+                                        <MudAlert Severity="@(_downloadResult.Success == true ? Severity.Success : Severity.Error)" Dense="true">
+                                            @_downloadResult.Message
+                                        </MudAlert>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</div>
+
+@code {
+    private const string LocalProvider = "local";
+    private const string CerbosProvider = "cerbos";
+
+    [Parameter, EditorRequired]
+    public AuthProviderConfigurationDto Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public AuthorizationProviderConfigurationDto AuthorizationModel { get; set; } = null!;
+
+    [Parameter]
+    public bool IsSingleTenant { get; set; }
+
+    [Parameter]
+    public IInstanceOnboardingService? OnboardingService { get; set; }
+
+    private bool _isSyncing;
+    private bool _isDownloadingPackage;
+    private bool _isRunningKeycloakDoctor;
+    private bool _isPreviewingKeycloakSync;
+    private bool _isApplyingKeycloakSync;
+    private bool _isRotatingKeycloakClientSecret;
+    private bool _useTemporaryKeycloakAdmin;
+    private bool _keycloakBackupConfirmed;
+    private bool _confirmApplicationManagedKeycloakSecret;
+    private string _temporaryKeycloakAdminUsername = string.Empty;
+    private string _temporaryKeycloakAdminPassword = string.Empty;
+    private string _rotationKeycloakAdminUsername = string.Empty;
+    private string _rotationKeycloakAdminPassword = string.Empty;
+    private string _newKeycloakClientSecret = string.Empty;
+    private KeycloakRealmDoctorResultDto? _keycloakDoctorResult;
+    private KeycloakRealmSyncPlanDto? _keycloakSyncPlan;
+    private KeycloakClientSecretRotationResultDto? _keycloakSecretRotationResult;
+    private BaseCommandResponseOfGuid? _syncResult;
+    private BaseCommandResponseOfGuid? _downloadResult;
+
+    private bool HasAnyAuthenticationProviderEnabled =>
+        Model.KeycloakEnabled == true || Model.AtprotoLoginEnabled == true || Model.GoogleSsoEnabled == true;
+
+    private RenderFragment ProviderStatusChip(bool enabled) => @<MudChip T="string"
+        Size="Size.Small"
+        Color="@(enabled ? Color.Success : Color.Default)"
+        Variant="Variant.Outlined">@(enabled ? "Enabled" : "Disabled")</MudChip>;
+
+    private RenderFragment AuthenticationProviderButton(string providerName, bool enabled, Func<Task> onClick) => @<MudButton Variant="@(enabled ? Variant.Outlined : Variant.Filled)"
+        Color="@(enabled ? Color.Error : Color.Primary)"
+        OnClick="CreateAuthenticationClick(onClick)">@(enabled ? $"Disable {providerName}" : $"Enable {providerName}")</MudButton>;
+
+    private EventCallback<MouseEventArgs> CreateAuthenticationClick(Func<Task> onClick) =>
+        EventCallback.Factory.Create<MouseEventArgs>(this, onClick);
+
+    private async Task SetAuthenticationProviderAsync(string providerName, Action<bool> setEnabled, bool currentlyEnabled)
+    {
+        if (currentlyEnabled && CountEnabledAuthenticationProviders() == 1)
+        {
+            await DialogService.ShowMessageBoxAsync(new MessageBoxOptions
+            {
+                Title = "Authentication provider required",
+                Message = $"{providerName} is the only enabled authentication provider. Enable another provider before disabling it.",
+                YesText = "OK"
+            }, DialogOptionsFactory.Confirmation());
+            return;
+        }
+
+        var action = currentlyEnabled ? "Disable" : "Enable";
+        var confirmed = await DialogService.ShowMessageBoxAsync(new MessageBoxOptions
+        {
+            Title = $"{action} {providerName}",
+            Message = currentlyEnabled
+                ? $"Disable {providerName} for new sign-ins? Existing sessions are not immediately signed out."
+                : $"Enable {providerName} for sign-ins after these settings are saved?",
+            YesText = action,
+            CancelText = "Cancel"
+        }, DialogOptionsFactory.Confirmation());
+
+        if (confirmed == true)
+        {
+            setEnabled(!currentlyEnabled);
+        }
+    }
+
+    private int CountEnabledAuthenticationProviders()
+    {
+        var count = 0;
+        if (Model.KeycloakEnabled == true) count++;
+        if (Model.AtprotoLoginEnabled == true) count++;
+        if (Model.GoogleSsoEnabled == true) count++;
+        return count;
+    }
+
+    private bool IsAuthorizationProviderSelected(string provider) =>
+        string.Equals(AuthorizationModel.Provider, provider, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsDeploymentAuthorizationProvider =>
+        AuthorizationModel.AuthorizationProviderManagedByDeployment == true;
+
+    private string GetAuthorizationCardStyle(string provider) =>
+        IsAuthorizationProviderSelected(provider)
+            ? "border: 2px solid var(--mud-palette-primary);"
+            : string.Empty;
+
+    private static Color OwnershipChipColor(SecretOwnershipDto? ownership) =>
+        string.Equals(ownership?.Mode, "deployment-managed", StringComparison.OrdinalIgnoreCase)
+            ? Color.Warning
+            : ownership?.BootstrapAvailable == true
+                ? Color.Info
+                : Color.Success;
+
+    private static Severity OwnershipAlertSeverity(SecretOwnershipDto? ownership) =>
+        string.Equals(ownership?.Mode, "deployment-managed", StringComparison.OrdinalIgnoreCase)
+            ? Severity.Warning
+            : ownership?.BootstrapAvailable == true
+                ? Severity.Info
+                : Severity.Success;
+
+
+    private bool CanSyncCerbosPolicies =>
+        !_isSyncing
+        && OnboardingService is not null
+        && IsAuthorizationProviderSelected(CerbosProvider)
+        && (IsDeploymentAuthorizationProvider
+            || (AuthorizationModel.CerbosEndpointVerified == true
+                && AuthorizationModel.CerbosAdminUsernameConfigured == true
+                && AuthorizationModel.CerbosAdminPasswordConfigured == true));
+
+    private bool IsCerbosEndpointReadOnly => AuthorizationModel.CerbosEndpointOwnership?.Editable != true;
+
+    private string CerbosEndpointHelperText => IsCerbosEndpointReadOnly
+        ? "Deployment-managed endpoint. Change it in the environment, secret provider, or appsettings and redeploy/restart."
+        : "Accepts a full URL or bare host:port. Environment values are bootstrap prefills only; saved application settings take precedence after you edit.";
+
+    private bool CanDownloadCerbosPackage =>
+        !_isDownloadingPackage
+        && IsAuthorizationProviderSelected(CerbosProvider);
+
+    private bool CanRunKeycloakDoctor =>
+        !_isRunningKeycloakDoctor
+        && !_isPreviewingKeycloakSync
+        && !_isApplyingKeycloakSync
+        && !_isRotatingKeycloakClientSecret
+        && OnboardingService is not null
+        && Model.KeycloakEnabled == true
+        && !string.IsNullOrWhiteSpace(Model.KeycloakAuthority)
+        && !string.IsNullOrWhiteSpace(Model.KeycloakClientId)
+        && (!_useTemporaryKeycloakAdmin
+            || (!string.IsNullOrWhiteSpace(_temporaryKeycloakAdminUsername)
+                && !string.IsNullOrWhiteSpace(_temporaryKeycloakAdminPassword)));
+
+    private bool CanPreviewKeycloakSync =>
+        !_isPreviewingKeycloakSync
+        && !_isRunningKeycloakDoctor
+        && !_isApplyingKeycloakSync
+        && !_isRotatingKeycloakClientSecret
+        && OnboardingService is not null
+        && Model.KeycloakEnabled == true
+        && !string.IsNullOrWhiteSpace(Model.KeycloakAuthority)
+        && !string.IsNullOrWhiteSpace(Model.KeycloakClientId)
+        && (!_useTemporaryKeycloakAdmin
+            || (!string.IsNullOrWhiteSpace(_temporaryKeycloakAdminUsername)
+                && !string.IsNullOrWhiteSpace(_temporaryKeycloakAdminPassword)));
+
+    private bool CanApplyKeycloakSync =>
+        !_isApplyingKeycloakSync
+        && !_isPreviewingKeycloakSync
+        && !_isRunningKeycloakDoctor
+        && !_isRotatingKeycloakClientSecret
+        && _keycloakBackupConfirmed
+        && OnboardingService is not null
+        && Model.KeycloakEnabled == true
+        && !string.IsNullOrWhiteSpace(Model.KeycloakAuthority)
+        && !string.IsNullOrWhiteSpace(Model.KeycloakClientId)
+        && !string.IsNullOrWhiteSpace(_temporaryKeycloakAdminUsername)
+        && !string.IsNullOrWhiteSpace(_temporaryKeycloakAdminPassword);
+
+    private bool IsKeycloakSecretApplicationManaged =>
+        !string.Equals(Model.KeycloakClientSecretOwnership?.Mode, "deployment-managed", StringComparison.OrdinalIgnoreCase);
+
+    private bool CanRotateKeycloakClientSecret =>
+        !_isRotatingKeycloakClientSecret
+        && !_isRunningKeycloakDoctor
+        && !_isPreviewingKeycloakSync
+        && !_isApplyingKeycloakSync
+        && OnboardingService is not null
+        && Model.KeycloakEnabled == true
+        && !string.IsNullOrWhiteSpace(Model.KeycloakAuthority)
+        && !string.IsNullOrWhiteSpace(Model.KeycloakClientId)
+        && (!IsKeycloakSecretApplicationManaged
+            || (_confirmApplicationManagedKeycloakSecret
+                && !string.IsNullOrWhiteSpace(_newKeycloakClientSecret)
+                && !string.IsNullOrWhiteSpace(_rotationKeycloakAdminUsername)
+                && !string.IsNullOrWhiteSpace(_rotationKeycloakAdminPassword)));
+
+    private static Severity DoctorSeverity(string? status) => status?.ToLowerInvariant() switch
+    {
+        "healthy" => Severity.Success,
+        "warning" => Severity.Warning,
+        "needs-repair" => Severity.Warning,
+        _ => Severity.Error
+    };
+
+    private static Severity PlanSeverity(string? status) => status?.ToLowerInvariant() switch
+    {
+        "healthy" => Severity.Success,
+        "up-to-date" => Severity.Success,
+        "applied" => Severity.Success,
+        "rotated" => Severity.Success,
+        "changes-planned" => Severity.Warning,
+        "planned" => Severity.Warning,
+        "warning" => Severity.Warning,
+        "operator-action-required" => Severity.Warning,
+        _ => Severity.Error
+    };
+
+    private async Task SelectAuthorizationProviderAsync(string provider)
+    {
+        if (IsDeploymentAuthorizationProvider || IsAuthorizationProviderSelected(provider))
+        {
+            return;
+        }
+
+        var confirmed = await DialogService.ShowMessageBoxAsync(new MessageBoxOptions
+        {
+            Title = provider == LocalProvider ? "Switch to local authorization" : "Switch to Cerbos authorization",
+            Message = provider == LocalProvider
+                ? "Switching from Cerbos to local authorization removes Cerbos policy evaluation, centralized decision logs, and external PDP enforcement. Use this only when you intend to run authorization locally or need to recover from Cerbos being unavailable."
+                : "Switching to Cerbos routes protected authorization checks to the external PDP. If Cerbos is unavailable, authenticated requests fail closed by design.",
+            YesText = provider == LocalProvider ? "Switch to Local" : "Switch to Cerbos",
+            CancelText = "Cancel"
+        }, DialogOptionsFactory.Confirmation());
+
+        if (confirmed == true)
+        {
+            AuthorizationModel.Provider = provider;
+        }
+    }
+
+    private void OnCerbosEndpointChanged(string value)
+    {
+        if (IsCerbosEndpointReadOnly)
+        {
+            return;
+        }
+
+        var endpointChanged = !string.Equals(AuthorizationModel.CerbosGrpcEndpoint, value, StringComparison.Ordinal);
+        AuthorizationModel.CerbosGrpcEndpoint = value;
+
+        if (endpointChanged)
+        {
+            AuthorizationModel.CerbosEndpointVerified = false;
+            _syncResult = null;
+            _downloadResult = null;
+        }
+    }
+
+    private async Task DownloadCerbosPolicyPackageAsync()
+    {
+        if (!CanDownloadCerbosPackage)
+        {
+            return;
+        }
+
+        _isDownloadingPackage = true;
+        _downloadResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var downloaded = await BrowserActionInterop.DownloadFileFromUrlAsync(
+                "/api/instance/settings/authz-provider/package");
+
+            if (!downloaded)
+            {
+                _downloadResult = new BaseCommandResponseOfGuid
+                {
+                    Success = false,
+                    Message = "Authorization policy package download failed. Try again or check server logs."
+                };
+                return;
+            }
+
+            _downloadResult = new BaseCommandResponseOfGuid
+            {
+                Success = true,
+                Message = "Authorization policy package download started."
+            };
+        }
+        catch
+        {
+            _downloadResult = new BaseCommandResponseOfGuid
+            {
+                Success = false,
+                Message = "Authorization policy package download failed. Try again or check server logs."
+            };
+        }
+        finally
+        {
+            _isDownloadingPackage = false;
+        }
+    }
+
+    private async Task RunKeycloakDoctorAsync()
+    {
+        if (!CanRunKeycloakDoctor || OnboardingService is null)
+        {
+            return;
+        }
+
+        _isRunningKeycloakDoctor = true;
+        _keycloakDoctorResult = null;
+        StateHasChanged();
+
+        try
+        {
+            _keycloakDoctorResult = await OnboardingService.RunKeycloakRealmDoctorAsync(new KeycloakRealmDoctorRequestDto
+            {
+                UseTemporaryAdminCredentials = _useTemporaryKeycloakAdmin,
+                BootstrapAdminUsername = _useTemporaryKeycloakAdmin ? _temporaryKeycloakAdminUsername : null,
+                BootstrapAdminPassword = _useTemporaryKeycloakAdmin ? _temporaryKeycloakAdminPassword : null,
+                ApiClientId = "islamu-event-api"
+            });
+        }
+        finally
+        {
+            _temporaryKeycloakAdminPassword = string.Empty;
+            _isRunningKeycloakDoctor = false;
+        }
+    }
+
+    private async Task PreviewKeycloakSyncAsync()
+    {
+        if (!CanPreviewKeycloakSync || OnboardingService is null)
+        {
+            return;
+        }
+
+        _isPreviewingKeycloakSync = true;
+        _keycloakSyncPlan = null;
+        StateHasChanged();
+
+        try
+        {
+            _keycloakSyncPlan = await OnboardingService.PreviewKeycloakRealmSyncAsync(new KeycloakRealmSyncPreviewRequestDto
+            {
+                UseTemporaryAdminCredentials = _useTemporaryKeycloakAdmin,
+                BootstrapAdminUsername = _useTemporaryKeycloakAdmin ? _temporaryKeycloakAdminUsername : null,
+                BootstrapAdminPassword = _useTemporaryKeycloakAdmin ? _temporaryKeycloakAdminPassword : null,
+                ApiClientId = "islamu-event-api"
+            });
+        }
+        finally
+        {
+            _temporaryKeycloakAdminPassword = string.Empty;
+            _isPreviewingKeycloakSync = false;
+        }
+    }
+
+    private async Task ApplyKeycloakSyncAsync()
+    {
+        if (!CanApplyKeycloakSync || OnboardingService is null)
+        {
+            return;
+        }
+
+        _isApplyingKeycloakSync = true;
+        StateHasChanged();
+
+        try
+        {
+            _keycloakSyncPlan = await OnboardingService.ApplyKeycloakRealmSyncAsync(new KeycloakRealmSyncApplyRequestDto
+            {
+                BackupConfirmed = _keycloakBackupConfirmed,
+                BootstrapAdminUsername = _temporaryKeycloakAdminUsername,
+                BootstrapAdminPassword = _temporaryKeycloakAdminPassword,
+                ApiClientId = "islamu-event-api"
+            });
+        }
+        finally
+        {
+            _temporaryKeycloakAdminPassword = string.Empty;
+            _keycloakBackupConfirmed = false;
+            _isApplyingKeycloakSync = false;
+        }
+    }
+
+    private async Task RotateKeycloakClientSecretAsync()
+    {
+        if (!CanRotateKeycloakClientSecret || OnboardingService is null)
+        {
+            return;
+        }
+
+        _isRotatingKeycloakClientSecret = true;
+        _keycloakSecretRotationResult = null;
+        StateHasChanged();
+
+        try
+        {
+            _keycloakSecretRotationResult = await OnboardingService.RotateKeycloakClientSecretAsync(new KeycloakClientSecretRotationRequestDto
+            {
+                ClientId = Model.KeycloakClientId,
+                SecretOwnershipMode = Model.KeycloakClientSecretOwnership?.Mode,
+                ConfirmApplicationManagedSecret = _confirmApplicationManagedKeycloakSecret,
+                NewClientSecret = IsKeycloakSecretApplicationManaged ? _newKeycloakClientSecret : null,
+                BootstrapAdminUsername = IsKeycloakSecretApplicationManaged ? _rotationKeycloakAdminUsername : null,
+                BootstrapAdminPassword = IsKeycloakSecretApplicationManaged ? _rotationKeycloakAdminPassword : null
+            });
+        }
+        finally
+        {
+            _newKeycloakClientSecret = string.Empty;
+            _rotationKeycloakAdminPassword = string.Empty;
+            _confirmApplicationManagedKeycloakSecret = false;
+            _isRotatingKeycloakClientSecret = false;
+        }
+    }
+
+    private async Task SyncCerbosPoliciesAsync()
+    {
+        if (!CanSyncCerbosPolicies || OnboardingService is null)
+        {
+            return;
+        }
+
+        _isSyncing = true;
+        _syncResult = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await OnboardingService.SyncAuthorizationPolicyPackageAsAdminAsync();
+            if (response.Success == true && IsDeploymentAuthorizationProvider)
+            {
+                AuthorizationModel = await OnboardingService.GetAuthorizationProviderConfigurationAsAdminAsync();
+            }
+
+            _syncResult = response.Success == true
+                ? new BaseCommandResponseOfGuid
+                {
+                    Success = true,
+                    Message = string.IsNullOrWhiteSpace(response.Message)
+                        ? "Authorization policy package synced."
+                        : response.Message
+                }
+                : new BaseCommandResponseOfGuid
+                {
+                    Success = false,
+                    Message = "Authorization policy package sync failed. Check Admin API settings and retry."
+                };
+        }
+        catch
+        {
+            _syncResult = new BaseCommandResponseOfGuid
+            {
+                Success = false,
+                Message = "Authorization policy package sync failed. Check Admin API settings and retry."
+            };
+        }
+        finally
+        {
+            _isSyncing = false;
+        }
+    }
+}

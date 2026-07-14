@@ -1,0 +1,18 @@
+/* ===== Block: organization-success ===== */
+::deep .organization-success {
+    padding-block: var(--isl-space-6);
+}
+
+/* ===== Responsive: Tablet ===== */
+@media (max-width: 60em) {
+    ::deep .organization-success {
+        padding-block: var(--isl-space-5);
+    }
+}
+
+/* ===== Responsive: Mobile ===== */
+@media (max-width: 37.5em) {
+    ::deep .organization-success {
+        padding-block: var(--isl-space-4);
+    }
+}

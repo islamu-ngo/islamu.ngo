@@ -1,0 +1,36 @@
+@*
+    AnnouncementBar Component - BEM Methodology
+    Block: announcement-bar
+    Elements: __wrapper, __alert, __content, __icon, __text, __link
+*@
+
+@if (_isVisible)
+{
+    <div class="announcement-bar">
+        <MudAlert Severity="Severity.Info"
+                  Class="announcement-bar__alert"
+                  Dense="true"
+                  Variant="@Variant.Text"
+                  ContentAlignment="HorizontalAlignment.Center"
+                  ShowCloseIcon="true"
+                  CloseIconClicked="CloseBar"
+                  NoIcon="true">
+            <div class="announcement-bar__content">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Inherit" Size="Size.Small" Class="announcement-bar__icon" />
+                <MudText Class="announcement-bar__text">
+                    @_message
+                </MudText>
+                @if (HasLink)
+                {
+                    <a href="@_linkUrl"
+                       target="@LinkTarget"
+                       rel="@LinkRel"
+                       class="announcement-bar__link"
+                       @onclick:stopPropagation>
+                        @_linkText
+                    </a>
+                }
+            </div>
+        </MudAlert>
+    </div>
+}

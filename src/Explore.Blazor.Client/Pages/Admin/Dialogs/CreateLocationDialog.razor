@@ -1,0 +1,53 @@
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Validators
+@using FluentValidation
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
+            Create New Location
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FluentValidationValidator />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.FullName" Label="Name" For="@(() => locationDto.FullName)" Required="true" RequiredError="Name is required." />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.Address" Label="Address" For="@(() => locationDto.Address)" />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.City" Label="City" For="@(() => locationDto.City)" />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.Postcode" Label="Postcode" For="@(() => locationDto.Postcode)" />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.Country" Label="Country" For="@(() => locationDto.Country)" />
+            <MudNumericField @bind-Value="locationDto.Latitude" Label="Latitude" For="@(() => locationDto.Latitude)" />
+            <MudNumericField @bind-Value="locationDto.Longitude" Label="Longitude" For="@(() => locationDto.Longitude)" />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="locationDto.Timezone" Label="Timezone" For="@(() => locationDto.Timezone)" />
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IDialogReference? DialogReference { get; set; }
+
+    private EditContext _editContext = default!;
+    private CreateLocationDto locationDto = new();
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(locationDto);
+    }
+
+    private void Submit()
+    {
+        if (_editContext.Validate())
+        {
+            DialogReference?.Dismiss(DialogResult.Ok(locationDto));
+        }
+    }
+
+    void Cancel() => DialogReference?.Dismiss(DialogResult.Cancel());
+}

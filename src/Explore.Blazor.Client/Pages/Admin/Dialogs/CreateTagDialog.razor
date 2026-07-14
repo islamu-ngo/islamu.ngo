@@ -1,0 +1,47 @@
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Validators
+@using FluentValidation
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-3 mb-n1" />
+            Create New Tag
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FluentValidationValidator />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="tagDto.FullName" Label="Name" For="@(() => tagDto.FullName)" Required="true" RequiredError="Name is required." />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="tagDto.MasterCode" Label="Master Code" For="@(() => tagDto.MasterCode)" Required="true" RequiredError="Master Code is required." />
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IDialogReference? DialogReference { get; set; }
+
+    private EditContext _editContext = default!;
+    private CreateTagDto tagDto = new();
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(tagDto);
+    }
+
+    private void Submit()
+    {
+        if (_editContext.Validate())
+        {
+            DialogReference?.Dismiss(DialogResult.Ok(tagDto));
+        }
+    }
+
+    void Cancel() => DialogReference?.Dismiss(DialogResult.Cancel());
+}

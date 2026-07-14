@@ -1,0 +1,580 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.0",
+  "description": "Skill activation triggers for .NET Clean Architecture solutions (API, Application, Persistence, Blazor).",
+  "customizationNote": "Patterns are project-agnostic by default. If your solution uses non-standard naming, adjust path patterns to your folder structure.",
+  "lastUpdated": "2026-03-27",
+  "skills": {
+    "clean-architecture-rules": {
+      "type": "guardrail",
+      "enforcement": "block",
+      "priority": "critical",
+      "description": "Enforces Clean Architecture dependency rules (Domain → Application → Infrastructure → API/Blazor). Blocks violations to maintain architectural integrity.",
+      "promptTriggers": {
+        "keywords": [
+          "dependency",
+          "reference",
+          "architecture",
+          "layer",
+          "clean architecture",
+          "domain logic",
+          "ef core",
+          "dbcontext",
+          "violation",
+          "specification pattern",
+          "hateoas",
+          "middleware",
+          "pipeline behavior"
+        ],
+        "intentPatterns": [
+          "(add|create|reference).*?(dependency|project|layer)",
+          "(where).*?(logic|entity|dto).*?(go|belong)",
+          "fix.*?(dependency|reference).*?error"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*Domain/**/*.cs",
+          "**/*Application/**/*.cs"
+        ],
+        "contentPatterns": [
+          "using.*Infrastructure",
+          "using.*Api",
+          "using.*Microsoft.AspNetCore.Mvc"
+        ]
+      },
+      "blockMessage": "⚠️ BLOCKED - Clean Architecture Violation\n\n📋 VIOLATION DETECTED:\nYou are attempting to add a reference that violates the Dependency Rule.\n\n**Allowed Dependencies:**\n1. **Domain** → Cannot reference ANY other layer\n2. **Application** → Can only reference **Domain**\n3. **Infrastructure** → References **Application** and **Domain**\n4. **API/Blazor** → References **Application** and **Infrastructure**\n\n**Required Action:**\n1. Review the `clean-architecture-rules` skill\n2. Move logic to the correct layer (interfaces in Application, implementations in Infrastructure)",
+      "skipConditions": {
+        "sessionSkillUsed": true,
+        "fileMarkers": ["@skip-architecture-check"]
+      }
+    },
+    "cqrs-mediatr-guidelines": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "CQRS (Command Query Responsibility Segregation) patterns with MediatR. Covers commands, queries, handlers, validation, and pipeline behaviors.",
+      "promptTriggers": {
+        "keywords": [
+          "command",
+          "query",
+          "handler",
+          "mediatr",
+          "cqrs",
+          "validation",
+          "validator",
+          "pipeline",
+          "behavior",
+          "feature",
+          "use case"
+        ],
+        "intentPatterns": [
+          "(create|add|implement).*?(feature|endpoint|use case)",
+          "(handle|validate).*?(request|command|query)",
+          "(how to).*?(mediatr|cqrs)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*Application/**/*Handler.cs",
+          "**/*Application/**/*Command.cs",
+          "**/*Application/**/*Query.cs",
+          "**/*Application/**/*Validator.cs",
+          "**/*Application/**/*Request.cs",
+          "**/*Application/**/*Specification.cs",
+          "**/*Application/**/*Filter.cs",
+          "**/*Application/**/*Behavior.cs"
+        ],
+        "contentPatterns": [
+          "IRequest",
+          "IRequestHandler",
+          "AbstractValidator",
+          "FluentValidation",
+          "BaseCommandResponse",
+          "IQuerySpecification",
+          "IPipelineBehavior",
+          "PaginatedResult",
+          "HybridCache"
+        ]
+      }
+    },
+    "blazor-ui-conventions": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Comprehensive Blazor UI conventions including MudBlazor components, BEM CSS methodology, theming, render modes, state management, and component patterns.",
+      "promptTriggers": {
+        "keywords": [
+          "blazor",
+          "component",
+          "razor",
+          "mudblazor",
+          "blazouter",
+          "route guard",
+          "ui",
+          "page",
+          "dialog",
+          "render",
+          "parameter",
+          "eventcallback",
+          "theme",
+          "css",
+          "state",
+          "lifecycle"
+        ],
+        "intentPatterns": [
+          "(create|fix|style).*?(component|page|ui|button|grid|form)",
+          "(how to).*?(blazor|mudblazor)",
+          "(render|lifecycle).*?(issue|bug|mode)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*.razor",
+          "**/*.razor.cs",
+          "**/*Blazor/**/*.cs",
+          "**/*Blazor.Client/**/*.cs",
+          "**/*.css",
+          "**/*.scss"
+        ],
+        "contentPatterns": [
+          "<Mud",
+          "Blazouter",
+          "@page",
+          "@inject",
+          "[Parameter]",
+          "CascadingValue",
+          "EventCallback",
+          "@rendermode"
+        ]
+      }
+    },
+    "blazor-bff-patterns": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Backend-for-Frontend (BFF) patterns for Blazor including YARP proxy, token forwarding, cookie management, and service layer patterns.",
+      "promptTriggers": {
+        "keywords": [
+          "bff",
+          "yarp",
+          "proxy",
+          "interactiveauto",
+          "antiforgery",
+          "token forwarding",
+          "cookie",
+          "api client",
+          "service layer",
+          "nswag"
+        ],
+        "intentPatterns": [
+          "(configure|setup).*?(bff|proxy|yarp)",
+          "(forward|pass).*?(token|auth)",
+          "(call|consume).*?api"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*Blazor/Program.cs",
+          "**/*Blazor/Services/**/*.cs",
+          "**/*Blazor.Client/Services/**/*.cs",
+          "**/*Blazor.Client/Clients/**/*.cs"
+        ],
+        "contentPatterns": [
+          "AddReverseProxy",
+          "AccessTokenForwardingHandler",
+          "AddAntiforgery",
+          "ApiClient",
+          "HttpClient"
+        ]
+      }
+    },
+    "auth-patterns": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Authentication and authorization patterns for OIDC/JWT APIs, including claim extraction, HATEOAS authorization, and security headers.",
+      "promptTriggers": {
+        "keywords": [
+          "auth",
+          "authentication",
+          "authorization",
+          "keycloak",
+          "oidc",
+          "token",
+          "jwt",
+          "claim",
+          "role",
+          "policy",
+          "cookies",
+          "user id",
+          "hateoas auth",
+          "security headers",
+          "rate limiting",
+          "cors"
+        ],
+        "intentPatterns": [
+          "(login|logout|auth).*?(issue|fail|error)",
+          "(check|verify|debug|extract).*?(token|claim|role|user)",
+          "(configure).*?(keycloak|oidc|auth)",
+          "(hateoas|link).*?(auth|permission)",
+          "(security).*?(header|middleware)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*API/Program.cs",
+          "**/*Api/Program.cs",
+          "**/Program.cs",
+          "**/appsettings*.json",
+          "**/*Controller.cs"
+        ],
+        "contentPatterns": [
+          "AddAuthentication",
+          "AddOpenIdConnect",
+          "[Authorize]",
+          "[AllowAnonymous]",
+          "ClaimTypes",
+          "JwtBearer",
+          "GetRequiredUserId",
+          "IAuthorizedRequest",
+          "AuthorizationBehavior",
+          "HateoasAuthorizationEvaluator",
+          "SecurityHeaders"
+        ]
+      }
+    },
+    "dotnet-efcore-guidelines": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "EF Core patterns for PostgreSQL including DbContext configuration, entity mappings, migrations, repository pattern, specification pattern.",
+      "promptTriggers": {
+        "keywords": [
+          "database",
+          "postgres",
+          "postgresql",
+          "migration",
+          "dbcontext",
+          "entity",
+          "relationship",
+          "foreign key",
+          "index",
+          "seeding",
+          "repository",
+          "include",
+          "navigation",
+          "specification",
+          "query filter",
+          "soft delete"
+        ],
+        "intentPatterns": [
+          "(add|modify|create).*?(table|column|entity|migration)",
+          "(run|create|apply).*?(migration)",
+          "(configure).*?(db|context|connection|relationship)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*Persistence/**/*.cs",
+          "**/*DbContext.cs",
+          "**/*Configuration.cs",
+          "**/*Repository.cs"
+        ],
+        "contentPatterns": [
+          "DbSet<",
+          "IEntityTypeConfiguration",
+          "OnModelCreating",
+          "UseNpgsql",
+          "HasQueryFilter",
+          "Include(",
+          "IQuerySpecification",
+          "JsonContains",
+          "JsonKeyExists",
+          "IgnoreQueryFilter"
+        ]
+      }
+    },
+    "error-tracking": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "Error tracking and observability patterns including chained IExceptionHandler, correlation IDs, business metrics, and structured logging.",
+      "promptTriggers": {
+        "keywords": [
+          "error",
+          "exception",
+          "logging",
+          "monitoring",
+          "error boundary",
+          "performance",
+          "observability",
+          "metrics",
+          "correlation id",
+          "problem details",
+          "rate limit",
+          "429"
+        ],
+        "intentPatterns": [
+          "(track|log|capture).*?(error|exception)",
+          "(add|configure).*?(error handling|metrics|observability)",
+          "(monitor).*?(performance)",
+          "(correlation|trace).*?(id|request)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/Program.cs",
+          "**/*Controller.cs",
+          "**/*Handler.cs"
+        ],
+        "contentPatterns": [
+          "try.*catch",
+          "ILogger",
+          "ErrorBoundary",
+          "IExceptionHandler",
+          "ProblemDetails",
+          "BusinessMetrics",
+          "CorrelationId",
+          "PerformanceBehavior"
+        ]
+      }
+    },
+    "blazor-css-isolation": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Blazor CSS isolation patterns with BEM methodology, @layer architecture, scoped styling, and ::deep selector for child components.",
+      "promptTriggers": {
+        "keywords": [
+          "css isolation",
+          "scoped css",
+          "razor css",
+          "bem",
+          "@layer",
+          "css layers",
+          "::deep",
+          "css nesting",
+          "container queries",
+          "design tokens",
+          "css variables",
+          "custom properties"
+        ],
+        "intentPatterns": [
+          "(style|css).*?(component|blazor|razor)",
+          "(create|add|fix).*?(css|styling|layer)",
+          "(override).*?(mudblazor|mud)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/*.razor.css",
+          "**/wwwroot/css/**/*.css"
+        ],
+        "contentPatterns": [
+          "::deep",
+          "@layer",
+          "--isl-",
+          "display: contents",
+          ".isl-"
+        ]
+      }
+    },
+    "agentic-research": {
+      "type": "workflow",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "Local-first research workflow for selecting the right evidence source before using official docs or external research.",
+      "promptTriggers": {
+        "keywords": [
+          "research",
+          "investigate",
+          "look into",
+          "find out",
+          "documentation",
+          "how does",
+          "why does",
+          "what is the pattern"
+        ],
+        "intentPatterns": [
+          "(research|investigate|explore).*?(pattern|approach|library)",
+          "(find|check).*?(documentation|docs|examples)",
+          "(look into|understand).*?(how|why|what)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [],
+        "contentPatterns": []
+      }
+    },
+    "prd": {
+      "type": "workflow",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "Generate a Product Requirements Document (PRD) for feature planning and requirements gathering.",
+      "promptTriggers": {
+        "keywords": [
+          "prd",
+          "product requirements",
+          "requirements document",
+          "plan this feature",
+          "spec out",
+          "feature spec",
+          "product spec"
+        ],
+        "intentPatterns": [
+          "(create|write|generate).*?(prd|requirements|spec)",
+          "(plan|define).*?(feature|product|requirement)",
+          "(spec out|document).*?(feature|requirement)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/dev/active/prd.md",
+          "**/dev/active/**/*.md"
+        ],
+        "contentPatterns": []
+      }
+    },
+    "outbox-pattern": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Transactional outbox pattern for reliable at-least-once event delivery with dead-letter handling.",
+      "promptTriggers": {
+        "keywords": [
+          "outbox",
+          "outbox message",
+          "outbox processor",
+          "dead letter",
+          "message dispatch",
+          "at-least-once",
+          "event delivery"
+        ],
+        "intentPatterns": [
+          "(create|implement|add).*?(outbox|message dispatch)",
+          "(dispatch|publish|send).*?(event|message|outbox)",
+          "(dead letter|retry).*?(message|outbox)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/OutboxMessage.cs",
+          "**/OutboxProcessor.cs",
+          "**/IOutboxRepository.cs",
+          "**/IOutboxMessageDispatcher.cs"
+        ],
+        "contentPatterns": [
+          "OutboxMessage",
+          "OutboxProcessor",
+          "IOutboxMessageDispatcher",
+          "OutboxMessageStatus",
+          "DeadLettered"
+        ]
+      }
+    },
+    "design-system": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "CSS @layer architecture, 3-tier design tokens, MudBlazor wrapper components, and appearance builder patterns.",
+      "promptTriggers": {
+        "keywords": [
+          "design system",
+          "design tokens",
+          "wrapper component",
+          "AppButton",
+          "AppCard",
+          "AppTextField",
+          "AppIconButton",
+          "AppDialogShell",
+          "DialogOptionsFactory",
+          "AppearanceStyleBuilder",
+          "appearance editor"
+        ],
+        "intentPatterns": [
+          "(create|modify|style).*?(wrapper|app component)",
+          "(design|token|appearance).*?(system|builder|style)",
+          "(dialog|factory).*?(options|preset)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/Components/Common/App*.razor",
+          "**/wwwroot/css/tokens.css",
+          "**/wwwroot/css/layers.css",
+          "**/Helpers/AppearanceStyleBuilder.cs",
+          "**/Services/DialogOptionsFactory.cs"
+        ],
+        "contentPatterns": [
+          "AppButton",
+          "AppCard",
+          "AppTextField",
+          "AppDialogShell",
+          "DialogOptionsFactory",
+          "AppearanceStyleBuilder",
+          "display: contents"
+        ]
+      }
+    },
+    "footer-management": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "Footer customization system with template-based rendering, governance locking, and social link management.",
+      "promptTriggers": {
+        "keywords": [
+          "footer",
+          "footer template",
+          "footer link",
+          "footer group",
+          "footer governance",
+          "social links",
+          "footer settings"
+        ],
+        "intentPatterns": [
+          "(create|modify|configure).*?(footer|social link)",
+          "(footer).*?(template|governance|lock|setting)",
+          "(manage|admin).*?(footer|link group)"
+        ]
+      },
+      "fileTriggers": {
+        "pathPatterns": [
+          "**/Footer*.razor",
+          "**/FooterController.cs",
+          "**/FooterAdminService.cs",
+          "**/TenantFooterLink*.cs"
+        ],
+        "contentPatterns": [
+          "TenantFooterLinkGroup",
+          "TenantFooterLink",
+          "FooterAdminService",
+          "footer.template",
+          "footer.enabled"
+        ]
+      }
+    }
+  },
+  "architectureLayers": {
+    "Domain": {
+      "project": "{Project}.Domain",
+      "description": "Core business logic, entities, enums, value objects. No external dependencies.",
+      "allowedDependencies": []
+    },
+    "Application": {
+      "project": "{Project}.Application",
+      "description": "Use cases, CQRS handlers, DTOs, interfaces, validation, Specification Pattern (filters/sorts), MediatR pipeline behaviors. Orchestrates domain logic.",
+      "allowedDependencies": ["Domain"]
+    },
+    "Infrastructure": {
+      "projects": ["{Project}.Persistence", "{Project}.Infrastructure"],
+      "description": "Database access, external services, repository implementations.",
+      "allowedDependencies": ["Application", "Domain"]
+    },
+    "Presentation": {
+      "projects": ["{Project}.API", "{Project}.Blazor", "{Project}.Blazor.Client"],
+      "description": "REST API controllers, Blazor UI components, HATEOAS assemblers/policies, middleware, action filters. Entry points to the application.",
+      "allowedDependencies": ["Application", "Infrastructure"]
+    }
+  }
+}

@@ -1,0 +1,62 @@
+@* ABOUTME: Renders appearance settings for single-tenant mode: landing page choice and event card click behavior. *@
+@* ABOUTME: Part of the Instance Admin Settings sidebar, shown only in single-tenant deployment mode. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Appearance</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            Configure the default landing page and how users interact with event cards.
+        </MudText>
+    </div>
+    <MudStack Spacing="4">
+        <MudText Typo="Typo.h6" Style="font-weight: 600;">Landing Page</MudText>
+        <MudSelect T="string"
+                   Label="Default Public Home Page"
+                   @bind-Value="Delegation.DefaultPublicHomePage"
+                   Variant="Variant.Outlined"
+                   HelperText="Choose which page visitors see when they first arrive.">
+            <MudSelectItem Value="@("EventList")">Event List</MudSelectItem>
+            <MudSelectItem Value="@("LandingPage")">Landing Page</MudSelectItem>
+        </MudSelect>
+
+        <MudDivider Class="my-2" />
+
+        <MudText Typo="Typo.h6" Style="font-weight: 600;">Event Card Behavior</MudText>
+        <MudSelect T="string"
+                   Label="Event Card Click Action"
+                   Value="_eventCardClickAction"
+                   ValueChanged="OnEventCardClickActionChanged"
+                   Variant="Variant.Outlined"
+                   HelperText="Choose what happens when a user clicks on an event card.">
+            <MudSelectItem Value="@("Sidebar")">Show details sidebar</MudSelectItem>
+            <MudSelectItem Value="@("Navigate")">Navigate to event detail page</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public RenderPolicySettingsDto Model { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public TenantDelegationSettingsDto Delegation { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventPolicyDto EventPolicy { get; set; } = null!;
+
+    private string _eventCardClickAction = "Sidebar";
+
+    protected override void OnParametersSet()
+    {
+        _eventCardClickAction = EventPolicy.EventCardClickOpensDetailPage == true ? "Navigate" : "Sidebar";
+    }
+
+    private void OnEventCardClickActionChanged(string value)
+    {
+        _eventCardClickAction = value;
+        EventPolicy.EventCardClickOpensDetailPage = value == "Navigate";
+    }
+}

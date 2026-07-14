@@ -1,0 +1,84 @@
+@* ABOUTME: Dialog for creating and editing footer link groups. *@
+@* ABOUTME: Follows TenantNavigationDialog pattern with EditForm validation and DialogResult dispatch. *@
+
+@using Explore.Blazor.Client.Clients
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(_isEdit ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)" Class="mr-3 mb-n1" />
+            @(_isEdit ? "Edit Link Group" : "Create Link Group")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FluentValidationValidator />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="_model.Title"
+                          Label="Group Title"
+                          For="@(() => _model.Title)"
+                          Required="true"
+                          RequiredError="Title is required."
+                          Placeholder="e.g., Resources" />
+
+            @if (_isEdit)
+            {
+                <MudCheckBox T="bool" @bind-Value="_isActive"
+                             Label="Active"
+                             Color="Color.Primary" />
+            }
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">@(_isEdit ? "Update" : "Create")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IDialogReference? DialogReference { get; set; }
+
+    [Parameter]
+    public FooterLinkGroupListDto? ExistingGroup { get; set; }
+
+    private EditContext _editContext = default!;
+    private bool _isEdit;
+    private bool _isActive = true;
+    private CreateFooterLinkGroupRequest _model = new();
+
+    protected override void OnInitialized()
+    {
+        _isEdit = ExistingGroup != null;
+
+        if (_isEdit && ExistingGroup != null)
+        {
+            _model.Title = ExistingGroup.Title ?? string.Empty;
+            _isActive = ExistingGroup.IsActive == true;
+        }
+
+        _editContext = new EditContext(_model);
+    }
+
+    private void Submit()
+    {
+        if (_editContext.Validate())
+        {
+            if (_isEdit && ExistingGroup != null)
+            {
+                var updateModel = new UpdateFooterLinkGroupRequest
+                {
+                    Title = _model.Title,
+                    IsActive = _isActive
+                };
+                DialogReference?.Dismiss(DialogResult.Ok(updateModel));
+            }
+            else
+            {
+                DialogReference?.Dismiss(DialogResult.Ok(_model));
+            }
+        }
+    }
+
+    private void Cancel() => DialogReference?.Dismiss(DialogResult.Cancel());
+}

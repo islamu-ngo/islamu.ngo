@@ -1,0 +1,74 @@
+@* ABOUTME: Renders tenant branding fields from the typed tenant settings document. *@
+@* ABOUTME: Uses API-emitted HAL affordances to determine editability during settings cutover. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Components.Common
+
+<div class="settings-section">
+    <div class="settings-section-header">
+        <MudText Typo="Typo.h5" HtmlTag="h2" Style="font-weight: 700;">Branding</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+            Customize your tenant's typed branding document. These values are saved only to the JSONB branding settings document.
+        </MudText>
+    </div>
+    <MudStack Spacing="3">
+        @if (!Model.Exists)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" role="alert">
+                @Model.ErrorMessage
+            </MudAlert>
+        }
+        else if (!Model.CanReplace)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">
+                Branding settings are read-only because the API did not emit the replace-settings action.
+            </MudAlert>
+        }
+
+        <AppTextField T="string" Label="Brand display name"
+                      @bind-Value="Model.DisplayName"
+                      ReadOnly="@IsReadOnly"
+                      Disabled="@IsSaving"
+                      FullWidth="true"
+                      HelperText="Public name shown in tenant-branded surfaces." />
+
+        <AppTextField T="string" Label="Brand logo URL"
+                      @bind-Value="Model.LogoUrl"
+                      ReadOnly="@IsReadOnly"
+                      Disabled="@IsSaving"
+                      FullWidth="true"
+                      HelperText="HTTPS URL for the tenant logo asset." />
+
+        <AppTextField T="string" Label="Brand favicon URL"
+                       @bind-Value="Model.FaviconUrl"
+                       ReadOnly="@IsReadOnly"
+                       Disabled="@IsSaving"
+                       FullWidth="true"
+                       HelperText="HTTPS URL for the browser favicon asset." />
+
+        <AppTextField T="string" Label="Brand custom CSS URL"
+                       @bind-Value="Model.CustomCssUrl"
+                       ReadOnly="@IsReadOnly"
+                       Disabled="@IsSaving"
+                       FullWidth="true"
+                       HelperText="HTTPS URL for the tenant-specific stylesheet asset." />
+
+        @if (Model.Exists)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Concurrency stamp: @Model.ConcurrencyStamp
+            </MudText>
+        }
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public TenantBrandingSettingsAdminModel Model { get; set; } = null!;
+
+    [Parameter]
+    public bool IsSaving { get; set; }
+
+    private bool IsReadOnly => !Model.Exists || !Model.CanReplace;
+}

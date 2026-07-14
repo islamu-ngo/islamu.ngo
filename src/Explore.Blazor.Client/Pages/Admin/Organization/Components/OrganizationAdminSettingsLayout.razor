@@ -1,0 +1,117 @@
+@* ABOUTME: Sidebar layout component for Organization Admin Settings. *@
+@* ABOUTME: Provides Google-style sidebar navigation for organization profile, members, and verification. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+
+@inject IOrganizationService OrganizationService
+
+<div class="settings-layout">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+        @if (_isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="py-12">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Loading organization settings...</MudText>
+            </MudStack>
+        }
+        else if (_organization is null)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">Organization not found.</MudAlert>
+        }
+        else
+        {
+            <!-- Header -->
+            <div class="settings-header mb-8">
+                <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">@_organization.FullName</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Organization settings and management</MudText>
+            </div>
+
+            <!-- Main Layout: Sidebar + Content -->
+            <MudGrid Spacing="4">
+                <!-- Sidebar Navigation -->
+                <MudItem xs="12" md="3" Class="@(_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-sidebar pa-0" Style="background-color: transparent;">
+                        <MudList T="string" Dense="true" DisablePadding="true">
+                            <MudListItem Icon="@Icons.Material.Filled.Business"
+                                         Text="Profile"
+                                         Class="@GetNavItemClass("profile")"
+                                         OnClick="@(() => SelectSection("profile"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.People"
+                                         Text="Members"
+                                         Class="@GetNavItemClass("members")"
+                                         OnClick="@(() => SelectSection("members"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.VerifiedUser"
+                                         Text="Verification"
+                                         Class="@GetNavItemClass("verification")"
+                                         OnClick="@(() => SelectSection("verification"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Key"
+                                         Text="API Keys"
+                                         Class="@GetNavItemClass("api-keys")"
+                                         OnClick="@(() => SelectSection("api-keys"))" />
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Content Area -->
+                <MudItem xs="12" md="9" Class="@(!_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-content pa-6" Style="background-color: transparent;">
+                        <div class="d-md-none mb-4">
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToMenu">
+                                Settings Menu
+                            </MudButton>
+                        </div>
+                        @if (_currentSection == "profile")
+                        {
+                            <OrganizationProfileSection OrganizationId="OrganizationId" />
+                        }
+                        else if (_currentSection == "members")
+                        {
+                            <OrganizationMembersSection OrganizationId="OrganizationId" />
+                        }
+                        else if (_currentSection == "verification")
+                        {
+                            <OrganizationVerificationSection OrganizationId="OrganizationId" />
+                        }
+                        else if (_currentSection == "api-keys")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Components.ApiKeysSection OwnerType="2" OrganizationId="OrganizationId" Title="Organization API Keys" Description="Create and manage API keys for this organization." />
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudContainer>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Guid OrganizationId { get; set; }
+
+    private OrganizationDto? _organization;
+    private bool _isLoading = true;
+    private string _currentSection = "profile";
+    private bool _showMobileMenu = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _organization = await OrganizationService.GetOrganizationByIdAsync(OrganizationId);
+        _isLoading = false;
+    }
+
+    private void SelectSection(string section)
+    {
+        _currentSection = section;
+        _showMobileMenu = false;
+    }
+
+    private void BackToMenu()
+    {
+        _showMobileMenu = true;
+    }
+
+    private string GetNavItemClass(string section)
+    {
+        return _currentSection == section ? "settings-nav-active" : "";
+    }
+}

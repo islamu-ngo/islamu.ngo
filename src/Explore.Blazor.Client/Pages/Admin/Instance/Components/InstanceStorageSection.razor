@@ -1,0 +1,422 @@
+@* ABOUTME: Provider-neutral instance storage dashboard for platform administrators. *@
+@* ABOUTME: Shows policy, usage, provider health, optional S3 settings, and HAL-gated actions. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+
+<div class="settings-section storage-section">
+    <div class="settings-section-header">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="storage-section__header">
+            <div>
+                <MudText Typo="Typo.h5" Style="font-weight: 700;">Object Storage</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                    Configure the platform storage provider, upload limits, tenant quota defaults, and usage governance.
+                </MudText>
+            </div>
+            <MudChip T="string" Color="@ProviderChipColor" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Inventory2">
+                @StorageProviderOptions.Label(Model.Provider)
+            </MudChip>
+        </MudStack>
+    </div>
+
+    @if (!Model.HasLink("edit"))
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="storage-section__alert">
+            Storage settings are read-only for this session because the API response did not include an edit affordance.
+        </MudAlert>
+    }
+
+    <div class="storage-section__metrics" aria-label="Instance storage usage">
+        <div class="storage-section__metric">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">Used</MudText>
+            <MudText Typo="Typo.h6">@FormatBytes(UsedBytes)</MudText>
+        </div>
+        <div class="storage-section__metric">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">Reserved</MudText>
+            <MudText Typo="Typo.h6">@FormatBytes(ReservedBytes)</MudText>
+        </div>
+        <div class="storage-section__metric">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">Quarantined</MudText>
+            <MudText Typo="Typo.h6">@FormatBytes(QuarantinedBytes)</MudText>
+        </div>
+        <div class="storage-section__metric">
+            <MudText Typo="Typo.overline" Color="Color.Secondary">Objects</MudText>
+            <MudText Typo="Typo.h6">@ObjectCount</MudText>
+        </div>
+    </div>
+
+    <MudStack Spacing="3" Class="storage-section__form">
+        <MudSelect T="string"
+                   Label="Storage Provider"
+                   Variant="Variant.Outlined"
+                   @bind-Value="Provider"
+                   Disabled="@ControlsDisabled">
+            <MudSelectItem T="string" Value="@StorageProviderOptions.Local">Local file storage</MudSelectItem>
+            <MudSelectItem T="string" Value="@StorageProviderOptions.S3Compatible">S3-compatible object storage</MudSelectItem>
+        </MudSelect>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4">
+                <MudNumericField T="long"
+                                 Label="Default max upload (MB)"
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="DefaultMaxUploadMiB"
+                                 Min="1L"
+                                 Max="@InstanceMaxUploadMiB"
+                                 Disabled="@ControlsDisabled"
+                                 HelperText="Default per-file upload limit for tenants." />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudNumericField T="long"
+                                 Label="Default tenant quota (GB)"
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="DefaultTenantQuotaGiB"
+                                 Min="1L"
+                                 Disabled="@ControlsDisabled"
+                                 HelperText="Default total tenant storage quota." />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudNumericField T="long"
+                                 Label="Instance max upload (MB)"
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="InstanceMaxUploadMiB"
+                                 Min="1L"
+                                 Disabled="@ControlsDisabled"
+                                 HelperText="Hard ceiling enforced for tenant overrides." />
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="storage-section__route-matrix pa-4" Elevation="0" Outlined="true">
+            <MudStack Spacing="2">
+                <div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">Hybrid storage routes</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Choose where each upload class is stored. The browser still receives only provider-neutral upload sessions.
+                    </MudText>
+                </div>
+
+                @foreach (var route in Model.Routes ?? [])
+                {
+                    <MudGrid Spacing="3" Class="storage-section__route-row" aria-label="@($"{StorageRouteOptions.Label(route.RouteKey)} storage route")">
+                        <MudItem xs="12" md="4">
+                            <MudText Typo="Typo.subtitle2">@StorageRouteOptions.Label(route.RouteKey)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@StorageRouteOptions.Description(route.RouteKey)</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string"
+                                       Label="@($"{StorageRouteOptions.Label(route.RouteKey)} provider")"
+                                       Variant="Variant.Outlined"
+                                       Dense="true"
+                                       @bind-Value="route.Provider"
+                                       Disabled="@(ControlsDisabled || route.IsReadOnly == true)">
+                                <MudSelectItem T="string" Value="@StorageProviderOptions.Local">Local file storage</MudSelectItem>
+                                <MudSelectItem T="string" Value="@StorageProviderOptions.S3Compatible">S3-compatible object storage</MudSelectItem>
+                            </MudSelect>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Source: @route.ProviderSource</MudText>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudNumericField T="long"
+                                             Label="@($"{StorageRouteOptions.Label(route.RouteKey)} max upload (MB)")"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             Value="@StorageAdminExtensions.BytesToMiB(route.MaxUploadBytes)"
+                                             ValueChanged="@(value => route.MaxUploadBytes = StorageAdminExtensions.MiBToBytes(value))"
+                                             Min="1L"
+                                             Max="@InstanceMaxUploadMiB"
+                                             Disabled="@(ControlsDisabled || route.IsReadOnly == true)" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Source: @route.MaxUploadSource</MudText>
+                        </MudItem>
+                    </MudGrid>
+                }
+            </MudStack>
+        </MudPaper>
+
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+            Effective provider: @StorageProviderOptions.Label(Model.EffectivePolicy?.Provider);
+            max upload @FormatBytes(Model.EffectivePolicy?.MaxUploadBytes ?? 0);
+            tenant quota @FormatBytes(Model.EffectivePolicy?.TenantQuotaBytes ?? 0).
+        </MudAlert>
+
+        @if (Provider == StorageProviderOptions.S3Compatible)
+        {
+            <div class="storage-section__provider-panel">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">S3-Compatible Provider</MudText>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Endpoint"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3Endpoint"
+                                      Disabled="@ControlsDisabled"
+                                      Placeholder="https://object-storage.example.com" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Public Endpoint"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3PublicEndpoint"
+                                      Disabled="@ControlsDisabled"
+                                      Placeholder="https://cdn.example.com"
+                                      HelperText="Optional public endpoint for generated read URLs." />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Bucket Name"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3BucketName"
+                                      Disabled="@ControlsDisabled" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Region"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3Region"
+                                      Disabled="@ControlsDisabled"
+                                      Placeholder="us-east-1" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Access Key ID"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3AccessKeyId"
+                                      Disabled="@ControlsDisabled"
+                                      HelperText="@ConfiguredText(Model.S3AccessKeyConfigured, "access key")" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Secret Access Key"
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="Model.S3SecretAccessKey"
+                                      InputType="InputType.Password"
+                                      Disabled="@ControlsDisabled"
+                                      HelperText="@ConfiguredText(Model.S3SecretAccessKeyConfigured, "secret key")" />
+                    </MudItem>
+                </MudGrid>
+
+                <MudSwitch T="bool"
+                           @bind-Value="S3ForcePathStyle"
+                           Color="Color.Primary"
+                           Disabled="@ControlsDisabled">
+                    Force path-style URLs
+                </MudSwitch>
+
+                <MudNumericField T="int"
+                                 Label="Upload URL expiration (minutes)"
+                                 Variant="Variant.Outlined"
+                                 @bind-Value="S3UploadUrlExpirationMinutes"
+                                 Min="1"
+                                 Max="1440"
+                                 Disabled="@ControlsDisabled" />
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">
+                Local file storage is selected. Uploads are stored under the server-managed local storage root and exposed only through metadata-backed API URLs.
+            </MudAlert>
+        }
+
+        <MudDivider Class="my-2" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="storage-section__actions">
+            @if (Model.HasLink("provider-test"))
+            {
+                <MudButton Elevation="0"
+                           Variant="Variant.Outlined"
+                           Color="Color.Info"
+                           OnClick="TestConnectionAsync"
+                           Disabled="_isTesting"
+                           StartIcon="@(_isTesting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.NetworkCheck)">
+                    @(_isTesting ? "Testing..." : "Test Provider")
+                </MudButton>
+            }
+
+            @if (Model.HasLink("recalculate-usage"))
+            {
+                <MudButton Elevation="0"
+                           Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           OnClick="RecalculateUsageAsync"
+                           Disabled="_isRecalculating"
+                           StartIcon="@(_isRecalculating ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Calculate)">
+                    @(_isRecalculating ? "Recalculating..." : "Recalculate Usage")
+                </MudButton>
+            }
+
+            @if (_operationResult is not null)
+            {
+                <MudAlert Severity="@(_operationResult.Success ? Severity.Success : Severity.Error)"
+                          Dense="true"
+                          Class="storage-section__operation-result"
+                          role="status">
+                    @_operationResult.Message
+                </MudAlert>
+            }
+        </MudStack>
+
+        @if (HasProviderStatus)
+        {
+            <MudAlert Severity="@(ProviderIsAvailable ? Severity.Success : Severity.Warning)"
+                      Variant="Variant.Outlined"
+                      Class="storage-section__status">
+                Provider status: @(ProviderIsAvailable ? "available" : "unavailable").
+                @if (!string.IsNullOrWhiteSpace(ProviderStatusMessage))
+                {
+                    <span>@ProviderStatusMessage</span>
+                }
+            </MudAlert>
+        }
+
+        @if (!IsSingleTenant)
+        {
+            <MudDivider Class="my-3" />
+            <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">Tenant Delegation</MudText>
+            <MudSwitch T="bool"
+                       Value="LockForTenants"
+                       ValueChanged="OnLockForTenantsChanged"
+                       Color="Color.Warning"
+                       Disabled="@ControlsDisabled">
+                Lock storage settings - tenants cannot configure their own storage policy
+            </MudSwitch>
+        }
+    </MudStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public HalResourceOfInstanceStorageSettingsDto Model { get; set; } = null!;
+
+    [Parameter]
+    public IInstanceOnboardingService? OnboardingService { get; set; }
+
+    [Parameter]
+    public bool IsSingleTenant { get; set; }
+
+    [Parameter]
+    public bool LockForTenants { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> LockForTenantsChanged { get; set; }
+
+    private bool _isTesting;
+    private bool _isRecalculating;
+    private StorageOperationMessage? _operationResult;
+    private InstanceStorageProviderStatusDto? _testedProviderStatus;
+    private InstanceStorageUsageDto? _recalculatedUsage;
+
+    private bool ControlsDisabled => !Model.HasLink("edit");
+
+    private string Provider
+    {
+        get => StorageProviderOptions.Normalize(Model.Provider);
+        set => Model.Provider = value;
+    }
+
+    private long DefaultMaxUploadMiB
+    {
+        get => StorageAdminExtensions.BytesToMiB(Model.DefaultMaxUploadBytes);
+        set => Model.DefaultMaxUploadBytes = StorageAdminExtensions.MiBToBytes(value);
+    }
+
+    private long DefaultTenantQuotaGiB
+    {
+        get => StorageAdminExtensions.BytesToGiB(Model.DefaultTenantQuotaBytes);
+        set => Model.DefaultTenantQuotaBytes = StorageAdminExtensions.GiBToBytes(value);
+    }
+
+    private long InstanceMaxUploadMiB
+    {
+        get => StorageAdminExtensions.BytesToMiB(Model.InstanceMaxUploadBytes);
+        set => Model.InstanceMaxUploadBytes = StorageAdminExtensions.MiBToBytes(value);
+    }
+
+    private bool S3ForcePathStyle
+    {
+        get => Model.S3ForcePathStyle ?? true;
+        set => Model.S3ForcePathStyle = value;
+    }
+
+    private int S3UploadUrlExpirationMinutes
+    {
+        get => Model.S3UploadUrlExpirationMinutes ?? 60;
+        set => Model.S3UploadUrlExpirationMinutes = value;
+    }
+
+    private long UsedBytes => _recalculatedUsage?.UsedBytes ?? Model.Usage?.UsedBytes ?? 0;
+    private long ReservedBytes => _recalculatedUsage?.ReservedBytes ?? Model.Usage?.ReservedBytes ?? 0;
+    private long QuarantinedBytes => _recalculatedUsage?.QuarantinedBytes ?? Model.Usage?.QuarantinedBytes ?? 0;
+    private long ObjectCount => _recalculatedUsage?.ObjectCount ?? Model.Usage?.ObjectCount ?? 0;
+    private bool HasProviderStatus => _testedProviderStatus is not null || Model.ProviderStatus is not null;
+    private bool ProviderIsAvailable => _testedProviderStatus?.IsAvailable ?? Model.ProviderStatus?.IsAvailable ?? false;
+    private string? ProviderStatusMessage => _testedProviderStatus?.Message ?? Model.ProviderStatus?.Message;
+
+    private Color ProviderChipColor =>
+        Provider == StorageProviderOptions.S3Compatible ? Color.Info : Color.Success;
+
+    protected override void OnParametersSet()
+    {
+        if (!IsSingleTenant)
+        {
+            Model.LockTenantStorage = LockForTenants;
+        }
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        if (OnboardingService is null || !Model.HasLink("provider-test"))
+        {
+            return;
+        }
+
+        _isTesting = true;
+        _operationResult = null;
+        StateHasChanged();
+
+        var result = await OnboardingService.TestStorageConnectionAsync();
+        _testedProviderStatus = result;
+        _operationResult = new StorageOperationMessage(
+            result.IsAvailable == true,
+            result.Message ?? (result.IsAvailable == true ? "Storage provider is available." : "Storage provider is unavailable."));
+        _isTesting = false;
+    }
+
+    private async Task RecalculateUsageAsync()
+    {
+        if (OnboardingService is null || !Model.HasLink("recalculate-usage"))
+        {
+            return;
+        }
+
+        _isRecalculating = true;
+        _operationResult = null;
+        StateHasChanged();
+
+        var result = await OnboardingService.RecalculateStorageUsageAsync();
+        _recalculatedUsage = result;
+        _operationResult = result is null
+            ? new StorageOperationMessage(false, "Storage usage recalculation failed.")
+            : new StorageOperationMessage(true, "Storage usage recalculated.");
+        _isRecalculating = false;
+    }
+
+    private async Task OnLockForTenantsChanged(bool value)
+    {
+        Model.LockTenantStorage = value;
+        await LockForTenantsChanged.InvokeAsync(value);
+    }
+
+    private static string ConfiguredText(bool? configured, string label) =>
+        configured == true ? $"An existing {label} is configured. Leave blank to keep it." : string.Empty;
+
+    private static string FormatBytes(long bytes)
+    {
+        const double oneKiB = 1024d;
+        string[] units = ["bytes", "KB", "MB", "GB", "TB"];
+        var value = (double)Math.Max(0, bytes);
+        var unit = 0;
+        while (value >= oneKiB && unit < units.Length - 1)
+        {
+            value /= oneKiB;
+            unit++;
+        }
+
+        return unit == 0 ? $"{value:0} {units[unit]}" : $"{value:0.#} {units[unit]}";
+    }
+
+    private sealed record StorageOperationMessage(bool Success, string Message);
+}

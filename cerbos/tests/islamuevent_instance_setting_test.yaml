@@ -1,0 +1,183 @@
+# ABOUTME: Cerbos policy test suite for instance_setting resources.
+# ABOUTME: Validates instance-admin authority across storage, tenant plans, assignments, and tenant lifecycle settings.
+
+name: InstanceSettingPolicyTests
+description: "Validates that instance settings remain exclusive to instance administrators"
+
+principals:
+  islamuevent_instance_admin:
+    id: "user-instance-admin"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: true
+      tenantMemberships: {}
+      orgMemberships: {}
+
+  islamuevent_tenant_admin:
+    id: "user-tenant-admin"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: false
+      tenantMemberships:
+        "tenant-1": "admin"
+      orgMemberships: {}
+
+  regular_user:
+    id: "user-regular"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: false
+      tenantMemberships: {}
+      orgMemberships: {}
+
+resources:
+  storage_setting:
+    kind: "islamuevent_instance_setting"
+    id: "storage"
+    attr:
+      settingKey: "storage"
+
+  tenant_plans_setting:
+    kind: "islamuevent_instance_setting"
+    id: "control-plane.tenant-plans"
+    attr:
+      settingKey: "control-plane.tenant-plans"
+
+  tenant_plan_assignments_setting:
+    kind: "islamuevent_instance_setting"
+    id: "control-plane.tenant-plan-assignments"
+    attr:
+      settingKey: "control-plane.tenant-plan-assignments"
+
+  tenant_effective_configuration_setting:
+    kind: "islamuevent_instance_setting"
+    id: "control-plane.tenant-effective-configuration"
+    attr:
+      settingKey: "control-plane.tenant-effective-configuration"
+
+  control_plane_tenants_setting:
+    kind: "islamuevent_instance_setting"
+    id: "control-plane.tenants"
+    attr:
+      settingKey: "control-plane.tenants"
+
+tests:
+  - name: "Instance admin can fully manage instance storage settings"
+    input:
+      principals: ["islamuevent_instance_admin"]
+      resources: ["storage_setting"]
+      actions: ["view", "update", "delete", "lock", "unlock"]
+    expected:
+      - principal: "islamuevent_instance_admin"
+        resource: "storage_setting"
+        actions:
+          view: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+          lock: EFFECT_ALLOW
+          unlock: EFFECT_ALLOW
+
+  - name: "Tenant admin cannot view or manage instance storage settings"
+    input:
+      principals: ["islamuevent_tenant_admin"]
+      resources: ["storage_setting"]
+      actions: ["view", "update", "delete", "lock", "unlock"]
+    expected:
+      - principal: "islamuevent_tenant_admin"
+        resource: "storage_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+          delete: EFFECT_DENY
+          lock: EFFECT_DENY
+          unlock: EFFECT_DENY
+
+  - name: "Regular authenticated users cannot view or manage instance storage settings"
+    input:
+      principals: ["regular_user"]
+      resources: ["storage_setting"]
+      actions: ["view", "update"]
+    expected:
+      - principal: "regular_user"
+        resource: "storage_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+
+  - name: "Instance admin can manage Control Plane tenant plan settings"
+    input:
+      principals: ["islamuevent_instance_admin"]
+      resources: ["tenant_plans_setting", "tenant_plan_assignments_setting", "tenant_effective_configuration_setting"]
+      actions: ["view", "update"]
+    expected:
+      - principal: "islamuevent_instance_admin"
+        resource: "tenant_plans_setting"
+        actions:
+          view: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+      - principal: "islamuevent_instance_admin"
+        resource: "tenant_plan_assignments_setting"
+        actions:
+          view: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+      - principal: "islamuevent_instance_admin"
+        resource: "tenant_effective_configuration_setting"
+        actions:
+          view: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+
+  - name: "Non-instance admins cannot view Control Plane plan and configuration settings"
+    input:
+      principals: ["islamuevent_tenant_admin", "regular_user"]
+      resources: ["tenant_plans_setting", "tenant_plan_assignments_setting", "tenant_effective_configuration_setting"]
+      actions: ["view", "update"]
+    expected:
+      - principal: "islamuevent_tenant_admin"
+        resource: "tenant_plans_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+      - principal: "islamuevent_tenant_admin"
+        resource: "tenant_plan_assignments_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+      - principal: "islamuevent_tenant_admin"
+        resource: "tenant_effective_configuration_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+      - principal: "regular_user"
+        resource: "tenant_plans_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+      - principal: "regular_user"
+        resource: "tenant_plan_assignments_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+      - principal: "regular_user"
+        resource: "tenant_effective_configuration_setting"
+        actions:
+          view: EFFECT_DENY
+          update: EFFECT_DENY
+
+  - name: "Only instance admin can view Control Plane tenants"
+    input:
+      principals: ["islamuevent_instance_admin", "islamuevent_tenant_admin", "regular_user"]
+      resources: ["control_plane_tenants_setting"]
+      actions: ["view"]
+    expected:
+      - principal: "islamuevent_instance_admin"
+        resource: "control_plane_tenants_setting"
+        actions:
+          view: EFFECT_ALLOW
+      - principal: "islamuevent_tenant_admin"
+        resource: "control_plane_tenants_setting"
+        actions:
+          view: EFFECT_DENY
+      - principal: "regular_user"
+        resource: "control_plane_tenants_setting"
+        actions:
+          view: EFFECT_DENY

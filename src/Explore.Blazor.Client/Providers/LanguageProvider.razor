@@ -1,0 +1,120 @@
+@* ABOUTME: Cascading language provider that initializes translations from cookie/default. *@
+@* ABOUTME: Wraps child content with CascadingValue for LanguageContext, manages RTL direction via JS. *@
+
+@using Explore.Blazor.Client.Contracts.Services.Accessibility
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+@inject ITranslationService TranslationService
+@inject IJSRuntime JSRuntime
+@inject IAccessibilityAnnouncerService AccessibilityAnnouncer
+@inject PersistentComponentState PersistentState
+@inject ILogger<LanguageProvider> Logger
+
+<CascadingValue Value="@_languageContext" Name="Language">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private const string PersistenceKey = "culture-state";
+
+    private global::Explore.Blazor.Client.Models.LanguageContext _languageContext = global::Explore.Blazor.Client.Models.LanguageContext.ForLanguage("en");
+    private Action<string>? _languageChangedShim;
+    private PersistingComponentStateSubscription _persistSubscription;
+
+    protected override void OnInitialized()
+    {
+        // Keep a single delegate reference so Dispose unsubscribes the exact same handler.
+        // Async work is marshalled onto the render thread via InvokeAsync inside the shim itself.
+        _languageChangedShim = code => _ = InvokeAsync(() => HandleLanguageChangedAsync(code));
+        TranslationService.OnLanguageChanged += _languageChangedShim;
+
+        // On server prerender, persist the resolved language code so WASM can read it
+        // before JS interop is available (avoids double-fetch during Server→WASM hand-off).
+        _persistSubscription = PersistentState.RegisterOnPersisting(() =>
+        {
+            PersistentState.PersistAsJson(PersistenceKey, _languageContext.LanguageCode);
+            return Task.CompletedTask;
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            // Try persisted state first (WASM picking up server prerender value)
+            string? lang = null;
+            if (PersistentState.TryTakeFromJson<string>(PersistenceKey, out var persisted) && !string.IsNullOrWhiteSpace(persisted))
+            {
+                lang = persisted;
+                Logger.LogInformation("[LANGUAGE] Restored language from PersistentComponentState: {Language}", lang);
+            }
+
+            // Fall back to cookie if no persisted state
+            lang ??= await JSRuntime.InvokeAsync<string?>("localization.getLanguageCookie");
+            lang ??= "en";
+
+            var cookieDir = await JSRuntime.InvokeAsync<string?>("localization.getDirectionCookie");
+
+            Logger.LogInformation(
+                "[LANGUAGE] Initializing with language: {Language}, direction override: {Direction}",
+                lang, cookieDir ?? "auto");
+
+            await TranslationService.PreloadAsync(lang);
+
+            _languageContext = global::Explore.Blazor.Client.Models.LanguageContext.ForLanguage(lang);
+            _languageContext.DirectionOverride = cookieDir is "ltr" or "rtl" ? cookieDir : "auto";
+
+            await JSRuntime.InvokeVoidAsync(
+                "localization.setDirection",
+                _languageContext.EffectiveIsRtl ? "rtl" : "ltr",
+                _languageContext.LanguageCode);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize language provider");
+        }
+    }
+
+    private async Task HandleLanguageChangedAsync(string newLanguage)
+    {
+        try
+        {
+            var previousOverride = _languageContext.DirectionOverride;
+            _languageContext = global::Explore.Blazor.Client.Models.LanguageContext.ForLanguage(newLanguage);
+            _languageContext.DirectionOverride = previousOverride;
+
+            await JSRuntime.InvokeVoidAsync(
+                "localization.setDirection",
+                _languageContext.EffectiveIsRtl ? "rtl" : "ltr",
+                _languageContext.LanguageCode);
+
+            StateHasChanged();
+
+            // Polite announcement — non-blocking best-effort; failures are logged inside the announcer.
+            await AccessibilityAnnouncer.AnnouncePoliteAsync(
+                $"Language changed to {_languageContext.LanguageName}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to handle language change to {Language}", newLanguage);
+        }
+    }
+
+    public void Dispose()
+    {
+        _persistSubscription.Dispose();
+        if (_languageChangedShim is not null)
+        {
+            TranslationService.OnLanguageChanged -= _languageChangedShim;
+            _languageChangedShim = null;
+        }
+    }
+}

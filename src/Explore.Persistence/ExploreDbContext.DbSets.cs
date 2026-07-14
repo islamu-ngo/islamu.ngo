@@ -1,0 +1,319 @@
+// ABOUTME: Partial class containing all DbSet property declarations for the Explore platform.
+// ABOUTME: Organized by domain area: Tenancy, Users, Auth, Actors, Organizations, Groups, Events, etc.
+
+using Explore.Domain;
+using Explore.Domain.Ai;
+using Explore.Domain.Federation;
+using Explore.Domain.Modules;
+using Explore.Domain.Secrets;
+using Explore.Domain.Settings.Documents;
+using Explore.Domain.Views;
+using Microsoft.EntityFrameworkCore;
+using StorageObject = Explore.Domain.StorageObject;
+
+namespace Explore.Persistence;
+
+public partial class ExploreDbContext
+{
+    // ===== Multi-tenancy =====
+    public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<TenantUser> TenantUsers { get; set; }
+    public DbSet<TenantUserProfile> TenantUserProfiles { get; set; }
+    public DbSet<TenantUserRoleGrant> TenantUserRoleGrants { get; set; }
+    public DbSet<TenantOnboardingState> TenantOnboardingStates { get; set; }
+    public DbSet<TenantInvitation> TenantInvitations { get; set; }
+    public DbSet<TenantLifecycleLog> TenantLifecycleLogs { get; set; }
+    public DbSet<PlatformUserRole> PlatformUserRoles { get; set; }
+    public DbSet<TenantNavigationLink> TenantNavigationLinks { get; set; }
+    public DbSet<TenantFooterLinkGroup> TenantFooterLinkGroups { get; set; }
+    public DbSet<TenantFooterLink> TenantFooterLinks { get; set; }
+    public DbSet<TenantPlan> TenantPlans { get; set; }
+    public DbSet<TenantPlanVersion> TenantPlanVersions { get; set; }
+    public DbSet<TenantPlanVersionSetting> TenantPlanVersionSettings { get; set; }
+    public DbSet<TenantPlanVersionQuota> TenantPlanVersionQuotas { get; set; }
+    public DbSet<TenantPlanAssignment> TenantPlanAssignments { get; set; }
+    public DbSet<TenantPlanApplicationLog> TenantPlanApplicationLogs { get; set; }
+    public DbSet<InstanceBootstrapState> InstanceBootstrapStates { get; set; }
+    public DbSet<SupportAccessSession> SupportAccessSessions { get; set; }
+    public DbSet<SupportAccessAuditEvent> SupportAccessAuditEvents { get; set; }
+    public DbSet<SupportAccessSessionStatus> SupportAccessSessionStatuses { get; set; }
+    public DbSet<SupportAccessMode> SupportAccessModes { get; set; }
+    public DbSet<SupportAccessEndReason> SupportAccessEndReasons { get; set; }
+    public DbSet<SupportAccessAuditEventType> SupportAccessAuditEventTypes { get; set; }
+
+    // ===== Governance Policy Aggregates =====
+    public DbSet<Explore.Domain.Policies.InstancePolicySet> InstancePolicySets { get; set; }
+    public DbSet<Explore.Domain.Policies.TenantPolicySet> TenantPolicySets { get; set; }
+    public DbSet<Explore.Domain.Policies.OrganizationPolicySet> OrganizationPolicySets { get; set; }
+    public DbSet<Explore.Domain.Policies.PolicyChangeOutbox> PolicyChangeOutbox { get; set; }
+
+    // ===== Users & Authentication =====
+    public DbSet<User> Users { get; set; }
+    public DbSet<UserPii> UserPii { get; set; }
+    public DbSet<ExternalApiKey> ExternalApiKeys { get; set; }
+    public DbSet<ExternalApiKeyOwnerTypeLookup> ExternalApiKeyOwnerTypes { get; set; }
+    public DbSet<ExternalApiKeyStatus> ExternalApiKeyStatuses { get; set; }
+    public DbSet<ExternalApiKeyCreditPeriod> ExternalApiKeyCreditPeriods { get; set; }
+    public DbSet<ExternalApiKeyQuota> ExternalApiKeyQuotas { get; set; }
+    public DbSet<UserAuthenticationToken> UserAuthenticationTokens { get; set; }
+    public DbSet<UserExternalLogin> UserExternalLogins { get; set; }
+    public DbSet<ExternalBinding> ExternalBindings { get; set; }
+    public DbSet<ManagedControlPlaneRegistration> ManagedControlPlaneRegistrations { get; set; }
+    public DbSet<ManagedTenantProvisioningOperation> ManagedTenantProvisioningOperations { get; set; }
+
+    // ===== Authorization (RBAC) =====
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<RoleScope> RoleScopes { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+    public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<EventRoleAssignment> EventRoleAssignments { get; set; }
+
+    // ===== Actors (Federation/ATProto) =====
+    public DbSet<Actor> Actors { get; set; }
+    public DbSet<ActorPii> ActorPii { get; set; }
+    public DbSet<ActorType> ActorTypes { get; set; }
+    public DbSet<DidCustodyType> DidCustodyTypes { get; set; }
+    public DbSet<ActorKeyStore> ActorKeyStores { get; set; }
+    public DbSet<ActorSubscription> ActorSubscriptions { get; set; }
+    public DbSet<ActorSubscriptionStatus> ActorSubscriptionStatuses { get; set; }
+    public DbSet<ActorSubscriptionNotificationLevel> ActorSubscriptionNotificationLevels { get; set; }
+
+    // ===== Organizations =====
+    public DbSet<Organization> Organizations { get; set; }
+    public DbSet<OrganizationPii> OrganizationPii { get; set; }
+    public DbSet<OrganizationMember> OrganizationMembers { get; set; }
+    public DbSet<OrganizationPosition> OrganizationPositions { get; set; }
+    public DbSet<OrganizationReview> OrganizationReviews { get; set; }
+
+    // ===== Group Entities =====
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<GroupMember> GroupMembers { get; set; }
+    public DbSet<GroupPosition> GroupPositions { get; set; }
+
+    // ===== Custom Properties (EAV) =====
+    public DbSet<CustomPropertyDefinition> CustomPropertyDefinitions { get; set; }
+    public DbSet<CustomPropertyOption> CustomPropertyOptions { get; set; }
+    public DbSet<CustomPropertyValue> CustomPropertyValues { get; set; }
+    public DbSet<EventTemplate> EventTemplates { get; set; }
+    public DbSet<EventTemplateCustomPropertyDefinition> EventTemplateCustomPropertyDefinitions { get; set; }
+    public DbSet<EventTemplateCustomPropertyOption> EventTemplateCustomPropertyOptions { get; set; }
+    public DbSet<EventCustomPropertyDefinition> EventCustomPropertyDefinitions { get; set; }
+    public DbSet<EventCustomPropertyOption> EventCustomPropertyOptions { get; set; }
+    public DbSet<EventCustomPropertyValue> EventCustomPropertyValues { get; set; }
+    public DbSet<EventCustomPropertyProjection> EventCustomPropertyProjections { get; set; }
+    public DbSet<EventWithSessionsView> EventsWithSessions => Set<EventWithSessionsView>();
+    public DbSet<CustomPropertyProjectionStatus> CustomPropertyProjectionStatuses { get; set; }
+    public DbSet<CustomPropertyProjectionDirtyScope> CustomPropertyProjectionDirtyScopes { get; set; }
+
+    // ===== Events =====
+    public DbSet<Event> Events { get; set; }
+    public DbSet<EventSession> EventSessions { get; set; }
+    public DbSet<EventSessionGroup> EventSessionGroups { get; set; }
+    public DbSet<EventSessionGroupSession> EventSessionGroupSessions { get; set; }
+    public DbSet<EventSessionIslamicAspect> EventSessionIslamicAspects { get; set; }
+    public DbSet<EventRegistration> EventRegistrations { get; set; }
+    public DbSet<EventModerationRecord> EventModerationRecords { get; set; }
+    public DbSet<EventReport> EventReports { get; set; }
+    public DbSet<EventReportTarget> EventReportTargets { get; set; }
+    public DbSet<EventReportEvidence> EventReportEvidenceItems { get; set; }
+    public DbSet<EventReportCase> EventReportCases { get; set; }
+    public DbSet<EventReportSignal> EventReportSignals { get; set; }
+    public DbSet<EventReportDecision> EventReportDecisions { get; set; }
+    public DbSet<EventReportExternalLink> EventReportExternalLinks { get; set; }
+    public DbSet<EventSessionLanguage> EventSessionLanguages { get; set; }
+    public DbSet<EventSessionSpeaker> EventSessionSpeakers { get; set; }
+    public DbSet<EventSessionAgendaItem> EventSessionAgendaItems { get; set; }
+    public DbSet<EventSessionTemplate> EventSessionTemplates { get; set; }
+    public DbSet<EventSessionTemplateCustomPropertyDefinition> EventSessionTemplateCustomPropertyDefinitions { get; set; }
+    public DbSet<EventSessionTemplateCustomPropertyOption> EventSessionTemplateCustomPropertyOptions { get; set; }
+    public DbSet<EventSessionCustomPropertyDefinition> EventSessionCustomPropertyDefinitions { get; set; }
+    public DbSet<EventSessionCustomPropertyOption> EventSessionCustomPropertyOptions { get; set; }
+    public DbSet<EventSessionCustomPropertyValue> EventSessionCustomPropertyValues { get; set; }
+    public DbSet<EventSessionCustomPropertyProjection> EventSessionCustomPropertyProjections { get; set; }
+    public DbSet<EventIslamicAspect> EventIslamicAspects { get; set; }
+    public DbSet<EventTechAspect> EventTechAspects { get; set; }
+
+    // ===== Event Scheduling Refactor (Phase 1 additive) =====
+    public DbSet<EventDay> EventDays { get; set; }
+    public DbSet<EventAgendaItem> EventAgendaItems { get; set; }
+    public DbSet<LocationRoom> LocationRooms { get; set; }
+    public DbSet<EventSessionCategory> EventSessionCategories { get; set; }
+    public DbSet<EventSessionTag> EventSessionTags { get; set; }
+    public DbSet<EventRegistrationIntent> EventRegistrationIntents { get; set; }
+
+    // ===== Event Lookup Tables =====
+    public DbSet<EventType> EventTypes { get; set; }
+    public DbSet<EventStatus> EventStatuses { get; set; }
+    public DbSet<EventSessionStatus> EventSessionStatuses { get; set; }
+    public DbSet<EventFormat> EventFormats { get; set; }
+    public DbSet<VisibilityType> VisibilityTypes { get; set; }
+    public DbSet<RegistrationMode> RegistrationModes { get; set; }
+    public DbSet<EventSessionKind> EventSessionKinds { get; set; }
+    public DbSet<ScheduleItemKind> ScheduleItemKinds { get; set; }
+    public DbSet<EventRegistrationPolicy> EventRegistrationPolicies { get; set; }
+    public DbSet<RegistrationScope> RegistrationScopes { get; set; }
+
+    // ===== Event Metadata =====
+    public DbSet<AudienceAge> AudienceAges { get; set; }
+    public DbSet<AudienceGender> AudienceGenders { get; set; }
+    public DbSet<Madhab> Madhabs { get; set; }
+    public DbSet<Language> Languages { get; set; }
+    public DbSet<ApprovalStatus> ApprovalStatuses { get; set; }
+    public DbSet<TenantStatus> TenantStatuses { get; set; }
+    public DbSet<TenantPlanStatus> TenantPlanStatuses { get; set; }
+    public DbSet<TenantPlanAssignmentStatus> TenantPlanAssignmentStatuses { get; set; }
+    public DbSet<TenantPlanApplicationStatus> TenantPlanApplicationStatuses { get; set; }
+    public DbSet<AnalyticsProvider> AnalyticsProviders { get; set; }
+
+    // ===== Categories & Tags =====
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<CategoryType> CategoryTypes { get; set; }
+    public DbSet<CategoryTypeCategories> CategoryTypeCategories { get; set; }
+    public DbSet<Tag> Tags { get; set; }
+    public DbSet<TagType> TagTypes { get; set; }
+    public DbSet<TagTypeTags> TagTypeTags { get; set; }
+    public DbSet<EventCategories> EventCategories { get; set; }
+    public DbSet<EventTags> EventTags { get; set; }
+
+    // ===== Locations =====
+    public DbSet<Location> Locations { get; set; }
+    public DbSet<LocationPii> LocationPii { get; set; }
+
+    // ===== Storage =====
+    public DbSet<StorageObject> StorageObjects { get; set; }
+    public DbSet<StorageUploadSession> StorageUploadSessions { get; set; }
+    public DbSet<StorageUsageCounter> StorageUsageCounters { get; set; }
+    public DbSet<FileType> FileTypes { get; set; }
+    public DbSet<OwnerType> OwnerTypes { get; set; }
+
+    // ===== Settings =====
+    public DbSet<SystemSetting> SystemSettings { get; set; }
+    public DbSet<SettingScopeLookup> SettingScopes { get; set; }
+    public DbSet<SettingValueTypeLookup> SettingValueTypes { get; set; }
+    public DbSet<TenantSetting> TenantSettingOverrides { get; set; }
+    public DbSet<TenantSettingsDocument> TenantSettingsDocuments { get; set; }
+    public DbSet<OrganizationSetting> OrganizationSettingOverrides { get; set; }
+    public DbSet<GroupSetting> GroupSettingOverrides { get; set; }
+    public DbSet<UserPreference> UserPreferences { get; set; }
+    public DbSet<UserNotificationPreference> UserNotificationPreferences { get; set; }
+    public DbSet<NotificationChannelPreference> NotificationChannelPreferences { get; set; }
+    public DbSet<NotificationPreferenceProfile> NotificationPreferenceProfiles { get; set; }
+    public DbSet<AppSetting> AppSettings { get; set; }
+    public DbSet<SecretBinding> SecretBindings { get; set; }
+    public DbSet<SecretSourceTypeLookup> SecretSourceTypes { get; set; }
+    public DbSet<SecretValidationStatus> SecretValidationStatuses { get; set; }
+    public DbSet<ConfigurationChangeLog> ConfigurationChangeLogs { get; set; }
+    public DbSet<UiTheme> UiThemes { get; set; }
+    public DbSet<UiThemePreset> UiThemePresets { get; set; }
+    public DbSet<UserAppearanceProfile> UserAppearanceProfiles { get; set; }
+    public DbSet<UserAppearancePreference> UserAppearancePreferences { get; set; }
+
+    // ===== Audit & Notifications =====
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<NotificationType> NotificationTypes { get; set; }
+    public DbSet<NotificationEntityType> NotificationEntityTypes { get; set; }
+    public DbSet<NotificationReason> NotificationReasons { get; set; }
+    public DbSet<NotificationScopeType> NotificationScopeTypes { get; set; }
+    public DbSet<NotificationFanoutRun> NotificationFanoutRuns { get; set; }
+    public DbSet<NotificationPreferenceCategory> NotificationPreferenceCategories { get; set; }
+    public DbSet<NotificationPreferenceChannel> NotificationPreferenceChannels { get; set; }
+    public DbSet<WebPushSubscription> WebPushSubscriptions { get; set; }
+    public DbSet<WebPushDispatchOutbox> WebPushDispatchOutbox { get; set; }
+    public DbSet<NotificationIntent> NotificationIntents { get; set; }
+    public DbSet<NotificationCategory> NotificationCategories { get; set; }
+    public DbSet<NotificationOwnershipType> NotificationOwnershipTypes { get; set; }
+    public DbSet<NotificationIntentStatus> NotificationIntentStatuses { get; set; }
+    public DbSet<NotificationRecipientKind> NotificationRecipientKinds { get; set; }
+    public DbSet<NotificationDelivery> NotificationDeliveries { get; set; }
+    public DbSet<NotificationDeliveryStatus> NotificationDeliveryStatuses { get; set; }
+    public DbSet<NotificationExternalDelegation> NotificationExternalDelegations { get; set; }
+    public DbSet<NotificationExternalDelegationStatus> NotificationExternalDelegationStatuses { get; set; }
+    public DbSet<ExternalWorkflowProviderKindLookup> ExternalWorkflowProviderKinds { get; set; }
+    public DbSet<AccountAuthorityKindLookup> AccountAuthorityKinds { get; set; }
+
+    // ===== Module Governance =====
+    public DbSet<ModuleDefinition> ModuleDefinitions { get; set; }
+    public DbSet<TenantCapability> TenantCapabilities { get; set; }
+
+    // ===== Federation/Indexer (ATProto) =====
+    public DbSet<IndexedDid> IndexedDids { get; set; }
+    public DbSet<SyncState> SyncStates { get; set; }
+    public DbSet<AtprotoRecord> AtprotoRecords { get; set; }
+
+    // ===== PDS Synchronization (Outbox Pattern) =====
+    public DbSet<PdsSyncOutbox> PdsSyncOutbox { get; set; }
+
+    // ===== Generic Outbox (cross-process side effects) =====
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
+
+    // ===== Email Dispatch Outbox (Basic Dispatch Mode) =====
+    public DbSet<EmailDispatchOutbox> EmailDispatchOutbox { get; set; }
+    public DbSet<EmailDispatchAttempt> EmailDispatchAttempts { get; set; }
+    public DbSet<EmailDispatchReceipt> EmailDispatchReceipts { get; set; }
+    public DbSet<EmailDispatchTenantControl> EmailDispatchTenantControls { get; set; }
+
+    // ===== Native Integration Sync Outbox =====
+    public DbSet<IntegrationSyncOutbox> IntegrationSyncOutbox { get; set; }
+
+    // ===== Event Series =====
+    public DbSet<EventSeries> EventSeries { get; set; }
+
+    // ===== Contact Share Consents =====
+    public DbSet<EventContactShareConsent> EventContactShareConsents { get; set; }
+    public DbSet<EventContactShareExport> EventContactShareExports { get; set; }
+    public DbSet<EventContactShareExportItem> EventContactShareExportItems { get; set; }
+
+    // ===== Idempotency =====
+    public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }
+
+    // ===== AI Assistant =====
+    public DbSet<AiConversation> AiConversations { get; set; }
+    public DbSet<AiConversationStatusLookup> AiConversationStatuses { get; set; }
+    public DbSet<AiMessage> AiMessages { get; set; }
+    public DbSet<AiMessageRoleLookup> AiMessageRoles { get; set; }
+    public DbSet<AiRun> AiRuns { get; set; }
+    public DbSet<AiRunStatusLookup> AiRunStatuses { get; set; }
+    public DbSet<AiConversationReference> AiConversationReferences { get; set; }
+    public DbSet<AiReferenceKindLookup> AiReferenceKinds { get; set; }
+    public DbSet<AiProposedAction> AiProposedActions { get; set; }
+    public DbSet<AiProposedActionKindLookup> AiProposedActionKinds { get; set; }
+    public DbSet<AiProposedActionStatusLookup> AiProposedActionStatuses { get; set; }
+    public DbSet<AiProviderKindLookup> AiProviderKinds { get; set; }
+    public DbSet<AiToolExecution> AiToolExecutions { get; set; }
+    public DbSet<AiConsentGrant> AiConsentGrants { get; set; }
+
+    // ===== Webhook Delivery =====
+    public DbSet<WebhookConsumer> WebhookConsumers { get; set; }
+    public DbSet<WebhookConsumerKindLookup> WebhookConsumerKinds { get; set; }
+    public DbSet<WebhookConsumerStatusLookup> WebhookConsumerStatuses { get; set; }
+    public DbSet<WebhookProviderModeLookup> WebhookProviderModes { get; set; }
+    public DbSet<WebhookProviderKindLookup> WebhookProviderKinds { get; set; }
+    public DbSet<WebhookProviderCapabilityLookup> WebhookProviderCapabilities { get; set; }
+    public DbSet<WebhookConsumerProviderBinding> WebhookConsumerProviderBindings { get; set; }
+    public DbSet<WebhookProviderBindingVerificationStateLookup> WebhookProviderBindingVerificationStates { get; set; }
+    public DbSet<WebhookEndpointStatusLookup> WebhookEndpointStatuses { get; set; }
+    public DbSet<WebhookLocalDeliveryStatusLookup> WebhookLocalDeliveryStatuses { get; set; }
+    public DbSet<WebhookPendingWorkDecisionLookup> WebhookPendingWorkDecisions { get; set; }
+    public DbSet<WebhookDeliveryAttemptOutcomeLookup> WebhookDeliveryAttemptOutcomes { get; set; }
+    public DbSet<IncomingWebhookMessageStatusLookup> IncomingWebhookMessageStatuses { get; set; }
+    public DbSet<IncomingWebhookProcessingAttemptOutcomeLookup> IncomingWebhookProcessingAttemptOutcomes { get; set; }
+    public DbSet<IncomingWebhookSettlementSourceLookup> IncomingWebhookSettlementSources { get; set; }
+    public DbSet<IncomingWebhookRedriveResultLookup> IncomingWebhookRedriveResults { get; set; }
+    public DbSet<WebhookProviderPublicationStatusLookup> WebhookProviderPublicationStatuses { get; set; }
+    public DbSet<WebhookProviderPublicationAttemptOutcomeLookup> WebhookProviderPublicationAttemptOutcomes { get; set; }
+    public DbSet<WebhookPayloadProvenanceLookup> WebhookPayloadProvenances { get; set; }
+    public DbSet<WebhookEventType> WebhookEventTypes { get; set; }
+    public DbSet<WebhookEndpoint> WebhookEndpoints { get; set; }
+    public DbSet<WebhookEndpointSubscription> WebhookEndpointSubscriptions { get; set; }
+    public DbSet<WebhookMessage> WebhookMessages { get; set; }
+    public DbSet<WebhookDeliveryPlanSnapshot> WebhookDeliveryPlanSnapshots { get; set; }
+    public DbSet<WebhookLocalTargetSnapshot> WebhookLocalTargetSnapshots { get; set; }
+    public DbSet<WebhookDeliveryAttempt> WebhookDeliveryAttempts { get; set; }
+    public DbSet<WebhookProviderPublication> WebhookProviderPublications { get; set; }
+    public DbSet<WebhookProviderPublicationAttempt> WebhookProviderPublicationAttempts { get; set; }
+    public DbSet<IncomingWebhookMessage> IncomingWebhookMessages { get; set; }
+    public DbSet<IncomingWebhookEffectReceipt> IncomingWebhookEffectReceipts { get; set; }
+    public DbSet<IncomingWebhookProcessingAttempt> IncomingWebhookProcessingAttempts { get; set; }
+    public DbSet<IncomingWebhookRedriveRecord> IncomingWebhookRedriveRecords { get; set; }
+}

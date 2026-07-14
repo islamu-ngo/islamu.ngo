@@ -1,0 +1,43 @@
+﻿@page "/Error"
+@using System.Diagnostics
+
+<PageTitle>Server Error — Event Platform</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+</HeadContent>
+
+<main class="server-error" role="alert" aria-labelledby="server-error-title">
+    <section class="server-error__card">
+        <p class="server-error__eyebrow">500</p>
+        <h1 id="server-error-title">Something Went Wrong</h1>
+        <p class="server-error__description">
+            We could not complete your request. Return home or contact support with the reference ID below.
+        </p>
+
+        @if (ShowRequestId)
+        {
+            <p class="server-error__reference">
+                <strong>Reference ID:</strong> <code>@RequestId</code>
+            </p>
+        }
+
+        <div class="server-error__actions">
+            <a class="server-error__button server-error__button--primary" href="/">Return Home</a>
+            <a class="server-error__button server-error__button--secondary" href="@SupportHref">Contact Support</a>
+        </div>
+    </section>
+</main>
+
+@code{
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    private string SupportHref => ShowRequestId
+        ? $"/contact?subject={Uri.EscapeDataString($"Support request for error {RequestId}")}"
+        : "/contact";
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

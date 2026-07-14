@@ -1,0 +1,362 @@
+@* ABOUTME: Top navigation shell with tenant links, search, preferences, and profile/admin dropdown. *@
+@* ABOUTME: Uses BFF/API-backed status models for admin affordance visibility instead of browser claims. *@
+@using Explore.Blazor.Client.Routing.ControlPlane
+@*
+    NavMenu Component - BEM Methodology
+    Block: navbar
+    Elements: __content, __brand, __brand-icon, __brand-text, __brand-highlight,
+              __links, __link, __actions, __theme-toggle, __create-event-btn, __login-btn,
+              __user-dropdown, __user-btn, __user-avatar, __user-name, __user-arrow,
+              __dropdown-menu, __dropdown-header, __dropdown-divider, __dropdown-section-label,
+              __dropdown-item, __dropdown-item-label, __dropdown-item-arrow,
+              __dropdown-submenu, __dropdown-submenu-item, __dropdown-submenu-name,
+              __dropdown-submenu-action, __dropdown-submenu-empty, __dropdown-submenu-divider,
+              __dropdown-submenu-create, __dropdown-overlay
+    Modifiers: __link--active, __dropdown-menu--open, __dropdown-item--danger,
+               __dropdown-item--expandable, __dropdown-submenu-name--text
+*@
+
+<div class="navbar">
+    <div class="navbar__content">
+        <!-- Sidebar Toggle (shown only when a page registers a sidebar) -->
+        @if (SidebarState.HasSidebar)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="Color.Inherit"
+                           OnClick="ToggleSidebarPanel"
+                            Title="Toggle sidebar"
+                            Class="navbar__sidebar-toggle"
+                            Edge="Edge.Start"
+                            aria-expanded="@(IsSidebarDockOpen ? "true" : "false")"
+                            aria-label="Toggle sidebar navigation" />
+        }
+
+        <!-- Brand -->
+        <a href="/" class="navbar__brand" aria-label="Home">
+            @if (!string.IsNullOrWhiteSpace(_brandLogoUrl))
+            {
+                <MudImage Src="@_brandLogoUrl" Alt="@_brandDisplayName" Class="navbar__brand-icon" Width="28" Height="28" />
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Explore" Color="Color.Primary" Size="Size.Large" Class="navbar__brand-icon" />
+            }
+            <div class="navbar__brand-text">@_brandDisplayName</div>
+        </a>
+
+        <!-- Global Search (Ctrl+K to focus) -->
+        <div class="navbar__search">
+            <MudTextField @ref="_searchField"
+                          T="string"
+                          Placeholder="@($"Search {_eventCatalogLabel}…  ⌘K")"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="navbar__search-input"
+                          @bind-Value="SearchQuery"
+                          @onkeyup="@HandleSearchKeyPress" />
+        </div>
+
+        <MudHotkey Key="JsKey.KeyK"
+                   KeyModifiers="@(new[] { JsKeyModifier.ControlLeft })"
+                   OnHotkeyPressed="FocusSearchAsync" />
+
+        <!-- Center Navigation -->
+        <div class="navbar__links">
+            @* Dynamic tenant navigation links *@
+            @foreach (var link in _navigationLinks.OrderBy(l => l.Order))
+            {
+                var icon = string.IsNullOrWhiteSpace(link.Icon) ? Icons.Material.Filled.Link : link.Icon;
+
+                @if (link.OpenInNewTab == true)
+                {
+                    <a @key="link.Id" href="@link.Url" target="_blank" rel="noopener noreferrer" class="navbar__link" title="@link.Label">
+                        <MudIcon Icon="@icon" Size="Size.Small" Class="mr-2" />
+                        @link.Label
+                    </a>
+                }
+                else
+                {
+                    <NavLink @key="link.Id" href="@link.Url" class="navbar__link" Match="NavLinkMatch.Prefix" ActiveClass="navbar__link--active" title="@link.Label">
+                        <MudIcon Icon="@icon" Size="Size.Small" Class="mr-2" />
+                        @link.Label
+                    </NavLink>
+                }
+            }
+        </div>
+
+        <!-- Right Actions -->
+        <div class="navbar__actions">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="navbar__desktop-preference-actions">
+                        <LanguagePicker Enabled="@_languagePickerEnabled" />
+                        <ThemeQuickSwitcher />
+                    </div>
+
+                    @if (_eventCreationEligibility.CanCreate)
+                    {
+                        <a href="@_eventCreationEligibility.CreateEventRoute" style="text-decoration: none;">
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                                       Size="Size.Small"
+                                       Class="navbar__create-event-btn">
+                                Add Event
+                            </MudButton>
+                        </a>
+                    }
+
+                    <!-- Notification Bell -->
+                    <NotificationBell />
+
+                    @* AI Assistant toggle follows tenant audience policy and the current user's preference. *@
+                    @if (AiAssistantState.IsButtonVisible)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome"
+                                       Color="Color.Inherit"
+                                       Size="Size.Medium"
+                                       OnClick="ToggleAiAssistantPanel"
+                                       Title="AI Assistant"
+                                       Class="@($"navbar__ai-toggle {(AiAssistantState.IsOpen ? "navbar__ai-toggle--active" : "")}")"
+                                       data-testid="shell-ai-toggle"
+                                       aria-label="Toggle AI Assistant"
+                                       aria-expanded="@(AiAssistantState.IsOpen ? "true" : "false")"
+                                       aria-controls="ai-assistant-rail" />
+                    }
+
+                    <!-- User Dropdown -->
+                    <div class="navbar__user-dropdown">
+                        <button type="button" class="navbar__user-btn" @onclick="ToggleDropdown" @onclick:stopPropagation
+                                aria-expanded="@_dropdownOpen" aria-haspopup="true" aria-label="User menu">
+                            @if (!string.IsNullOrEmpty(_currentUser?.ProfileImageUri))
+                            {
+                                <MudAvatar Size="Size.Small" Class="navbar__user-avatar">
+                                    <MudImage Src="@_currentUser.ProfileImageUri" Alt="@($"{context.User.Identity?.Name}'s profile picture")" />
+                                </MudAvatar>
+                            }
+                            else
+                            {
+                                <MudAvatar Color="Color.Primary" Size="Size.Small" Class="navbar__user-avatar">
+                                    @GetInitials(context.User.Identity?.Name)
+                                </MudAvatar>
+                            }
+
+                        </button>
+
+                        @if (_dropdownOpen)
+                        {
+                            <div class="navbar__dropdown-menu navbar__dropdown-menu--open" @onclick:stopPropagation>
+                                <div class="navbar__dropdown-header">
+                                    @if (!string.IsNullOrEmpty(_currentUser?.ProfileImageUri))
+                                    {
+                                        <MudAvatar Size="Size.Small" Class="navbar__dropdown-header-avatar">
+                                            <MudImage Src="@_currentUser.ProfileImageUri" Alt="@($"{context.User.Identity?.Name}'s profile picture")" />
+                                        </MudAvatar>
+                                    }
+                                    else
+                                    {
+                                        <MudAvatar Color="Color.Primary" Size="Size.Small" Class="navbar__dropdown-header-avatar">
+                                            @GetInitials(context.User.Identity?.Name)
+                                        </MudAvatar>
+                                    }
+                                    <div class="navbar__dropdown-header-info">
+                                        <MudText Typo="Typo.body2" Style="font-weight: 600;">@context.User.Identity?.Name</MudText>
+                                    </div>
+                                </div>
+                                <div class="navbar__dropdown-divider"></div>
+
+                                <a href="/my/profile" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                    Show Profile
+                                </a>
+
+                                <div class="navbar__mobile-preferences">
+                                    <div class="navbar__dropdown-divider"></div>
+                                    <div class="navbar__dropdown-section-label">Preferences</div>
+                                    <div class="navbar__dropdown-control-item">
+                                        <div class="navbar__dropdown-control-label">
+                                            <MudIcon Icon="@Icons.Material.Filled.Language" Size="Size.Small" />
+                                            <span>Language</span>
+                                        </div>
+                                        <LanguagePicker Enabled="@_languagePickerEnabled" />
+                                    </div>
+                                    <div class="navbar__dropdown-control-item">
+                                        <div class="navbar__dropdown-control-label">
+                                            <MudIcon Icon="@Icons.Material.Filled.Palette" Size="Size.Small" />
+                                            <span>Theme</span>
+                                        </div>
+                                        <ThemeQuickSwitcher />
+                                    </div>
+                                </div>
+
+                                @* Organizations expandable submenu *@
+                                <div class="navbar__dropdown-item navbar__dropdown-item--expandable" @onclick="ToggleOrgSubmenu" @onclick:stopPropagation
+                                     role="button" tabindex="0">
+                                    <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                                    <span class="navbar__dropdown-item-label">Organizations</span>
+                                    <MudIcon Icon="@(_orgSubmenuOpen ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                             Size="Size.Small" Class="navbar__dropdown-item-arrow" />
+                                </div>
+                                @if (_orgSubmenuOpen)
+                                {
+                                    <div class="navbar__dropdown-submenu">
+                                        @if (_userOrganizations.Any())
+                                        {
+                                            @foreach (var org in _userOrganizations)
+                                            {
+                                                <div class="navbar__dropdown-submenu-item" @key="org.Id">
+                                                    <a href="@($"/organization/{org.Id}")" class="navbar__dropdown-submenu-name" @onclick="CloseDropdown">
+                                                        @org.FullName
+                                                    </a>
+                                                    <a href="@($"/admin/organization/{org.Id}/settings")" class="navbar__dropdown-submenu-action" @onclick="CloseDropdown">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
+                                                        Settings
+                                                    </a>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="navbar__dropdown-submenu-empty">
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">No organizations yet</MudText>
+                                            </div>
+                                        }
+                                        <div class="navbar__dropdown-submenu-divider"></div>
+                                        <a href="/organizations/create" class="navbar__dropdown-submenu-create" @onclick="CloseDropdown">
+                                            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+                                            Create Organization
+                                        </a>
+                                    </div>
+                                }
+
+                                @* Groups expandable submenu *@
+                                <div class="navbar__dropdown-item navbar__dropdown-item--expandable" @onclick="ToggleGroupSubmenu" @onclick:stopPropagation
+                                     role="button" tabindex="0">
+                                    <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Small" />
+                                    <span class="navbar__dropdown-item-label">Groups</span>
+                                    <MudIcon Icon="@(_groupSubmenuOpen ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                             Size="Size.Small" Class="navbar__dropdown-item-arrow" />
+                                </div>
+                                @if (_groupSubmenuOpen)
+                                {
+                                    <div class="navbar__dropdown-submenu">
+                                        @if (_userGroups.Any())
+                                        {
+                                            @foreach (var group in _userGroups)
+                                            {
+                                                <div class="navbar__dropdown-submenu-item" @key="group.Id">
+                                                    <span class="navbar__dropdown-submenu-name navbar__dropdown-submenu-name--text">
+                                                        @group.FullName
+                                                    </span>
+                                                    <a href="@($"/admin/group/{group.Id}/settings")" class="navbar__dropdown-submenu-action" @onclick="CloseDropdown">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
+                                                        Settings
+                                                    </a>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="navbar__dropdown-submenu-empty">
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">No groups yet</MudText>
+                                            </div>
+                                        }
+                        <div class="navbar__dropdown-submenu-divider"></div>
+                                    </div>
+                                }
+
+                                @if (HasAnyAdminAuthority(context.User))
+                                {
+                                    <div class="navbar__dropdown-divider"></div>
+                                    <div class="navbar__dropdown-section-label">Admin</div>
+
+                                    @if (IsInstanceAdmin(context.User) && !_isSingleTenantMode)
+                                    {
+                                        <a href="@ControlPlaneRoutes.Overview" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                            <MudIcon Icon="@Icons.Material.Filled.Dns" Size="Size.Small" />
+                                            Instance Console
+                                        </a>
+                                    }
+
+                                    @if (IsTenantAdmin(context.User) || (IsInstanceAdmin(context.User) && _isSingleTenantMode))
+                                    {
+                                        <a href="/admin/tenant/settings" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                            <MudIcon Icon="@Icons.Material.Filled.Domain" Size="Size.Small" />
+                                            @(_isSingleTenantMode ? "Administration" : "Tenant Administration")
+                                        </a>
+                                        <a href="/admin/tenant/custom-properties" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                            <MudIcon Icon="@Icons.Material.Filled.Tune" Size="Size.Small" />
+                                            Custom Property Governance
+                                        </a>
+                                    }
+
+                                    @foreach (var orgId in GetAdminOrganizationIds(context.User))
+                                    {
+                                        <a href="@($"/admin/organization/{orgId}/settings")" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                            <MudIcon Icon="@Icons.Material.Filled.CorporateFare" Size="Size.Small" />
+                                            Organization Settings
+                                        </a>
+                                    }
+                                }
+
+                                <div class="navbar__dropdown-divider"></div>
+
+                                <a href="/settings" class="navbar__dropdown-item" @onclick="CloseDropdown">
+                                    <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Small" />
+                                    Settings
+                                </a>
+                                <a href="/logout" data-enhance-nav="false" class="navbar__dropdown-item navbar__dropdown-item--danger" @onclick="CloseDropdown">
+                                    <MudIcon Icon="@Icons.Material.Filled.Logout" Size="Size.Small" />
+                                    Logout
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="navbar__desktop-preference-actions navbar__desktop-preference-actions--always-visible">
+                        <LanguagePicker Enabled="@_languagePickerEnabled" />
+                        <ThemeQuickSwitcher />
+                    </div>
+
+                    @if (_showAddEventForAnonymous)
+                    {
+                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                                   Size="Size.Small"
+                                   Class="navbar__create-event-btn"
+                                   OnClick="@(() => OpenLoginPrompt("/events/create", "Sign in to add an event. After you sign in, we will bring you back to the event form."))">
+                            Add Event
+                        </MudButton>
+                    }
+                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" Class="navbar__login-btn"
+                                StartIcon="@Icons.Material.Filled.Login"
+                                OnClick="StartLogin">
+                        Login
+                    </MudButton>
+
+                    @* AI Assistant toggle follows tenant audience policy and the current user's preference. *@
+                    @if (AiAssistantState.IsButtonVisible)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome"
+                                       Color="Color.Inherit"
+                                       Size="Size.Medium"
+                                       OnClick="ToggleAiAssistantPanel"
+                                       Title="AI Assistant"
+                                       Class="@($"navbar__ai-toggle {(AiAssistantState.IsOpen ? "navbar__ai-toggle--active" : "")}")"
+                                       data-testid="shell-ai-toggle"
+                                       aria-label="Toggle AI Assistant"
+                                       aria-expanded="@(AiAssistantState.IsOpen ? "true" : "false")"
+                                       aria-controls="ai-assistant-rail" />
+                    }
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>
+
+@* Overlay to close dropdown when clicking outside *@
+@if (_dropdownOpen)
+{
+    <div class="navbar__dropdown-overlay" @onclick="CloseDropdown" aria-hidden="true"></div>
+}

@@ -1,0 +1,242 @@
+@* ABOUTME: Dialog component for creating or editing Event Templates.
+   ABOUTME: Handles root properties and embeds definition editor. *@
+
+@using Explore.Blazor.Client.Contracts.Services.EventTemplates
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Explore.Blazor.Client.Components.Forms
+@inject IEventTemplateService TemplateService
+@inject ISnackbar Snackbar
+
+<MudDialog Class="event-template-editor">
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FormSubmissionGuard State="@_submitState">
+            <AppValidationSummary />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.TemplateKey" Label="Template Key" Required="true" 
+                                  HelperText="Unique identifier for this template"
+                                  Class="event-template-editor__field" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_model.DisplayName" Label="Display Name" Required="true"
+                                  Class="event-template-editor__field" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="_model.EventTypeId" Label="Event Type ID" Required="true"
+                                     Class="event-template-editor__field" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="_model.Version" Label="Version" Required="true" Min="1"
+                                     Class="event-template-editor__field" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudNumericField @bind-Value="_model.SortOrder" Label="Sort Order" Required="true"
+                                     Class="event-template-editor__field" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSwitch @bind-Value="_model.IsPublished" Label="Published" Color="Color.Primary" 
+                               Class="event-template-editor__switch" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSwitch @bind-Value="_model.IsActive" Label="Active" Color="Color.Success"
+                               Class="event-template-editor__switch" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_model.Description" Label="Description" Lines="3"
+                                  Class="event-template-editor__field" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mt-4 mb-2">Definitions</MudText>
+                    <EventTemplateDefinitionEditor Definitions="_definitions" OnDefinitionsChanged="HandleDefinitionsChanged" />
+                </MudItem>
+            </MudGrid>
+            </FormSubmissionGuard>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_submitState.IsSubmitting">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_submitState.IsSubmitting">
+            @(_submitState.IsSubmitting ? "Saving..." : "Save")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance Dialog { get; set; } = null!;
+
+    [Parameter]
+    public HalResourceOfEventTemplateDto? Template { get; set; }
+
+    private EditContext _editContext = default!;
+    private FormSubmitState _submitState = new();
+    private ServerValidationErrorStore _errorStore = new();
+
+    private CreateEventTemplateDto _model = new();
+    private List<CreateEventTemplateDefinitionDto> _definitions = new();
+
+    protected override void OnInitialized()
+    {
+        if (Template != null)
+        {
+            _model = new CreateEventTemplateDto
+            {
+                TemplateKey = Template.TemplateKey,
+                DisplayName = Template.DisplayName,
+                Description = Template.Description,
+                EventTypeId = Template.EventTypeId,
+                Version = Template.Version,
+                IsPublished = Template.IsPublished,
+                IsActive = Template.IsActive,
+                SortOrder = Template.SortOrder,
+                Definitions = _definitions
+            };
+
+            foreach (var def in Template.Definitions ?? [])
+            {
+                _definitions.Add(new CreateEventTemplateDefinitionDto
+                {
+                    Namespace = def.Namespace,
+                    Key = def.Key,
+                    DisplayName = def.DisplayName,
+                    Description = def.Description,
+                    PropertyType = (PropertyType?)def.PropertyType,
+                    IsRequired = def.IsRequired,
+                    IsMulti = def.IsMulti,
+                    IsActive = def.IsActive,
+                    SortOrder = def.SortOrder,
+                    ExposureLevel = (ExposureLevel?)def.ExposureLevel,
+                    IsSearchable = def.IsSearchable,
+                    IsFilterable = def.IsFilterable,
+                    IsExportable = def.IsExportable,
+                    IsModerationRelevant = def.IsModerationRelevant,
+                    IsAnalyticsRelevant = def.IsAnalyticsRelevant,
+                    IsSystemOwned = def.IsSystemOwned,
+                    DefaultTextValue = def.DefaultTextValue,
+                    DefaultNumberValue = def.DefaultNumberValue,
+                    DefaultBooleanValue = def.DefaultBooleanValue,
+                    DefaultDateTimeValue = def.DefaultDateTimeValue,
+                    DefaultOptionId = def.DefaultOptionId,
+                    MinLength = def.MinLength,
+                    MaxLength = def.MaxLength,
+                    RegexPattern = def.RegexPattern,
+                    MinNumber = def.MinNumber,
+                    MaxNumber = def.MaxNumber,
+                    MinDateTime = def.MinDateTime,
+                    MaxDateTime = def.MaxDateTime,
+                    AllowedUrlSchemes = def.AllowedUrlSchemes,
+                    Options = def.Options?.Select(o => new CreateEventTemplateOptionDto
+                    {
+                        Namespace = o.Namespace,
+                        Key = o.Key,
+                        DisplayName = o.DisplayName,
+                        Description = o.Description,
+                        Value = o.Value,
+                        IsDefault = o.IsDefault,
+                        IsActive = o.IsActive,
+                        SortOrder = o.SortOrder
+                    }).ToList() ?? []
+                });
+            }
+        }
+        else
+        {
+            _model.Version = 1;
+            _model.IsActive = true;
+            _model.IsPublished = false;
+        }
+        
+        _model.Definitions = _definitions;
+
+        _editContext = new EditContext(_model);
+        _errorStore.Init(_editContext);
+    }
+
+    private void HandleDefinitionsChanged(IList<CreateEventTemplateDefinitionDto> definitions)
+    {
+        _definitions = definitions.ToList();
+        _model.Definitions = _definitions;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_submitState.IsSubmitting) return;
+        if (!_editContext.Validate()) return;
+
+        _submitState.Start();
+        try
+        {
+            _model.Definitions = _definitions;
+
+            BaseCommandResponseOfGuid? result;
+
+            if (Template == null)
+            {
+                result = await TemplateService.CreateTemplateAsync(_model);
+            }
+            else
+            {
+                var templateId = Template.Id ?? throw new InvalidOperationException("The template response did not include an ID.");
+                var updateDto = new UpdateEventTemplateDto
+                {
+                    Id = templateId,
+                    TemplateKey = _model.TemplateKey,
+                    DisplayName = _model.DisplayName,
+                    Description = _model.Description,
+                    EventTypeId = _model.EventTypeId,
+                    Version = _model.Version,
+                    IsPublished = _model.IsPublished,
+                    IsActive = _model.IsActive,
+                    SortOrder = _model.SortOrder,
+                    Definitions = _model.Definitions
+                };
+                result = await TemplateService.UpdateTemplateAsync(templateId, updateDto);
+            }
+
+            if (result?.Success == true)
+            {
+                Dialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var errorMsg = result?.Message ?? "Failed to save template";
+                if (result?.Errors?.Any() == true)
+                {
+                    errorMsg += ": " + string.Join(", ", result.Errors);
+                }
+                _submitState.Fail(errorMsg);
+            }
+        }
+        catch (Clients.ApiException ex)
+        {
+            if (!_errorStore.HandleApiError(ex))
+            {
+                _submitState.Fail($"Failed to save template: {ex.Message}");
+            }
+            else
+            {
+                _submitState.Fail("Please fix the validation errors below.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _submitState.Fail($"An error occurred: {ex.Message}");
+        }
+        finally
+        {
+            if (!_submitState.HasError)
+            {
+                _submitState.Complete();
+            }
+        }
+    }
+
+    private void Cancel()
+    {
+        Dialog.Cancel();
+    }
+}

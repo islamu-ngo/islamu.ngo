@@ -1,0 +1,51 @@
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Validators
+@using FluentValidation
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-3 mb-n1" />
+            Edit Category
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="_editContext">
+            <FluentValidationValidator />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="categoryDto.FullName!.Value" Label="Name" For="@(() => categoryDto.FullName!.Value)" Required="true" RequiredError="Name is required." />
+            <MudTextField Variant="Variant.Outlined" T="string" @bind-Value="categoryDto.MasterCode!.Value" Label="Master Code" For="@(() => categoryDto.MasterCode!.Value)" Required="true" RequiredError="Master Code is required." />
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Update</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IDialogReference? DialogReference { get; set; }
+
+    [Parameter] public CategoryListDto ExistingCategory { get; set; }
+
+    private EditContext _editContext = default!;
+    private UpdateCategoryDto categoryDto = new();
+
+    protected override void OnInitialized()
+    {
+        categoryDto.FullName = new UpdateCategoryFullNameDto { Value = ExistingCategory.FullName };
+        categoryDto.MasterCode = new UpdateCategoryMasterCodeDto { Value = ExistingCategory.MasterCode };
+        _editContext = new EditContext(categoryDto);
+    }
+
+    private void Submit()
+    {
+        if (_editContext.Validate())
+        {
+            DialogReference?.Dismiss(DialogResult.Ok(categoryDto));
+        }
+    }
+
+    void Cancel() => DialogReference?.Dismiss(DialogResult.Cancel());
+}

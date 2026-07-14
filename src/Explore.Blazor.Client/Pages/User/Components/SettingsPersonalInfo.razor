@@ -1,0 +1,211 @@
+@* ABOUTME: Account personal-information settings form for profile details and profile image upload. *@
+@* ABOUTME: Persists profile edits through IUserService and storage-backed image upload records. *@
+
+@using MudBlazor
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Clients
+@using Microsoft.AspNetCore.Components
+@using Explore.Blazor.Client.Pages.User.Components.Dialogs
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+@inject CurrentUserState CurrentUserState
+
+<div class="settings-section">
+    <!-- Section Header -->
+    <div class="settings-section-header mb-6">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Personal Information</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Update your personal details and profile picture</MudText>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="d-flex flex-column align-center justify-center py-8">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.body1" Class="mt-4" Color="Color.Secondary">Loading profile...</MudText>
+        </div>
+    }
+    else if (_user == null)
+    {
+        <div role="alert">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Failed to load user profile.</MudAlert>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="@(() => _successMessage = null)">
+                @_successMessage
+            </MudAlert>
+        }
+
+        <!-- Profile Picture Section -->
+        <div class="settings-profile-picture mb-8">
+            <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-4">Profile Picture</MudText>
+            <div class="d-flex align-center gap-6">
+                <MudImage Src="@_user.ProfileImageUri" Width="120" Height="120" ObjectFit="ObjectFit.Cover" Class="rounded-circle" />
+                <div>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Recommended: Square image, at least 400x400px
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2 rounded-pill"
+                               StartIcon="@Icons.Material.Filled.PhotoCamera"
+                               OnClick="OpenEditProfileImageDialogAsync">
+                        Change
+                    </MudButton>
+                </div>
+            </div>
+        </div>
+
+        <MudDivider Class="my-6" />
+
+        <!-- Name Section -->
+        <div class="settings-form-section mb-8">
+            <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-4">Name</MudText>
+            <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                <MudText Typo="Typo.body1">@_user.FirstName @_user.LastName</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="rounded-pill"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           OnClick="OpenEditNamesDialogAsync">
+                    Edit
+                </MudButton>
+            </div>
+        </div>
+
+        <MudDivider Class="my-6" />
+
+        <!-- Contact Section (read-only) -->
+        <div class="settings-form-section mb-8">
+            <MudText Typo="Typo.subtitle2" Style="font-weight: 600;" Class="mb-4">Contact Information</MudText>
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudTextField Variant="Variant.Outlined" T="string" Value="@_user.Email"
+                                  Label="Email"
+                                  ReadOnly="true"
+                                  HelperText="Email cannot be changed"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Variant="Variant.Outlined" T="string" Value="@_user.ActorHandle"
+                                  Label="Username"
+                                  ReadOnly="true"
+                                  HelperText="Username is your actor handle and cannot be changed here"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.AlternateEmail" />
+                </MudItem>
+            </MudGrid>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject]
+    private IDialogService DialogService { get; set; } = null!;
+
+    private bool _loading = true;
+    private string? _successMessage;
+    private UserDto? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = new UserDto();
+        await LoadUserDataAsync();
+    }
+
+    private async Task LoadUserDataAsync()
+    {
+        try
+        {
+            _loading = true;
+            var loadedUser = await UserService.GetCurrentUserAsync();
+            if (loadedUser is not null)
+            {
+                _user = loadedUser;
+            }
+        }
+        catch (Exception)
+        {
+            _user = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenEditNamesDialogAsync()
+    {
+        if (_user is null) return;
+
+        var dialog = await DialogService.ShowAsync<EditUserNamesDialog>(
+            "Edit name",
+            DialogOptionsFactory.Small());
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data is UpdateUserNamesDto names)
+        {
+            await SavePartialAsync(new UpdateUserDto { Names = names });
+        }
+    }
+
+    private async Task OpenEditProfileImageDialogAsync()
+    {
+        if (_user is null) return;
+
+        var dialog = await DialogService.ShowAsync<EditUserProfileImageDialog>(
+            "Change profile picture",
+            DialogOptionsFactory.Small());
+        var result = await dialog.Result;
+        if (!result.Canceled && result.Data is EditUserProfileImageDialog.ProfileImageUploadResult img)
+        {
+            await SavePartialAsync(new UpdateUserDto
+            {
+                ProfileImage = new UpdateUserProfileImageDto { ProfilePictureId = img.StorageObjectId }
+            });
+        }
+    }
+
+    private async Task SavePartialAsync(UpdateUserDto dto)
+    {
+        if (_user?.Id is not Guid userId)
+        {
+            Snackbar.Add("Unable to save profile because the user identifier is missing.", Severity.Error);
+            return;
+        }
+
+        if (_user.ConcurrencyStamp is not Guid concurrencyStamp || concurrencyStamp == Guid.Empty)
+        {
+            Snackbar.Add("Unable to save profile because the latest profile version is missing. Refresh and try again.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            var response = await UserService.UpdateUserAsync(userId, concurrencyStamp, dto);
+            if (response?.Success == true)
+            {
+                // Re-fetch authoritative user (backend cache was invalidated) and notify shared state
+                // so the navbar avatar refreshes live without a page reload.
+                var freshUser = await UserService.GetCurrentUserAsync();
+                if (freshUser is not null)
+                {
+                    _user = freshUser;
+                    CurrentUserState.NotifyUpdated(freshUser);
+                }
+                _successMessage = "Profile updated successfully!";
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Failed to save profile.", Severity.Error);
+            }
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Failed to save profile: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to save profile: {ex.Message}", Severity.Error);
+        }
+    }
+}

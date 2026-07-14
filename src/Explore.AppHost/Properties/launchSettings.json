@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "local-default": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:17074;http://localhost:15185",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ISLAMU_ASPIRE_MODE": "DefaultLocal",
+        "SecretProvider__Provider": "None",
+        "Infisical__ProjectId": "",
+        "Infisical__ClientId": "",
+        "Infisical__ClientSecret": "",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21220",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22156"
+      }
+    },
+    "local-full": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:17071;http://localhost:15182",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ISLAMU_ASPIRE_MODE": "FullLocal",
+        "SecretProvider__Provider": "None",
+        "Infisical__ProjectId": "",
+        "Infisical__ClientId": "",
+        "Infisical__ClientSecret": "",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21217",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22153"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:17071;http://localhost:15182",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ISLAMU_ASPIRE_MODE": "FullLocal",
+        "SecretProvider__Provider": "None",
+        "Infisical__ProjectId": "",
+        "Infisical__ClientId": "",
+        "Infisical__ClientSecret": "",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21217",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22153"
+      }
+    },
+    "local-core": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:17072;http://localhost:15183",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ISLAMU_ASPIRE_MODE": "LocalDataExternalPlatform",
+        "SecretProvider__Provider": "None",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21218",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22154"
+      }
+    },
+    "local-lite": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:17073;http://localhost:15184",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ISLAMU_ASPIRE_MODE": "ExternalInfra",
+        "SecretProvider__Provider": "None",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21219",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22155"
+      }
+    }
+  }
+}

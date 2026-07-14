@@ -1,0 +1,56 @@
+@* ABOUTME: Minimal footer template rendering only copyright text, bottom links, and social icons.
+   ABOUTME: Compact single-row layout for sites that prefer a lightweight footer. *@
+
+<div class="site-footer__bottom">
+    <div class="site-footer__copyright">@CopyrightText</div>
+
+    @if (ShowCommunityGuidelinesLink || ShowCookieSettingsLink)
+    {
+        <div class="site-footer__bottom-links">
+            @if (ShowCommunityGuidelinesLink)
+            {
+                <a href="/community-guidelines" class="site-footer__link">Community Guidelines</a>
+            }
+            @if (ShowCookieSettingsLink)
+            {
+                <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Text"
+                           Size="Size.Small"
+                           Class="site-footer__link"
+                           OnClick="OnCookieSettingsClick">
+                    Cookie Settings
+                </MudButton>
+            }
+        </div>
+    }
+
+    @if (ShowSocialLinks && SocialLinks.Count > 0)
+    {
+        <div class="site-footer__social">
+            @foreach (var social in SocialLinks)
+            {
+                <MudIconButton Icon="@FooterIconHelper.GetSocialIcon(social.Platform ?? string.Empty)"
+                               aria-label="@social.Label"
+                               title="@social.Label"
+                               Class="site-footer__social-btn"
+                               Size="Size.Small"
+                               Href="@social.Url"
+                               Target="_blank"
+                               rel="noopener noreferrer" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string BrandDisplayName { get; set; } = string.Empty;
+    [Parameter] public string BrandLogoUrl { get; set; } = string.Empty;
+    [Parameter] public bool ShowDescription { get; set; }
+    [Parameter] public string DescriptionText { get; set; } = string.Empty;
+    [Parameter] public bool ShowSocialLinks { get; set; }
+    [Parameter] public List<FooterSocialLinkDto> SocialLinks { get; set; } = [];
+    [Parameter] public string CopyrightText { get; set; } = string.Empty;
+    [Parameter] public bool ShowCookieSettingsLink { get; set; }
+    [Parameter] public bool ShowCommunityGuidelinesLink { get; set; }
+    [Parameter] public List<FooterLinkGroupDto> LinkGroups { get; set; } = [];
+    [Parameter] public EventCallback OnCookieSettingsClick { get; set; }
+}

@@ -1,0 +1,625 @@
+@* ABOUTME: Sidebar layout component for Tenant Admin Settings. *@
+@* ABOUTME: Provides Google-style sidebar navigation for tenant-level policy, domain, and branding settings. *@
+
+@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@using Explore.Blazor.Client.Services
+@using Explore.Blazor.Client.Components.Forms
+@using Explore.Blazor.Client.Clients
+
+@inject ITenantOnboardingService TenantOnboardingService
+@inject IInstanceOnboardingService InstanceOnboardingService
+@inject IPublicExperienceService PublicExperienceService
+@inject ITenantPublicExperienceAdminService TenantPublicExperienceAdminService
+@inject ITenantBrandingSettingsAdminService TenantBrandingSettingsAdminService
+@inject ITenantStorageSettingsAdminService TenantStorageSettingsAdminService
+@inject AiAssistantState AiAssistantState
+@inject ISnackbar Snackbar
+
+<div class="settings-layout">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+        <!-- Header -->
+        <div class="settings-header mb-8">
+            <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">
+                @(_isSingleTenantMode ? "Administration" : "Tenant Administration")
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                @(_isSingleTenantMode
+                    ? "Manage policies, domains, branding, organization approvals, and lookup tables"
+                    : "Manage tenant policies, domains, branding, organization approvals, and lookup tables")
+            </MudText>
+            @if (_isInstanceAdmin && !_isSingleTenantMode)
+            {
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="mt-4">
+                    <MudChip T="string"
+                             Color="Color.Info"
+                             Variant="Variant.Outlined"
+                             Icon="@Icons.Material.Filled.Apartment">
+                        Multi-Tenant
+                    </MudChip>
+                    <MudButton Elevation="0" Variant="Variant.Text"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Dns"
+                               Href="/admin/instance/settings">
+                        Manage Platform
+                    </MudButton>
+                </MudStack>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+        }
+
+        @if (_isLoading)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="py-12">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Loading tenant settings...</MudText>
+            </MudStack>
+        }
+        else if (!_canEdit)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                You do not have tenant administrator permissions to view or modify these settings.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- Main Layout: Sidebar + Content -->
+            <MudGrid Spacing="4">
+                <!-- Sidebar Navigation -->
+                <MudItem xs="12" md="3" Class="@(_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-sidebar pa-0" Style="background-color: transparent;">
+                        <MudList T="string" Dense="true" DisablePadding="true">
+                            <MudListItem Icon="@Icons.Material.Filled.Policy"
+                                         Text="Policies"
+                                         Class="@GetNavItemClass("policies")"
+                                         OnClick="@(() => SelectSection("policies"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Speed"
+                                         Text="Render Policy"
+                                         Class="@GetNavItemClass("render-policy")"
+                                         OnClick="@(() => SelectSection("render-policy"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Language"
+                                         Text="Domain"
+                                         Class="@GetNavItemClass("domain")"
+                                         OnClick="@(() => SelectSection("domain"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Palette"
+                                          Text="Branding"
+                                          Class="@GetNavItemClass("branding")"
+                                          OnClick="@(() => SelectSection("branding"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Announcement"
+                                           Text="Announcement Bar"
+                                           Class="@GetNavItemClass("announcement-bar")"
+                                           OnClick="@(() => SelectSection("announcement-bar"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.HomeWork"
+                                         Text="Public Experience"
+                                         Class="@GetNavItemClass("public-experience")"
+                                         OnClick="@(() => SelectSection("public-experience"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.ColorLens"
+                                           Text="Themes"
+                                          Class="@GetNavItemClass("themes")"
+                                         OnClick="@(() => SelectSection("themes"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Business"
+                                         Text="Organizations"
+                                         Class="@GetNavItemClass("organizations")"
+                                         OnClick="@(() => SelectSection("organizations"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.TableChart"
+                                         Text="Lookup Tables"
+                                         Class="@GetNavItemClass("lookups")"
+                                         OnClick="@(() => SelectSection("lookups"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.Link"
+                                         Text="Navigation Links"
+                                         Class="@GetNavItemClass("nav-links")"
+                                         OnClick="@(() => SelectSection("nav-links"))" />
+                            @if (_model.CanOverrideSmtp == true)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Email"
+                                             Text="Email (SMTP)"
+                                             Class="@GetNavItemClass("smtp")"
+                                             OnClick="@(() => SelectSection("smtp"))" />
+                            }
+                            @if (_model.CanOverrideStorage == true)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Cloud"
+                                             Text="Object Storage"
+                                             Class="@GetNavItemClass("storage")"
+                                             OnClick="@(() => SelectSection("storage"))" />
+                            }
+                            @if (_model.CanOverrideAnalytics == true)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Analytics"
+                                             Text="Analytics & Privacy"
+                                             Class="@GetNavItemClass("analytics")"
+                                             OnClick="@(() => SelectSection("analytics"))" />
+                            }
+                            @if (_model.CanOverrideMcp == true || _model.CanOverrideMcpLegacySse == true)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Extension"
+                                             Text="MCP Adapter"
+                                             Class="@GetNavItemClass("mcp")"
+                                             OnClick="@(() => SelectSection("mcp"))" />
+                            }
+                            <MudListItem Icon="@Icons.Material.Filled.Key"
+                                         Text="API Keys"
+                                         Class="@GetNavItemClass("api-keys")"
+                                         OnClick="@(() => SelectSection("api-keys"))" />
+                            <MudListItem Icon="@Icons.Material.Filled.ReceiptLong"
+                                         Text="Support Evidence"
+                                         Class="@GetNavItemClass("support-access-evidence")"
+                                         OnClick="@(() => SelectSection("support-access-evidence"))" />
+                            <MudListItem Icon="@Icons.Material.Outlined.Gavel"
+                                         Text="Community Guidelines"
+                                         Class="@GetNavItemClass("community-guidelines")"
+                                         OnClick="@(() => SelectSection("community-guidelines"))" />
+                            @if (_isSingleTenantMode && _isInstanceAdmin)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Engineering"
+                                             Text="Advanced"
+                                             Class="@GetNavItemClass("advanced")"
+                                             OnClick="@(() => SelectSection("advanced"))" />
+                            }
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Content Area -->
+                <MudItem xs="12" md="9" Class="@(!_showMobileMenu ? "d-block" : "d-none d-md-block")">
+                    <MudPaper Elevation="0" Class="settings-content pa-6" Style="background-color: transparent;">
+                        <div class="d-md-none mb-4">
+                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToMenu">
+                                Settings Menu
+                            </MudButton>
+                        </div>
+                        @if (_currentSection == "policies")
+                        {
+                            <TenantPoliciesSection Model="_model" />
+                        }
+                        else if (_currentSection == "render-policy")
+                        {
+                            <TenantRenderPolicySection Model="_model" />
+                        }
+                        else if (_currentSection == "domain")
+                        {
+                            <TenantDomainSection Model="_model" />
+                        }
+                        else if (_currentSection == "branding")
+                        {
+                            <TenantBrandingSection Model="_brandingModel" IsSaving="_submitState.IsSubmitting" />
+                        }
+                        else if (_currentSection == "announcement-bar")
+                        {
+                            <TenantAnnouncementBarSection Model="_model" HasExistingAnnouncementBar="_hasAnnouncementBar" />
+                        }
+                        else if (_currentSection == "public-experience")
+                        {
+                            <TenantPublicExperienceSection @ref="_publicExperienceSection" Model="_publicExperienceModel" />
+                        }
+                        else if (_currentSection == "themes")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Components.UiThemeCatalogSection IsPlatformCatalog="false" />
+                        }
+                        else if (_currentSection == "organizations")
+                        {
+                            <TenantOrganizationsSection />
+                        }
+                        else if (_currentSection == "lookups")
+                        {
+                            <TenantLookupTablesSection />
+                        }
+                        else if (_currentSection == "nav-links")
+                        {
+                            <TenantNavigationLinksSection />
+                        }
+                        else if (_currentSection == "smtp" && _model.CanOverrideSmtp == true)
+                        {
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">Email (SMTP) Configuration</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                                        Configure SMTP settings for this tenant. When overridden, emails sent on behalf of this tenant will use these credentials instead of the platform defaults.
+                                    </MudText>
+                                </div>
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
+                                    Tenant-specific SMTP configuration is enabled by your platform administrator. Per-tenant override controls will be available in a future update.
+                                    Currently, emails are sent using the platform-level SMTP settings.
+                                </MudAlert>
+                            </div>
+                        }
+                        else if (_currentSection == "storage" && _model.CanOverrideStorage == true)
+                        {
+                            <TenantStorageSection Model="_storageModel" IsSaving="_submitState.IsSubmitting" />
+                        }
+                        else if (_currentSection == "analytics" && _model.CanOverrideAnalytics == true)
+                        {
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">Analytics & Privacy</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                                        Configure analytics and privacy settings for this tenant. When overridden, tenant-specific analytics preferences take effect.
+                                    </MudText>
+                                </div>
+                                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4">
+                                    Tenant-specific analytics configuration is enabled by your platform administrator. Per-tenant override controls will be available in a future update.
+                                    Currently, analytics settings are inherited from the platform configuration.
+                                </MudAlert>
+                            </div>
+                        }
+                        else if (_currentSection == "mcp" && (_model.CanOverrideMcp == true || _model.CanOverrideMcpLegacySse == true))
+                        {
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">MCP Adapter</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                                        Tenant runtime overrides for the API-hosted MCP adapter. Startup operator settings still cap whether MCP and legacy SSE can be exposed.
+                                    </MudText>
+                                </div>
+                                <MudStack Spacing="2" Class="mt-4">
+                                    <MudSwitch T="bool?" @bind-Value="_model.McpEnabled" Color="Color.Primary" Disabled="_model.CanOverrideMcp != true">
+                                        Enable MCP adapter for this tenant
+                                    </MudSwitch>
+                                    <MudSwitch T="bool?" @bind-Value="_model.McpEnableLegacySse" Color="Color.Warning" Disabled="_model.CanOverrideMcpLegacySse != true">
+                                        Request legacy SSE transport for this tenant
+                                    </MudSwitch>
+                                    <MudAlert Severity="Severity.Info" Dense="true">
+                                        Endpoint path and stateless transport are startup-only. Legacy SSE remains unavailable until a separate protocol/session review enables it.
+                                    </MudAlert>
+                                </MudStack>
+                            </div>
+                        }
+                        else if (_currentSection == "api-keys")
+                        {
+                            <Explore.Blazor.Client.Pages.Admin.Components.ApiKeysSection OwnerType="4" Title="Tenant API Keys" Description="Create and manage API keys for this tenant." />
+                        }
+                        else if (_currentSection == "support-access-evidence")
+                        {
+                            <TenantSupportAccessEvidenceSection />
+                        }
+                        else if (_currentSection == "community-guidelines")
+                        {
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">Community Guidelines</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
+                                        Manage the community guidelines displayed to users on the
+                                        <MudLink Href="/community-guidelines" Target="_blank" Color="Color.Primary">Community Guidelines</MudLink>
+                                        page. Guidelines inform event organizers and attendees of the platform's expectations.
+                                    </MudText>
+                                </div>
+                                @if (_model.CanOverrideCommunityGuidelines != true)
+                                {
+                                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mt-4 mb-4">
+                                        The community guidelines content has been locked by the platform administrator and cannot be changed for this tenant.
+                                    </MudAlert>
+                                }
+                                <div class="settings-form-section mt-4">
+                                    <MudTextField T="string" T="string"
+                                                  @bind-Value="_model.CommunityGuidelinesContent"
+                                                  Label="Guidelines Content"
+                                                  Lines="20"
+                                                  Variant="Variant.Outlined"
+                                                  ReadOnly="_model.CanOverrideCommunityGuidelines != true"
+                                                  HelperText="Supports basic Markdown: # Heading, ## Section, - bullet, **bold**, *italic*."
+                                                  FullWidth="true"
+                                                  Style="font-family: monospace; font-size: 0.875rem;" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                                        This content is displayed publicly. Leave empty to use the platform default guidelines.
+                                    </MudText>
+                                </div>
+                            </div>
+                        }
+                        else if (_currentSection == "advanced" && _isSingleTenantMode && _isInstanceAdmin)
+                        {
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <MudText Typo="Typo.h5" Style="font-weight: 700;">Advanced Settings</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">Danger zone and platform-level operations.</MudText>
+                                </div>
+                                <div class="settings-form-section">
+                                    <MudText Typo="Typo.subtitle2">Multi-Tenant Mode</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-4">
+                                        Your platform is currently running in Single-Tenant Mode. If you intend to host multiple organizations with their own dedicated instances, domains, and policies, you can switch to Multi-Tenant Mode. 
+                                        <strong>This will enable the full Instance Administration dashboard.</strong>
+                                    </MudText>
+                                    <MudButton Elevation="0" Variant="Variant.Outlined" Color="Color.Warning" Href="/admin/instance/settings">
+                                        Go to Instance Administration
+                                    </MudButton>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!IsReadOnlySection)
+                        {
+                            <MudDivider Class="my-4" />
+
+                            @if (_currentSection == "announcement-bar")
+                            {
+                                <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                                    @if (_hasAnnouncementBar)
+                                    {
+                                        <MudButton Elevation="0" Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   OnClick="RemoveAnnouncementBarAsync"
+                                                   Disabled="_submitState.IsSubmitting"
+                                                   StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Delete)">
+                                            @(_submitState.IsSubmitting ? "Saving..." : "Remove Announcement Bar")
+                                        </MudButton>
+                                    }
+                                    @if (_hasAnnouncementBar && HasUsableAnnouncementBar(_model))
+                                    {
+                                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Outlined"
+                                                   OnClick="@(() => SaveAsync(false))"
+                                                   Disabled="_submitState.IsSubmitting"
+                                                   StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Save)">
+                                            @(_submitState.IsSubmitting ? "Saving..." : "Save Text Update")
+                                        </MudButton>
+                                    }
+                                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => SaveAsync(true))"
+                                               Disabled="_submitState.IsSubmitting"
+                                               StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Campaign)">
+                                        @(_submitState.IsSubmitting ? "Saving..." : "Save and Show to Everyone")
+                                    </MudButton>
+                                </MudStack>
+                            }
+                            else
+                            {
+                                <MudStack Row="true" Justify="Justify.FlexEnd">
+                                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync"
+                                               Disabled="_submitState.IsSubmitting || !CanSaveCurrentSection"
+                                               StartIcon="@(_submitState.IsSubmitting ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Save)">
+                                        @(_submitState.IsSubmitting ? "Saving..." : "Save Tenant Settings")
+                                    </MudButton>
+                                </MudStack>
+                            }
+                         }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudContainer>
+</div>
+
+@code {
+    private TenantPolicySettingsDto _model = new();
+    private TenantBrandingSettingsAdminModel _brandingModel = new();
+    private HalResourceOfTenantStorageSettingsDto _storageModel = new();
+    private TenantPublicExperienceAdminModel _publicExperienceModel = new();
+    private TenantPublicExperienceSection? _publicExperienceSection;
+    private bool _isLoading = true;
+    private FormSubmitState _submitState = new();
+    private bool _canEdit;
+    private bool _isSingleTenantMode;
+    private bool _isInstanceAdmin;
+    private bool _hasAnnouncementBar;
+    private string? _errorMessage;
+    private string _currentSection = "policies";
+    private bool _showMobileMenu = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tenantStatus = await TenantOnboardingService.GetStatusAsync();
+        _canEdit = tenantStatus?.IsCurrentUserTenantAdministrator == true
+            || tenantStatus?.IsCurrentUserPlatformAdministrator == true;
+
+        if (!_canEdit)
+        {
+            _isLoading = false;
+            return;
+        }
+
+        var instanceStatus = await InstanceOnboardingService.GetStatusAsync();
+        _isInstanceAdmin = instanceStatus?.IsCurrentUserInstanceAdmin == true;
+        _isSingleTenantMode = instanceStatus == null
+            || string.IsNullOrWhiteSpace(instanceStatus.SelectedDeploymentMode)
+            || string.Equals(instanceStatus.SelectedDeploymentMode, "SingleTenant", StringComparison.OrdinalIgnoreCase);
+
+        _model = await TenantOnboardingService.GetSettingsAsync();
+        await TenantPublicExperienceAdminService.ApplyAnnouncementBarSettingsAsync(_model);
+        _hasAnnouncementBar = HasUsableAnnouncementBar(_model);
+        _brandingModel = await TenantBrandingSettingsAdminService.GetAsync();
+        _publicExperienceModel = await TenantPublicExperienceAdminService.GetSettingsAsync();
+        if (_model.CanOverrideStorage == true)
+        {
+            _storageModel = await TenantStorageSettingsAdminService.GetAsync();
+        }
+        _isLoading = false;
+    }
+
+    private Task SaveAsync() => SaveAsync(false);
+
+    private async Task SaveAsync(bool forceAnnouncementBarRedisplay)
+    {
+        if (_currentSection == "public-experience")
+        {
+            await SavePublicExperienceAsync();
+            return;
+        }
+
+        if (_currentSection == "branding")
+        {
+            await SaveBrandingAsync();
+            return;
+        }
+
+        if (_currentSection == "storage" && _model.CanOverrideStorage == true)
+        {
+            await SaveStorageAsync();
+            return;
+        }
+
+        _submitState.Start();
+        _errorMessage = null;
+        var response = await TenantOnboardingService.UpdateSettingsAsync(
+            _model,
+            _currentSection == "announcement-bar" && forceAnnouncementBarRedisplay);
+        _submitState.Complete();
+
+        if (response.Success == true)
+        {
+            var hadAnnouncementBarBeforeSave = _hasAnnouncementBar;
+            _hasAnnouncementBar = HasUsableAnnouncementBar(_model);
+            await RefreshShellExperienceAsync();
+            Snackbar.Add(
+                _currentSection == "announcement-bar"
+                    ? GetAnnouncementSaveMessage(hadAnnouncementBarBeforeSave, forceAnnouncementBarRedisplay)
+                    : "Tenant settings saved.",
+                Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to save tenant settings."
+            : response.Message;
+    }
+
+    private async Task RemoveAnnouncementBarAsync()
+    {
+        _model.AnnouncementBarEnabled = false;
+        _model.AnnouncementBarMessage = string.Empty;
+        _model.AnnouncementBarLinkText = string.Empty;
+        _model.AnnouncementBarLinkUrl = string.Empty;
+        _submitState.Start();
+        _errorMessage = null;
+
+        var response = await TenantOnboardingService.UpdateSettingsAsync(_model);
+        _submitState.Complete();
+
+        if (response.Success == true)
+        {
+            _hasAnnouncementBar = false;
+            await RefreshShellExperienceAsync();
+            Snackbar.Add("Announcement bar removed.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to remove announcement bar."
+            : response.Message;
+    }
+
+    private static bool HasUsableAnnouncementBar(TenantPolicySettingsDto model) =>
+        model.AnnouncementBarEnabled == true && !string.IsNullOrWhiteSpace(model.AnnouncementBarMessage);
+
+    private static string GetAnnouncementSaveMessage(bool hadAnnouncementBarBeforeSave, bool forceAnnouncementBarRedisplay)
+    {
+        if (!hadAnnouncementBarBeforeSave)
+        {
+            return "Announcement bar created.";
+        }
+
+        return forceAnnouncementBarRedisplay
+            ? "Announcement bar saved. Users who dismissed it will see it again."
+            : "Announcement bar text updated.";
+    }
+
+    private async Task SavePublicExperienceAsync()
+    {
+        if (_publicExperienceSection?.HasValidJson != true)
+        {
+            _errorMessage = "Public experience JSON fields must contain valid JSON objects before saving.";
+            return;
+        }
+
+        _submitState.Start();
+        _errorMessage = null;
+
+        var response = await TenantPublicExperienceAdminService.SaveAsync(_publicExperienceModel);
+        _submitState.Complete();
+
+        if (response.Success == true)
+        {
+            await RefreshShellExperienceAsync();
+            Snackbar.Add("Public experience settings saved.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to save public experience settings."
+            : response.Message;
+    }
+
+    private async Task SaveBrandingAsync()
+    {
+        _submitState.Start();
+        _errorMessage = null;
+
+        TenantBrandingSettingsSaveResult response = await TenantBrandingSettingsAdminService.SaveAsync(_brandingModel);
+        _submitState.Complete();
+
+        if (response.Success && response.Model is not null)
+        {
+            _brandingModel = response.Model;
+            await RefreshShellExperienceAsync();
+            Snackbar.Add("Tenant branding settings saved.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to save tenant branding settings."
+            : response.Message;
+    }
+
+    private async Task SaveStorageAsync()
+    {
+        _submitState.Start();
+        _errorMessage = null;
+
+        var response = await TenantStorageSettingsAdminService.SaveAsync(_storageModel);
+        _submitState.Complete();
+
+        if (response.Success == true)
+        {
+            _storageModel = await TenantStorageSettingsAdminService.GetAsync();
+            Snackbar.Add("Tenant storage settings saved.", Severity.Success);
+            return;
+        }
+
+        _errorMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "Failed to save tenant storage settings."
+            : response.Message;
+    }
+
+    private void SelectSection(string section)
+    {
+        _currentSection = section;
+        _showMobileMenu = false;
+    }
+
+    private void BackToMenu()
+    {
+        _showMobileMenu = true;
+    }
+
+    private bool CanSaveCurrentSection =>
+        _currentSection switch
+        {
+            "support-access-evidence" => false,
+            "branding" => _brandingModel.Exists && _brandingModel.CanReplace,
+            "storage" => _storageModel.IsEditable(),
+            _ => true
+        };
+
+    private bool IsReadOnlySection =>
+        _currentSection is "nav-links" or "support-access-evidence";
+
+    private async Task RefreshShellExperienceAsync()
+    {
+        PublicExperienceService.ResetCache();
+
+        var settings = await PublicExperienceService.GetSettingsAsync();
+        if (settings is not null)
+        {
+            AiAssistantState.SetPolicy(
+                settings.IsAiAssistantEnabled == true,
+                settings.IsAiAssistantAvailable == true,
+                settings.AiAssistantAllowAnonymousAccess == true,
+                isAuthenticated: true);
+        }
+    }
+
+    private string GetNavItemClass(string section)
+    {
+        return _currentSection == section ? "settings-nav-active" : "";
+    }
+}

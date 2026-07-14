@@ -1,0 +1,285 @@
+# ABOUTME: Reusable container image build workflow with SBOM, provenance, and digest evidence.
+# ABOUTME: Publishes API/UI images to ATCR and GHCR while retaining immutable build metadata.
+
+name: "Container Build (Reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+      context:
+        required: false
+        type: string
+        default: "."
+      metadata-tags:
+        required: true
+        type: string
+      build-configuration:
+        required: false
+        type: string
+        default: "Release"
+      registry:
+        required: false
+        type: string
+        default: "atcr.io"
+      registry-user:
+        required: true
+        type: string
+    secrets:
+      ATCR_PASSWORD:
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  artifact-metadata: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build ${{ inputs.image-name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Log in to ATcr
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ inputs.registry-user }}
+          password: ${{ secrets.ATCR_PASSWORD }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: |
+            ${{ inputs.registry }}/${{ inputs.registry-user }}/${{ inputs.image-name }}
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
+          tags: ${{ inputs.metadata-tags }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_CONFIGURATION=${{ inputs.build-configuration }}
+
+      - name: Record image digest evidence
+        shell: bash
+        env:
+          RestorePackagesWithLockFile: "false"
+          IMAGE_NAME: ${{ inputs.image-name }}
+          DOCKERFILE: ${{ inputs.dockerfile }}
+          CONTEXT: ${{ inputs.context }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+          METADATA: ${{ steps.build.outputs.metadata }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container
+          dotnet run .ci/scripts/write-container-digest-evidence.cs
+
+          {
+            echo "## Container image digest"
+            echo
+            echo "Image: \`${IMAGE_NAME}\`"
+            echo
+            echo "Digest: \`${DIGEST}\`"
+            echo
+            echo "Tags:"
+            echo '```text'
+            printf '%s\n' "$TAGS"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Export SBOM and provenance registry evidence
+        shell: bash
+        env:
+          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container
+
+          docker buildx imagetools inspect "$IMAGE_REF" > "artifacts/container/${IMAGE_NAME}-oci-inspect.txt"
+          docker buildx imagetools inspect --raw "$IMAGE_REF" > "artifacts/container/${IMAGE_NAME}-oci-index.json"
+
+          {
+            echo "## SBOM/provenance registry evidence"
+            echo
+            echo "Image reference: \`${IMAGE_REF}\`"
+            echo
+            echo "Retained artifacts:"
+            echo
+            echo "- \`artifacts/container/${IMAGE_NAME}-oci-inspect.txt\`"
+            echo "- \`artifacts/container/${IMAGE_NAME}-oci-index.json\`"
+            echo
+            echo "These files preserve the registry manifest/index evidence for the Buildx SBOM and provenance attestations generated during the build."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record immutable deployment tag promotion evidence
+        shell: bash
+        env:
+          RestorePackagesWithLockFile: "false"
+          IMAGE_NAME: ${{ inputs.image-name }}
+          REGISTRY: ${{ inputs.registry }}
+          REGISTRY_USER: ${{ inputs.registry-user }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container
+
+          dotnet run .ci/scripts/write-image-promotion-evidence.cs
+
+          promotion_tags_file="artifacts/container/${IMAGE_NAME}-promotion-tags.txt"
+          while IFS= read -r tag_ref; do
+            if [[ -z "${tag_ref}" ]]; then
+              continue
+            fi
+
+            safe_tag="$(printf '%s' "${tag_ref}" | sed -E 's/[^A-Za-z0-9._-]+/-/g')"
+            inspect_file="artifacts/container/${IMAGE_NAME}-promotion-${safe_tag}.txt"
+            docker buildx imagetools inspect "${tag_ref}" > "${inspect_file}"
+
+            if ! grep -F "${DIGEST}" "${inspect_file}" >/dev/null; then
+              echo "Immutable deployment tag ${tag_ref} did not resolve to built digest ${DIGEST}."
+              exit 1
+            fi
+          done < "${promotion_tags_file}"
+
+          {
+            echo "## Immutable deployment tag promotion"
+            echo
+            echo "Built digest: \`${DIGEST}\`"
+            echo
+            echo "Primary registry immutable tags:"
+            echo '```text'
+            cat "${promotion_tags_file}"
+            echo '```'
+            echo
+            echo "Each listed tag was inspected in the primary registry and verified to resolve to the built digest."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate Trivy SARIF evidence
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ steps.build.outputs.digest }}
+          format: sarif
+          output: artifacts/container/${{ inputs.image-name }}-trivy.sarif
+          exit-code: "0"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Scan image vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ steps.build.outputs.digest }}
+          format: table
+          output: artifacts/container/${{ inputs.image-name }}-trivy.txt
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Generate GHCR artifact attestation
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-name: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Verify GHCR artifact attestation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_NAME: ${{ inputs.image-name }}
+          IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}@${{ steps.build.outputs.digest }}
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/_container-build.yml
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/container
+
+          verification_file="artifacts/container/${IMAGE_NAME}-attestation-verification.json"
+          gh attestation verify "oci://${IMAGE_REF}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --signer-workflow "${SIGNER_WORKFLOW}" \
+            --source-ref "${GITHUB_REF}" \
+            --source-digest "${GITHUB_SHA}" \
+            --predicate-type "https://slsa.dev/provenance/v1" \
+            --deny-self-hosted-runners \
+            --format json > "${verification_file}"
+
+          {
+            echo "## Container attestation verification"
+            echo
+            echo "Image reference: \`${IMAGE_REF}\`"
+            echo
+            echo "Signer workflow: \`${SIGNER_WORKFLOW}\`"
+            echo
+            echo "Verification evidence: \`${verification_file}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate evidence checksum manifest
+        shell: bash
+        env:
+          RestorePackagesWithLockFile: "false"
+          IMAGE_NAME: ${{ inputs.image-name }}
+        run: |
+          set -euo pipefail
+          dotnet run .ci/scripts/write-artifact-checksums.cs -- artifacts/container "artifacts/container/${IMAGE_NAME}-checksums.sha256"
+
+          {
+            echo "## Container evidence checksums"
+            echo
+            echo "Checksum manifest: \`artifacts/container/${IMAGE_NAME}-checksums.sha256\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload container build evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-build-${{ inputs.image-name }}
+          path: artifacts/container/**
+          if-no-files-found: warn
+          retention-days: 90

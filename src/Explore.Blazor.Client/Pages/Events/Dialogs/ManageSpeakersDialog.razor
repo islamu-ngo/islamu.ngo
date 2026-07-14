@@ -1,0 +1,140 @@
+@* ABOUTME: Dialog UI for managing speaker assignments on an event session. *@
+@* ABOUTME: Uses HAL-gated generated API client services for add/remove affordances. *@
+
+@using Explore.Blazor.Client.Clients
+@using Explore.Blazor.Client.Contracts.Services.Events
+@using Explore.Blazor.Client.Contracts.Services.Lookup
+@using MudBlazor
+@using MudBlazor.Services
+@inject IEventSessionSpeakerService EventSessionSpeakerService
+@inject IActorService ActorService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Manage Speakers</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4">
+            @if (canCreateSpeaker)
+            {
+                <MudAutocomplete T="ActorListDto" Label="Add Speaker" @bind-Value="selectedActor"
+                                 SearchFunc="@SearchActors" ToStringFunc="@(e => e?.DisplayName)"
+                                 Variant="Variant.Outlined" Dense="true" />
+
+                <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="AddSpeaker" Disabled="@(selectedActor == null || isBusy)">Add Speaker</MudButton>
+            }
+
+            <MudText Typo="Typo.h6">Current Speakers</MudText>
+            <MudList T="EventSessionSpeakerListDto" Clickable="true">
+                @foreach (var speaker in speakers)
+                {
+                    <MudListItem T="EventSessionSpeakerListDto">
+                        @speaker.ActorDisplayName
+                        @if (speaker.HasHalLink("delete"))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" aria-label="Remove speaker" OnClick="@(() => RemoveSpeaker(speaker.Id))" Disabled="@isBusy" />
+                        }
+                    </MudListItem>
+                }
+            </MudList>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid SessionId { get; set; }
+
+    private List<EventSessionSpeakerListDto> speakers = new();
+    private ActorListDto? selectedActor;
+    private List<ActorListDto> allActors = new();
+    private bool canCreateSpeaker;
+    private bool isBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSpeakers();
+        var actorsCollection = await ActorService.GetActorsAsync();
+        allActors = actorsCollection.ToList();
+    }
+
+    private async Task LoadSpeakers()
+    {
+        var collection = await EventSessionSpeakerService.GetSpeakersBySessionAsync(SessionId);
+        speakers = collection.GetItems().ToList();
+        canCreateSpeaker = collection.HasLink("create");
+    }
+
+    private Task<IEnumerable<ActorListDto>> SearchActors(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return Task.FromResult<IEnumerable<ActorListDto>>(allActors);
+        }
+        return Task.FromResult<IEnumerable<ActorListDto>>(allActors.Where(x =>
+            x.DisplayName?.Contains(value, StringComparison.InvariantCultureIgnoreCase) == true));
+    }
+
+    private async Task AddSpeaker()
+    {
+        if (selectedActor != null && selectedActor.Id.HasValue)
+        {
+            BaseCommandResponseOfGuid? response;
+            try
+            {
+                isBusy = true;
+                response = await EventSessionSpeakerService.AddSpeakerToSessionAsync(SessionId, selectedActor.Id.Value);
+            }
+            finally
+            {
+                isBusy = false;
+            }
+
+            if (response?.Success == true)
+            {
+                Snackbar.Add("Speaker added.", Severity.Success);
+                await LoadSpeakers();
+                selectedActor = null;
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Failed to add speaker", Severity.Error);
+            }
+        }
+    }
+
+    private async Task RemoveSpeaker(Guid? speakerId)
+    {
+        if (!speakerId.HasValue) return;
+        bool removed;
+        try
+        {
+            isBusy = true;
+            removed = await EventSessionSpeakerService.RemoveSpeakerFromSessionAsync(SessionId, speakerId.Value);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+
+        if (removed)
+        {
+            Snackbar.Add("Speaker removed.", Severity.Success);
+            await LoadSpeakers();
+            StateHasChanged();
+        }
+        else
+        {
+            Snackbar.Add("Failed to remove speaker", Severity.Error);
+        }
+    }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

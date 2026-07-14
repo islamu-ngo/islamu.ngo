@@ -1,0 +1,13 @@
+@* ABOUTME: Page wrapper for the Instance Admin Settings sidebar layout. *@
+@* ABOUTME: Routes to /admin/instance/settings with Admin role authorization. *@
+
+@page "/admin/instance/settings"
+@using MudBlazor
+@using Microsoft.AspNetCore.Authorization
+@using Explore.Blazor.Client.Pages.Admin.Instance.Components
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Instance Settings</PageTitle>
+
+<InstanceAdminSettingsLayout />

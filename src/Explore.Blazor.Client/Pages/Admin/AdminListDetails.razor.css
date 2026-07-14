@@ -1,0 +1,282 @@
+/* ===== CSS Custom Properties ===== */
+::deep :root {
+    --admin-list-details-radius-xl: 1.375rem;
+    --admin-list-details-radius-lg: var(--isl-radius-lg);
+    --admin-list-details-radius-md: var(--isl-radius-md);
+    --admin-list-details-spacing: var(--isl-space-5);
+}
+
+/* ===== Block: admin-list-details ===== */
+::deep .admin-list-details {
+    max-width: 62.5rem;
+    margin: 0 auto;
+    padding: 1.375rem;
+}
+
+/* ===== Element: admin-list-details__hero ===== */
+::deep .admin-list-details__hero {
+    border-radius: var(--admin-list-details-radius-xl);
+    padding: 1.75rem;
+    margin-bottom: var(--isl-space-6);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background:
+        radial-gradient(
+            62.5rem 21.875rem at 15% 10%,
+            rgba(124, 58, 237, 0.24),
+            transparent 60%
+        ),
+        radial-gradient(
+            53.125rem 18.75rem at 85% 5%,
+            rgba(34, 197, 94, 0.16),
+            transparent 60%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.05),
+            rgba(255, 255, 255, 0.02)
+        );
+    box-shadow: 0 1.25rem 3.125rem rgba(0, 0, 0, 0.24);
+}
+
+/* ===== Element: admin-list-details__loading ===== */
+::deep .admin-list-details__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.875rem;
+    padding: 3rem var(--isl-space-5);
+    min-height: 12.5rem;
+}
+
+/* ===== Element: admin-list-details__hero-title ===== */
+::deep .admin-list-details__hero-title {
+    display: flex;
+    align-items: center;
+    gap: 1.125rem;
+}
+
+/* ===== Element: admin-list-details__hero-badge ===== */
+::deep .admin-list-details__hero-badge {
+    width: 4.5rem;
+    height: 4.5rem;
+    min-width: 4.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(
+            circle at 30% 30%,
+            rgba(124, 58, 237, 0.28),
+            transparent 70%
+        ),
+        linear-gradient(
+            135deg,
+            rgba(124, 58, 237, 0.22),
+            rgba(34, 197, 94, 0.18)
+        );
+    border: 0.125rem solid rgba(124, 58, 237, 0.38);
+    box-shadow:
+        0 0.75rem 2rem rgba(124, 58, 237, 0.3),
+        inset 0 0.125rem 0.5rem rgba(255, 255, 255, 0.14);
+    border-radius: var(--admin-list-details-radius-lg);
+}
+
+/* ===== Element: admin-list-details__hero-meta ===== */
+::deep .admin-list-details__hero-meta {
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* ===== Element: admin-list-details__panel ===== */
+::deep .admin-list-details__panel {
+    border-radius: var(--admin-list-details-radius-lg);
+    padding: 1.375rem;
+    margin-bottom: var(--admin-list-details-spacing);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12);
+    transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::deep .admin-list-details__panel:hover {
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.18);
+}
+
+/* ===== Element: admin-list-details__section-header ===== */
+::deep .admin-list-details__section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: var(--isl-space-5);
+    padding-bottom: 0.875rem;
+    border-bottom: 0.125rem solid rgba(255, 255, 255, 0.08);
+}
+
+/* ===== Element: admin-list-details__section-icon ===== */
+::deep .admin-list-details__section-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        135deg,
+        rgba(124, 58, 237, 0.16),
+        rgba(34, 197, 94, 0.12)
+    );
+    border: 0.094rem solid rgba(124, 58, 237, 0.3);
+    border-radius: var(--admin-list-details-radius-md);
+    box-shadow:
+        0 0.375rem 1rem rgba(124, 58, 237, 0.22),
+        inset 0 0.0625rem 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Element: admin-list-details__section-title ===== */
+::deep .admin-list-details__section-title {
+    font-weight: 700;
+    letter-spacing: 0.019rem;
+}
+
+/* ===== Element: admin-list-details__field-row ===== */
+::deep .admin-list-details__field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
+    gap: 1.125rem;
+    margin-bottom: var(--isl-space-4);
+}
+
+::deep .admin-list-details__field-row:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== Element: admin-list-details__field-value ===== */
+::deep .admin-list-details__field-value {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+/* ===== Element: admin-list-details__field-label ===== */
+::deep .admin-list-details__field-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    color: var(--mud-palette-text-secondary);
+    opacity: 0.85;
+}
+
+/* ===== Element: admin-list-details__field-text ===== */
+::deep .admin-list-details__field-text {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+/* ===== Element: admin-list-details__not-provided ===== */
+::deep .admin-list-details__not-provided {
+    font-style: italic;
+    opacity: 0.65;
+    font-size: 0.95rem;
+}
+
+/* ===== Element: admin-list-details__footer ===== */
+::deep .admin-list-details__footer {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.875rem;
+    padding: var(--isl-space-6);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--admin-list-details-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-top: 1.75rem;
+}
+
+/* ===== Element: admin-list-details__error ===== */
+::deep .admin-list-details__error {
+    border-radius: var(--admin-list-details-radius-xl);
+    padding: 3rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.875rem;
+    background:
+        radial-gradient(
+            50rem 18.75rem at 50% 20%,
+            rgba(239, 68, 68, 0.18),
+            transparent 55%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.04),
+            rgba(255, 255, 255, 0.02)
+        );
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    box-shadow: 0 1.125rem 2.8125rem rgba(239, 68, 68, 0.16);
+}
+
+/* ===== Responsive: Mobile Small (480px) ===== */
+@media (max-width: 30em) {
+    ::deep .admin-list-details {
+        padding: var(--isl-space-4);
+    }
+
+    ::deep .admin-list-details__hero {
+        padding: var(--isl-space-5);
+    }
+
+    ::deep .admin-list-details__hero-title {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    ::deep .admin-list-details__hero-badge {
+        width: var(--isl-space-16);
+        height: var(--isl-space-16);
+        min-width: var(--isl-space-16);
+    }
+
+    ::deep .admin-list-details__panel {
+        padding: 1.125rem;
+    }
+
+    ::deep .admin-list-details__field-row {
+        grid-template-columns: 1fr;
+        gap: var(--isl-space-4);
+    }
+
+    ::deep .admin-list-details__footer {
+        padding: 1.125rem;
+    }
+}
+
+/* ===== Responsive: Mobile (600px) ===== */
+@media (max-width: 37.5em) {
+    ::deep .admin-list-details__field-row {
+        grid-template-columns: 1fr;
+    }
+
+    ::deep .admin-list-details__section-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ===== Responsive: Tablet (768px) ===== */
+@media (max-width: 48em) {
+    ::deep .admin-list-details {
+        padding: 1.125rem;
+    }
+
+    ::deep .admin-list-details__hero {
+        padding: var(--isl-space-6);
+    }
+}

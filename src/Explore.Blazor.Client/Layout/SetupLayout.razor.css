@@ -1,0 +1,50 @@
+/* ABOUTME: Removes default Mud layout spacing and positions setup-level controls. */
+/* ABOUTME: Keeps theme and language actions responsive, focus-visible, and below modal layers. */
+
+.setup-layout-root {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: clip;
+    position: relative;
+}
+
+.setup-layout-root__switchers {
+    display: block;
+    position: fixed;
+    inset-block-start: var(--isl-space-5, 1.25rem);
+    inset-inline-end: var(--isl-space-5, 1.25rem);
+    z-index: var(--mud-zindex-appbar, 1100);
+}
+
+::deep .mud-layout {
+    padding: 0;
+    margin: 0;
+}
+
+::deep .mud-main-content {
+    padding: 0;
+    margin: 0;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+.setup-layout-root ::deep :focus-visible {
+    outline: var(--isl-focus-ring-width, 2px) solid var(--mud-palette-primary);
+    outline-offset: var(--isl-focus-ring-offset, 2px);
+}
+
+@media (max-width: 48rem) {
+    .setup-layout-root__switchers {
+        display: flex;
+        position: static;
+        justify-content: flex-end;
+        padding-block-start: max(var(--isl-space-3, 0.75rem), env(safe-area-inset-top, 0px));
+        padding-inline-end: max(var(--isl-space-3, 0.75rem), env(safe-area-inset-right, 0px));
+        padding-inline-start: var(--isl-space-3, 0.75rem);
+    }
+}

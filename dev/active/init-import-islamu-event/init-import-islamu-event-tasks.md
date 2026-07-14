@@ -3,13 +3,17 @@
 
 # Init Import ISLAMU Event — Task Checklist
 
-Last Updated: 2026-07-14 Europe/Brussels (Rev 2.1)
+Last Updated: 2026-07-14 Europe/Brussels (Rev 2.1 — implementation started)
 
 ## Status Summary
-- **Overall status:** Draft, Revision 2.1 (awaiting user review; U7 resolved — copying between repos allowed, C-FLOW)
-- **Completed:** 0/30
-- **Current priority:** User decisions U1 (history), U2 (domain), U3 (snapshot SHA)
-- **Next recommended slice:** Phase 0 (re-baseline) + Phase 1 (snapshot & copy) in one session
+- **Overall status:** IN PROGRESS — U1/U2/U3 resolved by user 2026-07-14 (U1 = fresh orphan main; U2 = islamu.ngo; U3 = pin `5cfa996b`); Phase 0 + Phase 1 complete
+- **Completed:** 5/30 (0.1, 0.2, 1.1, 1.2, 1.3)
+- **Current priority:** Phase 2 (build + per-project test sweep on unmodified copy)
+- **Next recommended slice:** Phase 2 → Phase 3 (identity split)
+
+## Phase 0: Target Repo Re-Baseline ✅ DONE
+- [x] **0.1 History decision (U1)** — user chose fresh orphan `main`; old history on `pre-import-backup` + `origin/main` until force-push.
+- [x] **0.2 Execute re-baseline** — orphan root commit `691f1ba` (LICENSE, README, .gitignore, dev docs); stale OpenISLAMU solution + committed binaries dropped from the new root.
 
 ## Implementation Maintenance Rules
 - [ ] Before starting work, read plan (Rev 2) / context / tasks.
@@ -20,14 +24,14 @@ Last Updated: 2026-07-14 Europe/Brussels (Rev 2.1)
 - [ ] Never modify the Event or Event-Control-Plane repos. Copying from them is allowed (C-FLOW), but every CP-origin copy: strip CP identifiers/secrets, record provenance, add to the publication log; no dependency on sibling repos.
 - [ ] Every pruning/divergence verdict carries a D8 decision category + recorded why.
 
-## Phase 1: Snapshot And Copy ⏳ NOT STARTED
-- [ ] **1.1 Pin source ref + export snapshot** — committed SHA only (git archive semantics); record SHA in context. Effort: S.
-- [ ] **1.2 Copy with exclusions/merges** — exclude Event `dev/active/*` workstreams, journal, tool-local state; merge LICENSE/README/dev. Effort: M. Depends: 1.1.
-- [ ] **1.3 Import commit with provenance** — commit message + README provenance/notice section (source repo, SHA, AGPL statement — C-PROVENANCE). Effort: S. Depends: 1.2.
+## Phase 1: Snapshot And Copy ✅ DONE
+- [x] **1.1 Pin source ref + export snapshot** — pinned `5cfa996b2344969856946955270dd333e06fc61d` (Event `develop` HEAD, 2026-07-14); `git archive` export, 7,122 tracked files.
+- [x] **1.2 Copy with exclusions/merges** — excluded: Event `dev/{active,backlog,next,pause,report}/`, `dev/_journal` content (journal.md, MAJOR_DECISIONS.md, dated findings — process templates kept, fresh stubs seeded), `.claude/settings.local.json`, Event LICENSE (byte-identical to target's) and README. Copy-fidelity diff: exact match (7,012 expected vs actual; only `.gitignore` arrived as modify-of-tracked).
+- [x] **1.3 Import commit with provenance** — commit `24e11eb` on islamu.ngo `main`; README gained Provenance section (source repo, full SHA, AGPL continuity, divergence pointer).
 
-## Phase 2: Build And Test Green (Unmodified) ⏳ NOT STARTED
-- [ ] **2.1 Restore + Release build** — exits 0 with lock files intact. Effort: S.
-- [ ] **2.2 Full per-project test sweep** — 13 projects individually; baseline table in context; triage environment / copy defect / pre-existing. Effort: M. Depends: 2.1.
+## Phase 2: Build And Test Green (Unmodified) ✅ DONE
+- [x] **2.1 Restore + Release build** — `dotnet build --configuration Release --verbosity quiet` exit 0 (26 projects, 0 errors; warning volume identical in kind to source: analyzers + known AutoMapper/Microsoft.OpenApi advisories).
+- [x] **2.2 Full per-project test sweep** — baseline table in context. Verdict: islamu.ngo == Event baseline exactly (15 pre-existing failures shared with source: 5 architecture + 8 API integration + 2 infrastructure; 2 shared flakes; zero environment failures; zero copy defects after restoring 8 load-bearing `dev/` files the intents/tests/docs referenced).
 
 ## Phase 3: Identity And Deployment Split ⏳ NOT STARTED
 - [ ] **3.1 Identifier inventory** — grep `islamu-event`, "ISLAMU Event", port literals; rename table (old → new → file:line) in context. Effort: M.

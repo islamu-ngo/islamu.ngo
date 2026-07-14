@@ -12,17 +12,22 @@ Last Updated: 2026-07-14 Europe/Brussels
 - 2026-07-14: **Analyzed the private Event-Control-Plane repo and its `dev/report/EVENT_REFERENCE_ALIGNMENT_REPORT.md` (3,009 lines); produced plan Revision 2 (deep update).** Key intake: config-driven Keycloak topology (3 options), dev-fixture realm vs additive production provisioner job, lean non-self-hostable production compose, InteractiveServer-only precedent, decision-category divergence governance.
 - 2026-07-14: **Revision 2.1 — U7 resolved by owner:** full copyright across all three repos; copying allowed in any direction. C-BOUNDARY → **C-FLOW** (per-file deliberate-publication + provenance log + no runtime coupling). Task 4.2 now adapts CP's proven `provision-control-plane-client.sh` directly (effort L→M).
 
+- 2026-07-14 (implementation session): **U1/U2/U3 resolved by user** — U1 = fresh orphan `main`; U2 = islamu.ngo branding; U3 = pin `5cfa996b2344969856946955270dd333e06fc61d` (Event `develop` HEAD; the in-flight webhook migration rework stays uncommitted in Event and is NOT in the snapshot).
+- 2026-07-14: **Phase 0 complete** — islamu.ngo `main` re-rooted as orphan (`691f1ba`); old history reachable via `pre-import-backup` and `origin/main` (force-push to origin still pending, user action).
+- 2026-07-14: **Phase 1 complete** — snapshot exported via `git archive`, copied with exclusions (Event dev workstream state, journal content, `.claude/settings.local.json`; LICENSE byte-identical so target's kept; target README kept + Provenance section added). Copy fidelity verified by file-list diff (exact). Fresh `dev/_journal/journal.md` + `MAJOR_DECISIONS.md` stubs seeded. Import commit `24e11eb` (7,020 tracked files).
+
+- 2026-07-14: **Phase 2 complete** — Release build exit 0; full per-project sweep done; baseline == source repo exactly (see Validation Baseline table). Copy-defect fix: 8 load-bearing `dev/` files restored.
+
 ### 🟡 IN PROGRESS
-- Awaiting user review of plan Rev 2.1 (decisions U1-U3 remain).
+- Nothing in flight; next slice is Phase 3.
 
 ### ⏭️ NEXT
-1. User answers U1 (history), U2 (domain), U3 (snapshot SHA).
-2. First implementation slice: Phase 0 + Phase 1.
+1. Phase 3: identifier inventory (3.1) + deployment renames (3.2) + doc patches (3.3); dual-stack boot acceptance.
+2. Phase 4 (Keycloak topology, D5 v2) — read plan §17 and R11 before touching the provisioner.
 3. Update this file after each slice.
 
 ### ⚠️ BLOCKERS
-- U1: bloated history vs fresh orphan `main` (recommendation: orphan).
-- U3: Event tree dirty; pin a committed SHA (currently `b1fadaa9` on `develop`) or wait for the webhook-redesign commit.
+- None. (Force-push of rewritten `main` to origin is a pending user action, not a work blocker.)
 
 ## Quick Resume
 1. Read `init-import-islamu-event-plan.md` (**Revision 2** — note the revision banner).
@@ -74,11 +79,30 @@ Last Updated: 2026-07-14 Europe/Brussels
 
 ## Validation Baseline
 
-Filled during Task 2.2 — per-project pass/fail for the 13 copied test projects. Commands:
+Filled 2026-07-14 during Task 2.2 — unmodified copy at `5cfa996b`. Commands:
 ```bash
-dotnet build --configuration Release --verbosity quiet
+dotnet build --configuration Release --verbosity quiet   # exit 0, 26 projects, 0 errors
 dotnet test --project tests/<Project>/<Project>.csproj --configuration Release --verbosity quiet
 ```
+
+| Project | Total | Failed | Verdict |
+|---|---|---|---|
+| Event.Application.UnitTests | 2243 | 0 | ✅ green |
+| Event.Domain.UnitTests | 336 | 0 | ✅ green |
+| Event.Architecture.Tests | 275 | 5 | **Pre-existing** — identical 5 fail in Event repo: `Commands_ShouldResideIn_CommandsNamespace`, `CommandHandlers_ShouldResideIn_CommandsNamespace`, `Handlers_ShouldBePublic`, `DTOs_ShouldEndWith_Dto`, `AllLinkPoliciesHaveExplicitPermissionActions` (WebhookConsumerLinkPolicy) — in-flight webhook-redesign fallout |
+| Explore.Secrets.UnitTests | 204 | 0 | ✅ green |
+| Explore.Blazor.Client.Tests | 1639 | 0 | ✅ green (1 flake on first run, green on rerun) |
+| Explore.Diagnostic.UnitTests | 35 | 0 | ✅ green |
+| Event.Persistence.IntegrationTests | 333 | 0 | ✅ green (Testcontainers, Docker 29.6.1) |
+| Event.API.IntegrationTests | 1769 | 8 | **Pre-existing** — same 8 fail in Event repo (`Public_Get_Endpoints_ReturnOk`, `InstanceAdmin_GetControlPlaneTenantListAndDetail…`, `MissingCerbosEndpoint…`, `AllowAllStub…`, 2× session-registration capacity, `RegularUser…(islamuevent_instance_setting)`, `Governance_InstanceSettings_ResolverConfig…`); plus 1 shared flake (`MissingKeycloakAuthority…`) |
+| Explore.Blazor.IntegrationTests | 241 | 0 | ✅ green |
+| Explore.Infrastructure.Tests | 794 | 2 | **Pre-existing** — same 2 `ManagedProfile_*` expiry-probe tests fail in Event repo (Event totals 812: its dirty tree has extra uncommitted webhook tests) |
+| Explore.Blazor.Client.E2ETests | — | — | Skipped by policy (requires running Aspire AppHost) |
+| Event.Benchmarks | — | — | Not a test suite |
+
+**Triage summary:** zero environment failures, zero copy defects (after the 8-file dev restoration below), 15 pre-existing failures identical to source. islamu.ngo == Event baseline exactly.
+
+**Copy-defect fix (2026-07-14):** first architecture run had 4 extra failures because excluded `dev/` files were load-bearing (intents.yaml `must_read_docs`, `ApiConventionTests` reading `authorization-policy-matrix.md`, skill link to `dev/active/README.md`, `docs/BENCHMARKS.md` source anchor). Restored exactly 8 files from the snapshot: `dev/active/README.md`, `dev/active/ai-context-disclosure-policy/{field-classification-matrix,ai-context-disclosure-policy-plan}.md`, `dev/active/webhook-delivery-redesign/*-{context,plan,tasks}.md`, `dev/active/backend-api-health-refactor/authorization-policy-matrix.md`, `dev/pause/performance-optimization/performance-optimization-context.md`. Rationale: the platform arrived mid-webhook-redesign, so those docs are truthful context; restoring beats editing the copied contract files.
 Phase 4 adds: provisioner double-run idempotence; fail-closed-on-missing-realm; Event-clients-untouched realm diff; audience negative test. Phase 9 adds: `docker compose -f compose.production.yaml config`.
 
 ## Current Known Risks / Unknowns
@@ -89,7 +113,14 @@ Phase 4 adds: provisioner double-run idempotence; fail-closed-on-missing-realm; 
 
 ## Handoff Notes
 
-### Handoff — 2026-07-14 Europe/Brussels (Rev 2.1)
+### Handoff — 2026-07-14 Europe/Brussels (Phases 0–2 delivered)
+- **Current state:** Phases 0, 1, 2 complete on islamu.ngo `main` (orphan root `691f1ba`; import commit `24e11eb` at source SHA `5cfa996b2344969856946955270dd333e06fc61d`; Phase 2 fix/docs commit follows it). Build green; test baseline == source exactly (15 shared pre-existing failures, all webhook-redesign/in-flight fallout — do NOT fix them here; they resolve upstream in Event).
+- **Next action:** Phase 3 (identity/deployment split). Start with Task 3.1 identifier inventory: grep `islamu-event`, "ISLAMU Event", port literals; build rename table old → new → file:line in this file.
+- **Blockers:** none. Pending user actions: force-push rewritten `main` to origin (U1 consequence); commit the in-flight webhook redesign in Event (islamu.ngo re-syncs later if wanted).
+- **Validation:** see Validation Baseline table (filled).
+- **Risks:** R4 (volume collision) is the sharpest edge of Phase 3 — Event dev stack and islamu.ngo dev stack must never share volumes/ports; `AppHost.cs:290` volume name and docker-compose project name are the first renames to verify.
+
+### Handoff — 2026-07-14 Europe/Brussels (Rev 2.1) *(superseded)*
 - **Current state:** Plan Revision 2.1 complete (CP analysis + owner's copyright clarification integrated); no implementation started; islamu.ngo tree untouched except these dev docs.
 - **Next action:** user answers U1/U2/U3 → execute Phase 0.
 - **Blockers:** U1, U3.

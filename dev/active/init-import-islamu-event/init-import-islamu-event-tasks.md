@@ -33,11 +33,10 @@ Last Updated: 2026-07-14 Europe/Brussels (Rev 2.1 — implementation started)
 - [x] **2.1 Restore + Release build** — `dotnet build --configuration Release --verbosity quiet` exit 0 (26 projects, 0 errors; warning volume identical in kind to source: analyzers + known AutoMapper/Microsoft.OpenApi advisories).
 - [x] **2.2 Full per-project test sweep** — baseline table in context. Verdict: islamu.ngo == Event baseline exactly (15 pre-existing failures shared with source: 5 architecture + 8 API integration + 2 infrastructure; 2 shared flakes; zero environment failures; zero copy defects after restoring 8 load-bearing `dev/` files the intents/tests/docs referenced).
 
-## Phase 3: Identity And Deployment Split ⏳ NOT STARTED
-- [ ] **3.1 Identifier inventory** — grep `islamu-event`, "ISLAMU Event", port literals; rename table (old → new → file:line) in context. Effort: M.
-- [ ] **3.2 Apply deployment renames** — services, volumes (incl. `AppHost.cs:290`), compose project, ports, DB `islamu_ngo`. NO C# namespace changes.
-  - Acceptance: `docker compose config` valid; dual-stack boot, zero collisions. Effort: L. Depends: 3.1.
-- [ ] **3.3 Patch identity-touched docs** — CONFIGURATION/SELF_HOSTING/OPERATIONS sections; docs-link tests green. Effort: M. Depends: 3.2.
+## Phase 3: Identity And Deployment Split 🟡 MOSTLY DONE (dual-stack boot pending)
+- [x] **3.1 Identifier inventory** — rename table in context (§Phase 3.1 Identifier Inventory). Keycloak client ids explicitly deferred to Phase 4; product identifiers (MCP URI scheme `islamu-event://`, OpenAPI doc name, `islamu-event-control-plane` provider key, `islamu-event` Keycloak contract name, nswag schema path) deferred to Phase 6/8.
+- [x] **3.2 Apply deployment renames** — 15 volumes → `islamu-ngo-*-data`; DB → `islamu-ngo-db`/`islamu_ngo`; compose project `islamu-ngo-platform`; services `islamu-ngo-api`/`islamu-ngo-ui`; DataProtection app `islamu-ngo` (+keyring); BFF cookie `__Host-islamu-ngo-web`; all dev host ports +10000 (AppHost literals, launchSettings incl. OTLP/resource-service, compose defaults, `.env.example`, browser-facing `*.localhost` URLs); API-base fallbacks 17039; Cerbos default 13593. `docker compose config` valid ✅; Release build exit 0 ✅; Diagnostic 35/35 ✅ (doctor fixture + remediation assertion updated); Blazor.Integration 241/241 ✅; Infrastructure at pre-existing baseline ✅; Architecture same 5 pre-existing ✅. **Dual-stack boot NOT yet run** (attended step: boot Event + islamu.ngo Aspire stacks side by side, verify zero port/volume collisions).
+- [x] **3.3 Patch identity-touched docs** — OPERATIONS/SELF_HOSTING service+volume+DB names; port shift applied across all `docs/*.md` `localhost:` references (container-internal refs like `mailpit:1025`, `keycloak:8080` untouched); docs-link tests green (Architecture suite).
 
 ## Phase 4: Keycloak Topology Integration (D5 v2) ⏳ NOT STARTED
 - [ ] **4.1 Dev-fixture realm** — extend islamu.ngo's copied realm-export.json with `islamu-ngo-blazor`/`islamu-ngo-api`/audience mapper + dev users; mark as dev-only fixture (production never imports); AppHost keeps importing locally. NO Event-repo edits.

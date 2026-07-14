@@ -21,8 +21,8 @@ This guide covers running ISLAMU Event outside the Aspire developer loop. The re
 | Keycloak DB | Yes | `keycloak-db` | Keycloak PostgreSQL database | internal |
 | Keycloak | Yes | `keycloak` | OIDC identity provider and realm import | `8080:8080` |
 | Keycloak Init | Yes | `keycloak-init` | One-shot client-secret synchronization after realm import | internal |
-| API | Yes | `islamu-event-api` | REST API, migrations, health, metrics, local storage volume | `7039:8080` |
-| Blazor BFF | Yes | `islamu-event-ui` | Server host, embedded admin-host shell, and YARP proxy to API | `7002:8080` |
+| API | Yes | `islamu-ngo-api` | REST API, migrations, health, metrics, local storage volume | `7039:8080` |
+| Blazor BFF | Yes | `islamu-ngo-ui` | Server host, embedded admin-host shell, and YARP proxy to API | `7002:8080` |
 | MinIO | Optional | `minio`, `minio-init` | S3-compatible storage profile when an instance selects optional S3 mode | `9005:9000`, `9006:9001` |
 | Cerbos | Optional | `cerbos` | External authorization PDP profile | `3592:3592`, `3593:3593` |
 | Svix | Optional | `svix-db`, `svix` | Outgoing webhook provider profile | `8071:8071` |
@@ -35,13 +35,13 @@ Profiles:
 - `storage` starts MinIO and creates the configured bucket for optional S3-compatible mode. It is not required for local-first storage.
 - `authz` starts Cerbos for deployments that select Cerbos authorization. It mounts `cerbos/config/.cerbos.yaml`, `cerbos/init/cerbos-schema.sql`, and `cerbos/policies/` from this repository so local infrastructure always uses the checked-in policy package. The Cerbos PostgreSQL profile uses the Postgres 18 parent data mount (`/var/lib/postgresql`) so local upgrades do not fail on the legacy `/var/lib/postgresql/data` mount boundary.
 - `webhooks` starts local Svix and its PostgreSQL database for outgoing webhook-provider testing.
-- `moderation` starts local Coop for moderation review-queue testing with an isolated PostgreSQL database. `COOP_UI_URL` defaults to `http://localhost:8082`, matching the local Coop port; the local profile also supplies Coop's `DATABASE_*`, `SESSION_SECRET`, `OTEL_SERVICE_NAME`, placeholder Scylla client settings, and no-op warehouse/analytics adapter defaults so the provider image can boot without ClickHouse or production secrets. Keep `REPORTING_MODE=LocalOnly` unless provider endpoints are intentionally enabled.
+- `moderation` starts local Coop for moderation review-queue testing with an isolated PostgreSQL database. `COOP_UI_URL` defaults to `http://localhost:18082`, matching the local Coop port; the local profile also supplies Coop's `DATABASE_*`, `SESSION_SECRET`, `OTEL_SERVICE_NAME`, placeholder Scylla client settings, and no-op warehouse/analytics adapter defaults so the provider image can boot without ClickHouse or production secrets. Keep `REPORTING_MODE=LocalOnly` unless provider endpoints are intentionally enabled.
 - `osprey` starts `ghcr.io/roostorg/osprey/osprey-coordinator:latest` by default. It exposes coordinator ports, not the app's HTTP-compatible `Reporting:Osprey` facade. Keep `REPORTING_OSPREY_ENABLED=false` unless you provide a compatible HTTP facade or adapter endpoint.
 
 Email dispatch modes:
 
 - **Basic Dispatch Mode is implemented and requires no extra Compose profile.** API + PostgreSQL + configured SMTP are sufficient for registration confirmation email. By default, API-hosted TickerQ schedules `email-dispatch-drain`, which claims `EmailDispatchOutbox` rows from PostgreSQL through the shared drain service and sends through the SMTP abstraction. `EmailDispatchProcessor:Mode=HostedService` is a fallback trigger, not a separate business workflow.
-- The Compose default SMTP target is local Mailpit: API containers use SMTP host `mailpit`, port `1025`, encryption `None`, and from-address `noreply@localhost`. Open the capture UI at `http://localhost:8025`. Replace `MAIL_SMTP_*` values before using a real external SMTP provider.
+- The Compose default SMTP target is local Mailpit: API containers use SMTP host `mailpit`, port `1025`, encryption `None`, and from-address `noreply@localhost`. Open the capture UI at `http://localhost:18025`. Replace `MAIL_SMTP_*` values before using a real external SMTP provider.
 - **RabbitMQ Dispatch Mode is optional transport infrastructure.** The repository now has a local Aspire RabbitMQ resource plus API-side pointer publishing, topology declaration, health checks, manual-ack consumption, and DLQ replay/parking for pointer-only dispatch messages. The production Compose stack still does not require or start RabbitMQ by default. Enabling RabbitMQ outside Aspire requires an operator-provided broker connection string and an explicit `EmailDispatchRabbitMq:Enabled=true` opt-in. RabbitMQ shares the same PostgreSQL `EmailDispatchOutbox` state machine; it is transport only.
 
 ## Start The Stack
@@ -61,7 +61,7 @@ Email dispatch modes:
 2. Start the required stack:
 
    ```bash
-   docker compose up -d postgres redis mailpit keycloak-db keycloak keycloak-init islamu-event-api islamu-event-ui
+   docker compose up -d postgres redis mailpit keycloak-db keycloak keycloak-init islamu-ngo-api islamu-ngo-ui
    ```
 
 3. Add optional MinIO only when S3-compatible storage is selected or tested:
@@ -96,7 +96,7 @@ Email dispatch modes:
    docker compose --profile osprey up -d
    ```
 
-8. Open Blazor at `http://localhost:7002` and API at `http://localhost:7039`.
+8. Open Blazor at `http://localhost:17002` and API at `http://localhost:17039`.
 
 ## Required Environment Keys
 
@@ -197,7 +197,7 @@ Enable destructive cleanup only after reviewing dry-run output, confirming backu
 | `USE_COMMERCIAL_LUCKYPENNY`, `LUCKYPENNY_LICENSE_KEY`, `AUTOMAPPER_COMMERCIAL_VERSION`, `MEDIATR_COMMERCIAL_VERSION` | API | Optional commercial package/license controls. Keep disabled unless intentionally using commercial AutoMapper/MediatR builds. |
 | `API_ENDPOINT` | Blazor | API base URL fallback for BFF proxying outside Aspire. |
 
-`docker-compose.yml` sets Blazor `API_ENDPOINT` with a default of `http://islamu-event-api:8080/`, matching the Compose API service name. Operators only need to override `API_ENDPOINT` when routing the BFF to a different API host.
+`docker-compose.yml` sets Blazor `API_ENDPOINT` with a default of `http://islamu-ngo-api:8080/`, matching the Compose API service name. Operators only need to override `API_ENDPOINT` when routing the BFF to a different API host.
 
 ### Multi-Tenant Hostnames And Reverse Proxy
 
@@ -205,9 +205,9 @@ Multi-tenant deployments use three host classes in front of the Blazor BFF:
 
 | Host | Example | Proxy target | Notes |
 |---|---|---|---|
-| Public platform host | `events.example.org` | `islamu-event-ui:8080` | Configure as the public `PublicBaseUrl` / canonical URL. |
-| Wildcard tenant host | `*.events.example.org` | `islamu-event-ui:8080` | Used for tenant subdomain resolution. Keep it on the same Blazor BFF entry point. |
-| Dedicated admin host | `admin.example.org` | `islamu-event-ui:8080` | Configure the exact host or origin in `Bff:AdminHosts`; optional `Bff:AdminHostAllowedIpRanges` can restrict source networks. |
+| Public platform host | `events.example.org` | `islamu-ngo-ui:8080` | Configure as the public `PublicBaseUrl` / canonical URL. |
+| Wildcard tenant host | `*.events.example.org` | `islamu-ngo-ui:8080` | Used for tenant subdomain resolution. Keep it on the same Blazor BFF entry point. |
+| Dedicated admin host | `admin.example.org` | `islamu-ngo-ui:8080` | Configure the exact host or origin in `Bff:AdminHosts`; optional `Bff:AdminHostAllowedIpRanges` can restrict source networks. |
 
 The reverse proxy must preserve the original host and scheme with trusted forwarded headers:
 
@@ -279,7 +279,7 @@ If `SETUP_SECRET` is unset and setup mode is active, the API generates a 32-char
 
 The validation endpoint is `POST /api/InstanceOnboarding/validate-secret`. The setup-secret rate-limit policy allows only a small number of attempts per minute; repeated failures should be treated as operator or credential errors, not retried blindly.
 
-If the generated secret expires before launch, restart `islamu-event-api` and use the newly logged secret.
+If the generated secret expires before launch, restart `islamu-ngo-api` and use the newly logged secret.
 
 Refresh and retry actions always re-fetch authoritative server state; do not resume from a stale browser step. Completion is idempotent and server-guarded, so a retry after a lost response must return the completed state rather than repeat destructive provisioning. Once launch completes, the pre-authentication setup gate locks and further setup-secret attempts are rejected. Use authenticated instance/tenant administration for later changes.
 
@@ -368,7 +368,7 @@ Do not reverse this order when starting from scratch; both contexts are part of 
 
 ## Reverse Proxy
 
-Place TLS termination in front of `islamu-event-ui` and route browser traffic to port `8080` inside the container. The Blazor BFF proxies API calls; browsers should not need direct API access.
+Place TLS termination in front of `islamu-ngo-ui` and route browser traffic to port `8080` inside the container. The Blazor BFF proxies API calls; browsers should not need direct API access.
 
 Minimum proxy requirements:
 

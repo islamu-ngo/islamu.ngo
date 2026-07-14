@@ -12,8 +12,8 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
         "postgres:",
         "redis:",
         "keycloak:",
-        "islamu-event-api:",
-        "islamu-event-ui:",
+        "islamu-ngo-api:",
+        "islamu-ngo-ui:",
     ];
 
     public string Code => "compose.topology";
@@ -53,9 +53,9 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
                 Code,
                 Category,
                 "Compose default API_ENDPOINT points at a stale API service name.",
-                "Set API_ENDPOINT explicitly or change the default to http://islamu-event-api:8080/ before relying on Compose-only BFF routing.",
+                "Set API_ENDPOINT explicitly or change the default to http://islamu-ngo-api:8080/ before relying on Compose-only BFF routing.",
                 "docs/SELF_HOSTING.md",
-                "API_ENDPOINT default uses a stale service name; service is islamu-event-api."));
+                "API_ENDPOINT default uses a stale service name; service is islamu-ngo-api."));
         }
 
         return Task.FromResult(DoctorCheckResult.Pass(

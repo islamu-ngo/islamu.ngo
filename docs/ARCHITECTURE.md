@@ -150,10 +150,10 @@ See [OUTBOX_PATTERN.md](OUTBOX_PATTERN.md) for full entity model, configuration,
 These background services and scheduler triggers use optimistic locking or durable claim semantics for multi-worker safety and are availability-gated where dependent services are required.
 
 ## Local Runtime Endpoints
-- API dev: `https://localhost:7039`
-- Blazor dev: `https://localhost:7177`
-- Docker API: `http://localhost:7039`
-- Docker Blazor: `http://localhost:7002`
+- API dev: `https://localhost:17039`
+- Blazor dev: `https://localhost:17177`
+- Docker API: `http://localhost:17039`
+- Docker Blazor: `http://localhost:17002`
 
 ## Related
 - [CUSTOM_PROPERTIES.md](CUSTOM_PROPERTIES.md)

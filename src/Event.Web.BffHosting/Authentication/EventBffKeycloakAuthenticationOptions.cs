@@ -143,7 +143,7 @@ public sealed class EventBffKeycloakAuthenticationOptions
 
         return profile == EventBffHostProfile.ControlPlane
             ? "__Host-event-control-plane-bff"
-            : "__Host-islamu-event-web";
+            : "__Host-islamu-ngo-web";
     }
 
     private static string? First(IConfiguration configuration, params string[] keys)

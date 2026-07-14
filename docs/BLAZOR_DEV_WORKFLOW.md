@@ -26,7 +26,7 @@ Start-Process -FilePath "dotnet" -ArgumentList "run","--project","Explore.AppHos
 
 # 4. Wait for the site to be ready (~15-20 seconds)
 Start-Sleep -Seconds 20
-Invoke-WebRequest -Uri "https://localhost:7177" -UseBasicParsing -SkipCertificateCheck -TimeoutSec 10
+Invoke-WebRequest -Uri "https://localhost:17177" -UseBasicParsing -SkipCertificateCheck -TimeoutSec 10
 
 # 5. Inspect (see §2 below)
 ```
@@ -50,7 +50,7 @@ Alternative: the Chrome-DevTools MCP for deeper frontend inspection (see [`AGENT
 
 | Concern | What to Know |
 |---|---|
-| App URL | `https://localhost:7177` |
+| App URL | `https://localhost:17177` |
 | Process management | Aspire AppHost spawns child `dotnet` processes — stop ALL `dotnet` processes before rebuild, not just the AppHost |
 | Enhanced navigation | Blazor enhanced navigation interferes with `page.goto()` — use `page.reload()` instead |
 | Scoped CSS | Changes to `*.razor.css` require a full rebuild (not hot-reload) |

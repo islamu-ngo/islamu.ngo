@@ -16,13 +16,13 @@ For task-first integration guidance, use [API_COOKBOOK.md](API_COOKBOOK.md). Gen
 
 ## Runtime Endpoints
 ### Development And Testing
-- API: `https://localhost:7039`
-- Swagger UI: `https://localhost:7039/swagger`
+- API: `https://localhost:17039`
+- Swagger UI: `https://localhost:17039/swagger`
 - Scalar API reference: mapped by `MapScalarApiReference()` in Development and Testing.
-- OpenAPI document: `https://localhost:7039/openapi/islamu-event.json`
+- OpenAPI document: `https://localhost:17039/openapi/islamu-event.json`
 
 ### Docker Compose
-- API: `http://localhost:7039`
+- API: `http://localhost:17039`
 - Compose runs the API with `ASPNETCORE_ENVIRONMENT=Production`, so Swagger UI, Scalar, and `/openapi/islamu-event.json` are not exposed there unless the environment is intentionally changed.
 
 ### Operational Endpoints

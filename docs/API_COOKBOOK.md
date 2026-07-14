@@ -18,7 +18,7 @@ This cookbook explains how to call the API safely without duplicating every endp
 | Environment | Reference endpoint |
 |---|---|
 | Development/Testing | OpenAPI JSON at `/openapi/event-api.json`, Swagger UI at `/swagger`, and the Scalar API reference mapped by `MapScalarApiReference()` |
-| Docker Compose | `http://localhost:7039` for the API base URL; expose the reference endpoints through the same API service when enabled for the environment. |
+| Docker Compose | `http://localhost:17039` for the API base URL; expose the reference endpoints through the same API service when enabled for the environment. |
 
 Generated reference is the endpoint source of truth. This cookbook focuses on cross-cutting calling rules.
 

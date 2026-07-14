@@ -55,18 +55,18 @@ if (runMode.UsesLocalData())
 {
     database = builder.AddPostgres("postgres")
         .WithImageTag("18-alpine")
-        .WithDataVolume("islamu-event-postgres-data")
-        .AddDatabase("islamu-event-db", "islamu_event_db");
+        .WithDataVolume("islamu-ngo-postgres-data")
+        .AddDatabase("islamu-ngo-db", "islamu_ngo");
 
     cache = builder.AddRedis("cache")
-        .WithDataVolume("islamu-event-redis-data");
+        .WithDataVolume("islamu-ngo-redis-data");
 }
 
 if (runMode is AspireRunMode.FullLocal or AspireRunMode.DefaultLocal)
 {
     messaging = builder.AddRabbitMQ("messaging")
         .WithManagementPlugin()
-        .WithDataVolume("islamu-event-rabbitmq-data");
+        .WithDataVolume("islamu-ngo-rabbitmq-data");
 
     localPlatformResources = AddLocalPlatform(
         builder,
@@ -110,7 +110,7 @@ var exploreAPI = WithProfileSecretMode(
         runMode,
         builder.Configuration)
     .WithEnvironment("HttpsRedirection__Enabled", "false")
-    .WithEnvironment("CONTROL_PLANE_PUBLIC_ORIGIN", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:7002"))
+    .WithEnvironment("CONTROL_PLANE_PUBLIC_ORIGIN", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:17002"))
     .WithEnvironment("Cerbos__PolicyPackagePath", cerbosPolicyPackagePath)
     .WithEnvironment("Storage__Local__RootPath", localStorageRootPath)
     .WithEnvironment("Storage__Local__CreateRootIfMissing", "true")
@@ -191,7 +191,7 @@ var exploreBlazor = WithProfileSecretMode(
         builder.Configuration)
     .WithReference(exploreAPI)
     .WaitFor(exploreAPI)
-    .WithEnvironment("Bff__AdminHosts__0", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:7002"))
+    .WithEnvironment("Bff__AdminHosts__0", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:17002"))
     .WithEnvironment("Storage__Local__RootPath", localStorageRootPath);
 
 if (migrations is not null)
@@ -251,13 +251,13 @@ static LocalPlatformResources AddLocalPlatform(
     var cerbosPostgresDatabase = configuration["CERBOS_POSTGRES_DB"] ?? "cerbos";
     var crdb = builder.AddContainer("crdb", "cockroachdb/cockroach", "v24.1.1")
         .WithArgs("start-single-node", "--insecure")
-        .WithVolume("islamu-event-crdb-data", "/cockroach/cockroach-data")
+        .WithVolume("islamu-ngo-crdb-data", "/cockroach/cockroach-data")
         .WithEndpoint(
             targetPort: 26257,
-            port: 26257,
+            port: 36257,
             name: "sql",
             protocol: ProtocolType.Tcp)
-        .WithHttpEndpoint(targetPort: 8080, port: 8081, name: "ui");
+        .WithHttpEndpoint(targetPort: 8080, port: 18081, name: "ui");
 
     var keycloak = builder.AddContainer("keycloak", "quay.io/phasetwo/phasetwo-keycloak", "26")
         .WithArgs(
@@ -288,10 +288,10 @@ static LocalPlatformResources AddLocalPlatform(
         .WithEnvironment("KC_HEALTH_ENABLED", "true")
         .WithEnvironment("KC_METRICS_ENABLED", "true")
         .WithEnvironment("KC_LOG_LEVEL", "INFO,io.phasetwo:DEBUG")
-        .WithVolume("islamu-event-keycloak-data", "/opt/keycloak/data")
+        .WithVolume("islamu-ngo-keycloak-data", "/opt/keycloak/data")
         .WithBindMount(keycloakRealmExportPath, "/opt/keycloak/data/import/realm-export.json", isReadOnly: true)
-        .WithHttpEndpoint(targetPort: 8080, port: 8080, name: "http")
-        .WithHttpEndpoint(targetPort: 9000, port: 9000, name: "mgmt")
+        .WithHttpEndpoint(targetPort: 8080, port: 18080, name: "http")
+        .WithHttpEndpoint(targetPort: 9000, port: 19000, name: "mgmt")
         .WithHttpHealthCheck("/auth/health/ready", endpointName: "mgmt")
         .WaitFor(crdb);
 
@@ -321,7 +321,7 @@ static LocalPlatformResources AddLocalPlatform(
         .WithEnvironment("POSTGRES_USER", cerbosPostgresUser)
         .WithEnvironment("POSTGRES_PASSWORD", cerbosPostgresPassword)
         .WithEnvironment("POSTGRES_DB", cerbosPostgresDatabase)
-        .WithVolume("islamu-event-cerbos-data", "/var/lib/postgresql")
+        .WithVolume("islamu-ngo-cerbos-data", "/var/lib/postgresql")
         .WithBindMount(cerbosSchemaPath, "/docker-entrypoint-initdb.d/cerbos-schema.sql", isReadOnly: true);
 
     var cerbos = builder.AddContainer("cerbos", "ghcr.io/cerbos/cerbos", "0.53.0")
@@ -333,10 +333,10 @@ static LocalPlatformResources AddLocalPlatform(
             $"postgres://{cerbosPostgresUser}:{cerbosPostgresPassword}@cerbos-db:5432/{cerbosPostgresDatabase}?search_path=cerbos&sslmode=disable")
         .WithBindMount(cerbosConfigPath, "/config/.cerbos.yaml", isReadOnly: true)
         .WithBindMount(cerbosPolicyPackagePath, "/policies", isReadOnly: true)
-        .WithHttpEndpoint(targetPort: 3592, port: 3592, name: "http")
+        .WithHttpEndpoint(targetPort: 3592, port: 13592, name: "http")
         .WithEndpoint(
             targetPort: 3593,
-            port: 3593,
+            port: 13593,
             name: "grpc",
             protocol: ProtocolType.Tcp)
         .WithHttpHealthCheck("/_cerbos/health", endpointName: "http")
@@ -346,9 +346,9 @@ static LocalPlatformResources AddLocalPlatform(
         .WithArgs("server", "/data", "--console-address", ":9001")
         .WithEnvironment("MINIO_ROOT_USER", configuration["STORAGE_S3_ACCESS_KEY_ID"] ?? "minioadmin")
         .WithEnvironment("MINIO_ROOT_PASSWORD", configuration["STORAGE_S3_SECRET_ACCESS_KEY"] ?? "minioadmin")
-        .WithVolume("islamu-event-minio-data", "/data")
-        .WithHttpEndpoint(targetPort: 9000, port: 9005, name: "api")
-        .WithHttpEndpoint(targetPort: 9001, port: 9006, name: "console")
+        .WithVolume("islamu-ngo-minio-data", "/data")
+        .WithHttpEndpoint(targetPort: 9000, port: 19005, name: "api")
+        .WithHttpEndpoint(targetPort: 9001, port: 19006, name: "console")
         .WithHttpHealthCheck("/minio/health/live", endpointName: "api");
     var minioBootstrap = builder.AddContainer("minio-bootstrap", "minio/mc", "latest")
         .WithEntrypoint("sh")
@@ -361,7 +361,7 @@ static LocalPlatformResources AddLocalPlatform(
         .WithEnvironment("POSTGRES_PASSWORD", configuration["SVIX_DB_PASSWORD"] ?? "postgres")
         .WithEnvironment("POSTGRES_USER", configuration["SVIX_DB_USER"] ?? "postgres")
         .WithEnvironment("POSTGRES_DB", configuration["SVIX_DB_NAME"] ?? "postgres")
-        .WithVolume("islamu-event-svix-postgres-data", "/var/lib/postgresql/data");
+        .WithVolume("islamu-ngo-svix-postgres-data", "/var/lib/postgresql/data");
 
     var svix = builder.AddContainer(
             "svix",
@@ -374,7 +374,7 @@ static LocalPlatformResources AddLocalPlatform(
         .WithEnvironment("SVIX_QUEUE_TYPE", configuration["SVIX_QUEUE_TYPE"] ?? "redis")
         .WithEnvironment("SVIX_CACHE_TYPE", configuration["SVIX_CACHE_TYPE"] ?? "redis")
         .WithEnvironment("SVIX_JWT_SECRET", configuration["SVIX_JWT_SECRET"] ?? "local-dev-svix-jwt-secret-change-me")
-        .WithHttpEndpoint(targetPort: 8071, port: 8071, name: "http")
+        .WithHttpEndpoint(targetPort: 8071, port: 18071, name: "http")
         .WaitFor(svixDb);
 
     if (cache is not null)
@@ -406,13 +406,13 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("POSTGRES_USER", configuration["WEBLATE_POSTGRES_USER"] ?? "weblate")
             .WithEnvironment("POSTGRES_PASSWORD", configuration["WEBLATE_POSTGRES_PASSWORD"] ?? "weblate_password")
             .WithEnvironment("POSTGRES_DB", configuration["WEBLATE_POSTGRES_DB"] ?? "weblate")
-            .WithVolume("islamu-event-weblate-postgres-data", "/var/lib/postgresql");
+            .WithVolume("islamu-ngo-weblate-postgres-data", "/var/lib/postgresql");
 
         var (weblateImage, weblateTag) = ResolveImageAndTag(
             configuration["WEBLATE_IMAGE"] ?? "weblate/weblate:latest",
             configuration["WEBLATE_TAG"] ?? "latest");
         weblate = builder.AddContainer("weblate", weblateImage, weblateTag)
-            .WithEnvironment("WEBLATE_SITE_DOMAIN", configuration["WEBLATE_SITE_DOMAIN"] ?? "localhost:8083")
+            .WithEnvironment("WEBLATE_SITE_DOMAIN", configuration["WEBLATE_SITE_DOMAIN"] ?? "localhost:18083")
             .WithEnvironment("WEBLATE_ADMIN_NAME", configuration["WEBLATE_ADMIN_NAME"] ?? "Admin")
             .WithEnvironment("WEBLATE_ADMIN_EMAIL", configuration["WEBLATE_ADMIN_EMAIL"] ?? "admin@openislamu.org")
             .WithEnvironment("WEBLATE_ADMIN_PASSWORD", configuration["WEBLATE_ADMIN_PASSWORD"] ?? "admin")
@@ -421,8 +421,8 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("POSTGRES_USER", configuration["WEBLATE_POSTGRES_USER"] ?? "weblate")
             .WithEnvironment("POSTGRES_PASSWORD", configuration["WEBLATE_POSTGRES_PASSWORD"] ?? "weblate_password")
             .WithEnvironment("POSTGRES_DB", configuration["WEBLATE_POSTGRES_DB"] ?? "weblate")
-            .WithHttpEndpoint(targetPort: 8080, port: 8083, name: "http")
-            .WithVolume("islamu-event-weblate-data", "/app/data")
+            .WithHttpEndpoint(targetPort: 8080, port: 18083, name: "http")
+            .WithVolume("islamu-ngo-weblate-data", "/app/data")
             .WaitFor(weblateDb);
 
         if (cache is not null)
@@ -440,7 +440,7 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("POSTGRES_USER", configuration["COOP_DATABASE_USER"] ?? "coop")
             .WithEnvironment("POSTGRES_PASSWORD", configuration["COOP_DATABASE_PASSWORD"] ?? "coop_password")
             .WithEnvironment("POSTGRES_DB", configuration["COOP_DATABASE_NAME"] ?? "coop")
-            .WithVolume("islamu-event-coop-postgres-data", "/var/lib/postgresql");
+            .WithVolume("islamu-ngo-coop-postgres-data", "/var/lib/postgresql");
 
         var (coopMigrationsImage, coopMigrationsTag) = ResolveImageAndTag(
             builder.Configuration["COOP_MIGRATIONS_IMAGE"] ?? "ghcr.io/roostorg/coop-migrations",
@@ -475,7 +475,7 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("NODE_ENV", builder.Configuration["COOP_NODE_ENV"] ?? "development")
             .WithEnvironment("OTEL_SERVICE_NAME", builder.Configuration["COOP_OTEL_SERVICE_NAME"] ?? "coop")
             .WithEnvironment("PORT", "8080")
-            .WithEnvironment("UI_URL", builder.Configuration["COOP_UI_URL"] ?? "http://localhost:3001")
+            .WithEnvironment("UI_URL", builder.Configuration["COOP_UI_URL"] ?? "http://localhost:13001")
             .WithEnvironment("SESSION_SECRET", builder.Configuration["COOP_SESSION_SECRET"] ?? "local-dev-coop-session-secret")
             .WithEnvironment("DATABASE_HOST", "coop-postgres")
             .WithEnvironment("DATABASE_READ_ONLY_HOST", "coop-postgres")
@@ -490,7 +490,7 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("SCYLLA_PASSWORD", builder.Configuration["COOP_SCYLLA_PASSWORD"] ?? "cassandra")
             .WithEnvironment("SCYLLA_LOCAL_DATACENTER", builder.Configuration["COOP_SCYLLA_LOCAL_DATACENTER"] ?? "datacenter1")
             .WithEnvironment("SCYLLA_SSL", builder.Configuration["COOP_SCYLLA_SSL"] ?? "false")
-            .WithHttpEndpoint(targetPort: 8080, port: 8082, name: "http")
+            .WithHttpEndpoint(targetPort: 8080, port: 18082, name: "http")
             .WaitFor(coopDb)
             .WaitForCompletion(coopMigrations);
 
@@ -509,7 +509,7 @@ static LocalPlatformResources AddLocalPlatform(
             "latest");
         coopClient = builder.AddContainer("coop-client", coopClientImage, coopClientTag)
             .WithBindMount(coopNginxConfigPath, "/etc/nginx/conf.d/default.conf", isReadOnly: true)
-            .WithHttpEndpoint(targetPort: 80, port: 3001, name: "http")
+            .WithHttpEndpoint(targetPort: 80, port: 13001, name: "http")
             .WaitFor(coop);
 
         pgAdmin = builder.AddContainer("pgadmin", "dpage/pgadmin4", "latest")
@@ -521,8 +521,8 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("PGPASS_FILE", "/pgadmin4/pgpass")
             .WithBindMount(pgAdminServersPath, "/pgadmin4/servers.json", isReadOnly: true)
             .WithBindMount(pgAdminPassFilePath, "/pgadmin4/pgpass", isReadOnly: true)
-            .WithVolume("islamu-event-pgadmin-data", "/var/lib/pgadmin")
-            .WithHttpEndpoint(targetPort: 80, port: 5050, name: "http")
+            .WithVolume("islamu-ngo-pgadmin-data", "/var/lib/pgadmin")
+            .WithHttpEndpoint(targetPort: 80, port: 15050, name: "http")
             .WaitFor(cerbosDb)
             .WaitFor(svixDb)
             .WaitFor(weblateDb)
@@ -567,21 +567,21 @@ static LocalPlatformResources AddLocalPlatform(
             .WithEnvironment("OSPREY_COORDINATOR_BIDI_STREAM_PORT", "19950")
             .WithEnvironment("OSPREY_COORDINATOR_SYNC_ACTION_PORT", "19951")
             .WithEnvironment("POD_IP", "osprey")
-            .WithEndpoint(targetPort: 19950, port: 19950, name: "bidi-stream", protocol: ProtocolType.Tcp)
-            .WithEndpoint(targetPort: 19951, port: 19951, name: "sync-action", protocol: ProtocolType.Tcp)
+            .WithEndpoint(targetPort: 19950, port: 29950, name: "bidi-stream", protocol: ProtocolType.Tcp)
+            .WithEndpoint(targetPort: 19951, port: 29951, name: "sync-action", protocol: ProtocolType.Tcp)
             .WaitForCompletion(ospreyKafkaBootstrap);
 
         prometheus = builder.AddContainer("prometheus", "prom/prometheus", "v3.2.1")
             .WithBindMount(prometheusConfigPath, "/etc/prometheus/prometheus.yaml", isReadOnly: true)
             .WithArgs("--web.enable-otlp-receiver", "--config.file=/etc/prometheus/prometheus.yaml")
-            .WithHttpEndpoint(targetPort: 9090, port: 9090, name: "http")
-            .WithVolume("islamu-event-prometheus-data", "/prometheus");
+            .WithHttpEndpoint(targetPort: 9090, port: 19090, name: "http")
+            .WithVolume("islamu-ngo-prometheus-data", "/prometheus");
 
         grafana = builder.AddContainer("grafana", "grafana/grafana", "latest")
             .WithBindMount(grafanaDashboardPath, "/var/lib/grafana/dashboards", isReadOnly: true)
             .WithEnvironment("PROMETHEUS_ENDPOINT", "http://prometheus:9090")
-            .WithHttpEndpoint(targetPort: 3000, port: 3000, name: "http")
-            .WithVolume("islamu-event-grafana-data", "/var/lib/grafana")
+            .WithHttpEndpoint(targetPort: 3000, port: 13000, name: "http")
+            .WithVolume("islamu-ngo-grafana-data", "/var/lib/grafana")
             .WaitFor(prometheus);
     }
 
@@ -611,13 +611,13 @@ static IResourceBuilder<ContainerResource> AddMailpit(IDistributedApplicationBui
         .WithEnvironment("MP_SMTP_AUTH_ACCEPT_ANY", "1")
         .WithEnvironment("MP_SMTP_AUTH_ALLOW_INSECURE", "1")
         .WithEnvironment("MP_DISABLE_VERSION_CHECK", "true")
-        .WithVolume("islamu-event-mailpit-data", "/data")
+        .WithVolume("islamu-ngo-mailpit-data", "/data")
         .WithEndpoint(
             targetPort: 1025,
-            port: 1025,
+            port: 11025,
             name: "smtp",
             protocol: ProtocolType.Tcp)
-        .WithHttpEndpoint(targetPort: 8025, port: 8025, name: "http");
+        .WithHttpEndpoint(targetPort: 8025, port: 18025, name: "http");
 }
 
 static void ExcludeProjectLaunchProfile(ProjectResourceOptions options)

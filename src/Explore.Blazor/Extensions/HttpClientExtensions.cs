@@ -339,7 +339,7 @@ public static class HttpClientExtensions
         }
 
         // 3. Fallback for standalone development (matches API launchSettings default)
-        return "https://localhost:7039/";
+        return "https://localhost:17039/";
     }
 
     private static string NormalizeBaseUrl(string url)

@@ -11,7 +11,7 @@ public sealed class EventBffHostingOptions
 
     public EventBffHostProfile HostProfile { get; set; } = EventBffHostProfile.PublicWeb;
 
-    public string ApiBaseAddress { get; set; } = "https://localhost:7039/";
+    public string ApiBaseAddress { get; set; } = "https://localhost:17039/";
 
     public string[] AdminHosts { get; set; } = [];
 

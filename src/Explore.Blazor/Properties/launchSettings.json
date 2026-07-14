@@ -7,7 +7,7 @@
       },
       "dotnetRunMessages": true,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "http://localhost:5144"
+      "applicationUrl": "http://localhost:15144"
     },
     "https": {
       "commandName": "Project",
@@ -16,7 +16,7 @@
       },
       "dotnetRunMessages": true,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://localhost:7177;http://localhost:5144"
+      "applicationUrl": "https://localhost:17177;http://localhost:15144"
     },
     "https-tailscale": {
       "commandName": "Project",
@@ -25,7 +25,7 @@
       },
       "dotnetRunMessages": true,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://localhost:7177;http://localhost:5144;https://100.64.0.2:7177;http://100.64.0.2:5144"
+      "applicationUrl": "https://localhost:17177;http://localhost:15144;https://100.64.0.2:17177;http://100.64.0.2:15144"
     },
     "Container (Dockerfile)": {
       "commandName": "Docker",

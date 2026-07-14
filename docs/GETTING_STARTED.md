@@ -80,7 +80,7 @@ If using external infrastructure with `local-core` or `local-lite`, configure yo
 
 `local-full` uses persistent containers and named volumes so repeated runs do not recreate the database, Keycloak, Mailpit messages, MinIO, RabbitMQ, or observability data from scratch. Keycloak keeps stable local ports for OIDC browser cookies and callbacks.
 
-Mailpit starts in every Aspire profile. SMTP uses `localhost:1025`, and the capture UI is `http://localhost:8025`. Development seeding applies those values when `email.smtp_host` is empty, so registration and other email workflows can use the normal SMTP path without sending real email.
+Mailpit starts in every Aspire profile. SMTP uses `localhost:11025`, and the capture UI is `http://localhost:18025`. Development seeding applies those values when `email.smtp_host` is empty, so registration and other email workflows can use the normal SMTP path without sending real email.
 
 Osprey starts in `local-full` with `ghcr.io/roostorg/osprey/osprey-coordinator:latest` plus a local `osprey-kafka` broker and `osprey.actions_input` topic for the coordinator action consumer. It exposes coordinator ports `19950` and `19951`; the application `Reporting:Osprey` HTTP adapter stays disabled unless you provide a compatible facade endpoint.
 
@@ -137,9 +137,9 @@ Default Compose endpoints:
 
 | Service | URL |
 |---|---|
-| Blazor BFF/UI | `http://localhost:7002` |
-| API | `http://localhost:7039` |
-| Mailpit | `http://localhost:8025` |
+| Blazor BFF/UI | `http://localhost:17002` |
+| API | `http://localhost:17039` |
+| Mailpit | `http://localhost:18025` |
 
 Swagger, Scalar, and OpenAPI JSON endpoints are mapped only for Development/Testing API runs. The Compose stack uses `ASPNETCORE_ENVIRONMENT=Production`; use [API.md](API.md) and [API_COOKBOOK.md](API_COOKBOOK.md) for API guidance unless you intentionally run the API in a development profile.
 

@@ -22,7 +22,7 @@ public class DockerComposeTopologyDoctorCheckTests
         var result = await check.RunAsync(CancellationToken.None);
 
         result.Status.Should().Be(DoctorCheckStatus.Warn);
-        result.Remediation.Should().Contain("http://islamu-event-api:8080/");
+        result.Remediation.Should().Contain("http://islamu-ngo-api:8080/");
     }
 
     [Test]
@@ -55,6 +55,6 @@ public class DockerComposeTopologyDoctorCheckTests
         "  postgres:\n" +
         "  redis:\n" +
         "  keycloak:\n" +
-        "  islamu-event-api:\n" +
-        "  islamu-event-ui:\n";
+        "  islamu-ngo-api:\n" +
+        "  islamu-ngo-ui:\n";
 }

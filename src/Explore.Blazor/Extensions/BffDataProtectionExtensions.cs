@@ -8,8 +8,8 @@ namespace Explore.Blazor.Extensions;
 
 public static class BffDataProtectionExtensions
 {
-    public const string ApplicationName = "islamu-event";
-    public const string KeyRingName = "islamu-event:data-protection-keys";
+    public const string ApplicationName = "islamu-ngo";
+    public const string KeyRingName = "islamu-ngo:data-protection-keys";
 
     public static IServiceCollection AddBffDataProtection(
         this IServiceCollection services,

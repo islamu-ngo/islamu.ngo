@@ -5,7 +5,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:17074;http://localhost:15185",
+      "applicationUrl": "https://localhost:27074;http://localhost:25185",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",
@@ -14,15 +14,15 @@
         "Infisical__ProjectId": "",
         "Infisical__ClientId": "",
         "Infisical__ClientSecret": "",
-        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21220",
-        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22156"
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:31220",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:32156"
       }
     },
     "local-full": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:17071;http://localhost:15182",
+      "applicationUrl": "https://localhost:27071;http://localhost:25182",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",
@@ -31,15 +31,15 @@
         "Infisical__ProjectId": "",
         "Infisical__ClientId": "",
         "Infisical__ClientSecret": "",
-        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21217",
-        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22153"
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:31217",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:32153"
       }
     },
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:17071;http://localhost:15182",
+      "applicationUrl": "https://localhost:27071;http://localhost:25182",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",
@@ -48,36 +48,36 @@
         "Infisical__ProjectId": "",
         "Infisical__ClientId": "",
         "Infisical__ClientSecret": "",
-        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21217",
-        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22153"
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:31217",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:32153"
       }
     },
     "local-core": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:17072;http://localhost:15183",
+      "applicationUrl": "https://localhost:27072;http://localhost:25183",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",
         "ISLAMU_ASPIRE_MODE": "LocalDataExternalPlatform",
         "SecretProvider__Provider": "None",
-        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21218",
-        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22154"
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:31218",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:32154"
       }
     },
     "local-lite": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:17073;http://localhost:15184",
+      "applicationUrl": "https://localhost:27073;http://localhost:25184",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "DOTNET_ENVIRONMENT": "Development",
         "ISLAMU_ASPIRE_MODE": "ExternalInfra",
         "SecretProvider__Provider": "None",
-        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21219",
-        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22155"
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:31219",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:32155"
       }
     }
   }

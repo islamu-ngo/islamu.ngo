@@ -43,7 +43,7 @@ The email settings model is defined by `EmailSettingDefinitions` and grouped by 
 
 `SmtpConfigResolver` reads the cascading settings model and caches resolved configuration per tenant for five minutes. It returns no SMTP configuration when required values such as host or from-address are missing.
 
-Local Aspire and Compose runs start Mailpit for email capture. Aspire exposes SMTP on `localhost:1025` and the UI at `http://localhost:8025`; Compose containers use SMTP host `mailpit` and port `1025`. Development database seeding uses `MAIL_SMTP_*`, then `SMTP_*` aliases, then these Mailpit defaults when no SMTP host has been configured.
+Local Aspire and Compose runs start Mailpit for email capture. Aspire exposes SMTP on `localhost:11025` and the UI at `http://localhost:18025`; Compose containers use SMTP host `mailpit` and port `1025`. Development database seeding uses `MAIL_SMTP_*`, then `SMTP_*` aliases, then these Mailpit defaults when no SMTP host has been configured.
 
 ## Secret Handling
 
@@ -143,7 +143,7 @@ Keep the future notifications doc focused on in-app notification behavior when t
 | Settings update appears ignored | Wait for the resolver cache window or re-run the settings/test path that invalidates SMTP configuration for the current tenant. |
 | Sends time out | Check `email.smtp_timeout_seconds`, firewall rules, and provider throttling. |
 | TLS/certificate failures | Verify security mode and only use `email.smtp_skip_cert_validation` for controlled non-production scenarios. |
-| Local development mail does not arrive | Open Mailpit at `http://localhost:8025` and confirm `email.smtp_host`/`email.smtp_port` resolve to `localhost:1025` for Aspire or `mailpit:1025` for Compose. |
+| Local development mail does not arrive | Open Mailpit at `http://localhost:18025` and confirm `email.smtp_host`/`email.smtp_port` resolve to `localhost:11025` for Aspire or `mailpit:1025` for Compose. |
 | RabbitMQ dispatch health is unhealthy | Confirm `EmailDispatchRabbitMq:Enabled` is intentional, then check broker connectivity, topology names, parking queue settings, and bounded transport logs. Basic Dispatch can stay healthy without RabbitMQ when broker dispatch is disabled. |
 | RabbitMQ DLQ grows | Inspect the HAL-gated EmailDispatch admin status before replay. Malformed or missing durable pointers should park or remain in DLQ evidence; replayable rows must reset durable state before republish. |
 

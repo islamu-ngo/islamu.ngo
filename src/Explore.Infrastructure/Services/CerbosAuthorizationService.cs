@@ -383,9 +383,9 @@ public class CerbosSettings
 
     /// <summary>
     /// The Cerbos PDP gRPC endpoint (e.g., "https://cerbosgrpc.openislamu.org:443" for TLS,
-    /// "http://localhost:3593" for plaintext). Protocol prefix determines TLS behavior.
+    /// "http://localhost:13593" for plaintext). Protocol prefix determines TLS behavior.
     /// </summary>
-    public string GrpcEndpoint { get; set; } = "http://localhost:3593";
+    public string GrpcEndpoint { get; set; } = "http://localhost:13593";
 
     /// <summary>
     /// When true, uses plaintext gRPC (no TLS). Required for local development with

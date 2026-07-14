@@ -31,7 +31,7 @@ public static class DataProtectionServiceCollectionExtensions
     /// Default application name for the Data Protection key ring.
     /// Must match across all Blazor BFF hosts that share keys.
     /// </summary>
-    public const string DefaultApplicationName = "islamu-event";
+    public const string DefaultApplicationName = "islamu-ngo";
 
     /// <summary>
     /// Registers ASP.NET Core Data Protection with keys persisted in the primary Postgres database

@@ -26,7 +26,7 @@ Use this page when you have a symptom. For planned work, installation, backup, r
 
 1. Run the read-only doctor when diagnosing local or self-hosting setup drift:
    `dotnet run --project Explore.Diagnostic/Explore.Diagnostic.csproj -- --root .`
-2. Check `https://localhost:7039/health` and `/alive`.
+2. Check `https://localhost:17039/health` and `/alive`.
 3. Check API startup logs for migration/seed failures.
 4. Verify deployment mode and tenant resolution behavior.
 5. Verify auth session (`/auth/status`) and token forwarding through BFF.
@@ -305,7 +305,7 @@ Checks:
 **Symptoms:** Registration confirmation email does not arrive, `email-dispatch` readiness is degraded/unhealthy, or RabbitMQ dispatch/DLQ counts grow.
 
 Checks:
-1. For local development, open Mailpit at the Aspire-discovered UI endpoint or Compose default `http://localhost:8025`. Non-isolated Aspire normally uses SMTP `localhost:1025`; isolated Aspire assigns dynamic ports, so run `aspire describe mailpit --apphost Explore.AppHost/Explore.AppHost.csproj --format Json` and verify API `email.smtp_port` matches the current Mailpit SMTP endpoint. Compose uses `mailpit:1025` from API containers.
+1. For local development, open Mailpit at the Aspire-discovered UI endpoint or Compose default `http://localhost:18025`. Non-isolated Aspire normally uses SMTP `localhost:11025`; isolated Aspire assigns dynamic ports, so run `aspire describe mailpit --apphost Explore.AppHost/Explore.AppHost.csproj --format Json` and verify API `email.smtp_port` matches the current Mailpit SMTP endpoint. Compose uses `mailpit:1025` from API containers.
 2. Check `/health`: `smtp` covers configured SMTP/Mailpit connectivity, `email-dispatch` covers Basic Dispatch trigger readiness, and `email-dispatch-rabbitmq` covers optional broker topology only when RabbitMQ mode is enabled. If Mailpit is stopped in FullLocal, API `/health` should return HTTP 503 with `smtp` Unhealthy. The SMTP readiness probe is bounded to five seconds; the 2026-07-04 local proof returned in `5.014s`.
 3. Inspect HAL-gated EmailDispatch admin status before replaying rows. Replay and park actions must be driven by `_links`; do not infer permissions from local roles.
 4. Query `email_dispatch_outbox` by status and tenant. `Unknown` rows are inspectable crash-window outcomes; `DeadLettered` rows require operator review; `Skipped` rows are terminal preference/compliance outcomes.
@@ -404,8 +404,8 @@ Checks:
 
 ## Local URLs
 
-- API: `https://localhost:7039`
-- Swagger: `https://localhost:7039/swagger`
+- API: `https://localhost:17039`
+- Swagger: `https://localhost:17039/swagger`
 - Scalar: mapped by `MapScalarApiReference()` in Development/Testing API runs
-- Blazor (dotnet): `https://localhost:7177`
-- Blazor (docker compose): `http://localhost:7002`
+- Blazor (dotnet): `https://localhost:17177`
+- Blazor (docker compose): `http://localhost:17002`

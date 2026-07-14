@@ -17,13 +17,14 @@ Last Updated: 2026-07-14 Europe/Brussels
 - 2026-07-14: **Phase 1 complete** — snapshot exported via `git archive`, copied with exclusions (Event dev workstream state, journal content, `.claude/settings.local.json`; LICENSE byte-identical so target's kept; target README kept + Provenance section added). Copy fidelity verified by file-list diff (exact). Fresh `dev/_journal/journal.md` + `MAJOR_DECISIONS.md` stubs seeded. Import commit `24e11eb` (7,020 tracked files).
 
 - 2026-07-14: **Phase 2 complete** — Release build exit 0; full per-project sweep done; baseline == source repo exactly (see Validation Baseline table). Copy-defect fix: 8 load-bearing `dev/` files restored.
+- 2026-07-14: **Phase 3 applied (3.1–3.3)** — deployment identity fully split (see §Phase 3.1 Identifier Inventory for the scheme: `islamu-ngo-*`, DB `islamu_ngo`, all dev ports +10000). Compose config valid; build green; affected suites green; docs patched. **Dual-stack boot acceptance still pending** (attended).
 
 ### 🟡 IN PROGRESS
-- Nothing in flight; next slice is Phase 3.
+- Phase 3 acceptance: dual-stack boot (Event + islamu.ngo side by side) — attended step, not yet run.
 
 ### ⏭️ NEXT
-1. Phase 3: identifier inventory (3.1) + deployment renames (3.2) + doc patches (3.3); dual-stack boot acceptance.
-2. Phase 4 (Keycloak topology, D5 v2) — read plan §17 and R11 before touching the provisioner.
+1. Run dual-stack boot verification (user-attended): start Event AppHost + islamu.ngo AppHost; confirm zero port/volume collisions; Event dev data intact (R4).
+2. Phase 4 (Keycloak topology, D5 v2) — read plan §17 and R11 before touching the provisioner; Task 4.2 copies CP's provisioner (C-FLOW: strip CP identifiers, log publication).
 3. Update this file after each slice.
 
 ### ⚠️ BLOCKERS
@@ -104,6 +105,22 @@ dotnet test --project tests/<Project>/<Project>.csproj --configuration Release -
 
 **Copy-defect fix (2026-07-14):** first architecture run had 4 extra failures because excluded `dev/` files were load-bearing (intents.yaml `must_read_docs`, `ApiConventionTests` reading `authorization-policy-matrix.md`, skill link to `dev/active/README.md`, `docs/BENCHMARKS.md` source anchor). Restored exactly 8 files from the snapshot: `dev/active/README.md`, `dev/active/ai-context-disclosure-policy/{field-classification-matrix,ai-context-disclosure-policy-plan}.md`, `dev/active/webhook-delivery-redesign/*-{context,plan,tasks}.md`, `dev/active/backend-api-health-refactor/authorization-policy-matrix.md`, `dev/pause/performance-optimization/performance-optimization-context.md`. Rationale: the platform arrived mid-webhook-redesign, so those docs are truthful context; restoring beats editing the copied contract files.
 Phase 4 adds: provisioner double-run idempotence; fail-closed-on-missing-realm; Event-clients-untouched realm diff; audience negative test. Phase 9 adds: `docker compose -f compose.production.yaml config`.
+
+## Phase 3.1 Identifier Inventory (2026-07-14)
+
+**Scheme:** deployment identifiers `islamu-event-*` → `islamu-ngo-*`; DB → `islamu_ngo`; dev host ports → source port + 10000 (disjoint from Event's range, deterministic). Keycloak client ids (`islamu-event-blazor`, `islamu-event-api`, `islamu-event-public-dev`, secrets, audiences, realm-export, keycloak-init.sh, Onboarding DTO defaults, EventKeycloakIdentityContractContributor, MCP resources) are **Phase 4 — not touched in Phase 3**. User-facing "ISLAMU Event" strings are Phase 6.
+
+| Old | New | Where (file:line) |
+|---|---|---|
+| 15 volumes `islamu-event-*-data` | `islamu-ngo-*-data` | `AppHost.cs:58,62,69,254,291,324,349,364,409,425,443,524,578,584,614` |
+| `islamu-event-db` / `islamu_event_db` | `islamu-ngo-db` / `islamu_ngo` | `AppHost.cs:59`; `docker-compose.yml:33,40`; `Config/pgadmin/servers.json:8` |
+| compose project `islamu-event-platform` | `islamu-ngo-platform` | `docker-compose.yml:4` |
+| services `islamu-event-api` / `islamu-event-ui` | `islamu-ngo-api` / `islamu-ngo-ui` | `docker-compose.yml:298,353,361,375`; `.env.example:141`; `DockerComposeTopologyDoctorCheck.cs:15,16,56,58` |
+| DataProtection app `islamu-event` (+ keyring `islamu-event:data-protection-keys`) | `islamu-ngo` (+ `islamu-ngo:data-protection-keys`) | `DataProtectionServiceCollectionExtensions.cs:34`; `BffDataProtectionExtensions.cs:11,12` |
+| cookie `__Host-islamu-event-web` | `__Host-islamu-ngo-web` | `EventBffKeycloakAuthenticationOptions.cs:146` |
+| AppHost fixed dev ports (keycloak 8080/9000, crdb 26257/8081, cerbos 3592/3593, minio 9005/9006, svix 8071, weblate 8083, coop 8082/3001, pgadmin 5050, osprey 19950/19951, prometheus 9090, grafana 3000, mailpit 1025/8025) | +10000 each | `AppHost.cs` endpoint literals + `WEBLATE_SITE_DOMAIN`/`COOP_UI_URL`/`CONTROL_PLANE_PUBLIC_ORIGIN` defaults `AppHost.cs:113,194,415,478` |
+| compose port defaults (same numbers) | +10000 each | `docker-compose.yml:213,214,255,321,370,396,397,452,453,512,563,597,639,671,672` |
+| launchSettings (AppHost 17071-74/15182-85; Blazor 5144/7177; API 5035/7039; UI compose default 7002) | +10000 each | `*/Properties/launchSettings.json`; `docker-compose.yml:370`; `AppHost.cs:113,194` |
 
 ## Current Known Risks / Unknowns
 

@@ -200,7 +200,7 @@ Docker Compose starts Svix only when the `webhooks` profile is enabled. The same
 | `Webhooks:Local:TimeoutSeconds` | `15` | Total LocalProvider request timeout. |
 | `Webhooks:Local:ConnectTimeoutSeconds` | `3` | LocalProvider connect timeout. |
 | `Webhooks:Local:BlockPrivateNetworks` | `true` | SSRF protection default. |
-| `Webhooks:Svix:BaseUrl` | unset | Set for self-hosted Svix, for example `http://localhost:8071` in Aspire or `http://svix:8071` in Compose. |
+| `Webhooks:Svix:BaseUrl` | unset | Set for self-hosted Svix, for example `http://localhost:18071` in Aspire or `http://svix:8071` in Compose. |
 | `Webhooks:Svix:Environment` | `production` | Exact conformance environment identifier; Compose/Aspire use `self-hosted`. |
 | `Webhooks:Svix:ProviderVersion` | `managed-api-v1` | Exact conformance version identifier; Compose/Aspire use pinned `1.96.1`. |
 | `Webhooks:Svix:CapabilityPolicyVersion` | `svix-managed-api-v1` | Exact versioned capability policy; Compose/Aspire use `svix-self-hosted-1.96.1-v1`. |

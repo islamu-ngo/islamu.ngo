@@ -83,8 +83,8 @@ Sensitive values are redacted before output. Do not add checks that print raw co
 | Launch profile | Mode | Started by Aspire |
 |---|---|---|
 | `https` | `FullLocal` | Compatibility alias for the contributor full-local topology. |
-| `local-full` | `FullLocal` | PostgreSQL `postgres` with app database `islamu_event_db`, Redis `cache`, RabbitMQ `messaging`, Mailpit, CockroachDB `crdb`, Phase Two Keycloak `keycloak`, Cerbos database/PDP, MinIO, Svix, Coop, Osprey, PgAdmin, Prometheus, Grafana, `Event.MigrationService`, `Explore.API`, and `Explore.Blazor`. |
-| `local-core` | `LocalDataExternalPlatform` | PostgreSQL `postgres` with app database `islamu_event_db`, Redis `cache`, Mailpit, `Event.MigrationService`, `Explore.API`, and `Explore.Blazor`. Auth, policy, storage, webhooks, and moderation providers come from Infisical/config. |
+| `local-full` | `FullLocal` | PostgreSQL `postgres` with app database `islamu_ngo`, Redis `cache`, RabbitMQ `messaging`, Mailpit, CockroachDB `crdb`, Phase Two Keycloak `keycloak`, Cerbos database/PDP, MinIO, Svix, Coop, Osprey, PgAdmin, Prometheus, Grafana, `Event.MigrationService`, `Explore.API`, and `Explore.Blazor`. |
+| `local-core` | `LocalDataExternalPlatform` | PostgreSQL `postgres` with app database `islamu_ngo`, Redis `cache`, Mailpit, `Event.MigrationService`, `Explore.API`, and `Explore.Blazor`. Auth, policy, storage, webhooks, and moderation providers come from Infisical/config. |
 | `local-lite` | `ExternalInfra` | Mailpit, `Explore.API`, and `Explore.Blazor`. All other infrastructure comes from Infisical/config. |
 
 Contributor default:
@@ -140,7 +140,7 @@ The `https` profile is the intuitive full-local alias for contributors who are u
 
 PgAdmin is available as the `pgadmin` browser resource in `local-full` with development credentials `admin@openislamu.org` / `admin`. It imports the PostgreSQL servers from `Explore.AppHost/Config/pgadmin/servers.json`; inside PgAdmin, use container-network hosts `postgres`, `cerbos-db`, `svix-postgres`, and `coop-postgres` on port `5432`, not Aspire dashboard endpoint strings such as `tcp://localhost:35305`. The fixed-password Cerbos, Svix, and Coop databases are covered by `Explore.AppHost/Config/pgadmin/pgpass`; the app `postgres` server may still prompt for the Aspire-generated local database password.
 
-To reset only the local app database while keeping the persistent Postgres container/volume, connect to the `postgres` server and drop/recreate `islamu_event_db`. The Aspire resource alias is `islamu-event-db` because resource names cannot contain underscores. Do not delete the `islamu-event-postgres-data` volume unless you also want to rotate the generated Postgres credentials and lose every database in that server.
+To reset only the local app database while keeping the persistent Postgres container/volume, connect to the `postgres` server and drop/recreate `islamu_ngo`. The Aspire resource alias is `islamu-ngo-db` because resource names cannot contain underscores. Do not delete the `islamu-ngo-postgres-data` volume unless you also want to rotate the generated Postgres credentials and lose every database in that server.
 
 Secret and connection priority:
 
@@ -162,7 +162,7 @@ Startup dependencies are explicit:
 5. `Explore.Blazor` waits for API readiness and receives API service discovery through Aspire.
 6. Dedicated admin hosts use the same `Explore.Blazor` process and generated API client boundary.
 
-The Blazor BFF resolves the API through Aspire service discovery (`services__explore-api__https__0` / `services__explore-api__http__0`) or `ExploreApi:BaseUrl`. Compose uses `API_ENDPOINT`, defaulting to the internal `islamu-event-api:8080` service. Do not hardcode the Compose/API host port into AppHost documentation.
+The Blazor BFF resolves the API through Aspire service discovery (`services__explore-api__https__0` / `services__explore-api__http__0`) or `ExploreApi:BaseUrl`. Compose uses `API_ENDPOINT`, defaulting to the internal `islamu-ngo-api:8080` service. Do not hardcode the Compose/API host port into AppHost documentation.
 
 Aspire local development uses the local filesystem storage provider by default unless a profile supplies S3-compatible settings. AppHost sets `Storage:Local:RootPath` to `storage-data/aspire-local` under the repository root and keeps `StorageReconciliation:DryRun=true`; `local-full` also supplies MinIO-compatible `S3Settings` for workflows that exercise S3 behavior, and bootstraps the `explore` bucket before the API starts. Local Svix pins `svix/svix-server:v1.96.1`, uses the Aspire Redis plaintext container endpoint with the generated Redis password, and configures Redis for both `SVIX_QUEUE_TYPE` and `SVIX_CACHE_TYPE`; the shared cache is required to preserve idempotency across replicas. .NET projects continue to consume Redis through normal Aspire references. AppHost injects the proven `self-hosted`/`1.96.1`/`svix-self-hosted-1.96.1-v1` conformance tuple, sets a deterministic development `SVIX_JWT_SECRET`, supplies a matching `WEBHOOKS_SVIX_AUTH_TOKEN` to the API, and Development seeding binds that value to `webhooks.svix.auth_token`; rotate all local defaults outside disposable development. Local Coop uses an isolated PostgreSQL container plus development-only `DATABASE_*`, `SESSION_SECRET`, `OTEL_SERVICE_NAME`, placeholder Scylla client settings, and no-op warehouse/analytics settings so the review-queue provider can boot without external ClickHouse or production secrets.
 
@@ -260,7 +260,7 @@ Readiness interpretation:
 | `storage-reconciliation` | API | Storage reconciliation worker is enabled in dry-run or mutation mode | Reconciliation is intentionally disabled | Invalid reconciliation options fail startup |
 | `ai-provider` | API | AI provider integration is disabled, deterministic fake provider is enabled, or OpenAI Responses/OpenAI-compatible/Anthropic/Anthropic-compatible/Azure OpenAI settings are valid | Not used | AI provider is enabled but no runnable provider is configured, or provider endpoint/settings fail egress validation |
 | `cerbos` | API | Local provider mode is selected, or configured Cerbos PDP passes gRPC health | Not used | Instance `authorization.provider` is `cerbos` and the PDP is missing or unreachable |
-| `islamu-event-api` | Blazor, Control Plane BFF | BFF can reach API readiness endpoint | Not used | API readiness endpoint is unavailable or unhealthy |
+| `islamu-ngo-api` | Blazor, Control Plane BFF | BFF can reach API readiness endpoint | Not used | API readiness endpoint is unavailable or unhealthy |
 | `secret_provider` | API, Blazor, Control Plane BFF | Secret backend path is healthy | Secret backend has transient failures within the configured threshold | Secret backend crossed the unhealthy threshold |
 
 Operational rules:

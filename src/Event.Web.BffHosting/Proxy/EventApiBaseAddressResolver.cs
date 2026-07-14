@@ -27,7 +27,7 @@ public static class EventApiBaseAddressResolver
             return NormalizeBaseUrl(aspireHttp);
         }
 
-        return "https://localhost:7039/";
+        return "https://localhost:17039/";
     }
 
     private static string NormalizeBaseUrl(string url) => url.EndsWith('/') ? url : url + "/";

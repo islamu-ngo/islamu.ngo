@@ -273,5 +273,5 @@ If the instance authorization provider is set to Cerbos and the PDP is unreachab
 
 - [AUTHORIZATION.md](AUTHORIZATION.md) - provider behavior, fail-closed semantics, and policy upload notes.
 - [OPERATIONS.md](OPERATIONS.md) - local Cerbos package operations and incident triage.
-- [SELF_HOSTING.md](SELF_HOSTING.md) - Docker Compose profiles and required runtime keys.
+- [CONFIGURATION.md](CONFIGURATION.md) - required runtime keys and provider settings.
 - [SECRETS.md](SECRETS.md) - secret ownership and redaction rules.

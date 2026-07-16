@@ -956,7 +956,7 @@ Delivery policy is server-owned. Account-security refreshes retain for 5 minutes
 ## Related
 
 - [SECRETS.md](SECRETS.md)
-- [SELF_HOSTING.md](SELF_HOSTING.md)
+- [GETTING_STARTED.md](GETTING_STARTED.md)
 - [MULTI_TENANCY.md](MULTI_TENANCY.md)
 - [RENDER_POLICIES.md](RENDER_POLICIES.md)
 - [OPERATIONS.md](OPERATIONS.md)

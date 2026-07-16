@@ -1,15 +1,17 @@
-ABOUTME: Documents implemented SMTP email delivery and its boundary from in-app notifications.
-ABOUTME: Prevents unsupported claims about notification fanout, queueing, unsubscribe, or delivery tracking.
+<!-- ABOUTME: Documents implemented durable SMTP delivery and local Mailpit testing for the website chassis. -->
+<!-- ABOUTME: Separates source-backed email behavior from planned waitlist, newsletter, and contact workflows. -->
 
 # Email And Notifications
 
-> **Audience:** Operators | Admins | Contributors
+> **Audience:** First-party operators | Product owners | Contributors
 > **Status:** Mixed
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-04
+> **Last Verified:** 2026-07-15
 > **Source Anchors:** `Explore.Infrastructure/Mail/`, `Explore.Infrastructure/EmailDispatchDrainService.cs`, `Explore.Infrastructure.Tests/Infrastructure/EmailDispatchDrainMailpitTests.cs`, `Explore.Infrastructure.Tests/Infrastructure/SmtpEmailServiceMailpitTests.cs`, `Explore.Persistence/Seed/DatabaseSeeder.cs`, `Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `Explore.Domain/Settings/Definitions/EmailSettingDefinitions.cs`, `Explore.API/HealthChecks/SmtpHealthCheck.cs`, `Explore.Application/Services/EventPublishedNotificationFanoutService.cs`, `Explore.Application/Services/EventModerationNotificationFanoutService.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
 
-Email delivery is implemented as direct SMTP sending. In-app notifications are a separate authenticated inbox feature; actor-subscription fanout and moderation attendee fanout create durable in-app notification rows and are not SMTP/email fanout pipelines.
+Email delivery is implemented through a durable outbox drained to SMTP. In-app notifications are a separate authenticated inbox feature. Event-specific fanout below documents current imported source and is removed with its code-owning slice; it is not a target website capability.
+
+Waitlists, newsletters, contact forms, and new transactional messages are directionally approved Engage-horizon capabilities, not implemented public features. Each requires a separate workstream with purpose, consent evidence, unsubscribe/deletion behavior, content ownership, abuse controls, and provider configuration before any form or CTA is published. Listmonk's existing adapter is reusable infrastructure, not proof that such a workflow exists.
 
 ## What Is Implemented
 

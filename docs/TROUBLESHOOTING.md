@@ -1,4 +1,4 @@
-ABOUTME: Practical troubleshooting guide for this repository's API, BFF, and tenant-aware runtime.
+ABOUTME: Practical troubleshooting guide for this repository's API, BFF, and first-party runtime.
 ABOUTME: Prioritizes repeat incidents and non-obvious checks over generic .NET advice.
 
 # Troubleshooting
@@ -7,7 +7,7 @@ ABOUTME: Prioritizes repeat incidents and non-obvious checks over generic .NET a
 > **Status:** Implemented
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-07-04
-> **Source Anchors:** `Explore.API/Program.cs`, `Explore.Blazor/`, `Explore.Infrastructure/Services/Keycloak/KeycloakBootstrapService.cs`, `Explore.Infrastructure/StorageObjectDeletionService.cs`, `docs/SELF_HOSTING.md`, `docs/OPERATIONS.md`, `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Source Anchors:** `Explore.API/Program.cs`, `Explore.Blazor/`, `Explore.Infrastructure/Services/Keycloak/KeycloakBootstrapService.cs`, `Explore.Infrastructure/StorageObjectDeletionService.cs`, `docker-compose.yml`, `docs/OPERATIONS.md`, `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
 
 Use this page when you have a symptom. For planned work, installation, backup, restore, upgrade, or rollback procedures, use the linked runbooks instead of copying procedures into this file.
 
@@ -15,7 +15,7 @@ Use this page when you have a symptom. For planned work, installation, backup, r
 
 | Need | Go To |
 |---|---|
-| Install, Compose topology, setup secret, Keycloak, MinIO, Cerbos, reverse proxy | [SELF_HOSTING.md](SELF_HOSTING.md) |
+| Local setup and first-party runtime topology | [GETTING_STARTED.md](GETTING_STARTED.md) and [OPERATIONS.md](OPERATIONS.md) |
 | Back up, restore, upgrade, roll back, or validate release safety | [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) |
 | Runtime health, rate limiting, request timeouts, metrics, graceful shutdown | [OPERATIONS.md](OPERATIONS.md) |
 | Configuration keys and environment-variable mapping | [CONFIGURATION.md](CONFIGURATION.md) |
@@ -24,7 +24,7 @@ Use this page when you have a symptom. For planned work, installation, backup, r
 
 ## Quick Triage Order
 
-1. Run the read-only doctor when diagnosing local or self-hosting setup drift:
+1. Run the read-only doctor when diagnosing local or first-party deployment drift:
    `dotnet run --project Explore.Diagnostic/Explore.Diagnostic.csproj -- --root .`
 2. Check `https://localhost:17039/health` and `/alive`.
 3. Check API startup logs for migration/seed failures.
@@ -93,7 +93,7 @@ Cause:
 Check:
 - proxy sends `X-Forwarded-Proto` and `X-Forwarded-Host`.
 - forwarded headers middleware is active in Blazor server pipeline.
-- API forwarded-header trust is configured for the reverse proxy; see [CONFIGURATION.md](CONFIGURATION.md) and [SELF_HOSTING.md](SELF_HOSTING.md).
+- API forwarded-header trust is configured for the reverse proxy; see [CONFIGURATION.md](CONFIGURATION.md) and [OPERATIONS.md](OPERATIONS.md).
 
 ### Keycloak `unauthorized_client` during login
 
@@ -101,7 +101,7 @@ Cause:
 - the Blazor BFF confidential client secret does not match the `islamu-event-blazor` client secret stored in Keycloak.
 
 Checks:
-1. Confirm `KEYCLOAK_BLAZOR_CLIENT_SECRET` is set for the Compose environment. Production/self-hosted deployments should not rely on the realm export's static default.
+1. Confirm `KEYCLOAK_BLAZOR_CLIENT_SECRET` is set for the Compose environment. Production deployments must not rely on the realm export's static default.
 2. Check `docker compose logs keycloak-init` for successful redacted sync messages. The log must not include raw secret values.
 3. Rerun `docker compose run --rm keycloak-init` after changing or rotating `KEYCLOAK_BLAZOR_CLIENT_SECRET`.
 4. If this is a disposable local stack and no secret is configured, set `KEYCLOAK_INIT_ALLOW_DEFAULT_LOCAL_SECRET=true` intentionally, then rerun `keycloak-init`. Do not use that flag in production.
@@ -169,7 +169,7 @@ Checks:
 4. auto-generated setup secrets expire after 60 minutes from API startup.
 5. if the setup page reports `Environment`, use the configured `SETUP_SECRET` value; if it reports `Generated`, use the API startup log secret; if it reports `Expired`, restart the API to reopen setup mode.
 6. use `GET /api/System/onboarding-preflight` to inspect non-sensitive launch blockers and operational warnings before retrying completion.
-7. for first-run Compose setup, confirm the operator used the service names and ports from [SELF_HOSTING.md](SELF_HOSTING.md), not older `api`/`blazor` examples.
+7. for first-run Compose setup, confirm the operator used the service names and ports from `docker-compose.yml` and [OPERATIONS.md](OPERATIONS.md), not older `api`/`blazor` examples.
 
 ### Onboarding Recovery Matrix
 

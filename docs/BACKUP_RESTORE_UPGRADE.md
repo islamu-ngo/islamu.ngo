@@ -1,4 +1,4 @@
-ABOUTME: Operator runbook for backups, restores, upgrades, and rollback decisions.
+ABOUTME: First-party operator runbook for backups, restores, upgrades, and rollback decisions.
 ABOUTME: Grounds release operations in Docker Compose, PostgreSQL, Keycloak, object storage, and migration behavior.
 
 # Backup, Restore, And Upgrade
@@ -7,9 +7,9 @@ ABOUTME: Grounds release operations in Docker Compose, PostgreSQL, Keycloak, obj
 > **Status:** Implemented
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-02
-> **Source Anchors:** `docker-compose.yml`, `Event.MigrationService/Worker.cs`, `Explore.API/Program.cs`, `docs/SELF_HOSTING.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Source Anchors:** `docker-compose.yml`, `Event.MigrationService/Worker.cs`, `Explore.API/Program.cs`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
 
-This runbook covers self-hosted deployments using the repository Docker Compose topology. Treat every upgrade as a data operation first and an image rollout second.
+This runbook covers the first-party deployment using the repository Docker Compose topology. Treat every upgrade as a data operation first and an image rollout second.
 
 ## What Must Be Backed Up
 
@@ -142,7 +142,7 @@ If release notes do not explicitly state that a rollback is image-only safe, ass
 
 ## Related
 
-- [SELF_HOSTING.md](SELF_HOSTING.md) — runtime topology and environment keys.
+- [OPERATIONS.md](OPERATIONS.md) — runtime topology and operational behavior.
 - [CONFIGURATION.md](CONFIGURATION.md) — canonical configuration sections.
 - [SECRETS.md](SECRETS.md) — secret-provider behavior.
 - [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) — release documentation contract.

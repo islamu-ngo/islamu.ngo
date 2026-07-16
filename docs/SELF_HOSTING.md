@@ -433,5 +433,4 @@ Use [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) for the full runbook 
 - [OPERATIONS.md](OPERATIONS.md) — health, startup, shutdown, and runtime safeguards.
 - [CERBOS_COOLIFY.md](CERBOS_COOLIFY.md) — Coolify-specific Cerbos PDP deployment runbook.
 - [SECURITY.md](SECURITY.md) — authentication and authorization architecture.
-- [DEPLOYMENT_MODES.md](DEPLOYMENT_MODES.md) — launch authority and mode-specific handoffs.
 - [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) — backup, restore, upgrade, rollback.

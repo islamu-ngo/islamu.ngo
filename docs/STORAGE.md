@@ -163,6 +163,6 @@ All storage metric dimensions are bounded to provider, operation, outcome, failu
 
 - [CONFIGURATION.md](CONFIGURATION.md) - runtime configuration keys.
 - [SECRETS.md](SECRETS.md) - secret-provider naming and sensitive value handling.
-- [SELF_HOSTING.md](SELF_HOSTING.md) - Compose local storage volume, optional `storage` profile, and MinIO ports.
+- [OPERATIONS.md](OPERATIONS.md) - first-party runtime topology and storage operations.
 - [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) - object storage backup and restore runbook.
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - symptom-first operator triage.

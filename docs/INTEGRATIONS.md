@@ -1,15 +1,15 @@
-ABOUTME: Integration callback guide for incoming provider webhooks and moderation connectors.
-ABOUTME: Separates incoming signed callbacks from outgoing webhook delivery provider configuration.
+<!-- ABOUTME: Records current incoming provider callbacks and their verification boundaries during the website migration. -->
+<!-- ABOUTME: Keeps imported moderation and webhook behavior explicit without promising those integrations in the target product. -->
 
 # Integrations
 
-> **Audience:** Operators | Integrators | Contributors | AI agents
-> **Status:** Implemented
+> **Audience:** First-party operators | Integrators | Contributors | AI agents
+> **Status:** Mixed
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-04
-> **Source Anchors:** `Explore.API/Controllers/IncomingWebhooksController.cs`, `Explore.API/Controllers/ModerationIntegrationController.cs`, `Explore.API/Services/IncomingWebhookIntakeService.cs`, `Explore.API/Services/CoopWebhookSignatureValidator.cs`, `Explore.Infrastructure/Services/Moderation/`, `docs/API.md`, `docs/SECURITY-MODEL.md`
+> **Last Verified:** 2026-07-16
+> **Source Anchors:** `src/Explore.API/Controllers/IncomingWebhooksController.cs`, `src/Explore.API/Controllers/ModerationIntegrationController.cs`, `src/Explore.API/Services/IncomingWebhookIntakeService.cs`, `src/Explore.API/Services/CoopWebhookSignatureValidator.cs`, `src/Explore.Infrastructure/Services/Moderation/`, `docs/API.md`, `docs/SECURITY-MODEL.md`
 
-Incoming integration webhooks are provider callbacks received by ISLAMU Event. They are not controlled by the outgoing webhook provider mode.
+Incoming integration webhooks are provider callbacks received by the current imported application. They are not controlled by the outgoing webhook provider mode. Coop, Osprey, Svix, moderation, and tenant-addressed behavior below remain implementation facts only while their callers survive init Phase 10; they are not promised capabilities of the first-party website.
 
 ```text
 Provider callback

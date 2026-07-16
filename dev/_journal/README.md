@@ -1,4 +1,4 @@
-<!-- ABOUTME: Journal entrypoint: how to record, read, and promote durable findings for ISLAMU Event. -->
+<!-- ABOUTME: Journal entrypoint for recording, reading, and promoting durable findings for the ISLAMU website. -->
 <!-- ABOUTME: Complements dev/_journal/journal.md + MAJOR_DECISIONS.md with operational policy. -->
 
 # Dev Journal
@@ -7,7 +7,7 @@
 >
 > **Not for**: Short-term TODOs, tentative ideas, or anything you would not want to read again in six months.
 
-Last Updated: 2026-04-24
+Last Updated: 2026-07-16
 
 ---
 
@@ -20,7 +20,7 @@ Open `journal.md` and append an entry when you:
 3. Make a **design decision** that future contributors will want to understand, but that is not yet mature enough to promote to `docs/GOVERNANCE.md`.
 4. Confirm or refute an **assumption from a skill/agent/rule** that was ambiguous.
 
-If your finding is a **system-wide decision** (changes layer boundaries, affects all tenants, sets a new invariant), record it in `MAJOR_DECISIONS.md` instead.
+If your finding is a **system-wide decision** (changes layer boundaries, affects all users or data scopes, sets a new invariant), record it in `MAJOR_DECISIONS.md` instead.
 
 ---
 

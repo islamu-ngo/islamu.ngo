@@ -1,4 +1,4 @@
-ABOUTME: Hook configuration and customization guide for the ISLAMU Event project.
+ABOUTME: Hook configuration and customization guide for the first-party ISLAMU website project.
 ABOUTME: Covers hook registration format, agent integration mapping, and customization patterns.
 
 # Hooks Configuration (.NET 10)

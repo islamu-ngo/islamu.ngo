@@ -5,7 +5,7 @@ argument-hint: Describe the work to plan, e.g. "refactor authentication system" 
 
 # `/dev-docs` — Strategic Implementation Planning Command
 
-You are the **principal implementation-planning agent** for the ISLAMU Event platform. Your job is not to produce a pleasant-looking outline. Your job is to create the artifact that future implementation agents will use as the operational source of truth before touching code.
+You are the **principal implementation-planning agent** for the first-party ISLAMU website and webapp. Your job is not to produce a pleasant-looking outline. Your job is to create the artifact that future implementation agents will use as the operational source of truth before touching code.
 
 Create a comprehensive, repository-grounded implementation plan for:
 
@@ -52,7 +52,7 @@ Use a stable kebab-case `[task-name]` derived from `$ARGUMENTS`. If an active di
 - **Auth:** Keycloak OIDC/JWT, BFF token handling, Cerbos or local authorization provider.
 - **Orchestration:** .NET Aspire and Docker Compose.
 - **Testing:** TUnit, bUnit, integration tests, architecture/context tests.
-- **Product constraints:** white-label/self-hostable platform, multi-tenancy, federation foundations, cultural filtering, prayer-relative scheduling, spatial discovery, verification system.
+- **Product constraints:** first-party deployment, truthful public claims, multilingual English/French/Arabic with RTL parity, WCAG 2.2 AA, privacy-respecting analytics, and no self-hosting or white-label product promise. Imported Event, tenant, and federation code is current source only until its owning workstream removes it.
 
 Do not let this context make you lazy. Treat it as orientation only; all claimed existing files/classes/behaviors must be verified.
 

@@ -385,7 +385,6 @@ intents:
       - "Explore.*Tests/**/*.cs"
       - "docs/CONFIGURATION.md"
       - "docs/SECRETS.md"
-      - "docs/SELF_HOSTING.md"
       - "docs/TROUBLESHOOTING.md"
       - "dev/active/**"
     minimum_tests:
@@ -397,7 +396,6 @@ intents:
     docs_to_update:
       - docs/CONFIGURATION.md
       - docs/SECRETS.md
-      - docs/SELF_HOSTING.md
       - docs/TROUBLESHOOTING.md
     unique_acceptance:
       - "Bootstrap credentials are request-scoped or job-scoped and never persisted as runtime application secrets"
@@ -671,7 +669,7 @@ intents:
       - "Logs, traces, metrics, DTOs, and support artifacts exclude payloads, secrets, tokens, full destination URLs, raw provider responses, and tenant metric labels"
       - "OpenAPI schemas and the generated NSwag client converge on a second generation and contain no removed compatibility fields"
       - "All minimum test projects execute nonzero tests and the Local, optional Svix, API, BFF, HAL, browser, retention, and recovery surfaces have evidence"
-      - "Webhook, API, Blazor, operations, configuration, self-hosting, backup/restore, troubleshooting, schema, and active development docs match the shipped behavior"
+      - "Webhook, API, Blazor, first-party operations, configuration, backup/restore, troubleshooting, schema, and active development docs match the shipped behavior"
     forbidden_without_approval:
       - "Restoring backward-compatibility properties, DTO aliases, deprecated methods, dual writes, or legacy request authority"
       - "Adding Redis, RabbitMQ, Kafka, CDC, another reverse proxy, a generic provider plugin system, or any other new webhook infrastructure"

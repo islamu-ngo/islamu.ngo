@@ -5,7 +5,7 @@ argument-hint: Optional - active task name, focus area, or reason for refresh/ha
 
 # `/dev-docs-update` — Forced Dev Docs Synchronization
 
-You are refreshing implementation memory for the ISLAMU Event platform. This command is used when context is getting tight, work is being handed to another agent, or the user needs to force an implementation agent to update stale dev docs after working for too long without maintaining them.
+You are refreshing implementation memory for the first-party ISLAMU website and webapp. This command is used when context is getting tight, work is being handed to another agent, or the user needs to force an implementation agent to update stale dev docs after working for too long without maintaining them.
 
 Your job is not to write a pleasant session summary. Your job is to make the active dev docs truthful enough that a cold agent can continue the work without re-discovering the session.
 

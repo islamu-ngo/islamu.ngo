@@ -1,10 +1,10 @@
-<!-- ABOUTME: Canonical AI-agent contract for the ISLAMU Event platform. -->
+<!-- ABOUTME: Canonical AI-agent contract for the first-party ISLAMU website repository. -->
 <!-- ABOUTME: Defines the Contribution Contract, critical rules, and routing logic. -->
 
 # AGENTS.md — Canonical Agent Contract
 
 > **This is the canonical entrypoint for every AI tool contributing to this repository.**
-> Last Updated: 2026-05-17
+> Last Updated: 2026-07-15
 
 ---
 

@@ -1,3 +1,6 @@
+<!-- ABOUTME: Pull request checklist for ISLAMU website changes and repository governance. -->
+<!-- ABOUTME: Captures validation, documentation impact, release risk, and CLA status. -->
+
 ## Summary
 
 -
@@ -37,17 +40,17 @@ Paste exact commands and results. Run projects individually; do not use solution
 - [ ] Migration/data/rollback impact documented
 - [ ] Configuration/secrets/deployment impact documented
 - [ ] OpenAPI/client contract impact documented
-- [ ] Operator/self-hosting/release-note impact documented
+- [ ] First-party operations/release-note impact documented
 - [ ] Release-impacting change checked against `docs/RELEASE_CHECKLIST.md`
 
 Details:
 
 ## Contributor Legal Status
 
-A bot will post signing instructions on this pull request as soon as it is opened. Every non-bot contributor must sign the [ISLAMU Event Contributor License Agreement v1.0](https://github.com/islamu-ngo/Event/blob/develop/legal/CLA.md) by posting a comment on this pull request with the exact text:
+A bot will post signing instructions on this pull request as soon as it is opened. Every non-bot contributor must sign the [ISLAMU Contributor License Agreement v2.0](../legal/CLA.md) by posting a comment on this pull request with the exact text:
 
 ```text
-I have read and agree to the ISLAMU Event Contributor License Agreement v1.0, and I confirm that I have the right to submit my contribution under it.
+I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
 ```
 
 To re-run the CLA check after signing, post a comment with `recheck`.

@@ -1,12 +1,12 @@
-ABOUTME: Decision record for contributor legal provenance and automation design.
-ABOUTME: Summarizes CLA research, owner decisions, and unsafe workflow patterns to avoid.
+<!-- ABOUTME: Decision record for contributor legal provenance and automation design. -->
+<!-- ABOUTME: Summarizes CLA decisions, signature continuity, and unsafe workflow patterns. -->
 
 # Contribution Legal Governance Decision
 
 > **Audience:** Maintainers | Legal reviewers | Contributors | AI agents
-> **Status:** CLA-only decision implemented; operational draft pending legal review and repository settings verification
+> **Status:** CLA v2.0 workflow implemented; agreement remains pending legal review and repository settings verification
 > **Owner:** Platform/Ops | Contributor Experience | Legal reviewer
-> **Last Verified:** 2026-05-31
+> **Last Verified:** 2026-07-15
 > **Source Anchors:** `docs/CI_CD_GOVERNANCE.md`, `docs/CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `dev/active/enterprise-ci-cd-hardening/enterprise-ci-cd-hardening-tasks.md`
 
 This document records the legal contribution gate decision and automation threat model. The active agreement is [CLA.md](CLA.md).
@@ -15,11 +15,11 @@ This document records the legal contribution gate decision and automation threat
 
 | Question | Current Answer |
 |---|---|
-| Legal posture | CLA only. Every non-bot contributor must sign the ISLAMU Event CLA. |
-| Inbound scope | Broad copyright and patent license grant to the ISLAMU project steward so ISLAMU Event can be maintained, provided, sold, sublicensed, or relicensed under alternative terms when sustainability, enterprise, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, or social-impact needs require it. |
+| Legal posture | CLA only. Every non-bot contributor must sign the ISLAMU CLA v2.0. |
+| Inbound scope | Broad copyright and patent license grant to the ISLAMU project steward so the website and related project materials can be maintained, provided, sublicensed, or relicensed under alternative terms for legitimate sustainability, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, or social-impact needs. |
 | Enforcing workflow | `.github/workflows/cla.yml` validates pull request and issue-comment metadata with `contributor-assistant/github-action`, pinned to a full commit SHA. |
-| Approved legal document | `legal/CLA.md` is the active CLA v1.0 operational draft, pending final legal review. |
-| Signature storage | Same-repository signature JSON at `signatures/v1.0/cla.json` on `develop`, plus GitHub PR/comment audit trail. |
+| Approved legal document | `legal/CLA.md` is the active CLA v2.0 operational draft, pending final legal review. |
+| Signature storage | Same-repository signature JSON at `signatures/v2.0/cla.json` on `develop`, plus GitHub PR/comment audit trail. Earlier v1.0 records remain historical evidence only. |
 | Token model | Default `GITHUB_TOKEN` with explicit write scopes for same-repository signature storage, pull-request comments, issue comments, and statuses. |
 | Bot allowlist | Explicit only: `dependabot[bot]` and `github-actions[bot]`. Broad patterns such as `bot*` are not approved. |
 
@@ -111,10 +111,10 @@ Repository rule:
 
 ## Current Contributor Instructions
 
-Every non-bot contributor must sign the ISLAMU Event CLA in [CLA.md](CLA.md) by posting the exact CLA v1.0 signature comment on the pull request.
+Every non-bot contributor must sign the ISLAMU CLA in [CLA.md](../../legal/CLA.md) by posting the exact CLA v2.0 signature comment on the pull request.
 
 Required pull request comment:
 
 ```text
-I have read and agree to the ISLAMU Event Contributor License Agreement v1.0, and I confirm that I have the right to submit my contribution under it.
+I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
 ```

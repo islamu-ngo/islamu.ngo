@@ -1,39 +1,39 @@
-<!-- ABOUTME: Contributor License Agreement for inbound ISLAMU Event contributions. -->
+<!-- ABOUTME: Contributor License Agreement for inbound ISLAMU website contributions. -->
 <!-- ABOUTME: Defines project-steward inbound rights, signature evidence, and AGPL alternative-licensing terms. -->
 
-# ISLAMU Event Contributor License Agreement
+# ISLAMU Contributor License Agreement
 
-> **Version:** 1.0
+> **Version:** 2.0
 > **Status:** Operational draft pending legal review
 > **Owner:** ISLAMU nonprofit | Platform/Ops
 > **Maintainer of record:** Amir Akrari
-> **Purpose:** Preserve the ISLAMU nonprofit's ability to keep ISLAMU Event public under AGPL-3.0-or-later while also offering alternative terms for legitimate sustainability, enterprise, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, and social-impact deployments.
+> **Purpose:** Preserve the ISLAMU nonprofit's ability to keep the ISLAMU website and related project materials public under AGPL-3.0-or-later while also offering alternative terms for legitimate sustainability, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, and social-impact uses.
 
 A new CLA version is published by bumping the `Version` line above and updating the `path-to-signatures` version segment in `.github/workflows/cla.yml` (e.g. `signatures/v1.0/cla.json`). Earlier signatures remain valid only for the CLA version under which they were recorded; a contributor must re-sign when the version changes.
 
-This Contributor License Agreement (CLA) applies to contributions submitted to ISLAMU Event, including API, Blazor, infrastructure, workflow, documentation, configuration, generated artifacts, tests, and related project materials.
+This Contributor License Agreement (CLA) applies to contributions submitted to the ISLAMU website repository, including application code, infrastructure, workflows, documentation, configuration, generated artifacts, tests, designs, and related project materials.
 
 This document is not personal legal advice. Contributors should only sign if they have the rights needed to grant these permissions.
 
 ## Why A CLA Alongside AGPL-3.0-Or-Later?
 
-ISLAMU Event is publicly distributed under AGPL-3.0-or-later. That public license remains in place for the open-source project and for anyone who receives ISLAMU Event under AGPL-3.0-or-later.
+The ISLAMU website repository is publicly distributed under AGPL-3.0-or-later. That public license remains in place for the open-source project and for anyone who receives it under AGPL-3.0-or-later.
 
-This CLA is an additional inbound license from contributors to the ISLAMU project steward. It allows the ISLAMU nonprofit, once incorporated, to also offer ISLAMU Event and contributed material under alternative terms when needed for legitimate deployments, including nonprofit, humanitarian, public-sector, enterprise, procurement-restricted, hosted-service, commercial sustainability, or special social-impact arrangements.
+This CLA is an additional inbound license from contributors to the ISLAMU project steward. It allows the ISLAMU nonprofit, once incorporated, to also offer the website and contributed material under alternative terms when needed for legitimate nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, commercial-sustainability, or special social-impact arrangements.
 
-The CLA does not take ownership away from contributors. Contributors keep ownership of their own Contributions. The CLA gives the Project Steward the rights needed to maintain, distribute, sublicense, relicense, commercialize, and protect ISLAMU Event sustainably.
+The CLA does not take ownership away from contributors. Contributors keep ownership of their own Contributions. The CLA gives the Project Steward the rights needed to maintain, distribute, sublicense, relicense, commercialize, and protect the ISLAMU project sustainably.
 
 ## Agreement
 
 By posting the CLA signature comment on a pull request, You and the Project Steward agree to the terms below.
 
-Until the ISLAMU nonprofit is formally incorporated, Amir Akrari acts solely as interim trustee and project steward for ISLAMU Event. The Trustee may exercise the rights granted under this Agreement only for the purpose of maintaining, operating, licensing, protecting, and transferring ISLAMU Event on behalf of the future ISLAMU nonprofit.
+Until the ISLAMU nonprofit is formally incorporated, Amir Akrari acts solely as interim trustee and project steward for the ISLAMU website repository. The Trustee may exercise the rights granted under this Agreement only for maintaining, operating, licensing, protecting, and transferring the project on behalf of the future ISLAMU nonprofit.
 
 Upon incorporation and acceptance by the ISLAMU nonprofit, the Trustee may assign this Agreement and all rights received under it to the ISLAMU nonprofit. After assignment, the Trustee will not independently exercise the rights granted under this Agreement except as authorized by the Organization or as necessary to complete the transition.
 
 ## Definitions
 
-**Contribution** means any code, documentation, design, test, configuration, workflow, generated artifact update, or other material You submit intentionally to ISLAMU Event.
+**Contribution** means any code, documentation, design, test, configuration, workflow, generated artifact update, or other material You submit intentionally to the ISLAMU website repository.
 
 A communication is not a Contribution if You conspicuously mark it in writing as `Not a Contribution`.
 
@@ -45,17 +45,17 @@ A communication is not a Contribution if You conspicuously mark it in writing as
 
 **Project Steward** means the Organization after incorporation and acceptance of this Agreement. Until then, Project Steward means the Trustee acting solely in the interim custodial capacity described above.
 
-**Downstream Recipients** means users, customers, sublicensees, distributors, hosting partners, public-sector partners, nonprofit partners, and other recipients who receive ISLAMU Event or related offerings from or on behalf of the Project Steward.
+**Downstream Recipients** means users, customers, sublicensees, distributors, hosting partners, public-sector partners, nonprofit partners, and other recipients who receive the ISLAMU project or related offerings from or on behalf of the Project Steward.
 
 ## Copyright License Grant
 
-Subject to this Agreement, You grant to the Project Steward and to recipients of software, services, or materials distributed or provided by or on behalf of the Project Steward a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable, transferable, and sublicensable copyright license to reproduce, use, execute, host, operate, modify, prepare derivative works of, publicly display, publicly perform, publish, distribute, make available, sublicense, relicense, sell, offer for sale, and otherwise exploit Your Contributions and derivative works thereof, as part of ISLAMU Event or related offerings, under any license or commercial terms selected by the Project Steward.
+Subject to this Agreement, You grant to the Project Steward and to recipients of software, services, or materials distributed or provided by or on behalf of the Project Steward a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable, transferable, and sublicensable copyright license to reproduce, use, execute, host, operate, modify, prepare derivative works of, publicly display, publicly perform, publish, distribute, make available, sublicense, relicense, sell, offer for sale, and otherwise exploit Your Contributions and derivative works thereof, as part of the ISLAMU project or related offerings, under any license or commercial terms selected by the Project Steward.
 
 ## Patent License Grant
 
-Subject to this Agreement, You grant to the Project Steward and to recipients of software, services, or materials distributed or provided by or on behalf of the Project Steward a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer ISLAMU Event, where such license applies only to patent claims licensable by You that are necessarily infringed by Your Contribution alone or by combination of Your Contribution with ISLAMU Event to which the Contribution was submitted.
+Subject to this Agreement, You grant to the Project Steward and to recipients of software, services, or materials distributed or provided by or on behalf of the Project Steward a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer the ISLAMU project, where such license applies only to patent claims licensable by You that are necessarily infringed by Your Contribution alone or by combination with the ISLAMU project to which the Contribution was submitted.
 
-If any entity institutes patent litigation alleging that Your Contribution or ISLAMU Event incorporating Your Contribution infringes a patent, then any patent licenses granted to that entity under this Agreement terminate as of the date such litigation is filed.
+If any entity institutes patent litigation alleging that Your Contribution or the ISLAMU project incorporating Your Contribution infringes a patent, then any patent licenses granted to that entity under this Agreement terminate as of the date such litigation is filed.
 
 ## Contributor Ownership
 
@@ -116,12 +116,12 @@ Courts located in Brussels, Belgium shall have jurisdiction, unless mandatory la
 Every non-bot contributor to a pull request must sign this CLA by posting the following exact comment on the pull request:
 
 ```text
-I have read and agree to the ISLAMU Event Contributor License Agreement v1.0, and I confirm that I have the right to submit my contribution under it.
+I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
 ```
 
-The ISLAMU CLA workflow (powered by [cla-assistant/github-action][cla-action-link], pinned at `contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08 # v2.6.1`) records each signature in `signatures/v1.0/cla.json` on the `develop` branch. The recorded entry stores the contributor's GitHub username, user ID, the pull request number, the signing comment ID and body, and an ISO-8601 timestamp.
+The ISLAMU CLA workflow (powered by [cla-assistant/github-action][cla-action-link], pinned at `contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08 # v2.6.1`) records each signature in `signatures/v2.0/cla.json` on the `develop` branch. The recorded entry stores the contributor's GitHub username, user ID, the pull request number, the signing comment ID and body, and an ISO-8601 timestamp.
 
-If the CLA version changes, the workflow switches the signatures file to a new version segment (for example `signatures/v1.0/cla.json`) and contributors must re-sign the new version.
+Version 2.0 replaces the Event-specific v1.0 agreement. Earlier signatures remain in `signatures/v1.0/cla.json`, but contributors must sign v2.0 for new contributions. Future versions use a new version segment and require a new signature.
 
 To re-run the CLA check after signing, post a comment containing only `recheck`.
 

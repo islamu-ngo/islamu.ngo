@@ -1,24 +1,32 @@
-<!-- ABOUTME: Implementation plan for importing the full ISLAMU Event platform into islamu.ngo as the central ISLAMU webapp. -->
-<!-- ABOUTME: Source of truth for the copy strategy, Keycloak topology, InteractiveServer conversion, non-self-hostable posture, and phased execution. -->
+<!-- ABOUTME: Re-baselined plan for retaining the imported platform chassis while removing the Event product from islamu.ngo. -->
+<!-- ABOUTME: Defines canonical local-lite development, Blog delivery, and the Plane-inspired ISLAMU navigation shell. -->
 
 # Init Import ISLAMU Event — Implementation Plan
 
-Last Updated: 2026-07-14 Europe/Brussels
+Last Updated: 2026-07-15 Europe/Brussels
 
 > **Revision 2 (2026-07-14):** Deep update after analyzing the private **Event-Control-Plane** repository and its `dev/report/EVENT_REFERENCE_ALIGNMENT_REPORT.md`. Major changes: (a) islamu.ngo is **not a self-hostable product** — it is a single first-party deployment, which reshapes deployment, docs, and pruning decisions; (b) Keycloak integration redesigned around the Control Plane pattern — config-driven OIDC authority supporting three topologies, dev-fixture realm import, and a per-repo **additive provisioner job** (no shared realm-export editing, no cross-repo backport); (c) the Control Plane's InteractiveServer-only BFF is family precedent for the render-mode conversion; (d) the alignment report's decision categories (Mandatory parity / Reusable pattern / Adaptation / Intentional exception / Not applicable) are adopted as the governance method for Phase 8 scoping and long-term divergence from Event; (e) new production-posture phase modeled on `compose.production.yaml`.
 >
 > **Revision 2.1 (2026-07-14):** U7 resolved by the owner: the user holds full copyright over all three codebases (sole author plus friends who assigned copyright fully) and authorizes copying code in any direction, including Control Plane → islamu.ngo. The former hard C-BOUNDARY prohibition is replaced by C-FLOW (a provenance + deliberate-publication rule): copying is legally unrestricted; the only remaining check is the *business* one — content copied from the private Control Plane repo into public islamu.ngo becomes public under AGPL, so each such copy is a deliberate per-file publication choice, recorded in the alignment ledger. Practical consequence: Task 4.2 now **adapts the Control Plane's finished `provision-control-plane-client.sh` directly** instead of re-authoring the pattern from Event's `keycloak-init.sh`, cutting effort and risk.
+>
+> **Revision 3 (2026-07-15; owner directives after Phases 0–3 delivery):** Three changes.
+> (a) **Dual-stack full boot is DEAD as an acceptance gate** — the dev machine cannot run two `local-full` Aspire stacks (hard owner constraint: "my pc will crash"). The canonical dev/verification profile for islamu.ngo is **`local-lite`** (`dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile local-lite`, `ISLAMU_ASPIRE_MODE=ExternalInfra`): Keycloak, Cerbos, and PostgreSQL come from the owner's **cloud instances via Infisical** secret resolution, not local containers. Phase 3's acceptance is re-verified through a `local-lite` boot; the +10000 port split stays as collision hygiene, not as a tested dual-boot guarantee.
+> (b) **Event domain surface will be DELETED** (owner decision): islamu.ngo is the ISLAMU website/webapp, not an events platform. All event-related product code (Events, EventSessions, registrations, agenda, series, templates, and the rest of the event cluster) is removed after the platform chassis is stabilized. This **pre-resolves the largest part of Task 8.1(a)**: the event module cluster's D8 category is *Not applicable — delete* (owner statement 2026-07-15), while chassis modules (identity, tenants, storage, notifications, HAL/governance, localization, SEO, webhooks, …) get keep/repurpose verdicts in the Phase 10 inventory. New **Phase 10** stages this dismantling.
+> (c) **Blog module is the first islamu.ngo product feature** — new **Phase 11**. Scope model: the owner's earlier `iLoveIbadah_API` clean-architecture Blog implementation (`iLoveIbadah.Application/Features/Blogs`, `BlogsController`, `Blog`/`BlogLike`/`BlogCategoryMapping`/`BlogTagMapping` entities). It is a **shape reference only** — the islamu.ngo implementation follows this repo's conventions (CQRS/MediatR feature folders, manual validators, entities-not-DTOs in handlers, HAL affordance gating, Cerbos authorization actions, TUnit tests, architecture-test compliance), not iLoveIbadah's (int PKs, DataAnnotations, role-string auth, DTO-in-command).
+>
+> **Revision 3.1 (2026-07-15; navigation directive):** Add **Phase 12** for the ISLAMU site navbar. Plane's public site was inspected with Chrome DevTools MCP at desktop and mobile sizes. The desired result is its interaction model—a full-width, footer-like mega panel below the fixed navbar, multi-column grouped links, fast panel switching, dimmed page backdrop, and automatic close after pointer/focus leaves—not its copy, assets, or code. The islamu.ngo implementation uses a small MudBlazor v9 disclosure-navigation component, CSS isolation/BEM and existing design tokens; `MudMenu` is intentionally not the full-width panel primitive. Touch/mobile uses an explicit menu/drawer with expandable sections, never hover-only behavior.
+> Backward compatibility is a non-goal throughout (development mode).
 
 ## 0. Planning Metadata
 
-- **Request:** Copy ALL of the ISLAMU Event platform (API + Blazor Server + Blazor Client) into the `islamu.ngo` repository to become the central ISLAMU webapp under the islamu.ngo domain — fully InteractiveServer render mode, connecting to the *same* Keycloak instance and realm as a new set of client applications (with topology kept configurable, per the Control Plane pattern), then modify what must be modified. islamu.ngo is **not** self-hostable by third parties. The braindump (`dev/active/braindump.md`) is inspiration only, **not** final direction.
+- **Request:** Keep the imported Event platform as the islamu.ngo application chassis; make the updated Event AppHost `local-lite` profile canonical; delete the Event product; add Blog; then replace the Event-oriented navbar with a Plane-inspired, footer-like ISLAMU mega navigation implemented in MudBlazor v9.
 - **Task directory:** `dev/active/init-import-islamu-event/`
-- **Planning status:** Draft, Revision 2 (awaiting user review)
+- **Planning status:** **Re-baselined, Revision 3; implementation in progress**
 - **Reference repositories:**
   - **Source:** `/home/amir/ISLAMU/Github/Event` (public, AGPL) — the platform being copied.
   - **Sibling precedent:** `/home/amir/ISLAMU/Github/Event-Control-Plane` (private, commercial) — a *different* copy approach: fresh `Event.ControlPlane.*` solution aligned to Event invariants by decision category rather than wholesale transplant. Its Keycloak, production-compose, and InteractiveServer patterns are adopted here, and selected assets (notably the Keycloak provisioner script) may be copied and adapted directly — the owner holds full copyright across all three repos (C-FLOW).
 - **Matched intents:** None in Event's `.claude/contract/intents.yaml` — **Fallback Contract** (§0.1). Closest analogs: `external-infrastructure-bootstrap` (Keycloak constraints adopted) and the Control Plane report's §3 "Non-Negotiable Boundaries" (repository-direction and provenance rules adopted).
-- **Relevant skills (Event repo):** `clean-architecture-rules`, `auth-patterns`, `blazor-bff-patterns`, `blazor-ui-conventions`, `aspire`, `dotnet-efcore-guidelines`
+- **Relevant skills (Event repo):** `clean-architecture-rules`, `auth-patterns`, `blazor-bff-patterns`, `blazor-ui-conventions`, `blazor-css-isolation`, `design-system`, `aspire`, `dotnet-efcore-guidelines`
 - **Relevant rules (Event repo):** `.claude/rules/blazor-server.md`, `.claude/rules/blazor-client.md`, `.claude/rules/api-controllers.md` — these travel with the copy and become authoritative in islamu.ngo after import.
 - **Primary layers touched:** All (Domain / Application / Persistence / Infrastructure / API / Blazor / Docs / DevOps) — whole-platform import.
 - **Estimated complexity:** **XL.** Source: 16 src + 13 test projects, 4,505 C# + 275 Razor files, ~20-service local stack. The copy is mechanical; risk lives in identity/topology separation, render-mode conversion, non-self-hostable pruning decisions, and re-baselining a polluted target git history.
@@ -50,7 +58,7 @@ islamu.ngo deliberately combines both approaches: Event's code (license-clean, A
 1. **Fully InteractiveServer render mode** — no WASM interactivity. The Control Plane already runs an InteractiveServer-only Blazor BFF in production topology, and its alignment report (§9.4, §15.3) explicitly endorses server-only as the simpler correct choice for a first-party deployment. Event's runtime render-policy system (`IRuntimeRenderPolicyService`, fallback already `InteractiveServer(prerender: true)`) makes this mostly a policy/default change. We keep Event's YARP BFF as-is (intentional divergence from the Control Plane's opaque-ticket BFF — see D4).
 2. **Keycloak via the Control Plane topology pattern** — the OIDC authority is pure configuration (`https://<host>/realms/<realm>`), so the app supports three topologies without code changes: own Keycloak, shared instance + own realm, or **same instance + same realm** (the chosen default, so users keep their ISLAMU accounts). Local dev imports a dev-fixture realm; production runs an **additive, idempotent provisioner job** that owns only islamu.ngo's clients/scopes/mappers and never creates or deletes realm resources.
 3. **Not self-hostable** — islamu.ngo drops Event's third-party-operator product surfaces over time (instance onboarding for strangers, deployment-mode selection, white-label configurability). Import first, prune later (Phase 8) using the alignment report's decision categories.
-4. **Separate everything except identity** — own PostgreSQL, Cerbos, MinIO, Redis, ports, volumes; side-by-side dev with the Event stack.
+4. **Separate deployment identity** — own PostgreSQL/schema, Cerbos policy surface, storage, cache, service names, ports, and volumes; the canonical developer path consumes external instances through `local-lite`.
 
 **Out of scope:** all braindump features (waitlists, release radar, demo center, email flows — future workstreams); renaming `Explore.*`/`Event.*` projects (deferred, D3); implementing production hosting (Phase 9 defines the target posture only).
 
@@ -83,10 +91,17 @@ islamu.ngo deliberately combines both approaches: Event's code (license-clean, A
 | **21** | **Alignment report methodology:** every finding classified as Mandatory parity / Reusable pattern / Control Plane adaptation / Intentional exception / Not applicable, each with required action; "Not applicable" exists specifically for "public/self-hosted requirements that Control Plane does not have… Record why to prevent future accidental scope growth" | Verified: report §2 | High | Adopted for Phase 8 (D8) |
 | **22** | **Repository direction + provenance rules:** public Event must never reference private Control Plane; private may adapt public code with preserved AGPL provenance (`NOTICE.md` records this factually) | Verified: report §3.1, §15.11; `Event-Control-Plane/NOTICE.md` | High | CP's internal rules; for islamu.ngo superseded by C-FLOW (owner holds full copyright, Rev 2.1) — only the no-runtime-coupling and provenance-logging disciplines carry over |
 | **23** | Control Plane report was compared against Event on 2026-07-14 and is "decision-complete"; its roadmap phases: Restore Contract Integrity → API Governance → HAL/UI Contracts → Browser Evidence → Operational Drills → Maintainability; product-domain Svix deferred until a named consumer exists | Verified: report header, §12 | High | Its HAL-verb defect finding (§5.3.1) is CP-internal, not relevant to islamu.ngo |
+| **24** | Target `local-lite` maps to `ExternalInfra`, but target AppHost creates MigrationService only when a local database resource exists | Verified: islamu.ngo `src/Explore.AppHost/Properties/launchSettings.json:69-81`; `AppHost.cs:89-103` | High | Task 3.4 ports the source fix |
+| **25** | Updated Event AppHost always adds MigrationService, forwards Infisical bootstrap configuration for non-`FullLocal` modes, and makes API/Blazor wait for migrations | Verified: Event `src/Explore.AppHost/AppHost.cs:96-111,143-151,199-207,841-884` | High | Canonical `local-lite` behavior |
+| **26** | Event surface is cross-layer and large: filename discovery found 102 Domain, 776 Application, 142 Persistence, 74 API, 225 Blazor Client, and 293 test files named for Event/session/registration/agenda/series/ticket/RSVP concepts | Verified by target `find`/`rg`, 2026-07-15 | Medium | Counts show scale only; deletion uses ownership/caller evidence |
+| **27** | iLoveIbadah Blog provides list/detail/create plus Blog/category, Blog/tag, and Blog/like model vocabulary, but update/delete/publish are incomplete and the implementation uses int IDs, Domain DataAnnotations, mutable entities, and role-string auth | Verified: `iLoveIbadah.Application/Features/Blogs`, `BlogsController.cs`, `iLoveIbadah.Domain/Blog*.cs` | High | Shape reference only |
+| **28** | Plane desktop navigation uses disclosure buttons for Product/Solutions/Resources (`aria-haspopup`, `aria-expanded`, `aria-controls`) and mounts one full-viewport absolute layer directly below the fixed navbar. The white panel is full-width with centered multi-column content; the remainder is a translucent backdrop. Hovering an adjacent trigger swaps panel content in place; leaving starts a short exit before unmount. | Chrome DevTools MCP inspection of `https://plane.so/`, desktop 1760px viewport, 2026-07-15 | High | Interaction/layout evidence only; do not copy Plane assets, copy, classes, or DOM verbatim |
+| **29** | Representative Plane timings are about 220ms enter and 150–220ms exit using opacity/transform; its inspected desktop panel was ~463px tall at 1760px and used a four-column body plus a separate announcement strip. Item rows combine icon, title, and description. | Chrome DevTools computed styles + DOM inspection, 2026-07-15 | High | Use ISLAMU tokens and content; dimensions are reference, not fixed requirements |
+| **30** | Plane mobile at 390×844 removes hover navigation and exposes an explicit “Open menu” button; the resulting navigation is a long touch-friendly overlay/list. The existing islamu.ngo `NavMenu` is Event-oriented, while its fixed header and isolated BEM/token CSS provide the correct integration point for a viewport-wide panel. | Chrome DevTools mobile emulation; islamu.ngo `NavMenu.razor(.cs/.css)` + `MainLayout.razor.css`, 2026-07-15 | High | Phase 12 must implement independent pointer and touch behaviors |
 
 ### 2.2 Existing Implementation
 
-**Target repo (`islamu.ngo`)** — greenfield with liabilities: AGPL LICENSE + README shell; polluted `main` history (Evidence #2); no code.
+**Target repo (`islamu.ngo`)** — the import is complete through Phase 2 and deployment tasks 3.1–3.3. The repository now contains the full Event chassis and product surface. Revision 3 keeps the chassis and removes the product.
 
 **Source repo (`Event`)** — full platform per §2.1. Layer map (unchanged from Rev 1):
 
@@ -121,16 +136,17 @@ Unchanged from Rev 1: islamu.ngo inherits Event's 13 test projects; they are the
 | Rev-1 Keycloak design (edit realm-export.json + cross-repo backport) created shared mutable state across repos | Rev-1 plan §5-D5; contradicted by #17-18 | **Replaced** in Rev 2 by per-repo dev fixture + additive provisioner (D5v2); R5 downgraded |
 | Two stacks share one Keycloak but nothing else | #7, #10 | Phase 3 identity split unchanged |
 | WASM interactivity registered unconditionally | #8 | Phase 5 removes it; CP precedent de-risks (#20) |
-| Event ships self-host product surfaces islamu.ngo doesn't want long-term (instance onboarding, deployment modes, white-label config) | #19, #21; user statement "it is not a self hostable webapp" | New decision D7 + Phase 8 pruning with decision categories; do NOT prune during import |
+| Event ships self-host product surfaces islamu.ngo doesn't want long-term (instance onboarding, deployment modes, white-label config) | #19, #21; user statement "it is not a self hostable webapp" | Decision D7 + Phase 8 classification followed by Phase 10 deletion with decision categories; do NOT prune without the boundary ledger and backup |
 | Three-repo family now needs divergence governance | #21-23 | D8: alignment-report method adopted; Task 8.5 creates a living alignment doc |
+| Existing navbar is Event-oriented and its compact link row cannot express the ISLAMU site's broader information architecture | #30 | Phase 10 removes Event affordances; Phase 12 introduces an ISLAMU content inventory and responsive mega navigation after Blog routes stabilize |
 
 ### 2.6 Unknowns After Investigation
 
 | # | Unknown | Status | Resolution path |
 |---|---|---|---|
-| U1 | Git history: keep vs fresh orphan root | Open | Phase 0 user decision (recommend orphan) |
-| U2 | Canonical domain/brand: `islamu.ngo` vs `openislamu.org` | Open | Phase 6; assume islamu.ngo per request |
-| U3 | Which Event commit to snapshot | Open | Latest committed `develop` (`b1fadaa9` as of 2026-07-13) or post-webhook-redesign; user picks at execution |
+| U1 | Git history: keep vs fresh orphan root | **Resolved** | Fresh orphan `main` completed in Phase 0 |
+| U2 | Canonical domain/brand | **Resolved** | islamu.ngo |
+| U3 | Event snapshot | **Resolved** | `5cfa996b2344969856946955270dd333e06fc61d` imported |
 | U4 | Side services fit (Svix, Coop, Osprey, Weblate) | Open | Phase 8.1 with decision categories; note CP resolved Svix-only for webhooks and deferred product-domain publication until a named consumer exists (#23) — a useful template for islamu.ngo's own webhook scoping |
 | U5 | Tenancy semantics | **Narrowed** | Non-self-hostable posture (D7) implies a single first-party install; whether the platform's multi-tenant machinery hosts multiple ISLAMU *projects* as tenants (one deployment, many project spaces) vs single-tenant is the remaining Phase 8.1 question |
 | U6 | Production hosting | **Largely resolved** | Target posture = Control Plane pattern (#19): lean compose, external shared Keycloak, provisioner job + migration gate before app readiness, management-port metrics, Coolify proxy/TLS. Phase 9 specifies; implementation still a later workstream |
@@ -138,19 +154,23 @@ Unchanged from Rev 1: islamu.ngo inherits Event's 13 test projects; they are the
 
 ## 3. Proposed Future State
 
-islamu.ngo = byte-faithful Event copy with these divergences:
+islamu.ngo = imported platform chassis with these divergences:
 
 1. **Identity/deployment split:** deployment identifiers re-prefixed `islamu-event-*` → `islamu-ngo-*`; C# untouched.
 2. **Auth (Control Plane topology pattern):**
    - OIDC authority is configuration: `https://<keycloak-host>/realms/<realm>` — the same binary supports (a) own Keycloak, (b) shared instance + own realm, (c) shared instance + shared realm. **Default and chosen topology: (c), realm `ISLAMU`**, so existing users sign in unchanged.
    - Clients owned by islamu.ngo: `islamu-ngo-blazor` (confidential BFF), `islamu-ngo-api` (resource server), `islamu-ngo-api-audience` mapper — provisioned by `docker/keycloak/provision-islamu-ngo-client.sh`, an additive idempotent kcadm job **copied and adapted from the Control Plane's `provision-control-plane-client.sh`** (C-FLOW; Rev 2.1): owns only its resources, never creates/deletes a realm, bootstrap credentials ephemeral.
-   - Local dev: own Keycloak container importing a **dev-fixture** realm (copied realm-export.json + islamu-ngo dev clients baked in, localhost callbacks, dev credentials) — never used in production; no cross-repo file sharing.
+   - Optional `local-full` only: own Keycloak container may import a **dev-fixture** realm. Canonical `local-lite` never imports a realm and uses the existing cloud realm through Infisical-backed configuration.
 3. **Rendering:** fully InteractiveServer (policy default + WASM registration removed); Event's YARP BFF retained (intentional divergence from CP's opaque-ticket BFF — swapping BFFs is out of scope).
 4. **Posture:** not self-hostable. Production is one first-party deployment following the CP lean-compose model; self-host product surfaces are pruned/parked in Phase 8 via decision categories, each with a recorded "why" to prevent accidental scope regrowth (report §2 "Not applicable" discipline).
 5. **Branding:** ISLAMU / islamu.ngo.
-6. **Governance:** copied Event contract system + a living `EVENT_REFERENCE_ALIGNMENT.md` for islamu.ngo (Task 8.5) tracking divergence from Event the same way CP does.
+6. **Canonical development:** `dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile local-lite`; MigrationService, API, and Blazor use Infisical-backed external infrastructure. No dual-`local-full` gate.
+7. **Product boundary:** the entire Event product cluster is deleted end to end. Generic domain/outbox events, webhook event types, audit events, and transitional project names are not deleted merely because they contain “Event”.
+8. **First feature:** Blog is implemented fresh with UUIDv7 `Guid`, tenant/audit/soft-delete/concurrency rules, per-tenant slug, Markdown content, optional StorageObject thumbnail, category/tag joins, draft/publish state, public reads, authorized writes, Cerbos, HAL, and Blazor UI. Likes/comments/views/recommendations are deferred.
+9. **Site navigation:** fixed ISLAMU navbar with desktop hover/focus disclosures opening one full-width, footer-like mega panel; pointer/focus leaving the composite closes it, Escape closes and restores trigger focus, and mobile uses an explicit drawer/accordion model. Only existing routes are linked; Blog is integrated after its contract stabilizes.
+10. **Governance:** copied Event contract system + a living `EVENT_REFERENCE_ALIGNMENT.md` for islamu.ngo.
 
-End-state gate (unchanged plus one): build green; 13 suites green; dual-stack dev boot; login with an existing ISLAMU-realm account over a pure InteractiveServer circuit; **and the provisioner job runs idempotently against a realm it did not create**.
+End-state gate: build and remaining per-project suites green; `local-lite` observed with MigrationService completing before healthy API/Blazor; login works; no Event product route/UI/schema/contract remains; the Blog draft-to-publish-to-anonymous-read workflow passes through Blazor → BFF → API → PostgreSQL/Cerbos; and the new navigation passes desktop pointer, keyboard, touch/mobile, RTL, reduced-motion, and focus-loss acceptance.
 
 ## 4. Non-Negotiable Constraints
 
@@ -160,6 +180,13 @@ All Rev-1 constraints stand (Event invariants, additive-only Keycloak, per-proje
 - **C-PROVISIONER (from Evidence #17-18):** production identity provisioning is an additive, idempotent, ownership-scoped job; it never creates or deletes a realm, never assigns roles to users, and keeps bootstrap credentials in ephemeral process state. The dev-fixture realm import is dev-only and must be documented as such.
 - **C-POSTURE (from user + Evidence #19):** islamu.ngo is not self-hostable. No work item may add third-party-operator product surface; pruning of existing surfaces goes through Phase 8 decisions, never ad-hoc deletion.
 - **C-PROVENANCE:** the import commit and a short `NOTICE.md`-style section in islamu.ngo README record source repo + SHA (AGPL→AGPL, license-clean; modeled on CP's factual NOTICE.md, Evidence #22).
+- **C-LOCAL-LITE:** Do not run Event + islamu.ngo as two `local-full` stacks. Port only the proven Event `ExternalInfra` resource-graph behavior and preserve islamu.ngo names, ports, volumes, and intentional divergences.
+- **C-SECRETS:** Infisical and cloud credentials, connection strings, endpoints, tokens, and tenant data must never enter tracked docs, tests, logs, commits, screenshots, or chat.
+- **C-EVENT-DELETE:** Event removal is final. Do not retain disabled/deprecated routes, DTO aliases, HAL relations, hidden UI, schema aliases, or compatibility shims.
+- **C-AMBIGUOUS-EVENT:** Generic domain events, webhook event types, audit events, and framework event handlers survive only when caller/ownership evidence proves a platform responsibility.
+- **C-MIGRATIONS:** Applied migrations remain immutable. Add a backed-up/tested `RemoveEventProductSurface` migration, reach a green chassis, then add Blog in a separate `AddBlogFoundation` migration.
+- **C-BLOG:** Adapt the iLoveIbadah behavior vocabulary, not its code conventions. Blog is tenant-safe; API/Cerbos enforce writes; UI uses HAL links only.
+- **C-NAVIGATION:** Plane is a behavioral reference only. Use ISLAMU content, routes, assets, and tokens. Public navigation uses an accessible disclosure-navigation pattern (buttons controlling a labelled link region), not ARIA `menu/menuitem` unless the complete application-menu keyboard contract is implemented. Hover is enhancement only; focus, keyboard, touch, reduced motion, RTL, and outside-close behavior are required.
 
 ## 5. Architecture And Design Decisions
 
@@ -187,12 +214,14 @@ The Control Plane proves clean sibling naming (`Event.ControlPlane.*`) is viable
 - **Consequences:** no Event-repo back-port needed (the cross-repo task disappears). Realm-level *settings* (password policy, SMTP, themes) remain shared state governed by the realm owner — documented in the Phase 4 governance note.
 - **Alternatives:** Rev-1 shared realm-export (rejected: drift, cross-repo coupling); Aspire-managed Keycloak resource in production (rejected: production Keycloak is external/shared, per Evidence #19).
 
-### D6 — Separate database, Cerbos, storage; side-by-side runnable *(unchanged)*
+### D6 — Separate database, Cerbos, storage; `local-lite` is canonical *(revised)*
+
+The +10000 ports and `islamu-ngo-*` names remain collision hygiene. They no longer imply a dual-full-stack acceptance test. The owner runs cloud-backed `local-lite`; `local-full` is optional only.
 
 ### D7 — Not self-hostable: single first-party deployment *(new)*
 - **Decision:** islamu.ngo does not support third-party operators. Consequences, phased:
   - **Import (Phases 1-2):** no effect — everything copies (D2).
-  - **Phase 8 pruning targets (decide, don't assume):** instance-onboarding flows for external operators; deployment-mode/tier selection surfaces; white-label/branding configurability (hard-set to ISLAMU); self-host provider-selection UI (e.g., webhook Local-vs-Svix operator choice — CP's Svix-only resolution is the template, Evidence #23); `SELF_HOSTING.md`/`DEPLOYMENT_MODES.md`/`DEPLOYMENT_TIERS.md` reframed as internal ops or marked Not applicable with recorded why.
+  - **Phase 8 classification targets (decide, don't assume):** instance-onboarding flows for external operators; deployment-mode/tier selection surfaces; white-label/branding configurability (hard-set to ISLAMU); self-host provider-selection UI (e.g., webhook Local-vs-Svix operator choice — CP's Svix-only resolution is the template, Evidence #23); `SELF_HOSTING.md`/`DEPLOYMENT_MODES.md`/`DEPLOYMENT_TIERS.md` reframed as internal ops or marked Not applicable with recorded why. Approved deletions execute in Phase 10.
   - **Phase 9 production posture:** lean CP-style compose — validator → Postgres → provisioner job → migration gate → API+workers → InteractiveServer BFF; external Keycloak; management-port metrics; Coolify (or equivalent) owns proxy/TLS; never bundle Keycloak/telemetry/backup/reverse-proxy into app compose without explicit requirement (Evidence #19).
 - **Why:** user statement ("it is not a self hostable webapp"), and the CP precedent shows exactly how a non-self-hostable sibling of Event is shaped.
 - **Nuance:** the *repo* stays public AGPL; "not self-hostable" is a product-support posture (no operator surfaces, no support matrix), not a license change. Anyone may read the code; ISLAMU runs the only supported deployment.
@@ -202,9 +231,23 @@ The Control Plane proves clean sibling naming (`Event.ControlPlane.*`) is viable
 - **Why:** three sibling repos now diverge from one reference; CP demonstrated that undisciplined divergence claims collapse under audit (report §5's three waves of corrections). Cheap to adopt now, expensive to retrofit.
 - **Consequences:** slightly more writing per pruning decision; drastically cheaper future audits.
 
+### D9 — Event product is Not applicable: delete end to end *(Revision 3)*
+- **Decision:** remove Event aggregates, use cases, routes/contracts, generated client surface, UI, policies, integrations, tests, docs, and schema in Phase 10 without compatibility aliases. Retain technical domain-event/outbox/webhook/audit infrastructure only when the boundary ledger proves independent chassis ownership.
+
+### D10 — Blog is the first fresh product vertical *(Revision 3)*
+- **Decision:** use iLoveIbadah only for Blog vocabulary and use-case discovery. Implement the vertical in this repository's Clean Architecture, tenant, authorization, HAL, persistence, testing, and Blazor conventions, with the complete draft/publish lifecycle defined in Phase 11.
+
+### D11 — Plane-inspired mega navigation as a focused MudBlazor shell component *(Revision 3.1)*
+- **Decision:** Build one reusable `SiteMegaMenu` Razor component inside the Blazor shell. Desktop triggers are real buttons (or text-variant `MudButton`s) with `aria-expanded` and `aria-controls`; panel content uses normal headings/lists/links plus `MudIcon` and existing MudBlazor primitives. The panel itself is CSS-isolated and viewport-wide beneath `NavMenu`; it is not forced into `MudMenu`, whose anchored/content-sized popover model is the wrong primitive for this layout.
+- **State model:** one `string?`/enum identifies the open section. `mouseenter`/focus opens and adjacent triggers switch content without tearing down the overlay. Pointer leave and `focusout` close only after the destination is outside the combined trigger+panel region; a cancellable 120–180ms grace period prevents the physical gap from causing flicker. Escape closes immediately and restores focus to the active trigger; route navigation, backdrop/outside activation, and responsive breakpoint changes also close stale state. Add minimal JS interop only if Blazor event data cannot reliably determine containment—do not introduce a general menu framework.
+- **Layout/motion:** full-width absolute layer directly below the fixed header; centered four-column content on desktop, two columns at intermediate widths, auto height with a viewport-safe maximum and internal vertical scrolling, optional announcement strip, and a backdrop over page content. Animate only opacity/transform (~220ms enter, 150–220ms exit), disable motion under `prefers-reduced-motion`, and use logical properties/tokens for RTL.
+- **Mobile/touch:** no hover contract. A labelled hamburger toggles a temporary top/end `MudDrawer` or equivalent shell overlay; sections expand explicitly with `MudCollapse`/`MudExpansionPanel` behavior and remain in normal reading order.
+- **Content boundary:** first release uses a small static, typed ISLAMU navigation model co-located with the shell. No database/CQRS/admin-configurable mega-menu system. Inventory actual routes first and do not create dead links; a featured Blog card/announcement may query already-cached published Blog data only after Phase 11, never once per hover.
+- **Accessibility rationale:** Plane exposes ARIA menu semantics, but islamu.ngo is site navigation rather than an application command menu. The WAI-ARIA disclosure-navigation model preserves expected Tab/link behavior while still providing expanded-state announcements, focus restoration, Escape, focus-visible styling, and automatic close when focus leaves.
+
 ## 6. Implementation Phases
 
-Phases 0-3 unchanged from Rev 1 (re-baseline; snapshot & copy; build/test green; identity split). Phase 4 redesigned; Phase 5 gains one check; Phase 8 extended; Phase 9 new.
+Phase numbers preserve history. Revision-3.1 execution order is **3.4 → 10 → 11 → 12**, then remaining relevant 4–8 work; Phase 9 runs after the new Blog/navigation surface so production describes the post-Event product.
 
 ### Phase 0: Target Repo Re-Baseline *(unchanged)*
 Tasks 0.1 (history decision U1), 0.2 (execute; backup branch; Event-grade `.gitignore`). Acceptance/verification as Rev 1.
@@ -215,8 +258,8 @@ Tasks 1.1 (pin SHA, export tracked files), 1.2 (copy with exclusions/merges), 1.
 ### Phase 2: Build And Test Green (Unmodified) *(unchanged)*
 Tasks 2.1 (restore+build), 2.2 (13-project sweep, baseline table, triage: environment / copy defect / pre-existing).
 
-### Phase 3: Identity And Deployment Split *(unchanged)*
-Tasks 3.1 (identifier inventory table), 3.2 (apply renames: services, volumes incl. `AppHost.cs:290`, ports, DB `islamu_ngo`), 3.3 (patch identity-touched docs). Dual-stack boot is the acceptance gate.
+### Phase 3: Identity, Deployment Split, And Canonical `local-lite` *(revised)*
+Tasks 3.1–3.3 are complete. **Task 3.4** selectively ports the updated Event AppHost behavior: MigrationService exists in `ExternalInfra`, receives the same Infisical bootstrap configuration as API/Blazor, and gates their readiness without starting local data/platform/heavy resources. Acceptance is a real `local-lite` boot, not dual-full-stack.
 
 ### Phase 4: Keycloak Topology Integration *(redesigned per D5 v2)*
 - **Goal:** users log into islamu.ngo with existing ISLAMU-realm accounts; identity provisioning follows the dev-fixture + additive-provisioner model; topology is pure configuration.
@@ -228,8 +271,8 @@ Tasks 3.1 (identifier inventory table), 3.2 (apply renames: services, volumes in
 
 #### Task 4.1: Dev-fixture realm for islamu.ngo
 - **Type:** modify · **Layer:** Infrastructure · **Effort:** M
-- **Description:** Extend islamu.ngo's copied `realm-export.json` with `islamu-ngo-blazor` (confidential; localhost + dev redirect URIs), `islamu-ngo-api`, `islamu-ngo-api-audience` mapper, dev users as needed. Mark the file (header comment + `docs/CONFIGURATION.md` note) as a development fixture that production must never import (mirrors CP `SECURITY.md:45` discipline). AppHost keeps importing it for local dev.
-- **Acceptance:** [ ] fresh local Keycloak boots with both event-dev and ngo-dev clients; [ ] fixture-only warning documented. No Event-repo file is touched.
+- **Description:** For the optional `local-full` profile only, extend islamu.ngo's copied `realm-export.json` with `islamu-ngo-blazor`, `islamu-ngo-api`, mapper, and dev users. Mark it as a fixture that `local-lite`, staging, and production must never import.
+- **Acceptance:** [ ] optional fresh local Keycloak boots with the islamu.ngo clients; [ ] fixture-only warning documented; [ ] `local-lite` resource graph contains no Keycloak/import resources. No Event-repo file is touched.
 
 #### Task 4.2: Additive provisioner job (adapted from CP's proven script)
 - **Type:** create · **Layer:** Infrastructure/DevOps · **Effort:** M (was L; reduced by C-FLOW) · **Dependencies:** 4.1
@@ -259,8 +302,8 @@ Task 7.1 (workflow audit table: keep/adapt/disable; CI green; no deploys).
 ### Phase 8: Scope And Posture Decisions *(extended; still investigate/decide only)*
 All verdicts use D8 decision categories with recorded rationale.
 
-#### Task 8.1: Module + side-service scoping *(extended)*
-- **Effort:** L — Now covers: (a) domain modules (events, sessions, registrations, prayer scheduling, spatial, notifications, AI, federation) — keep/repurpose/disable; (b) **self-host product surfaces** (instance onboarding for external operators, deployment-mode/tier selection, white-label configurability) — expected verdict Not applicable per D7, but each needs the recorded-why; (c) side services (Svix, Coop, Osprey, Weblate) — CP's Svix-only + deferred-until-named-consumer resolution (Evidence #23) is the analytical template for islamu.ngo's webhook stance; (d) tenancy semantics (U5): single-tenant vs ISLAMU-projects-as-tenants.
+#### Task 8.1: Chassis + side-service scoping *(revised)*
+- **Effort:** L — The Event product cluster verdict is already final: **Not applicable — delete**. Inventory adjacent modules (organizations/groups/locations, generic custom properties, AI, federation, moderation, notifications, side services) as keep/repurpose/delete using verified non-Event callers. Do not reopen the Event decision.
 #### Task 8.2: islamu.ngo feature roadmap *(unchanged)* — braindump themes → ranked future workstreams.
 #### Task 8.3: Solution identity rename decision *(unchanged, CP precedent)* — `Event.ControlPlane.*` shows the target shape; decide go/no-go for e.g. `Islamu.Ngo.*`.
 #### Task 8.4: Add `bootstrap-sibling-app` intent *(unchanged)*.
@@ -281,6 +324,81 @@ All verdicts use D8 decision categories with recorded rationale.
 #### Task 9.2: Author production compose + ops doc
 - **Type:** create/docs · **Effort:** L · **Dependencies:** 9.1, Phase 4 — Write `compose.production.yaml` + `docs/PRODUCTION_OPERATIONS.md` (islamu.ngo-specific, fresh text). Close small gaps from 9.1 (e.g., a metrics-binding config) if S-effort; larger gaps become follow-up tasks.
 
+### Phase 10: Delete The Event Product Surface *(new; owner decision)*
+
+#### Task 10.1: Boundary ledger + backup gate
+- Inventory Event-owned Domain/Application/Persistence/API/Blazor/policy/contract/test/doc/schema artifacts.
+- Classify technical-event names by caller evidence rather than string matching.
+- Add failing absence checks for canonical Event routes/resources.
+- Capture Event table row counts without tenant data and verify a restorable PostgreSQL backup.
+
+#### Task 10.2: Presentation + public-contract removal
+- Delete Event Blazor/admin/navigation/services, Event controllers/routes/HAL/MCP/AI/SEO/calendar integrations, event-only Cerbos/actions/modules/notifications, and their tests.
+- Regenerate OpenAPI and `EventApiClient.g.cs`; delete obsolete operations/models rather than aliasing them.
+- Exit: no Event HTTP, HAL, UI, MCP, generated-client, or Cerbos surface remains.
+
+#### Task 10.3: Domain/Application/Persistence/schema removal
+- Delete the Event/EventSession graph and dependent CQRS, services, specifications, repositories, configurations, projections, DbSets, filters, seeds, views, and DI registrations.
+- Preserve generic taxonomy/storage/outbox/domain-event/webhook/audit infrastructure only with independent-use evidence.
+- Scaffold `RemoveEventProductSurface`; never edit old migrations. Test isolated PostgreSQL first, cloud PostgreSQL only after backup verification.
+- Exit: no pending model changes; retained tenant filters/FKs pass; migration schema up/down is verified.
+
+#### Task 10.4: Residue + green chassis
+- Classify/delete Event-only tests while retaining or rewriting generic architecture/security coverage.
+- Update API/Domain/Architecture/BLAZOR/config/ops/schema/README/dev docs.
+- Run an allowlisted residual search. Remaining `Event` names need explicit non-product rationale.
+- Exit: build and remaining project tests green; no Event product behavior visible in `local-lite`.
+
+### Phase 11: Blog Vertical Slice *(new)*
+
+#### Task 11.1: Domain + persistence
+- Add tenant-scoped `Blog`, `BlogCategory`, and `BlogTag` with UUIDv7 `Guid`, audit/soft-delete/concurrency, normalized per-tenant slug, `ContentMarkdown`, optional StorageObject thumbnail, and nullable `PublishedAtUtc`.
+- Add entity-returning repository/specification, EF configuration/filters/index/joins/DbSets/DI, and separate `AddBlogFoundation` migration.
+- Test lifecycle, filters, slug uniqueness, taxonomy/thumbnail FKs, and no-pending-model.
+
+#### Task 11.2: CQRS + API + Cerbos + HAL
+- Add anonymous published list/detail-by-slug; authorized create/update/publish/unpublish/delete with manual validators and cancellation propagation.
+- Validate same-tenant category/tag/thumbnail ownership.
+- Add Blog actions/policy, named controller routes, RFC7807 metadata, collection/detail HAL policies, handler/auth/tenant/draft/slug/HAL/API tests.
+- Regenerate OpenAPI/NSwag only after the contract stabilizes.
+
+#### Task 11.3: Blazor
+- Add `/blog`, `/blog/{slug}`, and authenticated management list/editor.
+- Reuse storage upload and taxonomy selectors; gate writes only by HAL.
+- Render Markdown with raw HTML disabled; add XSS, accessibility, state, validation, and affordance tests.
+
+#### Task 11.4: SEO + docs + manual acceptance
+- Add only published Blog pages to sitemap/metadata.
+- Update relevant Domain/API/BLAZOR/auth/config/testing/ops docs.
+- Manual `local-lite`: create draft → edit → taxonomy/thumbnail → publish → anonymous read → unpublish/delete.
+- Likes/comments/views/scheduling/revisions/recommendations remain deferred.
+
+### Phase 12: ISLAMU Navbar And Mega Navigation *(Revision 3.1)*
+
+#### Task 12.0: Plane reference inspection *(complete — planning evidence)*
+- Capture desktop trigger semantics, panel/backdrop geometry, multi-column anatomy, switch/exit behavior, animation timings, and mobile explicit-menu behavior with Chrome DevTools MCP.
+- Record the findings as evidence #28–30 and in the context file. No Plane source/assets/copy enter the repository.
+
+#### Task 12.1: Information architecture + design-system contract
+- Remove remaining Event search/create/catalog assumptions from `NavMenu` as part of the Phase-10 boundary; inventory every surviving public/authenticated ISLAMU route after Blog lands.
+- Define desktop groups, item labels/descriptions/icons, optional featured Blog/announcement content, and the mobile order. Ship only valid routes; mark future destinations deferred rather than linking placeholders.
+- Add the `SiteMegaMenu` anatomy, states, responsive behavior, semantic tokens, z-index contract, motion values, focus behavior, RTL rules, and examples to `docs/DESIGN.md`; update `docs/BLAZOR.md` and `docs/ACCESSIBILITY.md` where their shell/navigation guidance changes.
+
+#### Task 12.2: Desktop disclosure navigation
+- Add the smallest maintainable `SiteMegaMenu.razor`/code-behind/isolated-CSS set and integrate it into `NavMenu`; retain one source of open-section state.
+- Implement hover/focus open, adjacent-trigger switching, composite-region pointer/focus close with cancellable grace, backdrop/outside close, route-change close, Escape + focus restoration, and cleanup of pending close work on disposal.
+- Render a centered four-column desktop body and optional lower announcement strip with ISLAMU tokens, BEM classes, logical CSS, safe max height/scroll, fixed-header/z-index coordination, and transform/opacity motion with reduced-motion fallback.
+
+#### Task 12.3: Responsive/touch navigation
+- At the selected design-system breakpoint, replace desktop hover disclosures with an explicit accessible menu toggle and temporary MudBlazor v9 drawer/overlay.
+- Present the same content in touch-sized expandable sections and normal link reading order; close on route selection, explicit close, outside activation, Escape/back, and breakpoint transition.
+- Verify the user/account dropdown and any shell/dock overlays remain mutually coherent; opening one shell overlay closes conflicting navigation state.
+
+#### Task 12.4: Tests + browser evidence
+- Add bUnit tests for open/switch/close, cancelled close grace, focus moving within vs outside, Escape/focus restoration, route cleanup, ARIA relationships, and mobile toggling.
+- Add browser coverage at 375/390, 768, 1280, and 1760 widths for mouse, keyboard-only, and touch emulation; cover light/dark, English/Arabic RTL, 200% zoom, reduced motion, content overflow, and no layout shift.
+- Run accessibility scans and manual Chrome DevTools comparison against the behavioral reference. Acceptance: no dead links, no per-hover API call, no console error, no obscured focused item, panel switches without flicker, focus loss closes, and mobile never depends on hover.
+
 ## 7. Testing Strategy
 
 Rev-1 table stands, with additions:
@@ -289,19 +407,23 @@ Rev-1 table stands, with additions:
 |---|---|---|
 | Copy fidelity | file-list diff vs source `git ls-files` | 1 |
 | Platform integrity | Release build + 13 suites per-project | 2 |
-| Deployment split | dual-stack boot, compose config, AppHost run | 3 |
+| Deployment split | AppHost graph tests + real cloud-backed `local-lite` migration/login smoke | 3 |
 | **Provisioner correctness** | **double-run idempotence; fail-closed-on-missing-realm; Event-clients-untouched diff; shellcheck** | **4** |
 | Auth + audience separation | login smoke; negative cross-audience test; two integration suites | 4 |
 | Server-only rendering | three Blazor suites; no-WASM network assertion; **component-discipline architecture test (if gap found)** | 5 |
 | Docs/context integrity | `Event.Architecture.Tests` docs/link/schema tests | 3,4,6,8 |
 | CI | green Actions run | 7 |
 | **Production shape** | **compose config validation; ordering dry-run** | **9** |
+| **Event removal** | **route/HAL/OpenAPI/client/schema absence; residual allowlist; migration test** | **10** |
+| **Blog** | **domain/persistence/tenant/draft/auth/HAL/XSS/bUnit + manual author-to-reader flow** | **11** |
+| **Navbar/mega navigation** | **bUnit state/focus/ARIA coverage + desktop/mobile browser evidence, RTL, zoom, reduced motion, accessibility scan** | **12** |
 
 ## 8. Documentation, Configuration, And Operations Impact
 
 - Patched: `CONFIGURATION.md` (identifiers, topology envs, fixture warning), `SECURITY-MODEL.md` (topology + ownership governance), `OPERATIONS.md`, `BLAZOR.md` (render divergence).
 - Reframed per D7/Phase 8: `SELF_HOSTING.md`, `DEPLOYMENT_MODES.md`, `DEPLOYMENT_TIERS.md` → internal-ops reference or Not-applicable with recorded why; superseded operationally by new `PRODUCTION_OPERATIONS.md` (Task 9.2).
 - New: `docker/keycloak/provision-islamu-ngo-client.sh` + `Dockerfile.provisioner`; `compose.production.yaml`; `dev/report/EVENT_REFERENCE_ALIGNMENT.md`; README provenance section; `bootstrap-sibling-app` intent.
+- Navigation docs: `docs/DESIGN.md` gains the `SiteMegaMenu` primitive/tokens/states; `docs/BLAZOR.md` records the shell composition; `docs/ACCESSIBILITY.md` records the disclosure, focus-loss, Escape, mobile, zoom, and reduced-motion contract.
 - **Removed from Rev 1:** the cross-repo realm-export back-port to Event — no longer needed under D5 v2.
 
 ## 9. Security, Authorization, Privacy, And Abuse Considerations
@@ -320,8 +442,8 @@ Rev-1 items stand (audience separation, secret handling via `Explore.Secrets`, C
 | Multi-tenancy | Needs decision (8.1) — narrowed by D7 | Single first-party deployment; open question is single-tenant vs ISLAMU-projects-as-tenants |
 | Federation | Not applicable this workstream | Dormant foundations copy over |
 | Localization | Applicable, no action | System copies over |
-| Accessibility | Applicable, no action | Inherited; CP report §12.4's authenticated-browser-evidence idea noted as a future islamu.ngo improvement (alignment doc) |
-| White-label/self-host | **Not applicable (changed from Rev 1)** | D7: islamu.ngo is the single supported deployment; white-label machinery is a Phase 8 pruning candidate with recorded why |
+| Accessibility | **Applicable; Phase 12 action** | Disclosure navigation, predictable Tab order, focus-loss/Escape close, focus restoration, touch parity, 200% zoom, reduced motion, and browser evidence are explicit acceptance gates |
+| White-label/self-host | **Not applicable (changed from Rev 1)** | D7: islamu.ngo is the single supported deployment; classify white-label machinery in Phase 8, then execute approved deletion in Phase 10 |
 
 ## 11. Observability And Operations
 
@@ -329,7 +451,11 @@ Inherited (OTel, health checks, Aspire dashboard). Added: Phase 9 adopts the CP 
 
 ## 12. Migration And Compatibility Plan
 
-Unchanged: fresh `islamu_ngo` DB; full copied migration chain via `Event.MigrationService` (which Phase 9 elevates to the production one-shot gate, matching CP); no data migration; no shims.
+- Applied Event migrations remain immutable.
+- Before `RemoveEventProductSurface`: verify the target cloud database, capture Event-table row counts, and create/test a restorable PostgreSQL backup.
+- Test the destructive migration on an isolated database first. Its `Down` restores schema; discarded Event data requires backup restore.
+- Reach a green Event-free chassis before creating independent `AddBlogFoundation`.
+- No Event-to-Blog data conversion and no compatibility shims.
 
 ## 13. Risk Register
 
@@ -338,7 +464,7 @@ Unchanged: fresh `islamu_ngo` DB; full copied migration chain via `Event.Migrati
 | R1 | Polluted target history kept | Medium (if U1=keep) | Medium | Recommend orphan re-root; backup branch | clone size | 0.1/0.2 |
 | R2 | Snapshot from dirty Event tree | Medium | High | Pin committed SHA; `git archive` | file-list diff | 1.1 |
 | R3 | Hidden dependency on excluded files | Medium | Medium | Phase 2 green-before-modification gate | failures classed "copy defect" | 2.1/2.2 |
-| R4 | Name/volume collision corrupts Event dev data | Medium | High | 3.1 rename table review; dual-stack boot test | Event stack misbehaves | 3.1/3.2 |
+| R4 | Target `local-lite` starts API/Blazor without applying external migrations | Medium | High | Port always-present MigrationService + graph tests + real smoke | stale-schema startup | 3.4 |
 | R5 *(reworked)* | Realm drift between repos | **Low (was High)** | Medium | D5 v2: per-repo dev fixtures + additive provisioner; no shared file | dev login failures after realm edits | 4.1/4.2/4.4 |
 | R6 | Server-only rendering breaks WASM-assuming path | Medium | Medium | 5.1 investigation first; CP precedent narrows unknowns | Blazor suite/E2E failures | 5.1-5.3 |
 | R7 | Audience misconfiguration cross-authorizes the two apps | Low | High | negative test in 4.3 | cross-app token accepted | 4.3 |
@@ -347,6 +473,11 @@ Unchanged: fresh `islamu_ngo` DB; full copied migration chain via `Event.Migrati
 | **R10** *(reworked in Rev 2.1)* | **Undeliberate publication of commercial CP internals into public islamu.ngo** — copying is now allowed, so the risk shifts from "legal breach" to "bulk-copying product differentiators without a decision" | Low-Medium | Medium (one-way publication of commercial surface) | C-FLOW per-file deliberation + publication log (Task 8.5); Task 4.2's approved copy sets the template; strip CP-specific identifiers/secrets on every copy | publication log missing entries for CP-origin diffs; CP secrets/URLs/claims in public tree | 4.2, 8.5, all |
 | **R11** | **Provisioner run against the shared production realm damages sibling resources** | Low | High | fail-closed on missing realm; owns-only reconciliation; Event-clients-untouched acceptance test; dry-run against dev Keycloak first | realm diff shows non-owned changes | 4.2 |
 | **R12** | **Three-repo divergence becomes untracked folklore** (future agents re-import pruned surfaces or "fix" intentional exceptions) | High over time | Medium | D8 categories + Task 8.5 living alignment doc + recorded-why on every verdict | PRs reversing Phase 8 verdicts without citing the doc | 8.1/8.5 |
+| **R13** | Blind Event-name deletion removes technical event/outbox/webhook/audit infrastructure | Medium | High | caller-evidence ledger + residual allowlist | cross-cutting build/runtime failures | 10.1-10.4 |
+| **R14** | Event-table deletion loses needed cloud data | Low-Medium | High | row review + verified backup + isolated migration rehearsal | missing retained data | 10.1/10.3 |
+| **R15** | Blog draft or cross-tenant content leaks publicly | Low | High | repository-level published/tenant filters + wrong-tenant tests | anonymous draft read | 11.1/11.2 |
+| **R16** | Markdown enables XSS | Medium | High | raw HTML disabled + malicious-content test | scriptable rendered output | 11.3 |
+| **R17** | Hover mega menu flickers, traps focus, or becomes unusable on touch/zoom | Medium | Medium-High | composite-region close grace; disclosure semantics; explicit mobile drawer; viewport-safe scroll; bUnit + browser matrix | panel closes while entering it, remains open after focus leaves, or hides focused links | 12.2-12.4 |
 
 ## 14. Success Metrics And Definition Of Done
 
@@ -356,6 +487,11 @@ Rev-1 items 1-9 stand, amended/added:
 10. `compose.production.yaml` + `PRODUCTION_OPERATIONS.md` committed and config-validated (Phase 9).
 11. `EVENT_REFERENCE_ALIGNMENT.md` exists with seeded divergence ledger **and CP-origin publication log** (Task 8.5).
 12. Every CP-origin file in the repo appears in the publication log, carries adapted (non-CP) identifiers, and contains no CP secrets/URLs (R10 sweep).
+13. `local-lite` is the documented canonical profile and is observed with MigrationService completing before healthy API/Blazor against Infisical-backed external infrastructure.
+14. No Event product route, HAL relation, controller, CQRS feature, aggregate, repository, EF model entry, UI page, generated operation, MCP resource, Cerbos policy, seed, fixture, schema entry, or product doc remains.
+15. Event removal and Blog creation use separate tested migrations with backup/rollback notes.
+16. Blog supports tenant-safe draft/edit/taxonomy/thumbnail/publish/unpublish/delete, anonymous list/detail, HAL-gated management, safe Markdown, and an observed `local-lite` workflow.
+17. The Event-oriented navbar is gone; desktop ISLAMU navigation opens on hover/focus, switches panels without flicker, closes when pointer/focus leaves or Escape/outside/route change occurs, restores focus on Escape, and provides an explicit touch/mobile experience with RTL, zoom, reduced-motion, and accessibility evidence.
 
 ## 15. Implementation Agent Contract — KEEP DEV DOCS CURRENT
 
@@ -370,4 +506,4 @@ Unchanged from Rev 1 (Implemented / Verified / Remaining / Next / Docs updated �
 
 ## 17. Potential Risks & Unknowns (Candid Critique)
 
-Rev 2 removes the worst Rev-1 seam (shared realm-export drift); Rev 2.1 removes the second one (the provisioner no longer needs to be re-authored — the proven CP script is the basis). What remains: First, **the provisioner is still the most safety-critical artifact** — a bash job holding realm-admin authority pointed at the same realm that serves the commercial product's users and the Event platform's users. Starting from CP's battle-tested script shrinks the implementation risk, but the *adaptation* is where new bugs enter: a missed rename could make islamu.ngo's job reconcile (and "correct") CP-owned clients in the shared realm. The Event-clients-untouched diff test must therefore also assert CP-owned clients untouched, and the first run against any shared (non-dev) Keycloak should be human-supervised. Second, **C-FLOW's remaining failure mode is drift-by-convenience**: with copying legally free in all directions, the cheap path for every future gap is "grab it from CP," which can silently publish commercial surfaces and blur which repo owns which behavior — the publication log only works if agents actually write to it, so PR review should ask "any CP-origin content? logged?" as a standing question. Third, the **non-self-hostable pruning (Phase 8) is where scope discipline will actually be tested** — Event's self-host surfaces are woven through onboarding, settings, docs, and tests, and CP's report shows (three waves of corrections) how often "obviously removable" surfaces turn out to be load-bearing; the decision-category ledger keeps pruning honest, and "just delete the onboarding wizard" is the predictable failure. Finally, Phase 9's assumption that Event's API can bind metrics to a management port the way CP does is **unverified** (Task 9.1) — if Event lacks the split, that's a small change in islamu.ngo, but don't let it silently become "metrics on the public port in production."
+Rev 2 removes the worst Rev-1 seam (shared realm-export drift); Rev 2.1 removes the second one (the provisioner no longer needs to be re-authored — the proven CP script is the basis). What remains: First, **the provisioner is still the most safety-critical artifact** — a bash job holding realm-admin authority pointed at the same realm that serves the commercial product's users and the Event platform's users. Starting from CP's battle-tested script shrinks the implementation risk, but the *adaptation* is where new bugs enter: a missed rename could make islamu.ngo's job reconcile (and "correct") CP-owned clients in the shared realm. The Event-clients-untouched diff test must therefore also assert CP-owned clients untouched, and the first run against any shared (non-dev) Keycloak should be human-supervised. Second, **C-FLOW's remaining failure mode is drift-by-convenience**: with copying legally free in all directions, the cheap path for every future gap is "grab it from CP," which can silently publish commercial surfaces and blur which repo owns which behavior — the publication log only works if agents actually write to it, so PR review should ask "any CP-origin content? logged?" as a standing question. Third, **Phase 10 Event removal is where scope discipline will actually be tested** — Event's product and self-host surfaces are woven through onboarding, settings, docs, policies, generated contracts, and tests. The caller ledger, technical-event allowlist, backup gate, and staged removal migration prevent "delete by filename" from taking out shared chassis behavior. Finally, Phase 9's assumption that Event's API can bind metrics to a management port the way CP does is **unverified** (Task 9.1) — if Event lacks the split, that's a small change in islamu.ngo, but don't let it silently become "metrics on the public port in production."

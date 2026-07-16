@@ -129,12 +129,12 @@ Phase 7.2 may start only after this decision is recorded and reviewed in active 
 3. API-hosted MCP endpoint mapping behind explicit enablement, with per-operation authorization filters and anonymous-safe discovery only.
 4. Registry-backed tool definitions and validation.
 5. Tests proving disabled mode, auth/tenant fail-closed behavior, registry-backed tool metadata, and no direct repository mutation for mutating tools.
-6. Self-hosting and operations docs.
+6. First-party operations docs.
 
 ## Related
 
 - [ARCHITECTURE.md](../ARCHITECTURE.md) — composition root and Clean Architecture boundary.
 - [CONFIGURATION.md](../CONFIGURATION.md) — static configuration surface.
 - [OPERATIONS.md](../OPERATIONS.md) — health, metrics, and runbook posture.
-- [SELF_HOSTING.md](../SELF_HOSTING.md) — self-hosting behavior and optional services.
+- [OPERATIONS.md](../OPERATIONS.md) — first-party runtime behavior and optional services.
 - `dev/active/ai-tool-contract-registry/ai-tool-contract-registry-plan.md` — AI Tool Contract Registry implementation plan.

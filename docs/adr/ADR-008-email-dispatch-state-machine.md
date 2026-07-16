@@ -81,5 +81,5 @@ Kafka or other future provider modes are out of scope for this ADR and this work
 - [ARCHITECTURE.md](../ARCHITECTURE.md) — Clean Architecture and background-service ownership.
 - [CONFIGURATION.md](../CONFIGURATION.md) — `EmailDispatchProcessor:*` settings.
 - [OPERATIONS.md](../OPERATIONS.md) — health checks, metrics, and operator behavior.
-- [SELF_HOSTING.md](../SELF_HOSTING.md) — Basic mode and future optional RabbitMQ profile.
+- [CONFIGURATION.md](../CONFIGURATION.md) — dispatch settings and optional RabbitMQ transport.
 - [ADR-002](ADR-002-outbox-pattern.md) — general transactional outbox pattern.

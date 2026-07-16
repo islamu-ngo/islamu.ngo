@@ -79,6 +79,6 @@ Before partitioning becomes current behavior for any table family, the implement
 
 - [OPERATIONS.md](../OPERATIONS.md) — lifecycle matrix and partitioning activation runbook.
 - [BACKUP_RESTORE_UPGRADE.md](../BACKUP_RESTORE_UPGRADE.md) — backup, restore, upgrade, and rollback expectations.
-- [DEPLOYMENT_TIERS.md](../DEPLOYMENT_TIERS.md) — infrastructure maturity tiers.
+- [OPERATIONS.md](../OPERATIONS.md) — first-party infrastructure activation and recovery.
 - [ADR-002](ADR-002-outbox-pattern.md) — transactional outbox pattern.
 - [ADR-008](ADR-008-email-dispatch-state-machine.md) — email dispatch state machine and optional dispatch profiles.

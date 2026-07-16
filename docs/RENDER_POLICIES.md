@@ -1,5 +1,5 @@
-ABOUTME: Defines runtime Blazor render-policy behavior from governance settings to route-level decisions.
-ABOUTME: Documents current presets, route groups, defaults, and onboarding guardrails exactly as implemented.
+<!-- ABOUTME: Defines current Blazor render-policy behavior from governance settings to route-level decisions. -->
+<!-- ABOUTME: Separates imported Event-era routing facts from the first-party website target contract. -->
 
 # Render Policies
 
@@ -14,7 +14,7 @@ Data source:
 - `PublicExperienceSettingsDto` from API (`GetPublicExperienceSettingsQueryHandler`)
 - values originate from `HierarchicalSettingsResolver.ResolveEffectiveSettingsAsync()` which applies the 5-tier cascade (User → Group → Organization → Tenant → Instance).
 
-This render-policy system belongs to the ISLAMU Event Blazor web app (`Explore.Blazor` / `Explore.Blazor.Client`). Public/community routes use the documented policy customization. Dedicated admin hosts render the embedded control-plane routes through the server-owned shell and do not create a separate application or contract boundary.
+This render-policy system is current imported behavior in `Explore.Blazor` and `Explore.Blazor.Client`. It remains authoritative only while those source paths survive the init-import workstream. Event routes and tenant-governance settings below are implementation facts, not target website promises. New website and Blog routes must be added by the code-owning workstream before this document presents them as implemented.
 
 ## Route Groups
 

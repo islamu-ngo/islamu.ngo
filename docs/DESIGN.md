@@ -1,164 +1,63 @@
-ABOUTME: Root design-system contract for the ISLAMU Event Blazor experience.
-ABOUTME: Codifies existing MudBlazor tokens, wrapper components, and support-access UI primitives.
+<!-- ABOUTME: Product experience direction for the public ISLAMU website and web application. -->
+<!-- ABOUTME: Defines a distinctive values-led atmosphere without speculative routes or decorative novelty. -->
 
-# ISLAMU Event Design System
+# ISLAMU Experience Direction
 
-## 1. Atmosphere & Identity
+> **Audience:** Product contributors | Designers | Frontend engineers | Content owners
+> **Status:** Active
+> **Owner:** Product | Design
+> **Last Verified:** 2026-07-15
+> **Source Anchors:** `docs/PROJECT.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `src/Explore.Blazor/`, `src/Explore.Blazor.Client/`
 
-ISLAMU Event is a quiet operational command center for event teams, platform administrators, and support staff. The signature is trustworthy density: clear surfaces, restrained status color, and explicit action affordances that make administrative work feel accountable rather than flashy.
+## North Star
 
-## 2. Color
+The ISLAMU website should feel like a calm, credible, contemporary institution with editorial
+depth. It is not a generic charity template, an imported Event dashboard, or a visual-effects
+showcase. Its distinctiveness comes from purpose, typography, content rhythm, multilingual
+craft, useful interaction, and transparent next steps.
 
-Colors flow through MudBlazor palette variables and the `--isl-*` semantic aliases defined in `Explore.Blazor/wwwroot/css/tokens.css`.
+## Visitor Journey
 
-| Role | Token | Source | Usage |
-|------|-------|--------|-------|
-| Primary action | `--isl-color-primary` | `--mud-palette-primary` | Filled buttons, focus rings, links |
-| Secondary action | `--isl-color-secondary` | `--mud-palette-secondary` | Secondary controls |
-| Surface | `--isl-color-surface` | `--mud-palette-surface` | Cards, panels, dialogs |
-| Background | `--isl-color-background` | `--mud-palette-background` | Page canvas |
-| Text primary | `--isl-color-text` | `--mud-palette-text-primary` | Headings and body |
-| Text secondary | `--isl-color-text-secondary` | `--mud-palette-text-secondary` | Metadata and supporting labels |
-| Border | `--isl-color-border` | `--mud-palette-lines-default` | Card and panel outlines |
-| Divider | `--isl-color-divider` | `--mud-palette-divider` | Section separators |
-| Error | `--isl-color-error` | `--mud-palette-error` | Destructive states |
-| Success | `--isl-color-success` | `--mud-palette-success` | Completed states |
-| Warning | `--isl-color-warning` | `--mud-palette-warning` | Risk, support-access active state |
-| Info | `--isl-color-info` | `--mud-palette-info` | Neutral informative states |
+1. **Orient:** understand what ISLAMU is and why it exists.
+2. **Explore:** read trustworthy, well-structured editorial content.
+3. **Participate:** use only real, owned destinations that explain what happens next.
+4. **Return:** discover current content and services without manipulation or noisy engagement patterns.
 
-Rules:
-- Use semantic tokens in component CSS; raw palette values live only in token/theme sources.
-- Color cannot be the only signal for status. Pair warning/error/success with text and iconography.
-- Support-access active UI uses warning semantics, not primary branding, because it represents elevated risk.
+## Visual Principles
 
-## 3. Typography
+- Use generous editorial spacing, clear hierarchy, and deliberate pacing.
+- Prefer typography, content, and composition over decorative cards and gradients.
+- Use color semantically and with WCAG 2.2 AA contrast.
+- Preserve the existing three-tier token model and CSS layer architecture.
+- Use logical CSS properties so Arabic layouts are native RTL compositions, not mirrored afterthoughts.
+- Keep surfaces quiet and borders/shadows restrained; hierarchy must not depend on elevation alone.
+- Use authentic, rights-cleared imagery only. Missing imagery is better than placeholder or unlicensed imagery.
 
-Typography follows the fluid scale in `tokens.css`.
+## Interaction Principles
 
-| Level | Token | Usage |
-|-------|-------|-------|
-| H1 | `--isl-typography-h1-*` | Page titles |
-| H2 | `--isl-typography-h2-*` | Major sections |
-| H3 | `--isl-typography-h3-*` | Panel headings |
-| H4-H6 | `--isl-typography-h4-*` through `--isl-typography-h6-*` | Compact section headings |
-| Body | `--isl-typography-body1-*` | Primary copy |
-| Body small | `--isl-typography-body2-*` | Secondary copy and dense rows |
-| Button | `--isl-typography-button-*` | Button labels |
-| Caption | `--isl-typography-caption-*` | Metadata |
-| Overline | `--isl-typography-overline-*` | Rare labels |
+- Every animation explains state, hierarchy, or continuity.
+- Respect `prefers-reduced-motion`; no essential meaning depends on motion.
+- No hover-only controls, autoplay, gratuitous parallax, scroll hijacking, or cursor effects.
+- Navigation uses semantic disclosure controls, visible focus, Escape handling, and keyboard/touch parity.
+- Loading, empty, failure, and offline states remain comprehensible without optional third parties.
 
-Font stack:
-- Primary: `--isl-font-family-primary`
-- Secondary: `--isl-font-family-secondary`
+## Content Principles
 
-Rules:
-- Every page has one structural `h1`.
-- Body text stays at or above the existing body scale.
-- Overline labels are rare; status banners should use direct prose rather than decorative small caps.
+- Headlines state purpose rather than slogans unsupported by evidence.
+- Claims name an owner and source; impact figures require a verification date.
+- Calls to action describe the destination and consequence.
+- English, French, and Arabic content is reviewed as content, not merely machine-translated strings.
+- Planned capabilities stay in internal roadmaps until the destination is implemented.
 
-## 4. Spacing & Layout
+## Required Quality Gates
 
-Spacing uses the 4px grid from `--isl-space-1` through `--isl-space-16`.
+- WCAG 2.2 AA, semantic landmarks, skip link, visible focus, 200% zoom, and screen-reader labels.
+- English/French/Arabic parity and RTL review.
+- Reduced-motion and keyboard-only review.
+- Responsive behavior from small mobile viewports through large desktop layouts.
+- Public pages remain useful when analytics and engagement services are unavailable.
+- SEO metadata and structured data describe only implemented content types and routes.
+- Consent and privacy decisions precede non-essential analytics or email capture.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--isl-space-1` | 4px | Tight icon or status gaps |
-| `--isl-space-2` | 8px | Inline groups |
-| `--isl-space-3` | 12px | Compact padding |
-| `--isl-space-4` | 16px | Standard component padding |
-| `--isl-space-5` | 20px | Comfortable inline blocks |
-| `--isl-space-6` | 24px | Page and panel padding |
-| `--isl-space-8` | 32px | Section spacing |
-| `--isl-space-10` | 40px | Large section separation |
-| `--isl-space-16` | 64px | Major page rhythm |
-
-Layout rules:
-- Use CSS Grid or MudBlazor layout primitives for multi-column work.
-- Component CSS uses logical properties for RTL support.
-- Page sections are full-width or constrained layouts; nested cards are avoided.
-
-## 5. Components
-
-### AppButton
-- Structure: wrapper over `MudButton`.
-- Variants: filled, outlined, text.
-- Spacing: `--isl-button-padding-x`, `--isl-button-padding-y`.
-- States: default, hover, active, focus, disabled.
-- Accessibility: visible focus, real button/link semantics, optional icon text stays readable.
-- Motion: tokenized background, border, shadow, and opacity transitions.
-
-### AppCard
-- Structure: wrapper over `MudCard`.
-- Variants: flat default, outlined when separation is required.
-- Spacing: caller-owned content padding via tokenized layout classes or component CSS.
-- States: default, hover only when clickable.
-- Accessibility: cards are not interactive unless rendered with real button/link semantics.
-- Motion: no decorative movement.
-
-### WebPushSubscriptionPanel
-- Structure: one outlined settings panel with a compact heading, privacy copy, browser state, and one explicit command.
-- Variants: unavailable, unsupported, denied, ready, enabled, and error.
-- States: permission is requested only from the Enable command; denied state has no repeated prompt affordance.
-- Accessibility: state changes use visible text plus polite live-region announcements; icons are supplementary.
-- Motion: none beyond the parent settings surface transition.
-
-### AppTextField
-- Structure: wrapper over `MudTextField`.
-- Variants: outlined default.
-- Spacing: label above input, helper/error text below.
-- States: default, focus, disabled, error.
-- Accessibility: labels are mandatory; placeholder-only labels are not allowed.
-- Motion: MudBlazor focus and validation transitions only.
-
-### AppIconButton
-- Structure: wrapper over `MudIconButton`.
-- Variants: default, primary, error, warning.
-- Spacing: minimum target size follows `--isl-target-min`.
-- States: default, hover, active, focus, disabled.
-- Accessibility: icon-only actions require `aria-label`.
-- Motion: tokenized hover/active feedback.
-
-### SupportAccessBanner
-- Structure: shell-level status banner with warning icon, active target summary, expiry, mode, and stop action.
-- Variants: read-only active, write active, stopping, error.
-- Spacing: `--isl-space-3` mobile padding, `--isl-space-4` desktop padding, `--isl-space-2` inline gaps.
-- States: active, loading stop, stop failed, expired/cleared.
-- Accessibility: `role="status"` for normal updates, assertive announcement only when stop fails or session expires.
-- Motion: opacity/transform entry only; no repeated animation.
-
-### SupportAccessStatusChip
-- Structure: compact icon/text chip used inside admin surfaces.
-- Variants: read-only, write, expired, revoked.
-- Spacing: `--isl-space-1` icon gap, `--isl-space-2` inline padding.
-- States: default, focus when interactive, disabled.
-- Accessibility: status text must remain visible; color is supplementary.
-- Motion: none.
-
-## 6. Motion & Interaction
-
-| Type | Duration | Easing | Usage |
-|------|----------|--------|-------|
-| Micro | 150ms | ease | Button, chip, and hover feedback |
-| Standard | 250-300ms | ease-in-out | Drawer/panel transitions |
-| Dock | `--isl-dock-motion-duration` | `--isl-dock-motion-easing` | Shell dock panels |
-
-Rules:
-- Animate only `transform`, `opacity`, `filter`, color, border-color, or box-shadow.
-- Respect `prefers-reduced-motion`.
-- Motion must communicate state or affordance; support-access risk indicators do not pulse or distract.
-
-## 7. Depth & Surface
-
-Strategy: mixed, with flat cards by default and tokenized shadows only for overlays, menus, and genuinely elevated surfaces.
-
-| Level | Token | Usage |
-|-------|-------|-------|
-| Border | `--isl-card-border` | Ordinary cards and panels |
-| Hover border | `--isl-card-hover-border-color` | Clickable cards |
-| Subtle shadow | `--isl-shadow-xs` / `--isl-shadow-sm` | Light elevation |
-| Dialog/popover | `--isl-shadow-md` / `--isl-shadow-lg` | Overlays and menus |
-
-Rules:
-- Ordinary admin content should prefer borders and tonal separation over heavy shadows.
-- Support-access banner uses warning-toned surface treatment plus border, not high elevation.
-- MudBlazor `.mud-*` overrides remain limited to `mudblazor-overrides.css`.
+`docs/DESIGN_SYSTEM.md` remains the technical implementation contract. This document owns the
+public atmosphere and decision criteria, not component APIs.

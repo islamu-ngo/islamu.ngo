@@ -1,5 +1,5 @@
-ABOUTME: Accessibility platform rules and conventions for WCAG 2.2 AA compliance.
-ABOUTME: Defines the page shell contract, service contracts, component authoring rules, and CSS direction ban.
+<!-- ABOUTME: Accessibility rules and conventions for the first-party ISLAMU website. -->
+<!-- ABOUTME: Defines WCAG 2.2 AA launch gates, shell contracts, component rules, motion, and RTL requirements. -->
 
 # Accessibility Standards
 
@@ -298,7 +298,7 @@ Skip-to-content link. Automatically present in MainLayout. No page-level action 
 dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
 
 # Architecture convention tests, including accessibility guardrails
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
 ```
 
 Use TUnit `--treenode-filter` only for locally verified focused runs. Do not use VSTest-style `--filter` examples for TUnit projects.
@@ -306,7 +306,7 @@ Use TUnit `--treenode-filter` only for locally verified focused runs. Do not use
 ### Manual Testing Checklist
 
 - Keyboard-only navigation: Tab through all interactive elements, verify focus visibility.
-- Screen reader (NVDA/VoiceOver): critical flows (event browse, registration, dialog open/close).
+- Screen reader (NVDA/VoiceOver): every implemented public journey and dialog open/close flow.
 - Dialog flows: verify focus trap, Escape dismissal, focus restoration to trigger element.
 - Dark mode: verify all text passes WCAG AA contrast ratios.
 - RTL mode: verify layout mirrors correctly, no text overlap.

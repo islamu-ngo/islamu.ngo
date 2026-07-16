@@ -1,34 +1,34 @@
-ABOUTME: Roadmap for a future hosted public documentation website.
-ABOUTME: Keeps public-site planning separate from the current repository Markdown source of truth.
+<!-- ABOUTME: Policy for keeping repository Markdown as ISLAMU's single technical documentation source. -->
+<!-- ABOUTME: Prevents a duplicate hosted-docs tree until a concrete publishing requirement is approved. -->
 
-# Public Documentation Roadmap
+# Public Documentation Policy
 
-> **Audience:** Contributors | Operators | AI agents
-> **Status:** Planned
+> **Audience:** Contributors | First-party operators | AI agents
+> **Status:** Implemented
 > **Owner:** Contributor Experience
-> **Last Verified:** 2026-05-06
-> **Source Anchors:** `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/index.md`, `docs/docs-website/README.md`
+> **Last Verified:** 2026-07-15
+> **Source Anchors:** `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/index.md`, `README.md`
 
-The current documentation implementation keeps repository Markdown as the source of truth. A future public documentation website may mirror selected pages, but it must not become a competing source of operational truth.
+Repository Markdown is the technical documentation source of truth. The parked `docs/docs-website/` copy was removed because there is no approved hosted-docs requirement and duplicated pages drifted from current product and operational truth.
 
-## Deferred Until Repository Docs Are Stable
+## Publishing Gate
 
-Do not introduce a docs-site generator, publishing pipeline, or public-site navigation model until:
+Do not introduce a docs-site generator, mirrored page tree, or publishing pipeline until a separate approved workstream proves:
 
 1. canonical repository docs pass metadata, source-anchor, placeholder, and link validation;
-2. release documentation and operator runbooks are accurate enough for self-hosters;
+2. release documentation and first-party operator runbooks are accurate;
 3. the project chooses which pages are safe for public mirroring;
 4. ownership is clear for keeping mirrored public pages synchronized with source docs.
 
-## Candidate Public Pages
+## Eligible Source Material
 
-These pages are likely public-site candidates once the hosted docs phase starts:
+If publishing is later approved, select content directly from these canonical sources:
 
 | Candidate | Source Of Truth | Public-Site Notes |
 |---|---|---|
-| Product overview | `README.md`, `docs/PROJECT.md` | Keep concise and evaluator-focused. |
-| Getting started | `docs/GETTING_STARTED.md`, `docs/SELF_HOSTING.md` | Mirror only verified runnable paths. |
-| Self-hosting | `docs/SELF_HOSTING.md`, `docs/BACKUP_RESTORE_UPGRADE.md` | Include clear warnings for unverified restore/rollback steps. |
+| Product overview | `README.md`, `docs/PROJECT.md` | Keep claims tied to the capability horizon and content truth inventory. |
+| Contributor onboarding | `docs/GETTING_STARTED.md`, `docs/CONTRIBUTING.md` | Publish only verified local-development paths. |
+| First-party operations | `docs/OPERATIONS.md`, `docs/BACKUP_RESTORE_UPGRADE.md` | Do not present internal runbooks as a supported self-hosting product. |
 | API integration | `docs/API_COOKBOOK.md`, `docs/API.md` | Link generated OpenAPI reference rather than duplicating endpoint contracts. |
 | Admin guide | `docs/ADMIN_GUIDE.md` | Include implemented-vs-planned labels for admin surfaces. |
 | Accessibility | `docs/ACCESSIBILITY.md`, `docs/ACCESSIBILITY_ARTIFACTS.md` | Publish release-specific evidence only after validation is filled in. |
@@ -37,7 +37,7 @@ These pages are likely public-site candidates once the hosted docs phase starts:
 
 - No MkDocs, Docusaurus, VitePress, or other generator configuration.
 - No hosted docs deployment workflow.
-- No broad rewrite of repository docs into marketing pages.
+- No duplicate technical pages inside the marketing website.
 - No duplicate copies of configuration tables or operator runbooks.
 
 ## Required Future Contract

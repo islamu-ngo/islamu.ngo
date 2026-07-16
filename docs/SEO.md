@@ -1,15 +1,24 @@
-ABOUTME: Documents implemented sitemap, robots, render-policy, and public-discovery SEO behavior.
-ABOUTME: Separates source-backed SEO features from planned or unsupported site-wide SEO automation claims.
+<!-- ABOUTME: Documents source-backed SEO and public-discovery behavior during the website transition. -->
+<!-- ABOUTME: Separates imported Event behavior from implemented first-party website and planned Blog capabilities. -->
 
 # SEO And Public Discovery
 
-> **Audience:** Operators | Admins | Integrators | Contributors
+> **Audience:** First-party operators | Product and content owners | Contributors
 > **Status:** Mixed
 > **Owner:** Frontend
-> **Last Verified:** 2026-07-05
+> **Last Verified:** 2026-07-15
 > **Source Anchors:** `Explore.API/Controllers/SitemapController.cs`, `Explore.Application/Features/Seo/Handlers/Queries/GetSitemapEventsQueryHandler.cs`, `Explore.Infrastructure/Services/PublicUrlBuilder.cs`, `Explore.Blazor/Controllers/RobotsController.cs`, `Explore.Blazor/Components/App.razor`, `Explore.Blazor/Extensions/BffManifestEndpoints.cs`, `Explore.Blazor.Client/Routes.razor`, `Explore.Blazor.Client/Services/RuntimeRenderPolicyService.cs`, `Explore.Blazor.Client/Pages/Events/EventDetail.razor`, `Explore.Blazor.Client/Pages/Events/EventDetail.razor.cs`, `Explore.Application/Features/PublicExperience/`, `Explore.Application/Services/TenantPolicySettingService.Read.cs`, `Explore.Application/Services/TenantPolicySettingService.Apply.cs`, `docs/RENDER_POLICIES.md`, `docs/ADMIN_GUIDE.md`
 
-SEO support is implemented as a focused set of public-discovery primitives: sitemap generation, robots output, render-policy decisions for public routes, and tenant public-experience settings. Do not describe this as full site-wide SEO automation.
+SEO support is implemented as a focused set of imported public-discovery primitives: sitemap generation, robots output, render-policy decisions, and Event-detail metadata. These facts describe the current source, not the target website information architecture. Do not describe them as full site-wide SEO automation or imply that Blog metadata exists before init-import Phase 11 implements and verifies it.
+
+## Website Transition Contract
+
+- The canonical public route and content inventory decides which destinations may be indexed or linked.
+- Only implemented, public, owner-approved routes enter the sitemap.
+- Every indexable page needs a stable title, description, canonical URL, language/alternate-language behavior, and an explicit indexing decision.
+- Blog sitemap entries, article metadata, and article structured data remain **Planned** until the Blog implementation is source-backed and green.
+- Removed Event routes, tenant controls, and Event JSON-LD leave this document in the same code-owned deletion slice; no compatibility SEO routes are retained.
+- Analytics and consent behavior must remain privacy-respecting and may not be justified as an SEO requirement.
 
 ## Sitemap Behavior
 
@@ -78,9 +87,9 @@ Do not claim structured data for every route. Current structured data automation
 
 The public Blazor shell links a minimal web app manifest for launch install metadata. The BFF serves the manifest dynamically from public-experience branding, using the configured brand display name, logo URL, and favicon URL when available, with generic fallback values when branding cannot be resolved. No service worker, offline cache, push, or background sync behavior is registered by the manifest work.
 
-## Implemented Vs Planned
+## Current Imported Behavior Vs Target
 
-Implemented:
+Currently implemented in imported source:
 
 - Public sitemap endpoint.
 - Public robots endpoint with environment-sensitive indexing behavior.
@@ -91,6 +100,13 @@ Implemented:
 - Minimal public web app manifest and app-shell manifest link.
 - Error pages with page-level noindex behavior.
 - Tenant public-experience controls for discovery-oriented presentation.
+
+Planned for the first-party website only after code-owned implementation:
+
+- Sitemap coverage for the approved website route inventory.
+- Blog article canonical metadata and sitemap entries.
+- Appropriate article structured data where source and content governance support it.
+- Multilingual alternate-language metadata for fully reviewed locale variants.
 
 Not proven by inspected source:
 

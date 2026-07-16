@@ -1,5 +1,5 @@
-ABOUTME: Architecture and usage guide for the localization/i18n system.
-ABOUTME: Covers TMS provider abstraction (Tolgee/Weblate), offline bundles, key conventions, and self-hoster tiers.
+<!-- ABOUTME: Architecture and usage guide for the first-party website localization system. -->
+<!-- ABOUTME: Covers Weblate, offline resilience, language bundles, provider boundaries, and translation conventions. -->
 
 # Localization
 
@@ -7,13 +7,15 @@ ABOUTME: Covers TMS provider abstraction (Tolgee/Weblate), offline bundles, key 
 
 All translations are managed through a **Translation Management System (TMS)** — either live (connected to Tolgee or Weblate) or offline (pre-exported `.json` bundles shipped with the app). There is **no translations table** in the database; the TMS is the single source of truth.
 
-## Self-Hoster Tiers
+## First-Party Operating Modes
 
-| Tier | TMS Connected? | How Translations Work |
+| Mode | TMS Connected? | How Translations Work |
 |------|---------------|----------------------|
-| **Tier 1 — Offline** | No | Bundled `.json` files shipped as embedded resources. Single or multi-language depending on which files are included. |
-| **Tier 2 — Connected** | Yes (Tolgee or Weblate) | Live translation resolution from TMS API. Self-hoster can add languages, edit translations. |
-| **Tier 3 — ISLAMU Global** | Yes + CDN | Tolgee/Weblate + community translators + CDN-cached live updates. |
+| **Offline fallback** | No | Bundled `.json` files keep the website usable when the TMS is unavailable. |
+| **Weblate-managed** | Yes | Weblate is the retained first-party translation workflow for English, French, Arabic, and future approved locales. |
+| **Alternative provider** | Configuration-dependent | Tolgee remains implemented code until the init-import caller ledger decides whether to remove it. Its presence is not a product commitment. |
+
+Weblate is the target operational provider. Offline bundles are a resilience mechanism, not a separate distribution tier. New locales require content ownership, translation review, RTL validation where applicable, and parity across the public journey before they are advertised.
 
 ## Architecture
 

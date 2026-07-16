@@ -1,20 +1,20 @@
-ABOUTME: Summarizes documentation health and the current prioritized improvement stream.
-ABOUTME: Keeps only the decisions and actions that materially improve developer productivity.
+<!-- ABOUTME: Summarizes documentation health and the current prioritized improvement stream. -->
+<!-- ABOUTME: Keeps the first-party product, contributor, and operations sources of truth explicit. -->
 
 # Documentation Synthesis
 
 > **Audience:** Contributors | AI agents
 > **Status:** Implemented
 > **Owner:** Contributor Experience
-> **Last Verified:** 2026-06-12
-> **Source Anchors:** `README.md`, `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `docs/index.md`, `Event.Architecture.Tests/DocumentationQualityTests.cs`
+> **Last Verified:** 2026-07-16
+> **Source Anchors:** `README.md`, `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `docs/index.md`, `tests/Event.Architecture.Tests/DocumentationQualityTests.cs`
 
 ## Current State
 
 Strengths:
 
 - Core architecture and API docs exist.
-- Security and multi-tenancy behavior are now documented with implementation-level details.
+- Security and surviving data-scope behavior are documented with implementation-level details.
 - Reference docs are increasingly aligned with source code.
 - Repository Markdown is the current source of truth; hosted public docs remain deferred.
 - Canonical documentation metadata, source anchors, and stale-command checks now run through architecture tests.
@@ -24,12 +24,12 @@ Weaknesses:
 - Some docs became too long or mixed multiple intents.
 - Historical docs contained diagram-heavy sections with low signal.
 - Some docs duplicated each other instead of linking.
-- Operator and admin feature docs still need incremental source-grounded migration after the operator-critical runbooks.
+- Imported Event and external-operator docs still require source-grounded removal as their code owners complete the transition.
 
 ## High-Value Direction
 
 1. Keep repository Markdown authoritative before investing in a public docs website.
-2. Keep `README.md` as the public task router and `docs/index.md` as the full inventory.
+2. Keep `README.md` as the public repository entrypoint and `docs/index.md` as the curated technical map.
 3. Keep reference docs authoritative and short.
 4. Keep troubleshooting symptom-first and link to runbooks instead of duplicating long procedures.
 5. Keep onboarding tutorials minimal and runnable.
@@ -41,14 +41,17 @@ Weaknesses:
 These docs should remain the highest-priority source of truth:
 
 - `docs/DOCUMENTATION_ARCHITECTURE.md`
+- `docs/PROJECT.md`
+- `docs/DESIGN.md`
 - `docs/QUICK_REFERENCE.md`
 - `docs/API.md`
 - `docs/CONFIGURATION.md`
-- `docs/SECURITY-MODEL.md`
-- `docs/MULTI_TENANCY.md`
+- `docs/SECURITY.md`
+- `docs/PRIVACY_DATA_INVENTORY.md`
+- `docs/ACCESSIBILITY.md`
+- `docs/LOCALIZATION.md`
 - `docs/RENDER_POLICIES.md`
 - `docs/OPERATIONS.md`
-- `docs/SELF_HOSTING.md`
 - `docs/BACKUP_RESTORE_UPGRADE.md`
 - `docs/RELEASE_CHECKLIST.md`
 
@@ -63,8 +66,8 @@ These docs should remain the highest-priority source of truth:
 
 ## Near-Term Actions
 
-1. Finish splitting `OPERATIONS.md` into reference content plus links to dedicated runbooks.
-2. Keep `TROUBLESHOOTING.md` focused on repeat symptoms and exact runbook links.
-3. Add admin and API cookbook docs after operator-critical docs stay green.
-4. Keep `README.md` concise and aligned with canonical docs.
-5. Keep `API_CHANGELOG.md` behavior-focused and short.
+1. Remove imported Event and external-operator references only with their source, test, and workflow owners.
+2. Keep `TROUBLESHOOTING.md` focused on repeat symptoms and exact first-party runbook links.
+3. Keep Blog, navigation, and SEO claims Planned until their implementation workstreams are green.
+4. Keep `README.md` concise and aligned with canonical product truth.
+5. Keep privacy, accessibility, localization, and public-route inventories synchronized with deployed behavior.

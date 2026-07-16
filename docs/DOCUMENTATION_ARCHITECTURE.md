@@ -1,121 +1,82 @@
-ABOUTME: Defines the repository documentation architecture, ownership model, and quality gates.
-ABOUTME: Keeps docs source-grounded, audience-oriented, and safe to evolve without a hosted docs site.
+<!-- ABOUTME: Canonical documentation architecture for the first-party ISLAMU website repository. -->
+<!-- ABOUTME: Defines audiences, metadata, source anchors, truth states, and deletion safety. -->
 
 # Documentation Architecture
 
-> **Audience:** Contributors | Operators | Admins | Integrators | AI agents
-> **Status:** Implemented
-> **Owner:** Contributor Experience
-> **Last Verified:** 2026-06-12
-> **Source Anchors:** `README.md`, `docs/index.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `Event.Architecture.Tests/DocumentationQualityTests.cs`, `.github/workflows/agent-context.yml`
+> **Audience:** Contributors | Maintainers | Operators | AI agents
+> **Status:** Active
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-15
+> **Source Anchors:** `AGENTS.md`, `docs/index.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `tests/Event.Architecture.Tests/DocumentationQualityTests.cs`
 
-This repository uses Markdown-first documentation as the canonical operator, contributor, and agent knowledge base. A separately hosted public docs website is deferred until repository docs are accurate, validated, and release-ready.
+## Purpose
 
-## Intent Model
+Documentation is part of the repository contract. It must describe the first-party ISLAMU
+website accurately, help contributors change it safely, and give ISLAMU operators the
+information needed to run it. It must not advertise unsupported self-hosting, Event product
+features, or planned destinations as available behavior.
 
-Use Diátaxis intent categories to prevent one page from becoming a mixed manual:
+## Audiences
 
-| Intent | Reader Question | Use For | Example Docs |
-|---|---|---|---|
-| Tutorial | How do I learn the path once? | Guided first-run or first-contribution flows | `GETTING_STARTED.md`, future `FIRST_CONTRIBUTION.md` |
-| How-to | How do I complete this task safely? | Operator/admin procedures and runbooks | `SELF_HOSTING.md`, `BACKUP_RESTORE_UPGRADE.md` |
-| Reference | What are the exact keys/contracts? | Stable facts, settings, APIs, commands | `CONFIGURATION.md`, `SECRETS.md`, `API.md` |
-| Explanation | Why is the system designed this way? | Architecture, tradeoffs, governance | `ARCHITECTURE.md`, ADRs, `GOVERNANCE.md` |
-
-If a page needs two intents, split the task steps from the reference table and link between them.
-
-## Audience Paths
-
-Use `README.md` as the public entry point. It should route new readers by task and audience without forcing them into the full documentation inventory. Use `docs/index.md` as the complete documentation map for readers who already know their task or need a specific reference.
-
-| Audience | Start Here | Then Read |
+| Audience | Needs | Primary Entry Points |
 |---|---|---|
-| Evaluators | `README.md`, `PROJECT.md` | `ARCHITECTURE.md`, `SECURITY-MODEL.md`, `SELF_HOSTING.md` |
-| Local developers | `GETTING_STARTED.md` | `TESTING.md`, `TROUBLESHOOTING.md` |
-| Operators | `SELF_HOSTING.md` | `CONFIGURATION.md`, `SECRETS.md`, `OPERATIONS.md`, `BACKUP_RESTORE_UPGRADE.md`, `RELEASE_CHECKLIST.md` |
-| Instance and tenant admins | `ADMIN_GUIDE.md` | `ADMIN_HIERARCHY.md`, `DEPLOYMENT_MODES.md`, `AUTHORIZATION_PATTERNS.md`, product feature docs |
-| Integrators | `API_COOKBOOK.md` | `API.md`, `API_CHANGELOG.md`, `SECURITY-MODEL.md`, `CONFIGURATION.md` |
-| Contributors | `FIRST_CONTRIBUTION.md` | `CONTRIBUTING.md`, `TESTING.md`, `QUICK_REFERENCE.md`, `DOCUMENTATION_STYLE_GUIDE.md` |
-| AI agents | `AGENTS.md` | `.claude/contract/README.md`, `.claude/contract/intents.yaml`, `dev/_journal/README.md` |
+| Public/product readers | Purpose, provenance, contribution and security paths | `README.md`, `SECURITY-POLICY.md`, `CODE_OF_CONDUCT.md` |
+| Contributors | Setup, architecture, conventions, tests, docs impact | `docs/GETTING_STARTED.md`, `docs/CONTRIBUTING.md`, `docs/ARCHITECTURE.md` |
+| First-party operators | Configuration, secrets, deployment, recovery, observability | `docs/CONFIGURATION.md`, `docs/SECRETS.md`, `docs/OPERATIONS.md` |
+| Product/design/content owners | Product truth, experience, accessibility, localization | `docs/PROJECT.md`, `docs/DESIGN.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md` |
+| AI agents | Authority, intent, rules, active work, verification | `AGENTS.md`, `.claude/contract/intents.yaml`, `dev/active/` |
 
-## Canonical Docs And Owners
+Third-party operator and evaluator documentation is not a supported audience contract.
 
-Each canonical doc has an owner category. Ownership means the category is responsible for accuracy, not that only that team may edit it.
+## Information Model
 
-| Owner | Canonical Docs |
-|---|---|
-| Platform/Ops | `SELF_HOSTING.md`, `BACKUP_RESTORE_UPGRADE.md`, `OPERATIONS.md`, `CONFIGURATION.md`, `RELEASE_CHECKLIST.md` |
-| Security | `SECURITY.md`, `SECRETS.md`, `AUTHORIZATION_PATTERNS.md`, `DEPLOYMENT_TIERS.md` |
-| API | `API.md`, `API_CHANGELOG.md`, OpenAPI/client-generation guidance in `GOVERNANCE.md` |
-| Frontend | `BLAZOR.md`, `DESIGN_SYSTEM.md`, `ACCESSIBILITY.md`, `RENDER_POLICIES.md` |
-| Product/Admin | `ADMIN_HIERARCHY.md`, feature/admin workflow docs |
-| Contributor Experience | `CONTRIBUTING.md`, `TESTING.md`, `DOCUMENTATION_STYLE_GUIDE.md`, this document |
-| Agent Context | `AGENTS.md`, `.claude/contract/`, `.agents/skills/`, `dev/_journal/` |
+- **Tutorials:** learning-oriented setup and first-contribution paths.
+- **How-to guides:** task-oriented operations and contributor procedures.
+- **Reference:** configuration, API, policy, schema, and generated contracts.
+- **Explanation:** product, architecture, security, design, and decision records.
 
-## Metadata Policy
+One canonical document owns each claim. Other documents link to it rather than copy drift-prone
+details.
 
-New canonical docs and operator-critical docs must include this block immediately below the title:
+## Required Metadata
+
+Canonical and operator-facing documents use:
 
 ```markdown
-> **Audience:** Operators | Contributors | Admins | Integrators | AI agents
-> **Status:** Implemented | Draft | Planned | Mixed
-> **Owner:** Platform/Ops | Security | API | Frontend | Product/Admin | Contributor Experience | Agent Context
+> **Audience:** ...
+> **Status:** Active | Draft | Deprecated | Historical
+> **Owner:** ...
 > **Last Verified:** YYYY-MM-DD
-> **Source Anchors:** `path/one`, `path/two`
+> **Source Anchors:** `path`, `path::Symbol`
 ```
 
-Rules:
+Every source anchor must resolve. Generated documents identify their generator and must not be
+edited by hand.
 
-- `Audience` can list multiple audience labels separated by `|`.
-- `Status` must describe the page as a whole; sections that are not implemented must also be labeled in the section text.
-- `Owner` must use one of the owner categories in this page.
-- `Last Verified` is the date source anchors were checked, not the edit date for grammar-only changes.
-- `Source Anchors` must point to real files or directories that prove the behavior.
+## Truth States
 
-Legacy docs can migrate gradually. Do not add metadata mechanically to low-value pages without checking their source anchors.
+- **Implemented:** source/config/policy and an owned destination exist.
+- **Planned:** approved work exists but behavior is not available; it is never linked as working.
+- **Deferred:** not committed and not a reason to retain code or configuration.
+- **Historical:** preserved only for provenance or decisions and clearly marked non-current.
 
-## Source-Anchor Policy
+## Change And Deletion Rules
 
-Documentation must prefer source-grounded claims over inferred behavior:
+Before deleting or renaming a document, inspect Markdown links, source anchors, tests, workflows,
+agent context, active dev docs, and generated ownership. Canonical-doc test constants change in
+the same slice as the document disposition; quality gates are updated, not weakened.
 
-- Runtime/service facts anchor to code or infrastructure files such as `docker-compose.yml`, `Explore.AppHost/`, or `Explore.API/Program.cs`.
-- Configuration tables anchor to binding or compatibility code such as `Explore.API/Extensions/ConfigurationExtensions.cs`.
-- Testing commands anchor to `docs/TESTING.md`, `.github/workflows/`, and the relevant test project files.
-- Roadmap or future behavior must be explicitly marked `Planned` or `Draft` and must not be presented as implemented.
+Behavior, configuration, security, API, operations, and public claims change with their owning
+documentation. Source-coupled docs are finalized after the corresponding code-led workstream is
+green.
 
-When a source anchor and a doc disagree, update the doc or create a task to reconcile the source. Do not preserve stale examples for narrative continuity.
+## Quality Gate
 
-## Docs Impact Contract
-
-Every non-trivial change must record one of these outcomes in the PR or dev handoff:
-
-| Outcome | Meaning |
-|---|---|
-| Updated | Docs changed in the same PR because behavior, commands, config, or operations changed. |
-| Not needed | The change is internal and does not affect documented behavior. |
-| Deferred | Docs impact exists but is intentionally split; include the follow-up path and reason. |
-
-API contract, operator, security, onboarding, and release changes should default to `Updated` unless proven otherwise.
-
-## Quality Gates
-
-Docs quality is enforced through `Event.Architecture.Tests` and `.github/workflows/agent-context.yml`.
-
-Current gates:
-
-- markdown link integrity for the agent/docs entry points and custom slash commands;
-- metadata and source-anchor validation for newly canonical docs;
-- stale marker checks for new canonical/operator docs;
-- stale TUnit command detection for repository docs and custom slash commands.
-
-Run the local docs quality check with:
+The authoritative repository-root documentation/context gate is:
 
 ```bash
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
 ```
 
-Do not use solution-level `dotnet test`, and do not use VSTest-style `--filter` for TUnit projects.
-
-## Public Docs Website Boundary
-
-`docs/docs-website/` is parked for this phase. Repository Markdown remains the source of truth until the canonical docs, metadata, and release contract are stable. A future public site may mirror selected pages, but it must not become a second source of truth.
+The suite owns link integrity, required metadata, source anchors, placeholder markers, command
+syntax, ABOUTME coverage, and agent-context structure.

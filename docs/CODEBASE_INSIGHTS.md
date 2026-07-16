@@ -1,11 +1,15 @@
-ABOUTME: Non-intuitive patterns, hidden knowledge, and implementation details requiring deep analysis.
-ABOUTME: Captures what you cannot guess from reading ARCHITECTURE.md alone — internal mechanics and gotchas.
+<!-- ABOUTME: Records non-obvious mechanics in the currently imported implementation for maintainers and migration work. -->
+<!-- ABOUTME: Separates verified source behavior from the first-party website target so legacy mechanics are not product promises. -->
 
 # Codebase Insights
 
-> Non-intuitive patterns, hidden knowledge, and things requiring deep analysis.
-> This document captures what you cannot guess from reading ARCHITECTURE.md alone.
-> Last Updated: 2026-05-27
+> **Audience:** Maintainers | Contributors | AI agents
+> **Status:** Mixed
+> **Owner:** Platform/Architecture
+> **Last Verified:** 2026-07-16
+> **Source Anchors:** `src/Explore.API`, `src/Explore.Application`, `src/Explore.Domain`, `src/Explore.Infrastructure`, `src/Explore.Persistence`
+
+This document records non-intuitive behavior in the current imported source. Event, tenant, deployment-mode, and administration details below are migration evidence, not commitments for the first-party ISLAMU website. Remove or rewrite each section only in the same init-import slice that removes or replaces its source behavior.
 
 ---
 

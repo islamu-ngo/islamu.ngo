@@ -1,5 +1,5 @@
-ABOUTME: Project governance rules that normalize architecture, naming, and contribution standards for this repository.
-ABOUTME: Replaces generic template guidance with repo-specific constraints and links to the authoritative docs.
+<!-- ABOUTME: Project governance rules for the first-party ISLAMU website repository. -->
+<!-- ABOUTME: Normalizes architecture, naming, contribution standards, and import cleanup. -->
 
 # Code Conventions & Governance
 
@@ -8,7 +8,15 @@ ABOUTME: Replaces generic template guidance with repo-specific constraints and l
 > This document defines naming conventions, organizational patterns, and architectural decisions.
 > For code examples and implementation patterns, see the relevant skills in `.agents/skills/`.
 
-**Last Updated**: 2026-04-19
+> **Audience:** Contributors | Maintainers | AI agents
+> **Status:** Active during import refactor
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-15
+> **Source Anchors:** `AGENTS.md`, `docs/PROJECT.md`, `docs/QUICK_REFERENCE.md`, `dev/active/init-import-islamu-event/`
+
+The repository targets one first-party ISLAMU website. Imported Event examples remain useful
+only while their source exists; they are not compatibility requirements and must be removed with
+their owning code slice.
 
 ---
 

@@ -1,5 +1,5 @@
-ABOUTME: Complete directory map showing all projects, folders, and key files.
-ABOUTME: Helps AI agents and developers locate code quickly without full-repo scanning.
+<!-- ABOUTME: Complete directory map for the current first-party ISLAMU website codebase. -->
+<!-- ABOUTME: Helps contributors locate source while imported Event projects are removed in coordinated slices. -->
 
 # Codebase Structure Reference
 
@@ -7,11 +7,13 @@ ABOUTME: Helps AI agents and developers locate code quickly without full-repo sc
 > Lists all folders with max 2 key files per folder for quick lookup.
 > Last Updated: July 2026
 
+> **Transition rule:** `Explore.*`, `Event.*`, and generated `IEventApiClient` names are current source identifiers, not target branding. This non-code workstream does not invent rename aliases. The init-import workstream owns source removal and any later naming decision; update this map after each code-owned handoff.
+
 ---
 
 ## Solution Overview
 
-The solution uses **Clean Architecture** with CQRS (MediatR). There are **two naming prefixes** during the Explore-to-Event transition:
+The solution uses **Clean Architecture** with CQRS (MediatR). Two imported naming prefixes remain during the transition to the first-party ISLAMU website:
 
 - **Explore.\*** - Main application projects (API, Domain, Application, Persistence, Blazor, Infrastructure) (historical naming from when the project was "Explore", were not renamed to "Event" yet)
 - **Event.\*** - Test projects plus newer shared/runtime projects such as shared BFF hosting and the control-plane UI.

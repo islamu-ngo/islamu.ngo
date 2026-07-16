@@ -1,7 +1,17 @@
-ABOUTME: High-signal implementation rules that are easy to miss when reading code quickly.
-ABOUTME: Focuses on non-inferable constraints and project-specific behavior.
+<!-- ABOUTME: High-signal implementation rules that are easy to miss when reading code quickly. -->
+<!-- ABOUTME: Distinguishes current imported constraints from the first-party ISLAMU target. -->
 
 # Quick Reference
+
+> **Audience:** Contributors | Maintainers | AI agents
+> **Status:** Active during import refactor
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-15
+> **Source Anchors:** `AGENTS.md`, `docs/GOVERNANCE.md`, `dev/active/init-import-islamu-event/`
+
+This file describes constraints that still exist in the current source tree. Event-specific and
+multi-tenant entries are transitional truths, not target-product commitments. Remove each only
+with its owning Phase 10 source/policy/test slice; do not preserve it as compatibility behavior.
 
 ## Critical Rules
 1. Repositories return entities, not DTOs; mapping happens in handlers.

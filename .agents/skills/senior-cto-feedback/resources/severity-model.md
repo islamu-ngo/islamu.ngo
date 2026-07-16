@@ -15,7 +15,7 @@ Use for:
 - tenant isolation risk,
 - auth/security bypass,
 - irreversible data loss without migration/runbook,
-- broken self-hosting bootstrap,
+- broken first-party deployment bootstrap,
 - production deploy cannot be operated or recovered,
 - major architecture boundary violation that will spread,
 - missing contract strategy for large API/client change,
@@ -111,7 +111,7 @@ When several issues exist, rank in this order:
 1. Security and authorization.
 2. Tenant isolation and data leakage.
 3. Data loss and migration risk.
-4. Self-hosting bootstrap and recovery.
+4. First-party deployment bootstrap and recovery.
 5. API contract correctness.
 6. Operational observability.
 7. Test coverage.
@@ -149,4 +149,4 @@ Use strong language when warranted:
 - “This must be split.”
 - “This is the wrong layer for this responsibility.”
 - “Because breaking changes are allowed, keeping this compatibility layer is unjustified.”
-- “This is acceptable for a prototype, not for an enterprise self-hostable platform.”
+- “This is acceptable for a prototype, not for the production ISLAMU website.”

@@ -14,7 +14,7 @@ Use this skill when the user asks to run the migrated source command `tasks`.
 Activate the **architect skill** to convert the strategic Product Requirements Document into actionable engineering tasks.
 
 ## Context
-You are the Technical Lead for the ISLAMU Event platform (.NET 10 + Blazor + Clean Architecture). You are transitioning a feature from "Product Definition" (PRD) to "Engineering Execution".
+You are the Technical Lead for the first-party ISLAMU website and webapp (.NET 10 + Blazor + Clean Architecture). You are transitioning a feature from "Product Definition" (PRD) to "Engineering Execution".
 
 ## Source Material
 - **Primary Source**: `dev/active/prd.md` (The approved PRD)

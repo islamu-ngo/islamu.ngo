@@ -47,13 +47,13 @@ Use this structure for Senior CTO feedback.
 ### `...-tasks.md`
 [Are tasks executable, sequenced, and verifiable?]
 
-## Enterprise / Self-Hosting Assessment
+## Product and First-Party Operations Assessment
 
-[Discuss config, secrets, deployment, health checks, operations, upgrades, backup/restore/recovery, and operator clarity.]
+[Discuss public truth, config, secrets, deployment, health checks, operations, upgrades, backup/restore/recovery, and first-party operator clarity.]
 
-## Security and Multi-Tenancy Assessment
+## Security, Privacy, and Data-Scope Assessment
 
-[Discuss auth/authz, tenant isolation, trust boundaries, BFF/browser boundary, admin scope, and fail-closed behavior.]
+[Discuss auth/authz, privacy, data isolation, trust boundaries, BFF/browser boundary, privileged scope, and fail-closed behavior.]
 
 ## Architecture and Maintainability Assessment
 
@@ -87,7 +87,7 @@ Optional sections
 
 ## Red-Team Failure Scenarios
 
-[How this could fail in production/self-hosted deployments.]
+[How this could fail in production or mislead public users.]
 
 ## Alternative Architecture
 
@@ -97,9 +97,9 @@ Optional sections
 
 [Proposed PR boundaries and why.]
 
-## Operator Runbook Requirements
+## First-Party Runbook Requirements
 
-[What self-hosters need for install/upgrade/recovery.]
+[What first-party operators need for deployment, upgrade, recovery, and incident response.]
 ```
 
 ## Answer Style Rules
@@ -131,7 +131,7 @@ The direction is right, but I would not approve this as one implementation strea
 ```markdown
 ## Executive Verdict
 
-I would reject the current plan because it places policy decisions in the Blazor/UI layer instead of the API/Application boundary. For an enterprise self-hostable platform, the UI can express affordances, but it cannot be the source of authorization truth.
+I would reject the current plan because it places policy decisions in the Blazor/UI layer instead of the API/Application boundary. The UI can express server-provided affordances, but it cannot be the source of authorization truth.
 
 **Decision:** Reject.
 ```
@@ -141,7 +141,7 @@ I would reject the current plan because it places policy decisions in the Blazor
 ```markdown
 ## Executive Verdict
 
-This is a strong plan and the target architecture is credible. I would approve it after adding explicit tenant-isolation tests, a self-hoster upgrade note, and OpenAPI/client regeneration sequencing.
+This is a strong plan and the target architecture is credible. I would approve it after adding explicit data-isolation tests, a first-party upgrade note, and OpenAPI/client regeneration sequencing.
 
 **Decision:** Approve with required changes.
 ```

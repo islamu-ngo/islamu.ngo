@@ -1,12 +1,12 @@
 ---
 name: cto-consultation
-description: Professional CTO consultation workflow for feature strategy, architecture direction, infrastructure choices, market positioning, and enterprise self-hosting tradeoffs.
+description: Professional CTO consultation workflow for first-party website strategy, architecture, infrastructure, market positioning, and capability tradeoffs.
 type: workflow
 enforcement: suggest
 priority: high
 ---
 <!-- ABOUTME: CTO consultation skill for product, architecture, infrastructure, and market-facing feature decisions. -->
-<!-- ABOUTME: Grounds strategic advice in the ISLAMU Event architecture, governance docs, and self-hosting constraints. -->
+<!-- ABOUTME: Grounds strategic advice in ISLAMU's first-party product, experience, architecture, and governance constraints. -->
 
 ## Purpose
 Use this skill when the user wants strategic or architectural consultation rather than immediate implementation. It turns open-ended product, infrastructure, UX, market, compliance, or enterprise-readiness questions into a grounded recommendation with options, tradeoffs, risks, and a decision path.
@@ -15,7 +15,7 @@ Use this skill when the user wants strategic or architectural consultation rathe
 - Keywords: CTO, consult, architecture decision, product direction, enterprise, self-hosting, market, competition, best practice, legal, juridical, infrastructure decision.
 - Feature questions where the user asks whether to build, defer, make optional, make required, expose in UI, or choose between alternatives.
 - Examples: TickerQ dashboard optionality, organizer analytics dashboard, event discovery vs organization-centric UX, RabbitMQ/Cerbos/MinIO/provider choices, federation roadmap, extensibility packs.
-- Any consulting answer that must balance small community deployments, enterprise deployments, white-label tenants, and the public ISLAMU-hosted instance.
+- Any consulting answer that must balance public trust, editorial depth, participation, accessibility, localization, privacy, and first-party operations.
 - Use together with implementation skills if the consultation becomes a concrete code change.
 
 ## When NOT to Load
@@ -33,21 +33,22 @@ Use this skill when the user wants strategic or architectural consultation rathe
 - [../../../docs/API.md](../../../docs/API.md)
 - [../../../docs/BLAZOR.md](../../../docs/BLAZOR.md)
 - [../../../docs/SECURITY-MODEL.md](../../../docs/SECURITY-MODEL.md)
-- [../../../docs/MULTI_TENANCY.md](../../../docs/MULTI_TENANCY.md)
-- [../../../docs/SELF_HOSTING.md](../../../docs/SELF_HOSTING.md)
-- [../../../docs/DEPLOYMENT_TIERS.md](../../../docs/DEPLOYMENT_TIERS.md)
+- [../../../docs/DESIGN.md](../../../docs/DESIGN.md)
+- [../../../docs/ACCESSIBILITY.md](../../../docs/ACCESSIBILITY.md)
+- [../../../docs/LOCALIZATION.md](../../../docs/LOCALIZATION.md)
+- [../../../docs/PRIVACY_DATA_INVENTORY.md](../../../docs/PRIVACY_DATA_INVENTORY.md)
 - [../../../docs/CONFIGURATION.md](../../../docs/CONFIGURATION.md)
 - [resources/consultation-framework.md](resources/consultation-framework.md)
 
 ## Top 5 Invariants
-1. The recommendation must preserve the platform promise: enterprise-grade, self-hostable, tenant-governed, and usable by both small communities and larger operators.
-2. Product advice must separate Instance, Tenant, Organization, Group, User, BFF, Client, and API authority instead of collapsing them into one admin or UI concept.
-3. Infrastructure advice must treat optional dependencies as explicit deployment-mode or tier choices with health, fallback, and operator documentation impacts.
+1. The recommendation must preserve the product promise: a truthful, accessible, multilingual, privacy-respecting first-party ISLAMU digital front door.
+2. Product advice must separate implemented, planned, deferred, and historical capability states and never turn roadmap ideas into clickable promises.
+3. Infrastructure advice must justify retained dependencies with current callers, health/fallback behavior, and first-party operational ownership.
 4. UX advice must keep HAL links as the source of truth for per-resource action affordances and keep the API as the hard authorization boundary.
 5. Extensibility advice must choose Layer 1 core fields, Layer 2 typed sector schema, or Layer 3 governed custom properties before proposing storage or UI shape.
 
 ## Top 5 Anti-Patterns
-1. Enterprise-only default, which raises the operational floor and harms single-organization or community self-hosters.
+1. Generic marketing-site defaults that erase ISLAMU's purpose, editorial voice, multilingual audience, or participation journey.
 2. Local-role UX gating, which duplicates server authorization and breaks the HAL affordance contract.
 3. Runtime-schema sprawl, which turns Layer 3 custom properties into a hidden domain model and bypasses typed policy semantics.
 4. Dashboard-as-source-of-truth, which mistakes infrastructure internals such as scheduler dashboards for product/operator state.

@@ -1,8 +1,8 @@
 <!-- ABOUTME: Scoring and decision rubric for Senior CTO reviews of /dev-docs implementation-plan workstreams. -->
-<!-- ABOUTME: Focuses on architecture integrity, self-hosting, security, sequencing, and whether future agents can safely implement from the plan. -->
+<!-- ABOUTME: Focuses on architecture integrity, product truth, security, operations, and whether future agents can safely implement from the plan. -->
 # Senior CTO Review Rubric
 
-Use this rubric to evaluate implementation plans for enterprise-grade self-hostable software.
+Use this rubric to evaluate implementation plans for the first-party ISLAMU website and its supporting platform.
 
 Score only when useful. Prefer practical judgment over mechanical scoring.
 
@@ -21,7 +21,7 @@ Questions:
 - Does this solve a real product/platform problem?
 - Is this the right layer of the system for the capability?
 - Does it reduce future complexity or create a new permanent burden?
-- Is the plan aligned with self-hostable and enterprise expectations?
+- Is the plan aligned with the first-party product direction and truthful capability horizons?
 - Is the workstream narrow enough to execute without turning into an unreviewable mega-PR?
 
 ## 2. Architecture Integrity
@@ -60,22 +60,22 @@ Check:
 - Fail-closed behavior is explicit for authz and policy calls.
 - Admin/operator actions are separated from tenant/admin actions.
 
-## 4. Multi-Tenancy and Isolation
+## 4. Data Scope and Isolation
 
 | Score | Meaning |
 |---|---|
-| 5 | Tenant resolution, data filters, admin overrides, and cross-tenant operations are explicit |
-| 3 | Tenant behavior is mentioned but not fully tested |
-| 1 | Tenant isolation is assumed, not designed |
+| 5 | Data scope, ownership, filters, privileged overrides, and isolation are explicit |
+| 3 | Data scope is mentioned but not fully tested |
+| 1 | Isolation is assumed, not designed |
 
 Check:
 
-- Tenant context source is clear.
-- Query filters or explicit tenant predicates are preserved.
+- The authoritative data scope is clear.
+- Query filters or explicit ownership predicates are preserved where surviving source requires them.
 - Any filter bypass is named, scoped, and tested.
-- Instance-admin operations cannot casually leak tenant data.
-- Single-tenant and multi-tenant mode behavior is defined.
-- Tenant-scoped configuration has governance/lock behavior where needed.
+- Privileged operations cannot casually leak user or organizational data.
+- Imported tenant behavior is removed with its callers or explicitly justified by surviving first-party use.
+- Governed configuration has an accountable owner and safe defaults.
 
 ## 5. Data Model and Migration Quality
 
@@ -113,13 +113,13 @@ Check:
 - OpenAPI export/client generation is sequenced.
 - Breaking contract changes are explicit.
 
-## 7. Self-Hosting and Operations
+## 7. First-Party Operations and Resilience
 
 | Score | Meaning |
 |---|---|
-| 5 | Operators can deploy, configure, observe, recover, and upgrade |
+| 5 | First-party operators can deploy, configure, observe, recover, and upgrade |
 | 3 | Basic config exists but docs/health/recovery are incomplete |
-| 1 | Works only for local dev or SaaS assumptions |
+| 1 | Works only on a developer machine or depends on undocumented assumptions |
 
 Check:
 
@@ -130,7 +130,7 @@ Check:
 - Upgrade path is documented.
 - Failure mode is safe and understandable.
 - External dependencies are optional or clearly required.
-- Single-server and constrained-resource scenarios are considered.
+- Supported production topology and constrained-resource behavior are explicit where relevant.
 
 ## 8. Testability and Verification
 
@@ -166,7 +166,7 @@ Check:
 - Security/tenant tests land before feature expansion.
 - Docs update with behavior changes.
 - Each PR has clear exit criteria.
-- Rollback/reset path exists for self-hosters.
+- Rollback/reset path exists for first-party operators.
 
 ## 10. Dev-Docs Quality
 

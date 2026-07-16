@@ -6,10 +6,10 @@ enforcement: suggest
 priority: high
 ---
 <!-- ABOUTME: Senior CTO review skill for repository-grounded implementation plans and active dev-doc workstreams. -->
-<!-- ABOUTME: Aligns plan critique and rewrites with the /dev-docs contract, ISLAMU Event guardrails, and self-hostable platform expectations. -->
+<!-- ABOUTME: Aligns plan critique with the /dev-docs contract and first-party ISLAMU website constraints. -->
 
 ## Purpose
-Use this skill when the user wants blunt Senior CTO feedback on an implementation plan before coding starts. The primary target is the repository's `/dev-docs` workflow: `dev/active/[task-name]/[task-name]-plan.md`, `...-context.md`, and `...-tasks.md`. The goal is to decide whether the plan is executable, well-sequenced, safe for a self-hostable multi-tenant platform, and strong enough for another implementation agent to follow without rediscovering the problem.
+Use this skill when the user wants blunt Senior CTO feedback on an implementation plan before coding starts. The primary target is the repository's `/dev-docs` workflow: `dev/active/[task-name]/[task-name]-plan.md`, `...-context.md`, and `...-tasks.md`. The goal is to decide whether the plan is executable, well-sequenced, safe for the first-party ISLAMU website, and strong enough for another implementation agent to follow without rediscovering the problem.
 
 ## When to Load
 - The user asks for CTO feedback, plan critique, approval/rejection, or plan rewrite.
@@ -33,9 +33,7 @@ Use this skill when the user wants blunt Senior CTO feedback on an implementatio
 - [../../../dev/active/README.md](../../../dev/active/README.md)
 - [../../../.claude/commands/dev-docs.md](../../../.claude/commands/dev-docs.md)
 - [resources/input-contract.md](resources/input-contract.md)
-- [resources/islamu-event-guardrails.md](resources/islamu-event-guardrails.md)
 - [resources/review-rubric.md](resources/review-rubric.md)
-- [resources/enterprise-self-hostable-checklist.md](resources/enterprise-self-hostable-checklist.md)
 - [resources/severity-model.md](resources/severity-model.md)
 - [resources/output-template.md](resources/output-template.md)
 - [resources/plan-rewrite-guidance.md](resources/plan-rewrite-guidance.md)
@@ -44,7 +42,7 @@ Use this skill when the user wants blunt Senior CTO feedback on an implementatio
 1. Review the entire `/dev-docs` workstream, not just the main plan; `plan.md`, `context.md`, and `tasks.md` must agree.
 2. Distinguish verified codebase reality from plan aspiration. Do not approve claims you did not verify.
 3. Favor simpler, more operable, better-tested, more explicit designs over compatibility with weak pre-v1 architecture.
-4. Protect tenant isolation, authorization boundaries, and self-hosting/operator clarity before convenience or UI polish.
+4. Protect authorization, privacy, accessibility, content truth, and first-party operational clarity before convenience or UI polish. Preserve tenant isolation only while surviving source still depends on it.
 5. If the plan is directionally right but too large or mixed, require a sharper sequence or PR split instead of giving a soft approval.
 
 ## Top 5 Anti-Patterns
@@ -66,7 +64,7 @@ Review flow:
 
 ```text
 Typical CTO verdict:
-The target architecture is reasonable, but I would not approve this as one workstream. Persistence changes, API contract churn, and Blazor/UI enablement need separate slices, and the current tasks file does not prove tenant-isolation verification or self-hoster recovery steps.
+The target architecture is reasonable, but I would not approve this as one workstream. Persistence changes, API contract churn, and Blazor/UI enablement need separate slices, and the current tasks file does not prove authorization, privacy, accessibility, or first-party recovery behavior.
 ```
 
 ## Verification Hooks

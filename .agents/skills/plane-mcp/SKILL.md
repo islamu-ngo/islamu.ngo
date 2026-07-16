@@ -1,17 +1,17 @@
 ---
 name: plane-mcp
-description: Use Plane MCP tools to manage ISLAMU Event project work items — create, update, search, transition states, assign cycles/labels, and maintain project tracking hygiene.
+description: Use Plane MCP tools to manage this repository's work items in the legacy EVENT tracker project.
 type: tool
 enforcement: suggest
 priority: high
 ---
 
-<!-- ABOUTME: Teaches AI agents how to use the Plane MCP integration for the ISLAMU Event project. -->
+<!-- ABOUTME: Teaches AI agents how to use the Plane MCP integration for the repository's legacy EVENT tracker project. -->
 <!-- ABOUTME: Covers tool inventory, project context (UUIDs), common workflows, batch patterns, and dedup hygiene. -->
 
 ## Purpose
 
-This skill teaches AI agents to use the Plane (plane.so) MCP integration to manage the ISLAMU Event project's work items. It covers the full lifecycle: creating items, updating states, searching before creating (dedup), assigning cycles and labels, and bulk operations.
+This skill teaches AI agents to use the Plane (plane.so) MCP integration to manage the repository's work items. The external Plane project still uses identifier `EVENT`; treat that as tracker metadata, not current product branding. The skill covers creating items, updating states, searching before creating, assigning cycles and labels, and bulk operations.
 
 The ISLAMU Event project in Plane historically had <5% of actually-implemented features tracked. This skill ensures agents keep Plane synchronized with the codebase going forward.
 

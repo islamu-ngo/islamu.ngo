@@ -16,7 +16,7 @@ A better implementation plan should be:
 - migration-aware,
 - contract-aware,
 - security-aware,
-- self-hosting-aware,
+- first-party-operations-aware,
 - explicit about what breaks,
 - explicit about what gets deleted,
 - explicit about what future agents must keep updating.
@@ -179,7 +179,7 @@ Reason:
 Impact:
 - Existing `<clients/config/data>` must change.
 - Generated client must be regenerated.
-- Self-hosters must run the migration and update `<env/config>`.
+- First-party deployment configuration and data must be migrated or reset.
 
 Migration:
 - `<migration or reset path>`
@@ -214,7 +214,7 @@ Prefer splitting by risk boundary:
    - component/BFF tests.
 4. PR 4 — operations/docs/cleanup
    - configuration docs,
-   - self-hosting docs,
+   - first-party operations docs,
    - operations docs,
    - cleanup obsolete compatibility paths,
    - delete obsolete tests.
@@ -225,7 +225,7 @@ Replace these phrases:
 
 | Weak phrase | Strong replacement |
 |---|---|
-| “Maintain backward compatibility for now” | “Delete the old path unless a named self-hoster migration requires it.” |
+| “Maintain backward compatibility for now” | “Delete the old path unless a named data or deployment migration requires it.” |
 | “Add tests” | “Add these specific tests for these risks in these projects.” |
 | “Make tenant-aware” | “Resolve tenant from X, enforce through Y, test wrong-tenant Z.” |
 | “Add config” | “Add env var, default, validation, docs, and failure behavior.” |

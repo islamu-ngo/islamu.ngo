@@ -86,21 +86,22 @@ if (runMode is AspireRunMode.FullLocal or AspireRunMode.DefaultLocal)
         cache);
 }
 
-IResourceBuilder<ProjectResource>? migrations = null;
+var migrations = WithProfileSecretMode(
+    builder.AddProject<Projects.Event_MigrationService>(
+        "event-migrationservice",
+        ExcludeProjectLaunchProfile),
+    runMode,
+    builder.Configuration);
+
 if (database is not null)
 {
-    migrations = WithProfileSecretMode(
-            builder.AddProject<Projects.Event_MigrationService>(
-                "event-migrationservice",
-                ExcludeProjectLaunchProfile),
-            runMode,
-            builder.Configuration)
+    migrations = migrations
         .WithReference(database, connectionName: "EventMigrationService")
         .WithReference(database, connectionName: "DefaultConnection")
         .WaitFor(database);
-
-    migrations = ConfigureLocalMailpitSmtp(migrations, mailpit, builder.Configuration);
 }
+
+migrations = ConfigureLocalMailpitSmtp(migrations, mailpit, builder.Configuration);
 
 var exploreAPI = WithProfileSecretMode(
         builder.AddProject<Projects.Explore_API>(
@@ -136,12 +137,9 @@ if (!string.IsNullOrWhiteSpace(vapidPrivateKey))
     exploreAPI = exploreAPI.WithEnvironment("VAPID_PRIVATE_KEY", vapidPrivateKeyParameter);
 }
 
-if (migrations is not null)
-{
-    exploreAPI = exploreAPI
-        .WithReference(migrations)
-        .WaitForCompletion(migrations);
-}
+exploreAPI = exploreAPI
+    .WithReference(migrations)
+    .WaitForCompletion(migrations);
 
 if (database is not null)
 {
@@ -194,12 +192,9 @@ var exploreBlazor = WithProfileSecretMode(
     .WithEnvironment("Bff__AdminHosts__0", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:17002"))
     .WithEnvironment("Storage__Local__RootPath", localStorageRootPath);
 
-if (migrations is not null)
-{
-    exploreBlazor = exploreBlazor
-        .WithReference(migrations)
-        .WaitForCompletion(migrations);
-}
+exploreBlazor = exploreBlazor
+    .WithReference(migrations)
+    .WaitForCompletion(migrations);
 
 if (database is not null)
 {

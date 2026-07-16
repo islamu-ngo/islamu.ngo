@@ -228,6 +228,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
         IDistributedApplicationTestingBuilder builder,
         string connectionString)
     {
+        ConfigureProjectDatabase(builder, "event-migrationservice", connectionString);
         ConfigureProjectDatabase(builder, "explore-api", connectionString);
     }
 

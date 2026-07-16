@@ -157,9 +157,9 @@ Startup dependencies are explicit:
 
 1. Local data profiles create PostgreSQL and Redis first.
 2. `local-full` creates platform infrastructure, including CockroachDB before Phase Two Keycloak and Cerbos PostgreSQL before Cerbos.
-3. `Event.MigrationService` receives the local database through Aspire `WithReference(database, "EventMigrationService")` and `WithReference(database, "DefaultConnection")`, then waits for PostgreSQL.
-4. `Explore.API` waits for migration completion, local data/cache, and `local-full` platform resources when those resources exist.
-5. `Explore.Blazor` waits for API readiness and receives API service discovery through Aspire.
+3. `Event.MigrationService` runs in every Aspire profile. When local PostgreSQL exists, Aspire supplies `WithReference(database, "EventMigrationService")` and `WithReference(database, "DefaultConnection")` and the worker waits for PostgreSQL; in `local-lite`, it resolves the external database from Infisical/config instead.
+4. `Explore.API` always waits for migration completion, then waits for local data/cache and `local-full` platform resources when those resources exist.
+5. `Explore.Blazor` waits for API readiness, always waits for migration completion, and receives API service discovery through Aspire.
 6. Dedicated admin hosts use the same `Explore.Blazor` process and generated API client boundary.
 
 The Blazor BFF resolves the API through Aspire service discovery (`services__explore-api__https__0` / `services__explore-api__http__0`) or `ExploreApi:BaseUrl`. Compose uses `API_ENDPOINT`, defaulting to the internal `islamu-ngo-api:8080` service. Do not hardcode the Compose/API host port into AppHost documentation.

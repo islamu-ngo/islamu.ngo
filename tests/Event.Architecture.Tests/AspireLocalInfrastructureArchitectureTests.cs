@@ -8,6 +8,29 @@ public sealed class AspireLocalInfrastructureArchitectureTests
     private static readonly string RepoRoot = ResolveRepoRoot();
 
     [Test]
+    public async Task LocalLite_MustRunMigrationServiceBeforeApiAndBlazorWithoutLocalInfra()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+        var migrationRegistrationIndex = appHost.IndexOf(
+            "var migrations = WithProfileSecretMode(",
+            StringComparison.Ordinal);
+        var localDatabaseBranchIndex = appHost.IndexOf(
+            "if (database is not null)",
+            StringComparison.Ordinal);
+
+        await Assert.That(migrationRegistrationIndex).IsGreaterThanOrEqualTo(0);
+        await Assert.That(localDatabaseBranchIndex).IsGreaterThan(migrationRegistrationIndex);
+        await Assert.That(appHost).Contains("builder.AddProject<Projects.Event_MigrationService>");
+        await Assert.That(appHost).Contains("var exploreAPI = WithProfileSecretMode(");
+        await Assert.That(appHost).Contains("var exploreBlazor = WithProfileSecretMode(");
+        await Assert.That(appHost).DoesNotContain("if (migrations is not null)");
+        await Assert.That(appHost).Contains("exploreAPI = exploreAPI\n    .WithReference(migrations)\n    .WaitForCompletion(migrations);");
+        await Assert.That(appHost).Contains("exploreBlazor = exploreBlazor\n    .WithReference(migrations)\n    .WaitForCompletion(migrations);");
+        await Assert.That(appHost).Contains("if (runMode.UsesLocalData())");
+        await Assert.That(appHost).Contains("if (runMode is AspireRunMode.FullLocal or AspireRunMode.DefaultLocal)");
+    }
+
+    [Test]
     public async Task OspreyCoordinator_MustUseReadyLocalKafkaBroker()
     {
         var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));

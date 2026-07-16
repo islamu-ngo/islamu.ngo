@@ -1,12 +1,12 @@
-ABOUTME: Contribution workflow covering prerequisites, validation, code standards, and PR process.
-ABOUTME: Includes architecture test requirements, CSS rules, DTO sync flow, and release checklist.
+<!-- ABOUTME: Contribution workflow for the first-party ISLAMU website repository. -->
+<!-- ABOUTME: Covers prerequisites, validation, architecture rules, CLA v2.0, and pull requests. -->
 
 # Contributing
 
 > **Audience:** Contributors | AI agents
 > **Status:** Implemented
 > **Owner:** Contributor Experience
-> **Last Verified:** 2026-07-03
+> **Last Verified:** 2026-07-15
 > **Source Anchors:** `docs/FIRST_CONTRIBUTION.md`, `docs/TESTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/`, `dev/HANDOFF_TEMPLATE.md`
 
 ## Prerequisites
@@ -64,9 +64,11 @@ Before opening a PR:
 
 ## Contributor Legal Status
 
-Every non-bot contributor must sign the [ISLAMU Event Contributor License Agreement](../legal/CLA.md) by posting the exact CLA signature comment on the pull request. The CLA gives the ISLAMU project steward broad inbound rights to maintain, provide, sell, sublicense, and relicense ISLAMU Event under alternative terms when sustainability, enterprise, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, or social-impact needs require it.
+Every non-bot contributor must sign the [ISLAMU Contributor License Agreement v2.0](../legal/CLA.md) by posting this exact comment on the pull request:
 
-The `Contributor License Agreement` workflow records v1.0 signatures in `signatures/v1.0/cla.json` on the `develop` branch. It uses `pull_request_target` and `issue_comment` metadata only; it must not checkout, build, test, cache, restore packages, or execute pull-request head code.
+> I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
+
+The `Contributor License Agreement` workflow records v2.0 signatures in `signatures/v2.0/cla.json` on the `develop` branch. Historical v1.0 records remain historical; they do not replace v2.0 acceptance. The workflow uses `pull_request_target` and `issue_comment` metadata only; it must not checkout, build, test, cache, restore packages, or execute pull-request head code.
 
 ## Branch And Commit
 
@@ -243,7 +245,7 @@ Before submitting:
 - [ ] New C# files have `ABOUTME:` headers
 - [ ] New CSS follows layer architecture and uses design tokens
 - [ ] API contract changes include docs updates (`docs/API.md`, `docs/API_CHANGELOG.md`)
-- [ ] Operator/release changes update `docs/SELF_HOSTING.md`, `docs/BACKUP_RESTORE_UPGRADE.md`, or `docs/RELEASE_CHECKLIST.md` when applicable
+- [ ] First-party operations or release changes update `docs/OPERATIONS.md`, `docs/BACKUP_RESTORE_UPGRADE.md`, or `docs/RELEASE_CHECKLIST.md` when applicable
 - [ ] Multi-session work includes active dev docs or a handoff using [../dev/HANDOFF_TEMPLATE.md](../dev/HANDOFF_TEMPLATE.md)
 - [ ] Breaking changes are explicitly documented
 - [ ] No type error suppression (`as any`, `@ts-ignore`)

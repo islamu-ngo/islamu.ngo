@@ -1,15 +1,15 @@
-ABOUTME: Release readiness checklist for code, migrations, configuration, security, and documentation.
-ABOUTME: Provides the release documentation contract for self-hostable operators and contributors.
+<!-- ABOUTME: Defines release readiness for the first-party ISLAMU website, its infrastructure, and documentation. -->
+<!-- ABOUTME: Keeps deployment, rollback, security, migration, and evidence expectations explicit for maintainers. -->
 
 # Release Checklist
 
-> **Audience:** Contributors | Operators | AI agents
+> **Audience:** Contributors | First-party operators | AI agents
 > **Status:** Implemented
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-05-06
+> **Last Verified:** 2026-07-16
 > **Source Anchors:** `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONTRIBUTING.md`, `docs/TESTING.md`, `.github/workflows/test.yml`, `.github/workflows/agent-context.yml`
 
-Use this checklist before tagging or publishing a release. A release is not ready until operators can understand what changed, how to upgrade, how to verify, and how to roll back.
+Use this checklist before tagging or publishing a release. A release is not ready until maintainers and first-party operators can understand what changed, how to deploy it, how to verify it, and how to roll it back.
 
 ## Release Model
 
@@ -36,7 +36,7 @@ Attach the generated bundle files to the GitHub Release or copy them to durable 
 
 ## Pull Request Release Impact Gate
 
-Pull requests that touch security/auth, migration/data/rollback, configuration/secrets/deployment, OpenAPI/client contract, or operator/self-hosting/release-note paths must satisfy the `Release Impact Check` before merge. The check validates the `## Release Impact` section in `.github/PULL_REQUEST_TEMPLATE.md` and requires the matching category checkbox plus non-empty `Details:`.
+Pull requests that touch security/auth, migration/data/rollback, configuration/secrets/deployment, OpenAPI/client contracts, first-party operations, or release-note paths must satisfy the `Release Impact Check` before merge. The check validates the `## Release Impact` section in `.github/PULL_REQUEST_TEMPLATE.md` and requires the matching category checkbox plus non-empty `Details:`.
 
 Use `Not applicable` only when the change has no release-impact category. If the check flags a category, update the PR body and link the relevant documentation or release-note evidence before requesting release approval.
 
@@ -48,7 +48,7 @@ Use `Not applicable` only when the change has no release-impact category. If the
 - [ ] Image digests, immutable promotion tag evidence, Docker base image digest pins, SBOM/provenance evidence, image scan artifacts, and attestation verification results are recorded when container images are published.
 - [ ] Coolify-side consumption evidence is retained for container deployments: application configuration, API output, deployment logs, smoke summary, or deploy summary proves the running resource consumed either `image@sha256:<digest>` or the verified full-commit immutable tag.
 - [ ] Deployment environment, approver, expected immutable image tag, expected image digest, webhook result, smoke-check result, whether smoke was required, deployment-freeze state, override reason if any, and rollback note are recorded for staging/production deployments.
-- [ ] Supported deployment modes are stated: single-tenant, multi-tenant, optional storage, optional Cerbos.
+- [ ] The exact first-party deployment topology, optional resources, and enabled authorization/storage providers are recorded from deployed configuration rather than product-tier promises.
 - [ ] Known incompatible versions are stated.
 
 ## Code And Test Gates
@@ -63,7 +63,7 @@ Use `Not applicable` only when the change has no release-impact category. If the
 - [ ] Architecture/docs quality tests pass:
 
   ```bash
-  dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
+  dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
   ```
 
 - [ ] Infrastructure-dependent tests are either passed in the release lane or explicitly marked as deferred with the reason; email or messaging changes include the focused `Explore.Infrastructure.Tests` `Email` category evidence.

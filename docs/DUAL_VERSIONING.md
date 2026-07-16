@@ -3,14 +3,20 @@
 
 # Dual-Versioning Strategy
 
+> **Audience:** Contributors | Maintainers | First-party operators
+> **Status:** Implemented
+> **Owner:** Platform/Ops
+> **Last Verified:** 2026-07-16
+> **Source Anchors:** `Directory.Packages.props`, `Directory.Build.props`, `.github/workflows/_build-test.yml`, `.github/workflows/_container-build.yml`
+
 ## 1. Overview
 
-ISLAMU Event uses a **dual-versioning strategy** for Lucky Penny libraries — specifically **AutoMapper** and **MediatR**. These libraries transitioned from permissive open-source licenses to a commercial model under the "Lucky Penny" umbrella.
+The ISLAMU website repository uses a **dual-versioning strategy** for Lucky Penny libraries, specifically **AutoMapper** and **MediatR**. These libraries transitioned from permissive open-source licenses to a commercial model under the "Lucky Penny" umbrella.
 
 - **Default builds** resolve **FOSS versions** (the last permissive-license releases). No license key, environment variable, or build flag is required.
 - **ISLAMU production** uses **commercial versions** with license keys injected at runtime via Infisical secret management.
 
-This strategy ensures that **self-hosters and contributors can build and run the project out of the box**, while ISLAMU's own deployments benefit from the latest commercial releases with security patches and new features.
+This strategy keeps the public repository buildable for contributors without commercial credentials while allowing ISLAMU's first-party deployment to use licensed versions when the repository owner has approved and configured them. It is a dependency-governance mechanism, not a self-hosted product edition.
 
 ---
 
@@ -31,15 +37,15 @@ This strategy ensures that **self-hosters and contributors can build and run the
 > This version is **security-frozen** and will not receive patches under the MIT license.
 > The vulnerability is patched in commercial versions **15.1.1** and **16.1.1**.
 
-Self-hosters have three options:
+The repository owner has three options:
 
-1. **Accept the advisory** — If your deployment is not exposed to untrusted mapping inputs, the risk may be acceptable for your threat model.
+1. **Temporarily accept the advisory** — Only with a recorded threat-model decision, compensating controls, owner, and removal condition.
 2. **Supply your own commercial license** — Purchase a Lucky Penny license and build with `UseCommercialLuckyPennyLibraries=true` to get the patched version.
 3. **Migrate away from AutoMapper** — Replace AutoMapper with a source-generated alternative such as [Mapperly](https://mapperly.riok.app/) (see [§12. Long-Term Migration](#12-long-term-migration)).
 
 ---
 
-## 4. Self-Hoster Build (Default)
+## 4. Contributor Build (Default)
 
 No special configuration is needed. The default build resolves FOSS versions automatically:
 

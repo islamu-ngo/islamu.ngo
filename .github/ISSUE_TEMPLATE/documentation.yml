@@ -1,3 +1,5 @@
+# ABOUTME: Collects source-grounded corrections to ISLAMU product, contributor, and operations documentation.
+# ABOUTME: Captures affected audiences and evidence so stale claims can be corrected without guessing.
 name: Documentation issue
 description: Report stale, missing, confusing, or incorrect documentation.
 title: "docs: "
@@ -39,12 +41,13 @@ body:
       label: Affected audience
       multiple: true
       options:
-        - Operators
-        - Admins
+        - Public visitors
+        - Content editors
+        - First-party operators
         - Integrators
         - Contributors
         - AI agents
-        - End users
+        - Authenticated users
     validations:
       required: true
   - type: textarea

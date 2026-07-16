@@ -1,3 +1,5 @@
+# ABOUTME: Packages repository tasks with enough durable context for a coding agent to execute safely.
+# ABOUTME: Requires source scope, project rules, validation expectations, and an explicit handoff.
 name: AI agent task
 description: Package a task so an AI agent can start with enough context and validation expectations.
 title: "agent: "
@@ -26,7 +28,7 @@ body:
     attributes:
       label: Required docs and rules
       description: List project docs, skills, plans, or active context files the agent must follow.
-      placeholder: AGENTS.md, AGENTS.md, docs/CONTRIBUTING.md, dev/active/.../context.md
+      placeholder: AGENTS.md, docs/CONTRIBUTING.md, dev/active/.../context.md
     validations:
       required: true
   - type: textarea

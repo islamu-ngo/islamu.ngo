@@ -15,11 +15,11 @@ global.json @amirakrari
 **/*.csproj @amirakrari
 **/packages.lock.json @amirakrari
 
-# CI/CD, release, operations, self-hosting, and legal contribution governance.
+# CI/CD, release, first-party operations, and legal contribution governance.
 docs/CI_CD_GOVERNANCE.md @amirakrari
 docs/OPERATIONS.md @amirakrari
 docs/RELEASE_CHECKLIST.md @amirakrari
-docs/SELF_HOSTING.md @amirakrari
+docs/PRIVACY_DATA_INVENTORY.md @amirakrari
 docs/BACKUP_RESTORE_UPGRADE.md @amirakrari
 docs/CONFIGURATION.md @amirakrari
 docs/CONTRIBUTING.md @amirakrari

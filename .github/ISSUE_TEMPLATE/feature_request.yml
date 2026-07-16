@@ -1,5 +1,7 @@
+# ABOUTME: Collects focused feature requests for the first-party ISLAMU website and platform.
+# ABOUTME: Requires explicit users, non-goals, operational impact, and validation expectations.
 name: Feature request
-description: Propose a user-facing, operator, integrator, or contributor improvement.
+description: Propose a public-user, content, first-party operations, integration, or contributor improvement.
 title: "feat: "
 body:
   - type: markdown
@@ -34,12 +36,13 @@ body:
       label: Primary audience
       multiple: true
       options:
-        - Operators
-        - Admins
+        - Public visitors
+        - Content editors
+        - First-party operators
         - Integrators
         - Contributors
         - AI agents
-        - End users
+        - Authenticated users
     validations:
       required: true
   - type: textarea
@@ -50,8 +53,8 @@ body:
   - type: textarea
     id: operator-impact
     attributes:
-      label: Self-hosting, operator, or release impact
-      description: Note migrations, configuration, secrets, deployment, backup/restore, or release-checklist impact. Write "Not applicable" if none.
+      label: First-party operations or release impact
+      description: Note migrations, configuration, secrets, deployment, privacy, localization, accessibility, backup/restore, or release-checklist impact. Write "Not applicable" if none.
     validations:
       required: true
   - type: textarea

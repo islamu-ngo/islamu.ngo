@@ -1,3 +1,5 @@
+# ABOUTME: Collects reproducible ISLAMU website defects without exposing secrets or personal data.
+# ABOUTME: Requires observable expected and actual behavior plus non-sensitive evidence.
 name: Bug report
 description: Report a reproducible defect, validation gap, or regression.
 title: "fix: "
@@ -56,7 +58,7 @@ body:
     attributes:
       label: Affected docs or code paths
       description: List files, routes, endpoints, commands, or docs if known.
-      placeholder: docs/SELF_HOSTING.md, Explore.API/Controllers/..., dotnet test --project ...
+      placeholder: docs/OPERATIONS.md, Explore.API/Controllers/..., dotnet test --project ...
   - type: checkboxes
     id: checks
     attributes:

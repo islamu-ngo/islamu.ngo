@@ -1,4 +1,4 @@
-# ABOUTME: Audits GitHub repository settings against the enterprise CI/CD hardening contract.
+# ABOUTME: Audits GitHub repository settings against the first-party CI/CD hardening contract.
 # ABOUTME: Runs scheduled/manual drift checks and retains redacted repository-settings evidence.
 
 name: Repository Settings Drift

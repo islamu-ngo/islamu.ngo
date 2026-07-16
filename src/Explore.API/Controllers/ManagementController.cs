@@ -1,4 +1,4 @@
-// ABOUTME: Exposes the narrow optional Event managed-mode capability, registration, status, and credential contract.
+// ABOUTME: Exposes the narrow optional managed-mode capability, registration, status, and credential contract.
 // ABOUTME: Keeps standalone mode absent and protects managed writes with isolated directional machine trust.
 
 using System.Security.Claims;
@@ -31,7 +31,7 @@ public sealed class ManagementController(
     [AllowAnonymous]
     [EndpointClassification(EndpointClass.Public)]
     [EndpointSummary("Get managed-mode capabilities")]
-    [EndpointDescription("Returns the bounded Event management contract only when optional managed mode is enabled.")]
+    [EndpointDescription("Returns the bounded management contract only when optional managed mode is enabled.")]
     [ProducesResponseType(typeof(ManagementCapabilitiesDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ManagementCapabilitiesDto>> GetCapabilities(
@@ -44,7 +44,7 @@ public sealed class ManagementController(
             {
                 Status = StatusCodes.Status404NotFound,
                 Title = "Managed mode is disabled",
-                Detail = "This Event instance is operating independently without a managed Control Plane contract.",
+                Detail = "This instance is operating independently without a managed Control Plane contract.",
                 Instance = Request.Path,
                 Extensions = { ["code"] = "managed_mode_disabled" }
             });
@@ -57,7 +57,7 @@ public sealed class ManagementController(
     [Authorize]
     [EnableRateLimiting(RateLimitingExtensions.WritePolicy)]
     [EndpointSummary("Trigger managed registration")]
-    [EndpointDescription("Retries the same durable Event-to-Control-Plane registration attempt for an instance administrator.")]
+    [EndpointDescription("Retries the same durable instance-to-Control-Plane registration attempt for an instance administrator.")]
     [ProducesResponseType(typeof(TriggerManagedRegistrationResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(TriggerManagedRegistrationResult), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -77,22 +77,9 @@ public sealed class ManagementController(
         return result.Success ? Ok(result) : Accepted(result);
     }
 
-    [HttpGet("instance", Name = RouteNames.GetManagedEventInstance)]
-    [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
-    [EndpointSummary("Get managed Event instance")]
-    [EndpointDescription("Returns Event-owned instance identity, deployment mode, version, and trust freshness.")]
-    [ProducesResponseType(typeof(ManagedEventInstanceStatusDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ManagedEventInstanceStatusDto>> GetInstance(
-        CancellationToken cancellationToken = default)
-    {
-        var status = await mediator.Send(new GetManagedEventInstanceStatusQuery(), cancellationToken);
-        return status is null ? NotFound() : Ok(status);
-    }
-
     [HttpGet("version", Name = RouteNames.GetManagementVersion)]
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
-    [EndpointSummary("Get Event management version")]
+    [EndpointSummary("Get management version")]
     [ProducesResponseType(typeof(ManagementVersionDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<ManagementVersionDto>> GetVersion(
         CancellationToken cancellationToken = default)
@@ -103,7 +90,7 @@ public sealed class ManagementController(
 
     [HttpGet("health", Name = RouteNames.GetManagementHealth)]
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
-    [EndpointSummary("Get aggregate Event health")]
+    [EndpointSummary("Get aggregate instance health")]
     [ProducesResponseType(typeof(ManagementHealthDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<ManagementHealthDto>> GetHealth(
         CancellationToken cancellationToken = default)
@@ -114,8 +101,8 @@ public sealed class ManagementController(
 
     [HttpPost("upgrade/preflight", Name = RouteNames.EvaluateManagementUpgradePreflight)]
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
-    [EndpointSummary("Evaluate Event upgrade preflight")]
-    [EndpointDescription("Returns bounded blockers for an externally executed Event upgrade without mutating Event state.")]
+    [EndpointSummary("Evaluate instance upgrade preflight")]
+    [EndpointDescription("Returns bounded blockers for an externally executed upgrade without mutating instance state.")]
     [ProducesResponseType(typeof(ManagementUpgradePreflightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -134,7 +121,7 @@ public sealed class ManagementController(
 
     [HttpPost("upgrade/postflight", Name = RouteNames.VerifyManagementUpgradePostflight)]
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
-    [EndpointSummary("Verify Event upgrade postflight")]
+    [EndpointSummary("Verify instance upgrade postflight")]
     [EndpointDescription("Verifies bounded runtime, contract, registration, mode, and health evidence after an external upgrade.")]
     [ProducesResponseType(typeof(ManagementUpgradePostflightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -157,7 +144,7 @@ public sealed class ManagementController(
     [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
     [RequestTimeout(RequestTimeoutExtensions.ControlPlanePolicy)]
     [EndpointSummary("Evaluate managed tenant provisioning preflight")]
-    [EndpointDescription("Returns a provisional Event-owned policy assessment without creating operations or mutating tenant state.")]
+    [EndpointDescription("Returns a provisional instance-owned policy assessment without creating operations or mutating tenant state.")]
     [ProducesResponseType(typeof(ManagementTenantProvisioningPreflightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -186,7 +173,7 @@ public sealed class ManagementController(
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Write)]
     [EnableRateLimiting(RateLimitingExtensions.WritePolicy)]
     [EndpointSummary("Schedule managed tenant provisioning")]
-    [EndpointDescription("Validates and durably schedules Event-owned tenant creation without calling infrastructure providers.")]
+    [EndpointDescription("Validates and durably schedules instance-owned tenant creation without calling infrastructure providers.")]
     [ProducesResponseType(typeof(ManagementTenantProvisioningOperationDto), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -225,7 +212,7 @@ public sealed class ManagementController(
     [HttpGet("tenant-provisioning/{operationId:guid}", Name = RouteNames.GetManagedTenantProvisioningOperation)]
     [Authorize(Policy = ManagedControlPlaneAuthorizationPolicies.Read)]
     [EndpointSummary("Get managed tenant provisioning status")]
-    [EndpointDescription("Returns safe Event-owned operation state and result references for the authenticated managed instance.")]
+    [EndpointDescription("Returns safe instance-owned operation state and result references for the authenticated managed instance.")]
     [ProducesResponseType(typeof(ManagementTenantProvisioningOperationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

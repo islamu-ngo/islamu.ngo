@@ -30,7 +30,6 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
             .HasForeignKey(e => e.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Query by entity (e.g., "show audit trail for Event X")
         builder.HasIndex(e => new { e.TenantId, e.EntityType, e.EntityId })
             .HasDatabaseName("ix_auditlogs_tenant_entity");
 

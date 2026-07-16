@@ -1,5 +1,5 @@
-// ABOUTME: Luma-inspired group profile page with banner, avatar, events timeline.
-// ABOUTME: Loads group details and public events split into upcoming vs past.
+// ABOUTME: Group profile code-behind for identity, appearance, and accessibility announcements.
+// ABOUTME: Restores persisted group state without product-specific content loading.
 
 using Blazouter.Services;
 using Explore.Blazor.Client.Clients;
@@ -14,7 +14,6 @@ namespace Explore.Blazor.Client.Pages.Groups;
 public partial class GroupProfile
 {
     [Inject] protected IGroupService GroupService { get; set; } = null!;
-    [Inject] protected IEventService EventService { get; set; } = null!;
     [Inject] protected NavigationManager Navigation { get; set; } = null!;
     [Inject] protected RouterStateService RouterState { get; set; } = null!;
     [Inject] protected ILogger<GroupProfile> Logger { get; set; } = null!;
@@ -24,21 +23,10 @@ public partial class GroupProfile
 
     private HalResourceOfGroupDto? _group;
     private bool _isLoading = true;
-    private bool _isLoadingEvents;
-    private bool _isLoadingRegistrationEvents;
-    private List<EventListDto> _upcomingEvents = new();
-    private List<EventListDto> _pastEvents = new();
-    private List<KeyValuePair<DateTime, List<EventListDto>>> _pastEventsByDate = new();
-    private List<EventListDto> _upcomingRegistrationEvents = new();
-    private List<EventListDto> _pastRegistrationEvents = new();
-    private List<KeyValuePair<DateTime, List<EventListDto>>> _pastRegistrationEventsByDate = new();
     private AppearanceSettings _branding = new();
     private string _bannerStyle = AppearanceStyleBuilder.BuildBannerStyle(new AppearanceSettings(), "#334155");
 
     private string? _errorMessage;
-
-    private List<EventListDto> PostEvents => _upcomingEvents.Concat(_pastEvents).ToList();
-    private List<EventListDto> RegistrationEvents => _upcomingRegistrationEvents.Concat(_pastRegistrationEvents).ToList();
 
     [PersistentState]
     public GroupProfileState? PersistedState { get; set; }
@@ -88,99 +76,11 @@ public partial class GroupProfile
         else if (_group == null)
             await AnnouncerService.AnnouncePoliteAsync("Group not found");
 
-        if (_group?.ActorId.HasValue == true)
-        {
-            _ = InvokeAsync(LoadEventsAsync);
-            _ = InvokeAsync(LoadRegistrationEventsAsync);
-        }
-    }
-
-    private async Task LoadEventsAsync()
-    {
-        _isLoadingEvents = true;
-        StateHasChanged();
-
-        try
-        {
-            var allEvents = await EventService.GetProfileEventsByActorAsync(_group!.ActorId!.Value);
-
-            _upcomingEvents = allEvents
-                .Where(e => e.IsPast != true)
-                .OrderBy(e => e.FirstSessionDate)
-                .ToList();
-
-            _pastEvents = allEvents
-                .Where(e => e.IsPast == true)
-                .OrderByDescending(e => e.FirstSessionDate)
-                .ToList();
-
-            _pastEventsByDate = GroupEventsByDate(_pastEvents);
-
-            Logger.LogDebug("Loaded {Upcoming} upcoming and {Past} past events for group {GroupId}",
-                _upcomingEvents.Count, _pastEvents.Count, Id);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading events for group {GroupId}", Id);
-        }
-        finally
-        {
-            _isLoadingEvents = false;
-            StateHasChanged();
-
-            var totalEvents = _upcomingEvents.Count + _pastEvents.Count;
-            if (totalEvents > 0)
-                await AnnouncerService.AnnouncePoliteAsync($"{_upcomingEvents.Count} upcoming and {_pastEvents.Count} past events loaded");
-            else
-                await AnnouncerService.AnnouncePoliteAsync("No events found for this group");
-        }
-    }
-
-    private async Task LoadRegistrationEventsAsync()
-    {
-        _isLoadingRegistrationEvents = true;
-        StateHasChanged();
-
-        try
-        {
-            var allEvents = await EventService.GetRegistrationEventsByActorAsync(_group!.ActorId!.Value);
-
-            _upcomingRegistrationEvents = allEvents
-                .Where(e => e.IsPast != true)
-                .OrderBy(e => e.FirstSessionDate)
-                .ToList();
-
-            _pastRegistrationEvents = allEvents
-                .Where(e => e.IsPast == true)
-                .OrderByDescending(e => e.FirstSessionDate)
-                .ToList();
-
-            _pastRegistrationEventsByDate = GroupEventsByDate(_pastRegistrationEvents);
-
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading registration events for group {GroupId}", Id);
-        }
-        finally
-        {
-            _isLoadingRegistrationEvents = false;
-            StateHasChanged();
-        }
     }
 
     private string GetGroupPlaceholder()
     {
         return ImageHelper.GetOrganizationPlaceholder(null, _group?.FullName ?? "GRP");
-    }
-
-    private static List<KeyValuePair<DateTime, List<EventListDto>>> GroupEventsByDate(IEnumerable<EventListDto> events)
-    {
-        return events
-            .GroupBy(e => e.FirstSessionDate?.Date ?? DateTime.MinValue)
-            .OrderByDescending(g => g.Key)
-            .Select(g => new KeyValuePair<DateTime, List<EventListDto>>(g.Key, g.ToList()))
-            .ToList();
     }
 
     private bool TryRestoreState()
@@ -200,12 +100,6 @@ public partial class GroupProfile
         _bannerStyle = AppearanceStyleBuilder.BuildBannerStyle(_branding, "#334155");
         _isLoading = false;
         _errorMessage = null;
-
-        if (_group?.ActorId.HasValue == true)
-        {
-            _ = InvokeAsync(LoadEventsAsync);
-            _ = InvokeAsync(LoadRegistrationEventsAsync);
-        }
 
         return true;
     }

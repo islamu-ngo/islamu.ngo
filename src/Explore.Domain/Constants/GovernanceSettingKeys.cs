@@ -87,15 +87,6 @@ public static class GovernanceSettingKeys
         }
     }
 
-    public static class Events
-    {
-        public const string UserSubmissionEnabled = "events.user_submission_enabled";
-        public const string OrganizationSubmissionEnabled = "events.organization_submission_enabled";
-        public const string GroupSubmissionEnabled = "events.group_submission_enabled";
-        public const string RequireApproval = "events.require_approval";
-        public const string CardClickOpensDetailPage = "events.card_click_opens_detail_page";
-    }
-
     public static class Organizations
     {
         public const string VerificationRequired = "organizations.verification_required";
@@ -176,7 +167,6 @@ public static class GovernanceSettingKeys
             public const string InstanceUrl = "integrations.listmonk.instance_url";
             public const string DefaultListId = "integrations.listmonk.default_list_id";
             public const string PreconfirmSubscriptions = "integrations.listmonk.preconfirm_subscriptions";
-            public const string SyncOnRegistration = "integrations.listmonk.sync_on_registration";
         }
     }
 
@@ -234,18 +224,6 @@ public static class GovernanceSettingKeys
     public static class Federation
     {
         public const string DecentralizationEnabled = "federation.decentralization_enabled";
-    }
-
-    public static class Reporting
-    {
-        public const string TenantExternalSyncEnabled = "reporting.tenant_external_sync_enabled";
-        public const string EnableTenantOspreyProvider = "reporting.enable_tenant_osprey_provider";
-        public const string EnableTenantCoopProvider = "reporting.enable_tenant_coop_provider";
-        public const string OspreyRoutingMode = "reporting.osprey_routing_mode";
-        public const string CoopRoutingMode = "reporting.coop_routing_mode";
-        public const string EvidenceMode = "reporting.evidence_mode";
-        public const string OspreyEndpointUrl = "reporting.osprey_endpoint_url";
-        public const string CoopEndpointUrl = "reporting.coop_endpoint_url";
     }
 
     public static class Analytics
@@ -315,9 +293,6 @@ public static class GovernanceSettingKeys
         public const string LockAnalytics = "governance.lock_tenant_analytics";
         public const string LockAiAssistant = "governance.lock_tenant_ai_assistant";
         public const string LockIntegrations = "governance.lock_tenant_integrations";
-        public const string LockReportingProviders = "governance.lock_tenant_reporting_providers";
-        public const string LockTenantOspreyProvider = "governance.lock_tenant_osprey_provider";
-        public const string LockTenantCoopProvider = "governance.lock_tenant_coop_provider";
         public const string LockMcp = "governance.lock_tenant_mcp";
         public const string LockMcpLegacySse = "governance.lock_tenant_mcp_legacy_sse";
     }
@@ -340,34 +315,12 @@ public static class GovernanceSettingKeys
         public const string ForceOfflineMode = "localization.force_offline_mode";
     }
 
-    public static class EventList
-    {
-        public const string BrowseMode = "event_list.browse_mode";
-        public const string PageSize = "event_list.page_size";
-        public const string DefaultLayout = "event_list.default_layout";
-
-        public static class Card
-        {
-            public const string ShowDate = "event_list.card.show_date";
-            public const string ShowLocation = "event_list.card.show_location";
-            public const string ShowOrganizer = "event_list.card.show_organizer";
-            public const string ShowDescription = "event_list.card.show_description";
-            public const string ShowTags = "event_list.card.show_tags";
-            public const string ShowCategories = "event_list.card.show_categories";
-            public const string ShowCapacity = "event_list.card.show_capacity";
-            public const string ShowPrice = "event_list.card.show_price";
-            public const string ShowStatus = "event_list.card.show_status";
-        }
-    }
-
     public static class PublicExperience
     {
         public const string Mode = "public_experience.mode";
-        public const string EventCatalogLabel = "public_experience.event_catalog_label";
         public const string PrimaryOrganizationId = "public_experience.primary_organization_id";
         public const string HomeBlocks = "public_experience.home_blocks";
         public const string Ctas = "public_experience.ctas";
-        public const string EventSectionPresets = "public_experience.event_section_presets";
         public const string AnnouncementBarEnabled = "public_experience.announcement_bar.enabled";
         public const string AnnouncementBarMessage = "public_experience.announcement_bar.message";
         public const string AnnouncementBarLinkText = "public_experience.announcement_bar.link_text";

@@ -1,3 +1,6 @@
+// ABOUTME: Maps tenant-scoped organization reviews without product-specific relationships.
+// ABOUTME: Retains organization, reviewer, rating, comment, audit, and soft-delete persistence.
+
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,7 +20,6 @@ public class OrganizationReviewConfiguration : IEntityTypeConfiguration<Organiza
             .HasDefaultValueSql("uuidv7()");
 
         builder.Property(e => e.OrganizationId).HasColumnName("organization_id");
-        builder.Property(e => e.EventId).HasColumnName("event_id");
         builder.Property(e => e.UserId).HasColumnName("user_id");
         builder.Property(e => e.ReviewerName).HasColumnName("reviewer_name").HasMaxLength(200);
         builder.Property(e => e.Rating).HasColumnName("rating");

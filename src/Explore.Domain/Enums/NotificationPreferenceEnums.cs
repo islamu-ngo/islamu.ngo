@@ -7,8 +7,6 @@ public enum NotificationPreferenceCategoryEnum
 {
     AccountSecurity = 1,
     BillingLegal = 2,
-    RegistrationStatus = 3,
-    EventUpdates = 4,
     OrganizationUpdates = 5,
     GroupUpdates = 6,
     TrustSafety = 7,
@@ -27,8 +25,6 @@ public static class NotificationPreferenceCategoryCodes
 {
     public const string AccountSecurity = "account-security";
     public const string BillingLegal = "billing-legal";
-    public const string RegistrationStatus = "registration-status";
-    public const string EventUpdates = "event-updates";
     public const string OrganizationUpdates = "organization-updates";
     public const string GroupUpdates = "group-updates";
     public const string TrustSafety = "trust-safety";

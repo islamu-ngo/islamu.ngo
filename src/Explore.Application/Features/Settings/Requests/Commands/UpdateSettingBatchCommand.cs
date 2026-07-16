@@ -15,12 +15,12 @@ using MediatR;
 public class UpdateSettingBatchCommand : IRequest<BatchUpdateResponseDto>
 {
     /// <summary>
-    /// Setting category to scope the update (e.g., "EventList"). All keys must belong to this category.
+    /// Setting category to scope the update (e.g., "Branding"). All keys must belong to this category.
     /// </summary>
     public required string Category { get; init; }
 
     /// <summary>
-    /// Key-value pairs to update. Keys are fully qualified (e.g., "event_list.page_size").
+    /// Key-value pairs to update. Keys are fully qualified (e.g., "branding.display_name").
     /// Values are plain strings — handler validates and serializes per ValueType.
     /// </summary>
     public required Dictionary<string, string> Values { get; init; }

@@ -110,7 +110,7 @@
 
     protected override void OnInitialized()
     {
-        // Respect ?section= query parameter for deep links (e.g., from EventRegistration)
+        // Respect ?section= query parameter for settings deep links.
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var section = ParseSectionFromQuery(uri.Query);
         if (section is not null && Array.IndexOf(AllowedSections, section) >= 0)

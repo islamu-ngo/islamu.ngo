@@ -1,5 +1,5 @@
 // ABOUTME: Partial class containing SaveChangesAsync override with automatic audit and generated field population.
-// ABOUTME: Handles public event codes plus IConcurrencyAware, IAuditableEntity, and ISoftDeletable entity interceptors.
+// ABOUTME: Handles IConcurrencyAware, IAuditableEntity, and ISoftDeletable entity interceptors.
 
 using Explore.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,13 +15,6 @@ public partial class ExploreDbContext
 
         foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.Entity is Explore.Domain.Event eventEntity &&
-                entry.State == EntityState.Added &&
-                string.IsNullOrWhiteSpace(eventEntity.PublicCode))
-            {
-                eventEntity.PublicCode = GeneratePublicCode();
-            }
-
             if (entry.Entity is IConcurrencyAware concurrencyAware &&
                 (entry.State == EntityState.Added || entry.State == EntityState.Modified))
             {
@@ -75,8 +68,4 @@ public partial class ExploreDbContext
         return CurrentUserService?.UserId;
     }
 
-    private static string GeneratePublicCode()
-    {
-        return Guid.NewGuid().ToString("N")[..12];
-    }
 }

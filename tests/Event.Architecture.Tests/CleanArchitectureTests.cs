@@ -10,7 +10,7 @@ using NetArchTest.Rules;
 public class CleanArchitectureTests
 {
     // Assembly references for architecture testing
-    private static readonly Assembly DomainAssembly = typeof(Explore.Domain.Event).Assembly;
+    private static readonly Assembly DomainAssembly = typeof(Explore.Domain.Actor).Assembly;
     private static readonly Assembly ApplicationAssembly = typeof(Explore.Application.ApplicationServicesRegistration).Assembly;
     private static readonly Assembly PersistenceAssembly = typeof(Explore.Persistence.ExploreDbContext).Assembly;
     private static readonly Assembly InfrastructureAssembly = typeof(Explore.Infrastructure.InfrastructureServicesRegistration).Assembly;

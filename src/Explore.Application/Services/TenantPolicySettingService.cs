@@ -10,7 +10,7 @@ namespace Explore.Application.Services;
 public partial class TenantPolicySettingService : ITenantPolicySettingService
 {
     private const string DefaultBrandDisplayName = "";
-    private const string DefaultPublicHomePage = "EventList";
+    private const string DefaultPublicHomePage = "LandingPage";
     private const string DefaultCommunityGuidelinesContent =
         "# Community Guidelines\n\n" +
         "## Our Community\n\n" +
@@ -201,7 +201,7 @@ public partial class TenantPolicySettingService : ITenantPolicySettingService
 
         return value.Equals("LandingPage", StringComparison.OrdinalIgnoreCase)
             ? "LandingPage"
-            : "EventList";
+            : DefaultPublicHomePage;
     }
 
     private static string NormalizeOptionalHost(string? value)

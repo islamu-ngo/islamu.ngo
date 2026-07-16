@@ -19,11 +19,6 @@ public partial class TenantPolicySettingService
         SystemSetting? GetSystem(string key) => systemSettings.GetValueOrDefault(key);
         TenantSetting? GetTenant(string key) => tenantSettings.GetValueOrDefault(key);
 
-        var systemUserSubmission = GetSystem(GovernanceSettingKeys.Events.UserSubmissionEnabled);
-        var systemOrgSubmission = GetSystem(GovernanceSettingKeys.Events.OrganizationSubmissionEnabled);
-        var systemGroupSubmission = GetSystem(GovernanceSettingKeys.Events.GroupSubmissionEnabled);
-        var systemRequireApproval = GetSystem(GovernanceSettingKeys.Events.RequireApproval);
-        var systemEventCardClickOpensDetailPage = GetSystem(GovernanceSettingKeys.Events.CardClickOpensDetailPage);
         var systemRequireVerification = GetSystem(GovernanceSettingKeys.Organizations.VerificationRequired);
         var systemTenantCanOmitVerification = GetSystem(GovernanceSettingKeys.Organizations.TenantCanOmitVerification);
         var systemOrgSelfRegistration = GetSystem(GovernanceSettingKeys.Organizations.SelfRegistrationEnabled);
@@ -70,11 +65,6 @@ public partial class TenantPolicySettingService
         var systemAdminRenderMode = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Admin.RenderMode);
         var systemAdminPrerender = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Admin.PrerenderEnabled);
 
-        var tenantUserSubmission = GetTenant(GovernanceSettingKeys.Events.UserSubmissionEnabled);
-        var tenantOrgSubmission = GetTenant(GovernanceSettingKeys.Events.OrganizationSubmissionEnabled);
-        var tenantGroupSubmission = GetTenant(GovernanceSettingKeys.Events.GroupSubmissionEnabled);
-        var tenantRequireApproval = GetTenant(GovernanceSettingKeys.Events.RequireApproval);
-        var tenantEventCardClickOpensDetailPage = GetTenant(GovernanceSettingKeys.Events.CardClickOpensDetailPage);
         var tenantRequireVerification = GetTenant(GovernanceSettingKeys.Organizations.VerificationRequired);
         var tenantOrgSelfRegistration = GetTenant(GovernanceSettingKeys.Organizations.SelfRegistrationEnabled);
         var tenantGroupSelfRegistration = GetTenant(GovernanceSettingKeys.Groups.SelfRegistrationEnabled);
@@ -113,7 +103,6 @@ public partial class TenantPolicySettingService
 
         var isTenantWhiteLabelingEnabled = isMultiTenant && DeserializeBoolean(systemTenantWhiteLabeling?.Value, false);
         var canOverrideHomePage = systemHomePage?.IsLocked != true;
-        var canOverrideEventCardClickBehavior = systemEventCardClickOpensDetailPage?.IsLocked != true;
         var canOverrideSubdomain = systemTenantSubdomain?.IsLocked != true;
         var canOverrideCustomDomain = systemTenantCustomDomain?.IsLocked != true
             && DeserializeBoolean(systemAllowCustomDomain?.Value, true);
@@ -141,21 +130,6 @@ public partial class TenantPolicySettingService
 
         return new TenantPolicySettingsDto
         {
-            AllowUserSubmittedEvents = ResolveBoolean(
-                tenantUserSubmission?.Value,
-                systemUserSubmission?.Value,
-                true,
-                systemUserSubmission?.IsLocked != true),
-            AllowOrganizationSubmittedEvents = ResolveBoolean(
-                tenantOrgSubmission?.Value,
-                systemOrgSubmission?.Value,
-                true,
-                systemOrgSubmission?.IsLocked != true),
-            AllowGroupSubmittedEvents = ResolveBoolean(
-                tenantGroupSubmission?.Value,
-                systemGroupSubmission?.Value,
-                true,
-                systemGroupSubmission?.IsLocked != true),
             AllowOrganizationSelfRegistration = ResolveBoolean(
                 tenantOrgSelfRegistration?.Value,
                 systemOrgSelfRegistration?.Value,
@@ -166,16 +140,6 @@ public partial class TenantPolicySettingService
                 systemGroupSelfRegistration?.Value,
                 true,
                 systemGroupSelfRegistration?.IsLocked != true),
-            RequireEventApproval = ResolveBoolean(
-                tenantRequireApproval?.Value,
-                systemRequireApproval?.Value,
-                false,
-                systemRequireApproval?.IsLocked != true),
-            EventCardClickOpensDetailPage = ResolveBoolean(
-                tenantEventCardClickOpensDetailPage?.Value,
-                systemEventCardClickOpensDetailPage?.Value,
-                false,
-                canOverrideEventCardClickBehavior),
             RequireOrganizationVerification = requireVerification,
             CanTenantOmitVerification = canOmitVerification,
             IsTenantWhiteLabelingEnabled = isTenantWhiteLabelingEnabled,
@@ -227,7 +191,6 @@ public partial class TenantPolicySettingService
             CanOverrideBrandLogoUrl = isTenantWhiteLabelingEnabled && systemBrandLogoUrl?.IsLocked != true,
             CanOverrideBrandFaviconUrl = isTenantWhiteLabelingEnabled && systemBrandFaviconUrl?.IsLocked != true,
             CanOverrideBrandCustomCssUrl = isTenantWhiteLabelingEnabled && systemBrandCustomCssUrl?.IsLocked != true,
-            CanOverrideEventCardClickBehavior = canOverrideEventCardClickBehavior,
             RenderPolicyPreset = ResolveString(
                 allowTenantRenderOverride ? GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Preset)?.Value : null,
                 systemRenderPreset?.Value,

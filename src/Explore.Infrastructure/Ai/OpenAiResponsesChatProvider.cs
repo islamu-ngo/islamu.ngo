@@ -1,5 +1,5 @@
 // ABOUTME: Implements the first-class OpenAI Responses API provider adapter using raw HTTP.
-// ABOUTME: Maps /v1/responses output text and function calls into safe provider-neutral results.
+// ABOUTME: Maps /v1/responses output text into safe provider-neutral results.
 
 using System.Diagnostics;
 using System.Net;
@@ -19,7 +19,6 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
     public const string HttpClientName = "OpenAiResponsesAiClient";
 
     private const string DefaultEndpointUrl = "https://api.openai.com/v1";
-    private const string CreateEventDraftToolName = "create_event_draft";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IHttpClientFactory _httpClientFactory;
@@ -350,7 +349,7 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
             settings.ModelId.Trim(),
             settings.MaxInputTokens,
             settings.MaxOutputTokens,
-            SupportsToolProposals: true,
+            SupportsToolProposals: false,
             SupportsStreaming: false);
 
     private bool TryCreatePayload(
@@ -361,29 +360,6 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
     {
         payload = null;
         failure = null;
-
-        var tools = new List<OpenAiResponsesTool>();
-        if (request.Options.ToolProposalsEnabled && request.ActionSchema is not null)
-        {
-            foreach (var kind in request.ActionSchema.AllowedKinds.Distinct())
-            {
-                if (kind != AiProposedActionKind.CreateEventDraft)
-                {
-                    continue;
-                }
-
-                if (!TryCreateJsonSchema(request.ActionSchema.JsonSchema, out var schema, out failure))
-                {
-                    return false;
-                }
-
-                tools.Add(new OpenAiResponsesTool(
-                    "function",
-                    CreateEventDraftToolName,
-                    "Propose a draft event payload. The platform persists this as a proposal that still requires explicit user confirmation.",
-                    schema!.Value));
-            }
-        }
 
         OpenAiResponsesTextConfig? text = null;
         if (request.Options.StructuredOutputEnabled && request.StructuredOutputSchema is not null)
@@ -418,8 +394,6 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
             Stream = false,
             Temperature = request.Options.Temperature,
             MaxOutputTokens = request.Options.MaxOutputTokens,
-            Tools = tools.Count == 0 ? null : tools,
-            ToolChoice = tools.Count == 0 ? null : "auto",
             Text = text
         };
 
@@ -500,17 +474,6 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
 
     private bool TryCreateJsonSchema(
         string schemaJson,
-        out JsonElement? schema,
-        out AiChatProviderResult? failure)
-        => TryCreateJsonSchema(
-            schemaJson,
-            "invalid_action_schema",
-            "AI action schema must be a valid JSON object.",
-            out schema,
-            out failure);
-
-    private bool TryCreateJsonSchema(
-        string schemaJson,
         string failureCode,
         string failureMessage,
         out JsonElement? schema,
@@ -563,16 +526,7 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
                     && !string.IsNullOrWhiteSpace(content.Text))
                 .Select(content => content.Text!.Trim()));
 
-        var functionCalls = request.Options.ToolProposalsEnabled
-            ? (providerResponse.Output ?? []).Where(item => string.Equals(item.Type, "function_call", StringComparison.OrdinalIgnoreCase)).ToList()
-            : [];
-
-        if (!TryMapProposedActions(functionCalls, out var proposedActions, out failure))
-        {
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(text) && proposedActions.Count == 0)
+        if (string.IsNullOrWhiteSpace(text))
         {
             failure = RecordFailure("invalid_response", "AI provider returned an empty text response.");
             return false;
@@ -590,7 +544,7 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
 
         chatResponse = new AiChatResponse(
             assistantMessage,
-            proposedActions,
+            [],
             new AiTokenUsage(
                 providerResponse.Usage?.InputTokens,
                 providerResponse.Usage?.OutputTokens,
@@ -599,72 +553,6 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
             providerResponse.Status);
 
         return true;
-    }
-
-    private bool TryMapProposedActions(
-        IReadOnlyList<OpenAiResponsesOutputItem> functionCalls,
-        out IReadOnlyList<AiProposedActionCandidate> proposedActions,
-        out AiChatProviderResult? failure)
-    {
-        proposedActions = [];
-        failure = null;
-
-        if (functionCalls.Count == 0)
-        {
-            return true;
-        }
-
-        var actions = new List<AiProposedActionCandidate>();
-        foreach (var functionCall in functionCalls)
-        {
-            if (!string.Equals(functionCall.Name, CreateEventDraftToolName, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (!TryNormalizeToolArguments(functionCall.Arguments, out var payloadJson, out failure))
-            {
-                return false;
-            }
-
-            actions.Add(new AiProposedActionCandidate(
-                AiProposedActionKind.CreateEventDraft,
-                payloadJson!,
-                "Create an event draft"));
-        }
-
-        proposedActions = actions;
-        return true;
-    }
-
-    private bool TryNormalizeToolArguments(string? arguments, out string? payloadJson, out AiChatProviderResult? failure)
-    {
-        payloadJson = null;
-        failure = null;
-
-        if (string.IsNullOrWhiteSpace(arguments))
-        {
-            failure = RecordFailure("invalid_tool_arguments", "AI provider returned invalid action arguments.");
-            return false;
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(arguments);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                failure = RecordFailure("invalid_tool_arguments", "AI provider returned invalid action arguments.");
-                return false;
-            }
-
-            payloadJson = document.RootElement.GetRawText();
-            return true;
-        }
-        catch (JsonException)
-        {
-            failure = RecordFailure("invalid_tool_arguments", "AI provider returned invalid action arguments.");
-            return false;
-        }
     }
 
     private static string ToTranscriptRole(AiMessageRole role) => role switch
@@ -746,7 +634,7 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
         _metrics.RecordAiProviderProposedActions(
             AiProviderDefaults.ProviderOpenAi,
             response.ProposedActions.Count,
-            "create_event_draft");
+            response.ProposedActions.Count == 0 ? "none" : "unknown");
         AiProviderTelemetry.MarkSuccess(telemetryActivity, response);
     }
 
@@ -785,27 +673,9 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
         [JsonPropertyName("max_output_tokens")]
         public int MaxOutputTokens { get; init; }
 
-        [JsonPropertyName("tools")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public IReadOnlyList<OpenAiResponsesTool>? Tools { get; init; }
-
-        [JsonPropertyName("tool_choice")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? ToolChoice { get; init; }
-
         [JsonPropertyName("text")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public OpenAiResponsesTextConfig? Text { get; init; }
-    }
-
-    private sealed record OpenAiResponsesTool(
-        [property: JsonPropertyName("type")] string Type,
-        [property: JsonPropertyName("name")] string Name,
-        [property: JsonPropertyName("description")] string Description,
-        [property: JsonPropertyName("parameters")] JsonElement Parameters)
-    {
-        [JsonPropertyName("strict")]
-        public bool Strict => true;
     }
 
     private sealed record OpenAiResponsesTextConfig(
@@ -875,9 +745,7 @@ public sealed class OpenAiResponsesChatProvider : IAiChatProvider, IAiModelCatal
 
     private sealed record OpenAiResponsesOutputItem(
         [property: JsonPropertyName("type")] string? Type,
-        [property: JsonPropertyName("content")] IReadOnlyList<OpenAiResponsesContent>? Content,
-        [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("arguments")] string? Arguments);
+        [property: JsonPropertyName("content")] IReadOnlyList<OpenAiResponsesContent>? Content);
 
     private sealed record OpenAiResponsesContent(
         [property: JsonPropertyName("type")] string? Type,

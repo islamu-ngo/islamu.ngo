@@ -33,12 +33,6 @@ public class NotificationExternalDelegation : ITenantEntity, IAuditableEntity
     public string? ExternalDeliveryStatus { get; set; }
     public string? FailureCategory { get; set; }
 
-    public Guid? ReportId { get; set; }
-    public EventReport? Report { get; set; }
-
-    public Guid? ReportDecisionId { get; set; }
-    public EventReportDecision? ReportDecision { get; set; }
-
     public DateTime? RequestedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
 

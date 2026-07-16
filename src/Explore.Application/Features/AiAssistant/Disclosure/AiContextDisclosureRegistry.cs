@@ -22,7 +22,7 @@ namespace Explore.Application.Features.AiAssistant.Disclosure;
 /// <para>
 /// <b>Default rule</b>: any <c>*Pii</c> property not present in this registry resolves to
 /// <see cref="AiContextDisclosureRuleEnum.Deny"/>. The Phase-1 reflection test
-/// (<c>Event.Architecture.Tests/AiContextDisclosureSchemaTests</c>) fails the build if a
+/// The architecture disclosure schema test fails the build if a
 /// <c>*Pii</c> property is missing an entry.
 /// </para>
 /// <para>

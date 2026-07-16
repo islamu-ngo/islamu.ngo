@@ -1,4 +1,4 @@
-// ABOUTME: Defines the isolated machine-authentication contract for optional Event managed-mode endpoints.
+// ABOUTME: Defines the isolated machine-authentication contract for optional managed-mode endpoints.
 // ABOUTME: Prevents Control Plane credentials from participating in the ordinary JWT or external API-key schemes.
 
 namespace Explore.API.Authentication;

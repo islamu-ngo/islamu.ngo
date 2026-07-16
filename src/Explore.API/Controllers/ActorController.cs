@@ -1,5 +1,5 @@
 // ABOUTME: REST API controller for actor (speaker/performer) CRUD operations with HATEOAS support.
-// ABOUTME: Manages speaker profiles, credentials, and associations with events and organizations.
+// ABOUTME: Manages actor profiles, credentials, and organization associations.
 
 using Asp.Versioning;
 using Explore.API.Attributes;
@@ -92,8 +92,7 @@ public class ActorController : ControllerBase
     /// </summary>
     [HttpGet("{id:guid}", Name = RouteNames.GetActorById)]
     [EndpointSummary("Get Actor Details")]
-    [EndpointDescription("Get detailed information about a specific actor. " +
-        "Response includes links to related resources (events, organization).")]
+    [EndpointDescription("Get detailed actor information with links to the associated organization.")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(HalResource<ActorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

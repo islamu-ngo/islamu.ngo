@@ -6,8 +6,6 @@ using System.Text.Json;
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Components.Shell;
 using Explore.Blazor.Client.Contracts.Services;
-using Explore.Blazor.Client.Contracts.Services.Accessibility;
-using Explore.Blazor.Client.Contracts.Services.Events;
 using Explore.Blazor.Client.Contracts.Services.Organizations;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Services;
@@ -50,25 +48,16 @@ public partial class NavMenu : IDisposable
     protected TenantNavLinksState TenantNavLinksState { get; set; } = null!;
 
     [Inject]
-    protected IEventCreationEligibilityService EventCreationEligibilityService { get; set; } = null!;
-
-    [Inject]
     protected IOrganizationService OrganizationService { get; set; } = null!;
 
     [Inject]
     protected IGroupService GroupService { get; set; } = null!;
 
     [Inject]
-    protected IDialogService DialogService { get; set; } = null!;
-
-    [Inject]
     protected SidebarState SidebarState { get; set; } = null!;
 
     [Inject]
     protected CurrentUserState CurrentUserState { get; set; } = null!;
-
-    [Inject]
-    private IAccessibilityFocusService AccessibilityFocusService { get; set; } = default!;
 
     [Inject]
     protected AiAssistantState AiAssistantState { get; set; } = null!;
@@ -81,15 +70,10 @@ public partial class NavMenu : IDisposable
     private bool _userLoaded = false;
     private string _brandDisplayName = string.Empty;
     private string _brandLogoUrl = string.Empty;
-    private string _eventCatalogLabel = "events";
-    public string SearchQuery { get; set; } = "";
-    private MudTextField<string> _searchField = null!;
     private IReadOnlyList<TenantNavigationLinkDto> _navigationLinks = [];
-    private EventCreationEligibility _eventCreationEligibility = EventCreationEligibility.NotEligible;
     private bool _isSingleTenantMode = true;
     private bool _isCurrentUserInstanceAdmin;
     private bool _isCurrentUserTenantAdmin;
-    private bool _showAddEventForAnonymous;
     private bool _languagePickerEnabled = true;
     private ICollection<OrganizationListDto> _userOrganizations = new List<OrganizationListDto>();
     private ICollection<GroupListDto> _userGroups = new List<GroupListDto>();
@@ -108,25 +92,9 @@ public partial class NavMenu : IDisposable
         await LoadPublicExperienceAsync();
         await LoadCurrentUserAsync();
         await LoadNavigationLinksAsync();
-        await LoadEventCreationEligibilityAsync();
         await LoadDeploymentModeAsync();
         await LoadUserOrganizationsAsync();
         await LoadUserGroupsAsync();
-    }
-
-    private void HandleSearchKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            if (!string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                Nav.NavigateTo($"/events?q={Uri.EscapeDataString(SearchQuery)}");
-            }
-            else
-            {
-                Nav.NavigateTo("/events");
-            }
-        }
     }
 
     private async Task LoadPublicExperienceAsync()
@@ -143,9 +111,6 @@ public partial class NavMenu : IDisposable
             }
 
             _brandLogoUrl = shell.Home?.BrandLogoUrl ?? string.Empty;
-            _eventCatalogLabel = string.IsNullOrWhiteSpace(shell.EventCatalog?.Label)
-                ? _eventCatalogLabel
-                : shell.EventCatalog.Label.ToLowerInvariant();
         }
 
         var settingsTask = PublicExperienceService.GetSettingsAsync();
@@ -175,11 +140,6 @@ public partial class NavMenu : IDisposable
             await LoadAiAssistantPreferenceAsync();
         }
 
-        // Show "Add Event" button to anonymous visitors when at least one
-        // submission type is enabled, prompting them to log in on click.
-        _showAddEventForAnonymous = settings.AllowUserSubmittedEvents == true
-            || settings.AllowOrganizationSubmittedEvents == true
-            || settings.AllowGroupSubmittedEvents == true;
     }
 
     private async Task LoadAiAssistantPreferenceAsync()
@@ -364,24 +324,6 @@ public partial class NavMenu : IDisposable
         _navigationLinks = TenantNavLinksState.Links;
     }
 
-    private async Task LoadEventCreationEligibilityAsync()
-    {
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated != true)
-            {
-                return;
-            }
-
-            _eventCreationEligibility = await EventCreationEligibilityService.GetEligibilityAsync();
-        }
-        catch
-        {
-            // Silently fail - button simply won't appear
-        }
-    }
-
     private async Task LoadDeploymentModeAsync()
     {
         try
@@ -448,19 +390,6 @@ public partial class NavMenu : IDisposable
     {
         var returnUrl = new Uri(Nav.Uri).PathAndQuery;
         Nav.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: true);
-    }
-
-    private async Task OpenLoginPrompt(string? returnUrl, string? message = null)
-    {
-        returnUrl ??= new Uri(Nav.Uri).PathAndQuery;
-        await AccessibilityFocusService.SaveFocusAsync();
-        await LoginPromptDialog.ShowAsync(DialogService, returnUrl, message);
-        await AccessibilityFocusService.RestoreFocusAsync();
-    }
-
-    private async Task FocusSearchAsync()
-    {
-        await _searchField.FocusAsync();
     }
 
     public void Dispose()

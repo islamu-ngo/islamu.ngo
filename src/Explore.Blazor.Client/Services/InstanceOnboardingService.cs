@@ -18,7 +18,6 @@ public interface IInstanceOnboardingService
 
     Task<DeploymentModeDto> GetDeploymentModeAsync();
     Task<ModuleSettingsDto> GetModuleSettingsAsync();
-    Task<EventPolicyDto> GetEventPolicyAsync();
     Task<OrganizationPolicyDto> GetOrganizationPolicyAsync();
     Task<BrandingSettingsDto> GetBrandingSettingsAsync();
     Task<DomainSettingsDto> GetDomainSettingsAsync();
@@ -29,7 +28,6 @@ public interface IInstanceOnboardingService
 
     Task<BaseCommandResponseOfGuid> UpdateDeploymentModeAsync(string deploymentMode);
     Task<BaseCommandResponseOfGuid> UpdateModuleSettingsAsync(ModuleSettingsDto settings);
-    Task<BaseCommandResponseOfGuid> UpdateEventPolicyAsync(EventPolicyDto settings);
     Task<BaseCommandResponseOfGuid> UpdateOrganizationPolicyAsync(OrganizationPolicyDto settings);
     Task<BaseCommandResponseOfGuid> UpdateBrandingSettingsAsync(BrandingSettingsDto settings);
     Task<BaseCommandResponseOfGuid> UpdateDomainSettingsAsync(DomainSettingsDto settings);
@@ -161,9 +159,6 @@ public sealed class InstanceOnboardingService(
     public Task<ModuleSettingsDto> GetModuleSettingsAsync() =>
         GetSettingsAsync(ct => api.GetInstanceModuleSettingsAsync(cancellationToken: ct), () => new());
 
-    public Task<EventPolicyDto> GetEventPolicyAsync() =>
-        GetSettingsAsync(ct => api.GetInstanceEventPolicyAsync(cancellationToken: ct), () => new());
-
     public Task<OrganizationPolicyDto> GetOrganizationPolicyAsync() =>
         GetSettingsAsync(ct => api.GetInstanceOrganizationPolicyAsync(cancellationToken: ct), () => new());
 
@@ -191,9 +186,6 @@ public sealed class InstanceOnboardingService(
 
     public Task<BaseCommandResponseOfGuid> UpdateModuleSettingsAsync(ModuleSettingsDto settings) =>
         SendCommandAsync(ct => api.UpdateInstanceModuleSettingsAsync(settings, cancellationToken: ct));
-
-    public Task<BaseCommandResponseOfGuid> UpdateEventPolicyAsync(EventPolicyDto settings) =>
-        SendCommandAsync(ct => api.UpdateInstanceEventPolicyAsync(settings, cancellationToken: ct));
 
     public Task<BaseCommandResponseOfGuid> UpdateOrganizationPolicyAsync(OrganizationPolicyDto settings) =>
         SendCommandAsync(ct => api.UpdateInstanceOrganizationPolicyAsync(settings, cancellationToken: ct));

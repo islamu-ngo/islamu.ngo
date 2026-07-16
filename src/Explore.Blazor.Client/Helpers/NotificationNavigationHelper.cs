@@ -17,7 +17,6 @@ public static class NotificationNavigationHelper
 
         return notification.NotificationEntityTypeName.Trim().ToLowerInvariant() switch
         {
-            "event" => $"/events/{notification.EntityId}",
             "organization" => $"/organization/profile/{notification.EntityId}",
             "group" => $"/group/profile/{notification.EntityId}",
             _ => null

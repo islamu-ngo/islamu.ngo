@@ -1,4 +1,4 @@
-// ABOUTME: In-memory cache for lookup data (categories, tags, event types, etc.).
+// ABOUTME: In-memory cache for shared lookup data such as categories, tags, locations, and languages.
 // ABOUTME: Prevents redundant API calls for data that rarely changes.
 
 using Explore.Blazor.Client.Clients;
@@ -11,8 +11,6 @@ public interface ILookupCacheService
 {
     Task<ICollection<CategoryListDto>> GetCategoriesAsync(CancellationToken ct = default);
     Task<ICollection<TagListDto>> GetTagsAsync(CancellationToken ct = default);
-    Task<ICollection<EventTypeListDto>> GetEventTypesAsync(CancellationToken ct = default);
-    Task<ICollection<EventFormatListDto>> GetEventFormatsAsync(CancellationToken ct = default);
     Task<ICollection<MadhabListDto>> GetMadhabsAsync(CancellationToken ct = default);
     Task<ICollection<LocationListDto>> GetLocationsAsync(CancellationToken ct = default);
     Task<ICollection<LanguageListDto>> GetLanguagesAsync(CancellationToken ct = default);
@@ -30,8 +28,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
 
     private CacheEntry<ICollection<CategoryListDto>>? _categories;
     private CacheEntry<ICollection<TagListDto>>? _tags;
-    private CacheEntry<ICollection<EventTypeListDto>>? _eventTypes;
-    private CacheEntry<ICollection<EventFormatListDto>>? _eventFormats;
     private CacheEntry<ICollection<MadhabListDto>>? _madhabs;
     private CacheEntry<ICollection<LocationListDto>>? _locations;
     private CacheEntry<ICollection<LanguageListDto>>? _languages;
@@ -40,8 +36,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
 
     private readonly ICategoryService _categoryService;
     private readonly ITagService _tagService;
-    private readonly IEventTypeService _eventTypeService;
-    private readonly IEventFormatService _eventFormatService;
     private readonly IMadhabService _madhabService;
     private readonly ILocationService _locationService;
     private readonly ILanguageService _languageService;
@@ -50,8 +44,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
     public LookupCacheService(
         ICategoryService categoryService,
         ITagService tagService,
-        IEventTypeService eventTypeService,
-        IEventFormatService eventFormatService,
         IMadhabService madhabService,
         ILocationService locationService,
         ILanguageService languageService,
@@ -59,8 +51,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
     {
         _categoryService = categoryService;
         _tagService = tagService;
-        _eventTypeService = eventTypeService;
-        _eventFormatService = eventFormatService;
         _madhabService = madhabService;
         _locationService = locationService;
         _languageService = languageService;
@@ -81,22 +71,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
             entry => _tags = entry,
             () => _tagService.GetTagsAsync(),
             "Tags",
-            ct);
-
-    public Task<ICollection<EventTypeListDto>> GetEventTypesAsync(CancellationToken ct = default)
-        => GetOrFetchAsync(
-            () => _eventTypes,
-            entry => _eventTypes = entry,
-            () => _eventTypeService.GetEventTypesAsync(),
-            "EventTypes",
-            ct);
-
-    public Task<ICollection<EventFormatListDto>> GetEventFormatsAsync(CancellationToken ct = default)
-        => GetOrFetchAsync(
-            () => _eventFormats,
-            entry => _eventFormats = entry,
-            () => _eventFormatService.GetEventFormatsAsync(),
-            "EventFormats",
             ct);
 
     public Task<ICollection<MadhabListDto>> GetMadhabsAsync(CancellationToken ct = default)
@@ -127,8 +101,6 @@ public class LookupCacheService : ILookupCacheService, IDisposable
     {
         _categories = null;
         _tags = null;
-        _eventTypes = null;
-        _eventFormats = null;
         _madhabs = null;
         _locations = null;
         _languages = null;

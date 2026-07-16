@@ -23,7 +23,7 @@ namespace Explore.API.OpenApi;
 ///   <item>OperationId is non-null, non-empty, non-whitespace.</item>
 ///   <item>OperationId does not match a placeholder/fallback pattern such as verb-only
 ///         (<c>GetAsync</c>, <c>POST</c>) or numeric-suffix overflow collisions
-///         (<c>GetEventsAsync2</c>, <c>Create3</c>).</item>
+///         (<c>GetOrganizationsAsync2</c>, <c>Create3</c>).</item>
 /// </list>
 /// Uniqueness is already covered by <c>ContractInvariantsTests.OpenApiDocument_OperationIdsAreUnique</c>
 /// and does not need a runtime check.

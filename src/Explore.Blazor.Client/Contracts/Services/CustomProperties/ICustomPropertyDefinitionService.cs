@@ -19,14 +19,6 @@ public interface ICustomPropertyDefinitionService
         Guid id,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<CustomPropertyDefinitionDto>> GetEventDefinitionsAsync(
-        Guid eventId,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<CustomPropertyDefinitionDto>> GetEventSessionDefinitionsAsync(
-        Guid eventSessionId,
-        CancellationToken cancellationToken = default);
-
     Task<BaseCommandResponseOfGuid?> CreateDefinitionAsync(
         CreateCustomPropertyDefinitionDto body,
         CancellationToken cancellationToken = default);

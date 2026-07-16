@@ -16,12 +16,6 @@ public class EmailDispatchOutbox : ITenantEntity, IAuditableEntity, ISoftDeletab
     public required string SourceType { get; set; }
     public Guid SourceId { get; set; }
 
-    public Guid? EventId { get; set; }
-    public Event? Event { get; set; }
-
-    public Guid? RegistrationIntentId { get; set; }
-    public EventRegistrationIntent? RegistrationIntent { get; set; }
-
     public Guid? UserId { get; set; }
     public User? User { get; set; }
 
@@ -64,13 +58,6 @@ public class EmailDispatchOutbox : ITenantEntity, IAuditableEntity, ISoftDeletab
 
 public enum EmailDispatchKind
 {
-    RegistrationConfirmation = 1,
-    RegistrationApproved = 2,
-    RegistrationRejected = 3,
-    WaitlistPromoted = 4,
-    EventReminder = 5,
-    EventCancelled = 6,
-    OrganizerNotification = 7,
     TenantAdministratorInvitation = 8
 }
 

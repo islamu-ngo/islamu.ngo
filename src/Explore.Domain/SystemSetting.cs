@@ -1,5 +1,5 @@
 // ABOUTME: System-wide configuration setting with optional locking to prevent tenant overrides.
-// Part of the 3-tier cascading settings engine (System → Tenant → Event).
+// Part of the cascading settings engine (System → Tenant).
 
 using Explore.Domain.Interfaces;
 
@@ -57,7 +57,7 @@ public class SystemSetting : IAuditableEntity
     public string? Description { get; set; }
 
     /// <summary>
-    /// Category for grouping settings in UI (e.g., "Email", "Events", "Security").
+    /// Category for grouping settings in UI.
     /// </summary>
     public string? Category { get; set; }
 

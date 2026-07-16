@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using Explore.API.Hateoas;
 using Explore.API.Models;
-using Explore.Application.Features.Events.Requests.Queries;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -16,7 +15,7 @@ using NetArchTest.Rules;
 public class ApiContractArchitectureTests
 {
     private static readonly Assembly ApiAssembly = typeof(Program).Assembly;
-    private static readonly Assembly ApplicationAssembly = typeof(GetEventListRequest).Assembly;
+    private static readonly Assembly ApplicationAssembly = typeof(Explore.Application.ApplicationServicesRegistration).Assembly;
 
     private static readonly Type[] HttpVerbAttributes =
     {
@@ -385,105 +384,6 @@ public class ApiContractArchitectureTests
 
         await Assert.That(duplicates).IsEmpty()
             .Because("every action must be uniquely identifiable by controller.action; overloaded actions break OpenAPI generation");
-    }
-
-    [Test]
-    [DisplayName("Public event-list ownership filters must stay actor-backed and nullable")]
-    public async Task EventListOwnershipFilters_MustBe_NullableActorBackedContractOnly()
-    {
-        var requiredFilterNames = new[] { "ActorId", "OrganizationId", "GroupId" };
-        var forbiddenContractNames = new[] { "WorkspaceId", "OrganizerScopeId", "OrganizationScopeId", "OrganizationScope", "TenantWorkspace", "ScopeId" };
-
-        var apiProperties = typeof(EventFilterRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var requestProperties = typeof(GetEventListRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-        var violations = new List<string>();
-
-        foreach (var propertyName in requiredFilterNames)
-        {
-            if (apiProperties.SingleOrDefault(p => p.Name == propertyName)?.PropertyType != typeof(Guid?))
-                violations.Add($"EventFilterRequest.{propertyName} must be Guid? for optional query binding");
-
-            if (requestProperties.SingleOrDefault(p => p.Name == propertyName)?.PropertyType != typeof(Guid?))
-                violations.Add($"GetEventListRequest.{propertyName} must be Guid? for optional application filtering");
-        }
-
-        foreach (var forbiddenName in forbiddenContractNames)
-        {
-            if (apiProperties.Any(p => p.Name == forbiddenName))
-                violations.Add($"EventFilterRequest must not expose {forbiddenName}; use ActorId/OrganizationId/GroupId only");
-
-            if (requestProperties.Any(p => p.Name == forbiddenName))
-                violations.Add($"GetEventListRequest must not expose {forbiddenName}; use ActorId/OrganizationId/GroupId only");
-        }
-
-        await Assert.That(violations).IsEmpty()
-            .Because("the public /events list ownership contract must remain precise and actor-backed without introducing workspace/scope concepts");
-    }
-
-    [Test]
-    [DisplayName("Event creation must not reintroduce child-event hierarchy contracts")]
-    public async Task EventCreationContracts_MustNot_ReintroduceChildEventHierarchy()
-    {
-        var forbiddenTokens = new[] { "ParentEventId", "ChildEvent", "ChildEvents", "Subevent", "SubEvent", "subevent", "sub-event", "child-event" };
-        var violations = new List<string>();
-
-        foreach (var token in forbiddenTokens)
-        {
-            if (typeof(Explore.Domain.Event).GetProperty(token, BindingFlags.Public | BindingFlags.Instance) is not null)
-                violations.Add($"Explore.Domain.Event must not expose {token}; program items belong to EventSession.");
-        }
-
-        var routeNameValues = typeof(RouteNames)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(field => field.IsLiteral && !field.IsInitOnly && field.FieldType == typeof(string))
-            .Select(field => (Name: field.Name, Value: (string?)field.GetRawConstantValue() ?? string.Empty));
-
-        foreach (var routeName in routeNameValues)
-        {
-            foreach (var token in forbiddenTokens.Where(token => !string.Equals(token, "ParentEventId", StringComparison.Ordinal)))
-            {
-                if (routeName.Name.Contains(token, StringComparison.OrdinalIgnoreCase)
-                    || routeName.Value.Contains(token, StringComparison.OrdinalIgnoreCase))
-                {
-                    violations.Add($"RouteNames.{routeName.Name} must not expose rejected child-event route '{routeName.Value}'.");
-                }
-            }
-        }
-
-        var controllerTypes = Types.InAssembly(ApiAssembly)
-            .That()
-            .Inherit(typeof(ControllerBase))
-            .And()
-            .AreNotAbstract()
-            .GetTypes()
-            .ToList();
-
-        foreach (var controller in controllerTypes)
-        {
-            var controllerRouteTokens = controller
-                .GetCustomAttributes(typeof(RouteAttribute), true)
-                .Cast<RouteAttribute>()
-                .Select(attribute => attribute.Template ?? string.Empty);
-
-            var actionRouteTokens = controller
-                .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .SelectMany(method => method.GetCustomAttributes(true)
-                    .OfType<IRouteTemplateProvider>()
-                    .Select(attribute => attribute.Template ?? string.Empty));
-
-            foreach (var template in controllerRouteTokens.Concat(actionRouteTokens))
-            {
-                foreach (var token in forbiddenTokens.Where(token => !string.Equals(token, "ParentEventId", StringComparison.Ordinal)))
-                {
-                    if (template.Contains(token, StringComparison.OrdinalIgnoreCase))
-                        violations.Add($"Route template '{template}' must not expose rejected child-event hierarchy language.");
-                }
-            }
-        }
-
-        await Assert.That(violations).IsEmpty()
-            .Because("event creation progressive disclosure must model talks/workshops as EventSession, not child Event/ParentEventId hierarchy");
     }
 
     private static bool IsHttpAction(MethodInfo method)

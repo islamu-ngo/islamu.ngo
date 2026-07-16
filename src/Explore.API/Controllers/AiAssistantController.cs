@@ -260,7 +260,7 @@ public sealed class AiAssistantController : ControllerBase
 
     [HttpGet("references", Name = RouteNames.SearchAiReferences)]
     [EndpointSummary("Search AI references")]
-    [EndpointDescription("Searches lightweight tenant-visible event, actor, and organization references for AI assistant prompt context without returning full resource content.")]
+    [EndpointDescription("Searches lightweight tenant-visible actor and organization references for AI assistant prompt context without returning full resource content.")]
     [ProducesResponseType(typeof(HalCollectionResource<AiReferenceSearchResultDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -491,9 +491,6 @@ public sealed class AiAssistantController : ControllerBase
         var resource = new HalResource<AiReferenceSearchResultDto>(reference);
         switch (reference.Kind)
         {
-            case "Event":
-                AddResourceLink(resource, LinkRelations.Event, RouteNames.GetEventById, new { id = reference.ReferenceId });
-                break;
             case "Actor":
                 AddResourceLink(resource, LinkRelations.Actor, RouteNames.GetActorById, new { id = reference.ReferenceId });
                 break;

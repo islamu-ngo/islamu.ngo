@@ -3,11 +3,9 @@
 
 using System.Globalization;
 using Blazouter.Extensions;
-using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Configuration;
 using Explore.Blazor.Client.Contracts.Interop;
 using Explore.Blazor.Client.Contracts.Providers;
-using Explore.Blazor.Client.Contracts.Services.Events;
 using Explore.Blazor.Client.Contracts.Services.Organizations;
 using Explore.Blazor.Client.Extensions;
 using Explore.Blazor.Client.Localization;
@@ -33,7 +31,6 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 200;
 });
 builder.Services.AddBlazouter();
-builder.Services.AddEventControlPlaneClient();
 builder.Services.AddScoped<AuthenticatedRouteGuard>();
 builder.Services.AddScoped<MultiTenantOnboardingRouteGuard>();
 builder.Services.AddScoped<AdminRouteGuard>();
@@ -66,19 +63,6 @@ builder.Services.AddScoped(sp =>
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     return factory.CreateClient("BffClient");
 });
-
-// Register NSwag-generated API client for WASM
-// In WASM mode, the client calls through BFF endpoints (same origin)
-// The BFF handles authentication token attachment
-// IMPORTANT: AddHttpMessageHandler to send credentials (cookies) with every request
-builder.Services.AddHttpClient<IEventApiClient, EventApiClient>(client =>
-{
-    // Use base address pointing to self - BFF will proxy to API
-    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
-})
-.AddHttpMessageHandler<BrowserCredentialsMessageHandler>()
-.AddHttpMessageHandler<BffAntiforgeryMessageHandler>()
-.AddHttpMessageHandler<BffUnauthorizedHandler>();
 
 // Register TenantConfiguration for single-tenant mode (default)
 // In WASM, configuration section may not be available, so defaults from TenantConfiguration class are used

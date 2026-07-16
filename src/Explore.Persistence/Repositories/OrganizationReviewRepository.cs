@@ -1,3 +1,6 @@
+// ABOUTME: Persists generic organization reviews and their organization/user display relationships.
+// ABOUTME: Keeps read paths no-tracking and independent from removed product entities.
+
 using Explore.Application.Contracts.Persistence;
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +33,6 @@ public class OrganizationReviewRepository : GenericRepository<OrganizationReview
     {
         return await _dbContext.Set<OrganizationReview>()
             .AsNoTracking()
-            .Include(r => r.Event)
             .Include(r => r.Organization)
                 .ThenInclude(o => o!.Pii)
             .Include(r => r.User)
@@ -40,10 +42,4 @@ public class OrganizationReviewRepository : GenericRepository<OrganizationReview
             .ToListAsync();
     }
 
-    public async Task<bool> HasUserReviewedProgram(Guid userId, Guid programId)
-    {
-        return await _dbContext.Set<OrganizationReview>()
-            .AsNoTracking()
-            .AnyAsync(r => r.UserId == userId && r.EventId == programId);
-    }
 }

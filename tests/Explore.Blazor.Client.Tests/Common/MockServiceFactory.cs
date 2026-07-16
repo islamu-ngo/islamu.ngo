@@ -17,74 +17,7 @@ namespace Explore.Blazor.Client.Tests.Common;
 /// </remarks>
 public static class MockServiceFactory
 {
-    #region Core API Client
-
-    /// <summary>
-    /// Creates a mock IEventApiClient with default empty responses.
-    /// Uses HAL resource types that match the actual NSwag-generated client.
-    /// </summary>
-    public static IEventApiClient CreateEventApiClient()
-    {
-        var mock = Substitute.For<IEventApiClient>();
-
-        // Configure default successful empty responses for events (HAL collection)
-        // GetEventsAsync has many optional filter parameters (searchTerm, categoryId, etc.)
-        // Use ReturnsForAnyArgs to match regardless of which parameters are passed
-        mock.GetEventsAsync().ReturnsForAnyArgs(new HalCollectionResourceOfEventListDto
-        {
-            _embedded = new HalCollectionEmbeddedOfEventListDto
-            {
-                Items = new List<HalResourceOfEventListDto>()
-            }
-        });
-
-        // Configure default successful empty responses for my events (HAL collection)
-        mock.GetMyEventsAsync(Arg.Any<int?>(), Arg.Any<int?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns(new HalCollectionResourceOfEventListDto
-            {
-                _embedded = new HalCollectionEmbeddedOfEventListDto
-                {
-                    Items = new List<HalResourceOfEventListDto>()
-                }
-            });
-
-        // Configure default successful empty responses for organizations (HAL collection)
-        mock.GetOrganizationsAsync(Arg.Any<int?>(), Arg.Any<int?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns(new HalCollectionResourceOfOrganizationListDto
-            {
-                _embedded = new HalCollectionEmbeddedOfOrganizationListDto
-                {
-                    Items = new List<HalResourceOfOrganizationListDto>()
-                }
-            });
-
-        // Configure default successful empty responses for my organizations (HAL collection)
-        mock.GetMyOrganizationsAsync(Arg.Any<int?>(), Arg.Any<int?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns(new HalCollectionResourceOfOrganizationListDto
-            {
-                _embedded = new HalCollectionEmbeddedOfOrganizationListDto
-                {
-                    Items = new List<HalResourceOfOrganizationListDto>()
-                }
-            });
-
-        return mock;
-    }
-
-    #endregion
-
     #region Service Mocks
-
-    /// <summary>
-    /// Creates a mock IEventService with default empty responses.
-    /// </summary>
-    public static IEventService CreateEventService()
-    {
-        var mock = Substitute.For<IEventService>();
-        mock.GetAllEventsAsync().Returns(new List<EventListDto>());
-        mock.GetMyEventsAsync().Returns(new List<EventListDto>());
-        return mock;
-    }
 
     /// <summary>
     /// Creates a mock IOrganizationService with default empty responses.
@@ -254,16 +187,6 @@ public static class MockServiceFactory
         madhabMock.GetMadhabsAsync().Returns(new List<MadhabListDto>());
         services.AddSingleton(madhabMock);
 
-        var registrationPolicyMock = Substitute.For<IEventRegistrationPolicyService>();
-        registrationPolicyMock.GetEventRegistrationPoliciesAsync()
-            .Returns(new List<EventRegistrationPolicyListDto>());
-        services.AddSingleton(registrationPolicyMock);
-
-        var scheduleItemKindMock = Substitute.For<IScheduleItemKindService>();
-        scheduleItemKindMock.GetScheduleItemKindsAsync()
-            .Returns(new List<ScheduleItemKindListDto>());
-        services.AddSingleton(scheduleItemKindMock);
-
         var registrationScopeMock = Substitute.For<IRegistrationScopeService>();
         registrationScopeMock.GetRegistrationScopesAsync()
             .Returns(new List<RegistrationScopeListDto>());
@@ -302,16 +225,6 @@ public static class MockServiceFactory
         var madhabMock = Substitute.For<IMadhabService>();
         madhabMock.GetMadhabsAsync().Returns(ComponentDataBuilder.MadhabListDto.Generate(itemCount));
         services.AddSingleton(madhabMock);
-
-        var registrationPolicyMock = Substitute.For<IEventRegistrationPolicyService>();
-        registrationPolicyMock.GetEventRegistrationPoliciesAsync()
-            .Returns(new List<EventRegistrationPolicyListDto>());
-        services.AddSingleton(registrationPolicyMock);
-
-        var scheduleItemKindMock = Substitute.For<IScheduleItemKindService>();
-        scheduleItemKindMock.GetScheduleItemKindsAsync()
-            .Returns(new List<ScheduleItemKindListDto>());
-        services.AddSingleton(scheduleItemKindMock);
 
         var registrationScopeMock = Substitute.For<IRegistrationScopeService>();
         registrationScopeMock.GetRegistrationScopesAsync()
@@ -372,8 +285,6 @@ public static class MockServiceFactory
         Guid? userId = null,
         Guid? tenantId = null)
     {
-        services.AddSingleton(CreateEventApiClient());
-        services.AddSingleton(CreateEventService());
         services.AddSingleton(CreateOrganizationService());
         services.AddSingleton(CreateGroupService());
         services.AddSingleton(CreateAuthStateService(userId, tenantId));
@@ -387,16 +298,6 @@ public static class MockServiceFactory
         services.AddSingleton(CreateTranslationService());
         services.AddSingleton(Substitute.For<IHttpClientFactory>());
         RegisterLookupServiceMocks(services);
-
-        var eventDayMock = Substitute.For<IEventDayService>();
-        eventDayMock.GetDaysByEventAsync(Arg.Any<Guid>())
-            .Returns(new List<EventDayListDto>());
-        services.AddSingleton(eventDayMock);
-
-        var agendaItemMock = Substitute.For<IEventAgendaItemService>();
-        agendaItemMock.GetAgendaItemsByEventAsync(Arg.Any<Guid>())
-            .Returns(new List<EventAgendaItemListDto>());
-        services.AddSingleton(agendaItemMock);
 
         var locationRoomMock = Substitute.For<ILocationRoomService>();
         locationRoomMock.GetRoomsByLocationAsync(Arg.Any<Guid>())

@@ -117,7 +117,7 @@ public class PublicExperienceService : IPublicExperienceService
     {
         return settings?.PreferredHomePage?.Equals("LandingPage", StringComparison.OrdinalIgnoreCase) == true
             ? "/home"
-            : "/events";
+            : "/";
     }
 
     public string ResolveHomeRoute(PublicExperienceShellDto? shell)
@@ -133,7 +133,7 @@ public class PublicExperienceService : IPublicExperienceService
             return "/home";
         }
 
-        return "/events";
+        return "/";
     }
 
     private void CacheSettings(PublicExperienceSettingsDto? settings)

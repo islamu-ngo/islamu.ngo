@@ -21,7 +21,7 @@ public sealed class AiToolRegistryMcpTools(IAiToolContractRegistry registry)
         Idempotent = true,
         OpenWorld = false)]
     [AllowAnonymous]
-    [Description("List safe AI tool contracts exposed through the ISLAMU Event registry. Mutating tools still require proposal and confirmation.")]
+    [Description("List safe AI tool contracts exposed through the ISLAMU registry. Mutating tools still require proposal and confirmation.")]
     public string ListAiToolContracts(CancellationToken cancellationToken = default)
     {
         var startedAt = Stopwatch.GetTimestamp();

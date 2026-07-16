@@ -64,62 +64,6 @@ public sealed class CustomPropertyDefinitionService : ICustomPropertyDefinitionS
         }
     }
 
-    public async Task<IReadOnlyList<CustomPropertyDefinitionDto>> GetEventDefinitionsAsync(
-        Guid eventId,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var response = await _apiClient.GetEventCustomPropertyDefinitionsAsync(
-                eventId,
-                1,
-                200,
-                cancellationToken: cancellationToken);
-
-            var listItems = response.GetItems()
-                .Where(d => d.IsActive == true)
-                .OrderBy(d => d.SortOrder)
-                .ToList();
-
-            var detailTasks = listItems.Select(d => GetEventDefinitionAsync(d.Id ?? Guid.Empty, cancellationToken));
-            var details = await Task.WhenAll(detailTasks);
-            return NonNull(details);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP DEF] Failed to fetch event-local definitions for Event {EventId}", eventId);
-            throw;
-        }
-    }
-
-    public async Task<IReadOnlyList<CustomPropertyDefinitionDto>> GetEventSessionDefinitionsAsync(
-        Guid eventSessionId,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var response = await _apiClient.GetEventSessionCustomPropertyDefinitionsAsync(
-                eventSessionId,
-                1,
-                200,
-                cancellationToken: cancellationToken);
-
-            var listItems = response.GetItems()
-                .Where(d => d.IsActive == true)
-                .OrderBy(d => d.SortOrder)
-                .ToList();
-
-            var detailTasks = listItems.Select(d => GetEventSessionDefinitionAsync(d.Id ?? Guid.Empty, cancellationToken));
-            var details = await Task.WhenAll(detailTasks);
-            return NonNull(details);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP DEF] Failed to fetch session-local definitions for EventSession {EventSessionId}", eventSessionId);
-            throw;
-        }
-    }
-
     public async Task<BaseCommandResponseOfGuid?> CreateDefinitionAsync(
         CreateCustomPropertyDefinitionDto body,
         CancellationToken cancellationToken = default)
@@ -187,48 +131,4 @@ public sealed class CustomPropertyDefinitionService : ICustomPropertyDefinitionS
         }
     }
 
-    private async Task<CustomPropertyDefinitionDto?> GetEventDefinitionAsync(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var hal = await _apiClient.GetEventCustomPropertyDefinitionByIdAsync(id, cancellationToken: cancellationToken);
-            return hal.ToDto();
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            return null;
-        }
-    }
-
-    private async Task<CustomPropertyDefinitionDto?> GetEventSessionDefinitionAsync(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var hal = await _apiClient.GetEventSessionCustomPropertyDefinitionByIdAsync(id, cancellationToken: cancellationToken);
-            return hal.ToDto();
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            return null;
-        }
-    }
-
-    private static IReadOnlyList<CustomPropertyDefinitionDto> NonNull(
-        IEnumerable<CustomPropertyDefinitionDto?> definitions)
-    {
-        var result = new List<CustomPropertyDefinitionDto>();
-        foreach (var definition in definitions)
-        {
-            if (definition is not null)
-            {
-                result.Add(definition);
-            }
-        }
-
-        return result;
-    }
 }

@@ -1,5 +1,5 @@
 // ABOUTME: Notification service wrapping NSwag-generated IEventApiClient notification methods.
-// ABOUTME: Follows EventRegistrationService pattern: try-catch with logging, ApiException handling.
+// ABOUTME: Handles API failures with structured logging and safe fallback results.
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Constants;

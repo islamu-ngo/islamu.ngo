@@ -13,14 +13,6 @@ namespace Explore.Application.Authorization;
 /// </summary>
 public static class ResourceKinds
 {
-    public const string Event = "islamuevent_event";
-    public const string EventSession = "islamuevent_event_session";
-    public const string EventSessionGroup = "islamuevent_event_session_group";
-    public const string EventSessionAgendaItem = "islamuevent_event_session_agenda_item";
-    public const string EventDay = "islamuevent_event_day";
-    public const string EventAgendaItem = "islamuevent_event_agenda_item";
-    public const string EventRegistration = "islamuevent_event_registration";
-    public const string EventContactShareConsent = "islamuevent_event_contact_share_consent";
     public const string Organization = "islamuevent_organization";
     public const string OrganizationMember = "islamuevent_organization_member";
     public const string OrganizationReview = "islamuevent_organization_review";
@@ -40,7 +32,6 @@ public static class ResourceKinds
     public const string CustomPropertyDefinition = "islamuevent_custom_property_definition";
     public const string CustomPropertyTemplate = "islamuevent_custom_property_template";
     public const string CustomPropertyValue = "islamuevent_custom_property_value";
-    public const string CustomPropertyProjection = "islamuevent_custom_property_projection";
     public const string CustomPropertyGovernance = "islamuevent_custom_property_governance";
     public const string EmailDispatch = "islamuevent_email_dispatch";
     public const string Webhook = "islamuevent_webhook";

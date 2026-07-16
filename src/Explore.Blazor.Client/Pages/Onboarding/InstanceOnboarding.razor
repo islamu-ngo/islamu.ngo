@@ -102,9 +102,9 @@
                         <MudButton Elevation="0"
                                    Color="Color.Primary"
                                    Variant="Variant.Filled"
-                                   Href="/events"
-                                   StartIcon="@Icons.Material.Filled.Event">
-                            @T("success.single_primary", "Browse events")
+                                   Href="/"
+                                   StartIcon="@Icons.Material.Filled.Home">
+                            @T("success.single_primary", "Open home page")
                         </MudButton>
                         <MudButton Elevation="0"
                                    Color="Color.Secondary"
@@ -161,7 +161,7 @@
                                       Immediate="true"
                                       For="@(() => _siteProfile.SiteName)"
                                       @bind-Value="_siteProfile.SiteName"
-                                      Placeholder="@T("profile.site_name_placeholder", "Community Events")" />
+                                      Placeholder="@T("profile.site_name_placeholder", "Community Hub")" />
                         <ValidationMessage For="@(() => _siteProfile.SiteName)" />
 
                         <MudTextField T="string"
@@ -177,7 +177,7 @@
                                       Variant="Variant.Outlined"
                                       For="@(() => _siteProfile.CanonicalUrl)"
                                       @bind-Value="_siteProfile.CanonicalUrl"
-                                      Placeholder="@T("profile.canonical_url_placeholder", "https://events.example.org")" />
+                                      Placeholder="@T("profile.canonical_url_placeholder", "https://community.example.org")" />
                         <ValidationMessage For="@(() => _siteProfile.CanonicalUrl)" />
 
                         <MudTextField T="string"

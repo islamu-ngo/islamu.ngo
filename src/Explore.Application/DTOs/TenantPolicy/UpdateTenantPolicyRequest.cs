@@ -8,15 +8,10 @@ namespace Explore.Application.DTOs.TenantPolicy;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Skip)]
 public class UpdateTenantPolicyRequest
 {
-    public bool AllowUserSubmittedEvents { get; set; } = true;
-    public bool AllowOrganizationSubmittedEvents { get; set; } = true;
-    public bool AllowGroupSubmittedEvents { get; set; } = true;
     public bool AllowOrganizationSelfRegistration { get; set; } = true;
     public bool AllowGroupSelfRegistration { get; set; } = true;
-    public bool EventCardClickOpensDetailPage { get; set; }
-    public bool RequireEventApproval { get; set; }
     public bool RequireOrganizationVerification { get; set; } = true;
-    public string PreferredHomePage { get; set; } = "EventList";
+    public string PreferredHomePage { get; set; } = "LandingPage";
     public string Subdomain { get; set; } = string.Empty;
     public string CustomDomain { get; set; } = string.Empty;
     public bool AnnouncementBarEnabled { get; set; }

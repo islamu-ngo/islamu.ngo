@@ -1,4 +1,4 @@
-// ABOUTME: Retries the durable managed-registration callback until Event and Control Plane acknowledge the same attempt.
+// ABOUTME: Retries the durable managed-registration callback until the instance and Control Plane acknowledge the same attempt.
 // ABOUTME: Exits immediately in default standalone mode and never logs tokens or directional credentials.
 
 using Explore.Application.Features.Management.Requests;

@@ -47,13 +47,6 @@ public class CreateCustomRoleCommandHandler : IRequestHandler<CreateCustomRoleCo
             return response;
         }
 
-        if (request.Scope == RoleScopeEnum.Event)
-        {
-            response.Success = false;
-            response.Message = "Custom event roles are not supported in the first event-role release.";
-            return response;
-        }
-
         // Generate MasterCode from scope prefix + sanitized name
         var scopePrefix = request.Scope switch
         {

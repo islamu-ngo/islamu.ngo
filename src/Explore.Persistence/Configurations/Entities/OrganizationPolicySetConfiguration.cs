@@ -1,5 +1,5 @@
-// ABOUTME: EF Core configuration for OrganizationPolicySet — organization-level governance policy overrides.
-// ABOUTME: Organizations can only override event policies where the tenant allows it.
+// ABOUTME: EF Core configuration for the retained organization-level governance policy record.
+// ABOUTME: Maps identity, tenancy, audit metadata, concurrency, and organization uniqueness.
 
 using Explore.Domain.Policies;
 using Microsoft.EntityFrameworkCore;
@@ -26,22 +26,5 @@ public class OrganizationPolicySetConfiguration : IEntityTypeConfiguration<Organ
             .IsRowVersion();
 
         builder.HasIndex(x => x.OrganizationId).IsUnique();
-
-        builder.OwnsOne(x => x.Events, events =>
-        {
-            ConfigureSlot(events, e => e.AllowUserSubmittedEvents);
-            ConfigureSlot(events, e => e.AllowOrganizationSubmittedEvents);
-            ConfigureSlot(events, e => e.AllowGroupSubmittedEvents);
-            ConfigureSlot(events, e => e.EventCardClickOpensDetailPage);
-        });
-    }
-
-    private static void ConfigureSlot<TOwner, TPolicy, T>(
-        OwnedNavigationBuilder<TOwner, TPolicy> policyBuilder,
-        System.Linq.Expressions.Expression<Func<TPolicy, PolicySlot<T>?>> slotSelector)
-        where TOwner : class
-        where TPolicy : class
-    {
-        policyBuilder.OwnsOne(slotSelector);
     }
 }

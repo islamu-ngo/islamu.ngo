@@ -9,11 +9,10 @@ namespace Explore.API.Hateoas;
 /// </summary>
 public static class RouteNames
 {
-    #region Managed Event Routes
+    #region Managed Control Plane Routes
 
     public const string GetManagementCapabilities = "GetManagementCapabilities";
     public const string TriggerManagementRegistration = "TriggerManagementRegistration";
-    public const string GetManagedEventInstance = "GetManagedEventInstance";
     public const string GetManagementVersion = "GetManagementVersion";
     public const string GetManagementHealth = "GetManagementHealth";
     public const string EvaluateManagementUpgradePreflight = "EvaluateManagementUpgradePreflight";
@@ -47,99 +46,14 @@ public static class RouteNames
     public const string DeleteOrganization = "DeleteOrganization";
     #endregion
 
-    #region Event Routes
+    #region Integration Routes
 
-    public const string GetEvents = "GetEvents";
-    public const string GetEventById = "GetEventById";
-    public const string GetEventByPublicCode = "GetEventByPublicCode";
-    public const string GetEventManagementDetails = "GetEventManagementDetails";
-    public const string GetEventModerationHistory = "GetEventModerationHistory";
-    public const string GetManagedEventsByActor = "GetManagedEventsByActor";
-    public const string GetEventCalendar = "GetEventCalendar";
-    public const string GetMyEvents = "GetMyEvents";
-    public const string GetEventCreationContext = "GetEventCreationContext";
-    public const string GetEventSessionCreateContext = "GetEventSessionCreateContext";
-    public const string GetEventProgramSummary = "GetEventProgramSummary";
-    public const string GetEventPublishReadiness = "GetEventPublishReadiness";
-    public const string CreateEvent = "CreateEvent";
-    public const string ImportEvent = "ImportEvent";
-    public const string PublishEvent = "PublishEvent";
-    public const string ModerateEventLight = "ModerateEventLight";
-    public const string ModerateEventHeavy = "ModerateEventHeavy";
-    public const string UnmoderateEvent = "UnmoderateEvent";
-    public const string UpdateEvent = "UpdateEvent";
-    public const string ArchiveEvent = "ArchiveEvent";
-    public const string CancelEvent = "CancelEvent";
-    public const string DeleteEvent = "DeleteEvent";
-    public const string GetEventSessions = "GetEventSessions";
-    public const string GetEventTemplateSyncDiff = "GetEventTemplateSyncDiff";
-    public const string ApplyEventTemplateSync = "ApplyEventTemplateSync";
-    public const string GetEventTemplateSyncHistory = "GetEventTemplateSyncHistory";
-    #endregion
-
-    #region Event Report Routes
-
-    public const string GetEventReportOptions = "GetEventReportOptions";
-    public const string SubmitEventReport = "SubmitEventReport";
-    public const string GetMyEventReports = "GetMyEventReports";
-    public const string GetMyEventReport = "GetMyEventReport";
-    public const string GetModerationReportingRoutingState = "GetModerationReportingRoutingState";
-    public const string UpdateModerationReportingRoutingSettings = "UpdateModerationReportingRoutingSettings";
-    public const string TestModerationReportingProvider = "TestModerationReportingProvider";
-    public const string GetTenantModerationReportingDashboard = "GetTenantModerationReportingDashboard";
-    public const string GetModerationReportQueue = "GetModerationReportQueue";
-    public const string GetModerationReportDetail = "GetModerationReportDetail";
-    public const string TriageModerationReport = "TriageModerationReport";
-    public const string AssignModerationReport = "AssignModerationReport";
-    public const string DecideModerationReport = "DecideModerationReport";
-    public const string ExecuteModerationReportDecision = "ExecuteModerationReportDecision";
-    public const string ModerationIntegrationOspreyCallback = "ModerationIntegrationOspreyCallback";
-    public const string ModerationIntegrationCoopCallback = "ModerationIntegrationCoopCallback";
     public const string IntegrationSvixOperationalCallback = "IntegrationSvixOperationalCallback";
 
     public const string GetListmonkIntegrationSettings = "GetListmonkIntegrationSettings";
     public const string UpdateListmonkIntegrationSettings = "UpdateListmonkIntegrationSettings";
     public const string RotateListmonkIntegrationCredentials = "RotateListmonkIntegrationCredentials";
     public const string TestListmonkIntegrationConnection = "TestListmonkIntegrationConnection";
-
-    #endregion
-
-    #region Event Session Routes
-
-    public const string GetEventSessions_List = "GetEventSessionsList";
-    public const string GetEventSessionById = "GetEventSessionById";
-    public const string GetManagedEventSessionsByEvent = "GetManagedEventSessionsByEvent";
-    public const string CreateEventSession = "CreateEventSession";
-    public const string CreateDraftEventSession = "CreateDraftEventSession";
-    public const string ScheduleEventSession = "ScheduleEventSession";
-    public const string PublishEventSession = "PublishEventSession";
-    public const string ArchiveEventSession = "ArchiveEventSession";
-    public const string CancelEventSession = "CancelEventSession";
-    public const string CompleteEventSession = "CompleteEventSession";
-    public const string UpdateEventSession = "UpdateEventSession";
-    public const string DeleteEventSession = "DeleteEventSession";
-    public const string GetEventSessionLanguages = "GetEventSessionLanguages";
-    public const string CreateEventSessionLanguage = "CreateEventSessionLanguage";
-    public const string UpdateEventSessionLanguage = "UpdateEventSessionLanguage";
-    public const string DeleteEventSessionLanguage = "DeleteEventSessionLanguage";
-    public const string GetEventSessionSpeakersBySession = "GetEventSessionSpeakersBySession";
-    public const string CreateEventSessionSpeaker = "CreateEventSessionSpeaker";
-    public const string UpdateEventSessionSpeaker = "UpdateEventSessionSpeaker";
-    public const string DeleteEventSessionSpeaker = "DeleteEventSessionSpeaker";
-    public const string GetEventSessionAgendaItems = "GetEventSessionAgendaItems";
-    public const string GetEventRegistrations = "GetEventRegistrations";
-    public const string GetEventSessionTemplateSyncDiff = "GetEventSessionTemplateSyncDiff";
-    public const string ApplyEventSessionTemplateSync = "ApplyEventSessionTemplateSync";
-    public const string GetEventSessionTemplateSyncHistory = "GetEventSessionTemplateSyncHistory";
-
-    public const string GetEventSessionGroupsByEvent = "GetEventSessionGroupsByEvent";
-    public const string GetEventSessionGroupById = "GetEventSessionGroupById";
-    public const string GetEventSessionGroupSessions = "GetEventSessionGroupSessions";
-    public const string CreateEventSessionGroup = "CreateEventSessionGroup";
-    public const string UpdateEventSessionGroup = "UpdateEventSessionGroup";
-    public const string DeleteEventSessionGroup = "DeleteEventSessionGroup";
-    public const string AssignEventSessionToGroup = "AssignEventSessionToGroup";
-    public const string UnassignEventSessionFromGroup = "UnassignEventSessionFromGroup";
 
     #endregion
 
@@ -199,39 +113,19 @@ public static class RouteNames
 
     #endregion
 
-    #region Registration Routes
-
-    #endregion
-
     #region Lookup Table Routes
 
-    public const string GetEventTypes = "GetEventTypes";
-    public const string GetEventStatuses = "GetEventStatuses";
     public const string GetMadhabs = "GetMadhabs";
     public const string GetLanguages = "GetLanguages";
     public const string GetTagTypes = "GetTagTypes";
     public const string GetApprovalStatusOptions = "GetApprovalStatusOptions";
-    public const string GetAudienceAgeOptions = "GetAudienceAgeOptions";
-    public const string GetAudienceAgeOptionById = "GetAudienceAgeOptionById";
-    public const string GetAudienceGenderOptions = "GetAudienceGenderOptions";
-    public const string GetAudienceGenderOptionById = "GetAudienceGenderOptionById";
     public const string GetCategoryTypeOptions = "GetCategoryTypeOptions";
     public const string GetCategoryTypeOptionById = "GetCategoryTypeOptionById";
     public const string GetCategoryTypeOptionsWithCategories = "GetCategoryTypeOptionsWithCategories";
     public const string GetDidCustodyTypeOptions = "GetDidCustodyTypeOptions";
     public const string GetDidCustodyTypeOptionById = "GetDidCustodyTypeOptionById";
-    public const string GetEventFormatOptions = "GetEventFormatOptions";
-    public const string GetEventFormatOptionById = "GetEventFormatOptionById";
-    public const string GetEventStatusById = "GetEventStatusById";
     public const string GetLanguageById = "GetLanguageById";
     public const string GetMadhabById = "GetMadhabById";
-    public const string GetRegistrationModes = "GetRegistrationModes";
-    public const string GetRegistrationModeById = "GetRegistrationModeById";
-    public const string GetRegistrationScopes = "GetRegistrationScopes";
-    public const string GetEventSessionKinds = "GetEventSessionKinds";
-    public const string GetEventSessionStatuses = "GetEventSessionStatuses";
-    public const string GetEventSessionStatusById = "GetEventSessionStatusById";
-    public const string GetScheduleItemKinds = "GetScheduleItemKinds";
     public const string GetVisibilityTypes = "GetVisibilityTypes";
     public const string GetVisibilityTypeById = "GetVisibilityTypeById";
     public const string GetFileTypes = "GetFileTypes";
@@ -259,20 +153,6 @@ public static class RouteNames
     public const string RelayAnalyticsEvent = "RelayAnalyticsEvent";
     public const string GetTranslationByLanguage = "GetTranslationByLanguage";
     public const string GetAvailableTranslationLanguages = "GetAvailableTranslationLanguages";
-    public const string GetEventSeries = "GetEventSeries";
-    public const string GetEventSeriesById = "GetEventSeriesById";
-    public const string GetTopEventSeries = "GetTopEventSeries";
-    public const string CreateEventSeries = "CreateEventSeries";
-    public const string UpdateEventSeries = "UpdateEventSeries";
-    public const string DeleteEventSeries = "DeleteEventSeries";
-    public const string GetEventRegistrationPolicies = "GetEventRegistrationPolicies";
-    public const string GetEventRegistrationById = "GetEventRegistrationById";
-    public const string GetRegistrationsBySession = "GetRegistrationsBySession";
-    public const string GetRegistrationsByUser = "GetRegistrationsByUser";
-    public const string CreateEventRegistration = "CreateEventRegistration";
-    public const string UpdateEventRegistration = "UpdateEventRegistration";
-    public const string DeleteEventRegistration = "DeleteEventRegistration";
-
     #endregion
 
     #region User Routes
@@ -421,16 +301,6 @@ public static class RouteNames
 
     #endregion
 
-    #region Event Session Agenda Item Routes
-
-    public const string GetEventSessionAgendaItemById = "GetEventSessionAgendaItemById";
-    public const string CreateEventSessionAgendaItem = "CreateEventSessionAgendaItem";
-    public const string UpdateEventSessionAgendaItem = "UpdateEventSessionAgendaItem";
-    public const string DeleteEventSessionAgendaItem = "DeleteEventSessionAgendaItem";
-    public const string GetEventSessionAgendaItemsBySession = "GetEventSessionAgendaItemsBySession";
-
-    #endregion
-
     #region Storage Object Routes
 
     public const string GetStorageObjects = "GetStorageObjects";
@@ -522,16 +392,6 @@ public static class RouteNames
 
     #endregion
 
-    #region Contact Share Consent Routes
-
-    public const string GetUserContactShareConsents = "GetUserContactShareConsents";
-    public const string CheckConsentForOrganizer = "CheckConsentForOrganizer";
-    public const string WithdrawContactShareConsent = "WithdrawContactShareConsent";
-    public const string GetOrganizationSharedContacts = "GetOrganizationSharedContacts";
-    public const string ExportOrganizationSharedContacts = "ExportOrganizationSharedContacts";
-
-    #endregion
-
     #region Localization Admin Routes
 
     public const string CheckLocalizationBundleHealth = "CheckLocalizationBundleHealth";
@@ -553,54 +413,6 @@ public static class RouteNames
     public const string UpdateCustomPropertyDefinition = "UpdateCustomPropertyDefinition";
     public const string DeleteCustomPropertyDefinition = "DeleteCustomPropertyDefinition";
     public const string PurgeCustomPropertyDefinition = "PurgeCustomPropertyDefinition";
-
-    #endregion
-
-    #region Event Template Routes
-
-    public const string GetEventTemplates = "GetEventTemplates";
-    public const string GetEventTemplateById = "GetEventTemplateById";
-    public const string CreateEventTemplate = "CreateEventTemplate";
-    public const string UpdateEventTemplate = "UpdateEventTemplate";
-    public const string DeleteEventTemplate = "DeleteEventTemplate";
-
-    #endregion
-
-    #region Event Custom Property Routes
-
-    public const string GetEventCustomPropertyDefinitions = "GetEventCustomPropertyDefinitions";
-    public const string GetEventCustomPropertyDefinitionById = "GetEventCustomPropertyDefinitionById";
-    public const string CreateEventCustomPropertyDefinition = "CreateEventCustomPropertyDefinition";
-    public const string UpdateEventCustomPropertyDefinition = "UpdateEventCustomPropertyDefinition";
-    public const string DeleteEventCustomPropertyDefinition = "DeleteEventCustomPropertyDefinition";
-    public const string PurgeEventCustomPropertyDefinition = "PurgeEventCustomPropertyDefinition";
-    public const string GetEventCustomPropertyValues = "GetEventCustomPropertyValues";
-    public const string SetEventCustomPropertyValue = "SetEventCustomPropertyValue";
-    public const string SetEventCustomPropertyMultiValues = "SetEventCustomPropertyMultiValues";
-
-    #endregion
-
-    #region Event Session Template Routes
-
-    public const string GetEventSessionTemplates = "GetEventSessionTemplates";
-    public const string GetEventSessionTemplateById = "GetEventSessionTemplateById";
-    public const string CreateEventSessionTemplate = "CreateEventSessionTemplate";
-    public const string UpdateEventSessionTemplate = "UpdateEventSessionTemplate";
-    public const string DeleteEventSessionTemplate = "DeleteEventSessionTemplate";
-
-    #endregion
-
-    #region Event Session Custom Property Routes
-
-    public const string GetEventSessionCustomPropertyDefinitions = "GetEventSessionCustomPropertyDefinitions";
-    public const string GetEventSessionCustomPropertyDefinitionById = "GetEventSessionCustomPropertyDefinitionById";
-    public const string CreateEventSessionCustomPropertyDefinition = "CreateEventSessionCustomPropertyDefinition";
-    public const string UpdateEventSessionCustomPropertyDefinition = "UpdateEventSessionCustomPropertyDefinition";
-    public const string DeleteEventSessionCustomPropertyDefinition = "DeleteEventSessionCustomPropertyDefinition";
-    public const string PurgeEventSessionCustomPropertyDefinition = "PurgeEventSessionCustomPropertyDefinition";
-    public const string GetEventSessionCustomPropertyValues = "GetEventSessionCustomPropertyValues";
-    public const string SetEventSessionCustomPropertyValue = "SetEventSessionCustomPropertyValue";
-    public const string SetEventSessionCustomPropertyMultiValues = "SetEventSessionCustomPropertyMultiValues";
 
     #endregion
 
@@ -636,48 +448,6 @@ public static class RouteNames
 
     #endregion
 
-    #region Event Aspect Routes
-
-    public const string GetEventIslamicAspect = "GetEventIslamicAspect";
-    public const string UpsertEventIslamicAspect = "UpsertEventIslamicAspect";
-    public const string DeleteEventIslamicAspect = "DeleteEventIslamicAspect";
-    public const string GetEventTechAspect = "GetEventTechAspect";
-    public const string UpsertEventTechAspect = "UpsertEventTechAspect";
-    public const string DeleteEventTechAspect = "DeleteEventTechAspect";
-
-    #endregion
-
-    #region Event Team Routes
-
-    public const string GetEventTeam = "GetEventTeam";
-    public const string GetEventTeamAssignablePresets = "GetEventTeamAssignablePresets";
-    public const string GetCurrentUserEventPermissions = "GetCurrentUserEventPermissions";
-    public const string AssignEventRole = "AssignEventRole";
-    public const string RevokeEventRole = "RevokeEventRole";
-
-    #endregion
-
-    #region Event Day Routes
-
-    public const string GetEventDaysByEvent = "GetEventDaysByEvent";
-    public const string GetEventDayById = "GetEventDayById";
-    public const string CreateEventDay = "CreateEventDay";
-    public const string UpdateEventDay = "UpdateEventDay";
-    public const string DeleteEventDay = "DeleteEventDay";
-
-    #endregion
-
-    #region Event Agenda Item Routes
-
-    public const string GetEventAgendaItemsByEvent = "GetEventAgendaItemsByEvent";
-    public const string GetEventAgendaItemById = "GetEventAgendaItemById";
-    public const string CreateEventAgendaItem = "CreateEventAgendaItem";
-    public const string UpdateEventAgendaItem = "UpdateEventAgendaItem";
-    public const string DeleteEventAgendaItem = "DeleteEventAgendaItem";
-    public const string GetEventAgendaProjection = "GetEventAgendaProjection";
-
-    #endregion
-
     #region Location Room Routes
 
     public const string GetLocationRoomsByLocation = "GetLocationRoomsByLocation";
@@ -688,18 +458,8 @@ public static class RouteNames
 
     #endregion
 
-    #region Custom Property Projection Admin Routes
+    #region Custom Property Governance Routes
 
-    public const string GetCustomPropertyProjectionStatus = "GetCustomPropertyProjectionStatus";
-    public const string RebuildCustomPropertyProjection = "RebuildCustomPropertyProjection";
-    public const string RebuildSingleEventCustomPropertyProjection = "RebuildSingleEventCustomPropertyProjection";
-    public const string DrainCustomPropertyProjectionDirtyScopes = "DrainCustomPropertyProjectionDirtyScopes";
-    public const string GetCustomPropertyProjectionDirtyScopes = "GetCustomPropertyProjectionDirtyScopes";
-    public const string GetCustomPropertyProjectionsForEvent = "GetCustomPropertyProjectionsForEvent";
-    public const string GetSessionCustomPropertyProjectionStatus = "GetSessionCustomPropertyProjectionStatus";
-    public const string RebuildSessionCustomPropertyProjection = "RebuildSessionCustomPropertyProjection";
-    public const string RebuildSingleSessionCustomPropertyProjection = "RebuildSingleSessionCustomPropertyProjection";
-    public const string GetCustomPropertyProjectionsForSession = "GetCustomPropertyProjectionsForSession";
     public const string GetCustomPropertyGovernanceReport = "GetCustomPropertyGovernanceReport";
 
     #endregion
@@ -797,8 +557,6 @@ public static class RouteNames
     public const string RollbackControlPlaneTenantPlanAssignment = "RollbackControlPlaneTenantPlanAssignment";
     public const string GetInstanceModuleSettings = "GetInstanceModuleSettings";
     public const string UpdateInstanceModuleSettings = "UpdateInstanceModuleSettings";
-    public const string GetInstanceEventPolicy = "GetInstanceEventPolicy";
-    public const string UpdateInstanceEventPolicy = "UpdateInstanceEventPolicy";
     public const string GetInstanceOrganizationPolicy = "GetInstanceOrganizationPolicy";
     public const string UpdateInstanceOrganizationPolicy = "UpdateInstanceOrganizationPolicy";
     public const string GetInstanceBrandingSettings = "GetInstanceBrandingSettings";
@@ -809,7 +567,6 @@ public static class RouteNames
     public const string UpdateInstanceTenantDelegationSettings = "UpdateInstanceTenantDelegationSettings";
     public const string GetInstanceAdminPortalSettings = "GetInstanceAdminPortalSettings";
     public const string UpdateInstanceAdminPortalSettings = "UpdateInstanceAdminPortalSettings";
-    public const string UpdateInstanceModerationReportingProviderLocks = "UpdateInstanceModerationReportingProviderLocks";
     public const string GetInstanceAiAssistantGovernanceSettings = "GetInstanceAiAssistantGovernanceSettings";
     public const string UpdateInstanceAiAssistantGovernanceSettings = "UpdateInstanceAiAssistantGovernanceSettings";
     public const string GetInstanceMcpGovernanceSettings = "GetInstanceMcpGovernanceSettings";

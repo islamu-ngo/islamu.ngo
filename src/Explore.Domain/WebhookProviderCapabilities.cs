@@ -12,7 +12,6 @@ public enum WebhookProviderCapability : long
     Replay = 1L << 2,
     PayloadInspection = 1L << 3,
     AppPortal = 1L << 4,
-    EventCatalog = 1L << 5,
     ProviderRetentionControl = 1L << 6,
     ApplicationThrottling = 1L << 7,
     EndpointThrottling = 1L << 8,
@@ -24,7 +23,6 @@ public enum WebhookProviderCapability : long
           Replay |
           PayloadInspection |
           AppPortal |
-          EventCatalog |
           ProviderRetentionControl |
           ApplicationThrottling |
           EndpointThrottling |

@@ -118,17 +118,11 @@ public class TenantOnboardingService : ITenantOnboardingService
 
     private static TenantPolicySettingsDto DefaultSettings() => new()
     {
-        AllowUserSubmittedEvents = true,
-        AllowOrganizationSubmittedEvents = true,
-        AllowGroupSubmittedEvents = true,
         AllowOrganizationSelfRegistration = true,
         AllowGroupSelfRegistration = true,
         RequireOrganizationVerification = true,
-        PreferredHomePage = "EventList",
-        CanOverrideHomePagePreference = true,
         CanOverrideSubdomain = true,
         CanOverrideCustomDomain = true,
-        CanOverrideEventCardClickBehavior = true,
         CanOverrideCommunityGuidelines = true,
         AiAssistantProvider = "none"
     };
@@ -137,15 +131,9 @@ public class TenantOnboardingService : ITenantOnboardingService
         TenantPolicySettingsDto settings,
         bool forceAnnouncementBarRedisplay) => new()
         {
-            AllowUserSubmittedEvents = settings.AllowUserSubmittedEvents,
-            AllowOrganizationSubmittedEvents = settings.AllowOrganizationSubmittedEvents,
-            AllowGroupSubmittedEvents = settings.AllowGroupSubmittedEvents,
             AllowOrganizationSelfRegistration = settings.AllowOrganizationSelfRegistration,
             AllowGroupSelfRegistration = settings.AllowGroupSelfRegistration,
-            EventCardClickOpensDetailPage = settings.EventCardClickOpensDetailPage,
-            RequireEventApproval = settings.RequireEventApproval,
             RequireOrganizationVerification = settings.RequireOrganizationVerification,
-            PreferredHomePage = settings.PreferredHomePage,
             Subdomain = settings.Subdomain,
             CustomDomain = settings.CustomDomain,
             AnnouncementBarEnabled = settings.AnnouncementBarEnabled,

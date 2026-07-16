@@ -11,7 +11,6 @@ using Explore.API.Mcp;
 using Explore.API.Middleware;
 using Explore.API.OpenApi;
 using Explore.API.Services;
-using Explore.API.Services.Calendar;
 using Explore.Application;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Services;
@@ -107,13 +106,11 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
 builder.Services.AddApiCaching();
-builder.Services.AddSingleton<IEventCalendarFileBuilder, IcalNetEventCalendarFileBuilder>();
 builder.Services.AddScoped<ICoopWebhookSignatureValidator, CoopWebhookSignatureValidator>();
 builder.Services.AddScoped<IIncomingWebhookVerifier, CoopIncomingWebhookVerifier>();
 builder.Services.AddScoped<IIncomingWebhookVerifier, SvixIncomingWebhookVerifier>();
 builder.Services.AddScoped<IIncomingWebhookVerifierRegistry, IncomingWebhookVerifierRegistry>();
 builder.Services.AddScoped<IIncomingWebhookIntakeService, IncomingWebhookIntakeService>();
-builder.Services.AddScoped<IManagedEventHealthProbe, ManagedEventHealthProbe>();
 
 builder.Services.AddRouting(options =>
 {
@@ -246,14 +243,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGenWithAuth(builder.Configuration);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-// Configure native OpenAPI (for /openapi/islamu-event.json endpoint)
+// Configure native OpenAPI for the public Explore API contract.
 // Register document transformer to add missing DTO schemas that are hidden inside HAL wrappers
-builder.Services.AddOpenApi("islamu-event", options =>
+builder.Services.AddOpenApi("v1", options =>
 {
     options.ShouldInclude = (description) => true;
     options.AddDocumentTransformer((document, _, _) =>
     {
-        document.Info.Title = "Event API";
+        document.Info.Title = "Explore API";
         document.Info.Version = "v0.1";
         return Task.CompletedTask;
     });
@@ -454,10 +451,8 @@ if (!isOpenApiGeneration)
         .AddAuthorizationFilters()
         .WithTools<AiToolRegistryMcpTools>()
         .WithTools<AiAssistantMcpTools>()
-        .WithTools<EventManagementMcpTools>()
         .WithResources<AiAssistantMcpResources>()
-        .WithResources<EventManagementMcpResources>()
-        .WithPrompts<AiAssistantMcpPrompts>();
+    .WithResources<AiAssistantMcpResources>();
 
     builder.Services.AddSingleton<IConfigureOptions<McpServerOptions>, AiMcpProjectedToolOptionsSetup>();
 }
@@ -604,7 +599,7 @@ if (!string.IsNullOrWhiteSpace(setupSecretForStartupReminder))
 
 // Configure the HTTP request pipeline.
 // OpenAPI/Swagger surface is exposed in Development AND Testing so contract-invariant
-// integration tests (Event.API.IntegrationTests) can fetch /openapi/event-api.json.
+// contract tests can fetch the native OpenAPI document.
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing") || isOpenApiGeneration)
 {
     app.MapOpenApi().DisableRequestTimeout();

@@ -14,12 +14,6 @@ public static class PublicExperienceSettingDefinitions
         description: "Anonymous public experience posture. Allowed values: DiscoveryCentric, OrganizationCentric",
         allowedValues: ["DiscoveryCentric", "OrganizationCentric"]);
 
-    public static readonly SettingDefinition EventCatalogLabel = PublicExperienceDefinition(
-        key: GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
-        valueType: SettingValueType.String,
-        defaultValue: "\"Events\"",
-        description: "Display label for the public event catalog entry point");
-
     public static readonly SettingDefinition PrimaryOrganizationId = PublicExperienceDefinition(
         key: GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId,
         valueType: SettingValueType.String,
@@ -37,12 +31,6 @@ public static class PublicExperienceSettingDefinitions
         valueType: SettingValueType.Json,
         defaultValue: "{\"schemaVersion\":1,\"ctas\":[]}",
         description: "Versioned public call-to-action configuration document");
-
-    public static readonly SettingDefinition EventSectionPresets = PublicExperienceDefinition(
-        key: GovernanceSettingKeys.PublicExperience.EventSectionPresets,
-        valueType: SettingValueType.Json,
-        defaultValue: "{\"schemaVersion\":1,\"presets\":[]}",
-        description: "Versioned public event-section preset configuration document");
 
     public static readonly SettingDefinition AnnouncementBarEnabled = PublicExperienceDefinition(
         key: GovernanceSettingKeys.PublicExperience.AnnouncementBarEnabled,
@@ -87,11 +75,9 @@ public static class PublicExperienceSettingDefinitions
     public static IReadOnlyList<SettingDefinition> All =>
     [
         Mode,
-        EventCatalogLabel,
         PrimaryOrganizationId,
         HomeBlocks,
         Ctas,
-        EventSectionPresets,
         AnnouncementBarEnabled,
         AnnouncementBarMessage,
         AnnouncementBarLinkText,

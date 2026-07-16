@@ -446,16 +446,8 @@ public class CompleteInstanceOnboardingCommandHandler : IRequestHandler<Complete
             "Anonymous public experience posture");
 
         await PersistSystemSettingAsync(
-            GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
-            JsonSerializer.Serialize("Events"),
-            SettingValueType.String,
-            "PublicExperience",
-            2,
-            "Display label for the public event catalog entry point");
-
-        await PersistSystemSettingAsync(
             GovernanceSettingKeys.Routing.DefaultPublicHomePage,
-            JsonSerializer.Serialize("EventList"),
+            JsonSerializer.Serialize("LandingPage"),
             SettingValueType.String,
             "Routing",
             1,
@@ -468,9 +460,6 @@ public class CompleteInstanceOnboardingCommandHandler : IRequestHandler<Complete
                     Id: "hero",
                     Kind: PublicExperienceHomeBlockKind.Hero,
                     Title: siteName,
-                    Subtitle: "Discover upcoming events.",
-                    LinkText: "Browse events",
-                    LinkUrl: "/events",
                     SortOrder: 0)
             ]);
 
@@ -482,17 +471,7 @@ public class CompleteInstanceOnboardingCommandHandler : IRequestHandler<Complete
             3,
             "Versioned public home block configuration document");
 
-        var ctas = new PublicExperienceCtasConfig(
-            Ctas:
-            [
-                new PublicExperienceCtaConfig(
-                    Id: "browse-events",
-                    Label: "Browse events",
-                    Url: "/events",
-                    Placement: PublicExperienceCtaPlacement.Hero,
-                    Style: PublicExperienceCtaStyle.Primary,
-                    SortOrder: 0)
-            ]);
+        var ctas = new PublicExperienceCtasConfig(Ctas: []);
 
         await PersistSystemSettingAsync(
             GovernanceSettingKeys.PublicExperience.Ctas,

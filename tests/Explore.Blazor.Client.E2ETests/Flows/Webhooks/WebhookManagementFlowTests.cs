@@ -4,6 +4,7 @@
 using System.Text.Json;
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.E2ETests.Fixtures;
+using Explore.Blazor.Client.E2ETests.Helpers;
 using Explore.Blazor.Client.E2ETests.Seeds;
 
 namespace Explore.Blazor.Client.E2ETests.Flows.Webhooks;
@@ -284,7 +285,7 @@ public sealed class WebhookManagementFlowTests(
         await retryButton.WaitForAsync(new LocatorWaitForOptions { Timeout = BrowserTimeoutMilliseconds });
 
         var retry = await api.RetryWebhookDeliveryAttemptAsync(failedAttemptId);
-        var retryAttemptId = EventApiScenario.SuccessfulId(retry, "retrying the failed webhook delivery");
+        var retryAttemptId = ApiResponseHelpers.SuccessfulId(retry, "retrying the failed webhook delivery");
         await WaitForManualRetryAttemptAsync(api, retryAttemptId, failedMessageId, failedEndpointId);
     }
 

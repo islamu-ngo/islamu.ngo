@@ -15,8 +15,6 @@ public interface IInstanceGovernanceSettingService
 
     Task ApplyModuleSettingsAsync(Guid? defaultTenantId, ModuleSettingsDto modules, Guid? actorUserId);
 
-    Task ApplyEventPolicyAsync(EventPolicyDto eventPolicy, Guid? actorUserId);
-
     Task ApplyOrganizationPolicyAsync(OrganizationPolicyDto orgPolicy, Guid? actorUserId);
 
     Task ApplyBrandingSettingsAsync(BrandingSettingsDto branding, Guid? actorUserId);

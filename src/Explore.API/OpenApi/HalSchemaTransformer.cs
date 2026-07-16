@@ -5,7 +5,7 @@
 // This file is excluded from compilation. If this approach is revived:
 // 1. Remove the #if false / #endif directives
 // 2. Register with: options.AddSchemaTransformer<HalSchemaTransformer>() in AddOpenApi()
-// 3. Keep the document name aligned with the active native endpoint: /openapi/event-api.json
+// 3. Keep the document name aligned with the active native endpoint: /openapi/v1.json
 //
 // The active native path is HalDtoSchemaTransformer; Swashbuckle uses HalSchemaFilter.
 

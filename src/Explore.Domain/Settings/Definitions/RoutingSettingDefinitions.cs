@@ -8,11 +8,11 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition DefaultPublicHomePage = new(
         Key: "routing.default_public_home_page",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"EventList\"",
+        DefaultValue: "\"LandingPage\"",
         Category: "Routing",
         Description: "Default public home page for tenants",
         MaxScope: SettingScope.Tenant,
-        AllowedValues: ["EventList", "LandingPage"]);
+        AllowedValues: ["LandingPage"]);
 
     // Tenant resolution
     public static readonly SettingDefinition ResolverHeaderEnabled = new(

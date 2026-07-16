@@ -1,7 +1,6 @@
 // ABOUTME: Centralizes all HttpClient registrations for the Blazor BFF server.
 // ABOUTME: Eliminates repeated ConfigurePrimaryHttpMessageHandler blocks for dev cert bypass.
 
-using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Contracts.Services;
 using Explore.Blazor.Client.Extensions;
 using Explore.Blazor.Client.Services;
@@ -20,7 +19,7 @@ public static class HttpClientExtensions
 
     /// <summary>
     /// Registers all API-facing HttpClient instances used by the Blazor BFF server.
-    /// Each client calls the Event API directly with access token forwarding.
+    /// Each client calls the Explore API directly with access token forwarding.
     /// </summary>
     public static IServiceCollection AddApiHttpClients(
         this IServiceCollection services,
@@ -49,10 +48,6 @@ public static class HttpClientExtensions
         .ConfigureDevCertBypass(environment)
         .AddBackgroundResilience();
 
-        // Typed NSwag-generated API client
-        services.AddTypedApiClient<IEventApiClient, EventApiClient>(apiBaseUrl, environment)
-            .AddInteractiveResilience();
-
         services.AddScoped<ILocalizationAdminService, LocalizationAdminService>();
 
         // Admin claims transformation client (shorter timeout, no token forwarding handler)
@@ -64,24 +59,6 @@ public static class HttpClientExtensions
           .AddAdminResilience();
 
         return services;
-    }
-
-    private static IHttpClientBuilder AddTypedApiClient<TInterface, TImplementation>(
-        this IServiceCollection services,
-        string baseUrl,
-        IWebHostEnvironment environment)
-        where TInterface : class
-        where TImplementation : class, TInterface
-    {
-        return services.AddHttpClient<TInterface, TImplementation>(client =>
-        {
-            client.BaseAddress = new Uri(baseUrl);
-        })
-        .AddHttpMessageHandler<AccessTokenForwardingHandler>()
-        .AddHttpMessageHandler<TenantHeaderForwardingHandler>()
-        .AddHttpMessageHandler<SetupSecretForwardingHandler>()
-        .AddHttpMessageHandler<SupportAccessForwardingHandler>()
-        .ConfigureDevCertBypass(environment);
     }
 
     // Interactive BFF->API calls use a lean custom pipeline: no circuit breaker (same-machine

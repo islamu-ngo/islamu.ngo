@@ -425,14 +425,6 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
             ResourceKinds.OrganizationReview or
             ResourceKinds.Group or
             ResourceKinds.GroupMember or
-            ResourceKinds.Event or
-            ResourceKinds.EventSession or
-            ResourceKinds.EventSessionGroup or
-            ResourceKinds.EventSessionAgendaItem or
-            ResourceKinds.EventDay or
-            ResourceKinds.EventAgendaItem or
-            ResourceKinds.EventRegistration or
-            ResourceKinds.EventContactShareConsent or
             ResourceKinds.StorageObject or
             ResourceKinds.Actor;
     }
@@ -443,7 +435,6 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
                 AuthorizationActions.View or
                 AuthorizationActions.SupportAccessSessions.List or
                 AuthorizationActions.SupportAccessSessions.ViewAudit or
-                AuthorizationActions.Events.ViewManagement or
                 AuthorizationActions.StorageObjects.Download or
                 AuthorizationActions.StorageObjects.PresignedDownload or
                 AuthorizationActions.ViewSharedContacts or
@@ -619,9 +610,7 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
     {
         return check.ResourceKind == ResourceKinds.AiConversation
             || IsHandlerOwnedUserProfileUpdateCheck(check)
-            || IsHandlerOwnedEventCreateCheck(check)
             || IsHandlerOwnedOrganizationCreateCheck(check)
-            || IsHandlerOwnedEventSessionPreCreateCheck(check)
             || IsHandlerOwnedStorageUploadSessionCheck(check);
     }
 
@@ -632,26 +621,12 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
             && Guid.TryParse(check.ResourceId, out _);
     }
 
-    private static bool IsHandlerOwnedEventCreateCheck(AuthorizationCheck check)
-    {
-        return check.ResourceKind == ResourceKinds.Event
-            && check.Action == AuthorizationActions.Create
-            && string.Equals(check.ResourceId, "create", StringComparison.Ordinal);
-    }
-
     private static bool IsHandlerOwnedOrganizationCreateCheck(AuthorizationCheck check)
     {
         return check.ResourceKind == ResourceKinds.Organization
             && check.Action == AuthorizationActions.Create
             && string.Equals(check.ResourceId, CreateOrganizationCommand.PreCreateResourceId, StringComparison.Ordinal)
             && HasAuthorizationPhase(check, CreateOrganizationCommand.PreCreateAuthorizationPhase);
-    }
-
-    private static bool IsHandlerOwnedEventSessionPreCreateCheck(AuthorizationCheck check)
-    {
-        return check.ResourceKind == ResourceKinds.EventSession
-            && check.Action == AuthorizationActions.Create
-            && HasAuthorizationPhase(check, AuthorizationPhases.PreCreate);
     }
 
     private static bool IsHandlerOwnedStorageUploadSessionCheck(AuthorizationCheck check)

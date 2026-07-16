@@ -5,17 +5,12 @@ namespace Explore.Application.DTOs.Onboarding;
 
 public class TenantPolicySettingsDto
 {
-    public bool AllowUserSubmittedEvents { get; set; } = true;
-    public bool AllowOrganizationSubmittedEvents { get; set; } = true;
-    public bool AllowGroupSubmittedEvents { get; set; } = true;
     public bool AllowOrganizationSelfRegistration { get; set; } = true;
     public bool AllowGroupSelfRegistration { get; set; } = true;
-    public bool EventCardClickOpensDetailPage { get; set; }
-    public bool RequireEventApproval { get; set; }
     public bool RequireOrganizationVerification { get; set; } = true;
     public bool CanTenantOmitVerification { get; set; }
     public bool IsTenantWhiteLabelingEnabled { get; set; }
-    public string PreferredHomePage { get; set; } = "EventList";
+    public string PreferredHomePage { get; set; } = "LandingPage";
     public string InstanceBaseDomain { get; set; } = string.Empty;
     public string Subdomain { get; set; } = string.Empty;
     public string CustomDomain { get; set; } = string.Empty;
@@ -35,7 +30,7 @@ public class TenantPolicySettingsDto
     public bool CanOverrideBrandLogoUrl { get; set; } = true;
     public bool CanOverrideBrandFaviconUrl { get; set; } = true;
     public bool CanOverrideBrandCustomCssUrl { get; set; } = true;
-    public bool CanOverrideEventCardClickBehavior { get; set; } = true;
+
 
     // Render policy tenant overrides
     public string RenderPolicyPreset { get; set; } = string.Empty;

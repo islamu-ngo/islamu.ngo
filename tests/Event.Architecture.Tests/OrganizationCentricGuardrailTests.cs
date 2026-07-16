@@ -8,7 +8,7 @@ using Explore.Domain.Interfaces;
 
 public class OrganizationCentricGuardrailTests
 {
-    private static readonly Assembly DomainAssembly = typeof(Explore.Domain.Event).Assembly;
+    private static readonly Assembly DomainAssembly = typeof(Explore.Domain.Actor).Assembly;
 
     private static readonly string[] ForbiddenScopeConceptNames =
     [
@@ -68,7 +68,7 @@ public class OrganizationCentricGuardrailTests
             "ScopeId"
         };
 
-        var eventPropertyNames = typeof(Explore.Domain.Event)
+        var eventPropertyNames = typeof(Explore.Domain.AiProposedAction)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(property => property.Name)
             .ToHashSet(StringComparer.Ordinal);

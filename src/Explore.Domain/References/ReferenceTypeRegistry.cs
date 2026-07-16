@@ -299,30 +299,6 @@ public static class ReferenceTypeRegistry
                 ReferenceTenantScopeRule.TenantOwned,
                 ReferenceCleanupBehavior.RetainHistoricalReference,
                 "Group references must use a Guid whose TenantId matches the surrounding tenant context."),
-            new ReferenceTargetDefinition(
-                nameof(Event),
-                nameof(Event),
-                ReferenceIdKind.Guid,
-                ReferenceOwnership.Tenant,
-                ReferenceTenantScopeRule.TenantOwned,
-                ReferenceCleanupBehavior.RetainHistoricalReference,
-                "Event references must use a Guid whose TenantId matches the surrounding tenant context."),
-            new ReferenceTargetDefinition(
-                nameof(EventRegistration),
-                nameof(EventRegistration),
-                ReferenceIdKind.Guid,
-                ReferenceOwnership.Tenant,
-                ReferenceTenantScopeRule.TenantOwned,
-                ReferenceCleanupBehavior.RetainHistoricalReference,
-                "EventRegistration references must use a Guid whose TenantId and EventId match the surrounding event context."),
-            new ReferenceTargetDefinition(
-                nameof(EventSession),
-                nameof(EventSession),
-                ReferenceIdKind.Guid,
-                ReferenceOwnership.Tenant,
-                ReferenceTenantScopeRule.TenantOwned,
-                ReferenceCleanupBehavior.RetainHistoricalReference,
-                "EventSession references must use a Guid whose TenantId and EventId match the surrounding event context."),
         };
 
         return definitions.ToFrozenDictionary(definition => definition.Kind, StringComparer.Ordinal);
@@ -412,11 +388,8 @@ public static class ReferenceTypeRegistry
     {
         var definitions = new[]
         {
-            Notification(NotificationEntityTypeEnum.Event, "EVENT", nameof(Event), "Notification Event links must store an Event Guid from the notification tenant."),
             Notification(NotificationEntityTypeEnum.Organization, "ORGANIZATION", ExternalBindingTypes.Internal.Organization, "Notification Organization links must store an Organization Guid from the notification tenant."),
             Notification(NotificationEntityTypeEnum.Group, "GROUP", ExternalBindingTypes.Internal.Group, "Notification Group links must store a Group Guid from the notification tenant."),
-            Notification(NotificationEntityTypeEnum.EventRegistration, "EVENT_REGISTRATION", nameof(EventRegistration), "Notification EventRegistration links must store an EventRegistration Guid from the notification tenant."),
-            Notification(NotificationEntityTypeEnum.EventSession, "EVENT_SESSION", nameof(EventSession), "Notification EventSession links must store an EventSession Guid from the notification tenant."),
             Notification(NotificationEntityTypeEnum.User, "USER", ExternalBindingTypes.Internal.User, "Notification User links must store a User Guid and remain scoped by the notification TenantId."),
         };
 
@@ -440,13 +413,6 @@ public static class ReferenceTypeRegistry
     {
         var definitions = new[]
         {
-            CustomProperty(
-                EntityTypeName.Event,
-                nameof(Event),
-                supportsSharedDefinitions: false,
-                "Event custom properties use EventCustomPropertyDefinition/EventCustomPropertyValue and event-template materialization, not shared CustomPropertyDefinition rows.",
-                ReferenceCleanupBehavior.CascadeWithOwner,
-                "Event-scoped custom-property values must use an Event Guid and validate through the event-specific runtime model."),
             CustomProperty(
                 EntityTypeName.Organization,
                 ExternalBindingTypes.Internal.Organization,

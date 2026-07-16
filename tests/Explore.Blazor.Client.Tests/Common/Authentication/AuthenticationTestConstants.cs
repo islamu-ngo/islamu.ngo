@@ -107,11 +107,6 @@ public static class AuthenticationTestConstants
     /// </summary>
     public const string UserRole = "User";
 
-    /// <summary>
-    /// Event Organizer role name.
-    /// </summary>
-    public const string EventOrganizerRole = "EventOrganizer";
-
     #endregion
 
     #region Policy Names
@@ -125,11 +120,6 @@ public static class AuthenticationTestConstants
     /// Policy for organization management.
     /// </summary>
     public const string ManageOrganizationPolicy = "CanManageOrganization";
-
-    /// <summary>
-    /// Policy for event creation.
-    /// </summary>
-    public const string CreateEventPolicy = "CanCreateEvent";
 
     /// <summary>
     /// Policy for content moderation.

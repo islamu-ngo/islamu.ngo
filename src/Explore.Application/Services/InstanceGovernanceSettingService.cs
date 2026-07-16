@@ -41,7 +41,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
 
         var deployment = PopulateGroup<DeploymentSettingGroup>(resolved);
         var modules = PopulateGroup<ModuleSettingGroup>(resolved);
-        var events = PopulateGroup<EventSettingGroup>(resolved);
         var orgs = PopulateGroup<OrganizationSettingGroup>(resolved);
         var groups = PopulateGroup<GroupSettingGroup>(resolved);
         var branding = PopulateGroup<BrandingSettingGroup>(resolved);
@@ -69,14 +68,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
             {
                 EnableIslamicModule = modules.IslamicEnabled,
                 EnableTechModule = modules.TechEnabled
-            },
-            EventPolicy = new EventPolicyDto
-            {
-                AllowUserSubmittedEvents = events.UserSubmissionEnabled,
-                AllowOrganizationSubmittedEvents = events.OrganizationSubmissionEnabled,
-                AllowGroupSubmittedEvents = events.GroupSubmissionEnabled,
-                EventCardClickOpensDetailPage = events.CardClickOpensDetailPage,
-                LockTenantEventCardClickBehavior = IsLocked(resolved, GovernanceSettingKeys.Events.CardClickOpensDetailPage)
             },
             OrganizationPolicy = new OrganizationPolicyDto
             {
@@ -173,7 +164,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
         await ApplyMcpGovernanceSettingsAsync(settings.Mcp, actorUserId);
         await ApplyRenderPolicySettingsInternalAsync(settings.RenderPolicy, actorUserId);
         await ApplyModuleSettingsAsync(defaultTenantId, settings.Modules, actorUserId);
-        await ApplyEventPolicyAsync(settings.EventPolicy, actorUserId);
         await ApplyOrganizationPolicyAsync(settings.OrganizationPolicy, actorUserId);
         await ApplyBrandingSettingsAsync(settings.Branding, actorUserId);
         await ApplyDomainSettingsAsync(settings.Domains, actorUserId);
@@ -192,26 +182,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
         if (defaultTenantId.HasValue)
             await _moduleCapabilityService.SyncTenantModuleCapabilitiesAsync(
                 defaultTenantId.Value, modules.EnableIslamicModule, modules.EnableTechModule, actorUserId);
-    }
-
-    public async Task ApplyEventPolicyAsync(EventPolicyDto ep, Guid? actorUserId)
-    {
-        await _upsertService.UpsertValueAsync(
-            GovernanceSettingKeys.Events.UserSubmissionEnabled,
-            SettingValueSerializer.Serialize(ep.AllowUserSubmittedEvents), actorUserId);
-
-        await _upsertService.UpsertValueAsync(
-            GovernanceSettingKeys.Events.OrganizationSubmissionEnabled,
-            SettingValueSerializer.Serialize(ep.AllowOrganizationSubmittedEvents), actorUserId);
-
-        await _upsertService.UpsertValueAsync(
-            GovernanceSettingKeys.Events.GroupSubmissionEnabled,
-            SettingValueSerializer.Serialize(ep.AllowGroupSubmittedEvents), actorUserId);
-
-        await _upsertService.UpsertValueAsync(
-            GovernanceSettingKeys.Events.CardClickOpensDetailPage,
-            SettingValueSerializer.Serialize(ep.EventCardClickOpensDetailPage),
-            isLocked: ep.LockTenantEventCardClickBehavior, actorUserId);
     }
 
     public async Task ApplyOrganizationPolicyAsync(OrganizationPolicyDto op, Guid? actorUserId)
@@ -408,7 +378,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
     {
         return DeploymentSettingGroup.SettingKeys
             .Concat(ModuleSettingGroup.SettingKeys)
-            .Concat(EventSettingGroup.SettingKeys)
             .Concat(OrganizationSettingGroup.SettingKeys)
             .Concat(GroupSettingGroup.SettingKeys)
             .Concat(BrandingSettingGroup.SettingKeys)
@@ -692,8 +661,8 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
 
     private static string NormalizeHomePage(string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return "EventList";
-        return raw.Equals("LandingPage", StringComparison.OrdinalIgnoreCase) ? "LandingPage" : "EventList";
+        if (string.IsNullOrWhiteSpace(raw)) return "LandingPage";
+        return raw.Equals("LandingPage", StringComparison.OrdinalIgnoreCase) ? "LandingPage" : "LandingPage";
     }
 
     private static void NormalizeRenderPolicySettings(RenderPolicySettingsDto rp)

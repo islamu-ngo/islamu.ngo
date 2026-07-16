@@ -26,7 +26,6 @@
                         <strong>Next steps:</strong><br/>
                         • Check your email for confirmation<br/>
                         • Wait for approval from the admin team<br/>
-                        • After approval, you can start creating events<br/>
                         • You will gain access to the organization dashboard
                     </MudText>
                 </MudAlert>
@@ -35,12 +34,6 @@
                     <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Home"
                                OnClick="@(() => NavigationManager.NavigateTo("/"))">
                         Return to Home
-                    </MudButton>
-
-                    <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Outlined"
-                               StartIcon="@Icons.Material.Filled.Event"
-                               OnClick="@(() => NavigationManager.NavigateTo("/events"))">
-                        Browse Events
                     </MudButton>
                 </MudStack>
             </MudStack>

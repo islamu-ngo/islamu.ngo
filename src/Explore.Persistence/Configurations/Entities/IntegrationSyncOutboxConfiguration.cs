@@ -1,5 +1,5 @@
 // ABOUTME: EF Core mapping for durable native integration sync outbox rows.
-// ABOUTME: Adds tenant-safe relationships, worker-poll indexes, and idempotency for registration-originated Listmonk sync.
+// ABOUTME: Adds tenant-safe relationships, worker-poll indexes, and idempotency for generic provider sync.
 
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -28,19 +28,9 @@ public class IntegrationSyncOutboxConfiguration : IEntityTypeConfiguration<Integ
             .HasForeignKey(e => e.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.RegistrationIntent)
-            .WithMany()
-            .HasForeignKey(e => e.RegistrationIntentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Event)
-            .WithMany()
-            .HasForeignKey(e => e.EventId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => new { e.Status, e.NextAttemptAt, e.CreatedAt })

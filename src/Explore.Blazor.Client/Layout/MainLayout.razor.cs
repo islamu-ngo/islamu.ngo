@@ -152,9 +152,6 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
                 var settings = await PublicExperienceService.GetCachedSettingsAsync();
                 if (settings is not null)
                 {
-                    _showCommunityGuidelinesLink = settings.AllowUserSubmittedEvents == true
-                        || settings.AllowOrganizationSubmittedEvents == true
-                        || settings.AllowGroupSubmittedEvents == true;
                     _brandDisplayName = settings.BrandDisplayName ?? string.Empty;
                     _brandLogoUrl = settings.BrandLogoUrl ?? string.Empty;
                     _languagePickerEnabled = settings.ClientPickerEnabled ?? true;

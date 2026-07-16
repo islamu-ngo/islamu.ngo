@@ -18,7 +18,7 @@ public sealed class AiAssistantMcpResources(IMediator mediator, IAiContextRedact
     [McpServerResource(
         Name = "ai_conversations",
         Title = "AI conversations",
-        UriTemplate = "islamu-event://ai/conversations",
+        UriTemplate = "islamu://ai/conversations",
         MimeType = "application/json")]
     [Authorize(Policy = McpAuthorizationPolicies.Read)]
     [Description("List recent authenticated AI assistant conversation summaries visible to the current principal.")]
@@ -36,7 +36,7 @@ public sealed class AiAssistantMcpResources(IMediator mediator, IAiContextRedact
     [McpServerResource(
         Name = "ai_conversation_detail",
         Title = "AI conversation detail",
-        UriTemplate = "islamu-event://ai/conversations/{conversationId}",
+        UriTemplate = "islamu://ai/conversations/{conversationId}",
         MimeType = "application/json")]
     [Authorize(Policy = McpAuthorizationPolicies.Read)]
     [Description("Read safe AI assistant conversation metadata without raw proposed-action payloads.")]

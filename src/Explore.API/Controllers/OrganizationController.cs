@@ -146,8 +146,7 @@ public class OrganizationController : ExploreControllerBase
     [EndpointClassification(EndpointClass.Public)]
     [HttpGet("{id:guid}", Name = RouteNames.GetOrganizationById)]
     [EndpointSummary("Get Organization Details")]
-    [EndpointDescription("Get full details of an organization including actor information and approval status. " +
-        "Response includes links to related resources (events, members).")]
+    [EndpointDescription("Get full details of an organization including actor information, approval status, and member links.")]
     [ProducesResponseType(typeof(HalResource<OrganizationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [OutputCache(PolicyName = "DetailData")]

@@ -112,7 +112,7 @@ public sealed class AiProviderResponseResolver
     private static string BuildEmptyResponseCorrectionMessage(AiChatPayload providerPayload)
     {
         var actionInstruction = providerPayload.Options.ToolProposalsEnabled && providerPayload.ActionSchema is not null
-            ? "If the poster contains enough event details, return one valid platform tool call using the provided schema. If required details are missing, answer in plain text with the missing details instead."
+            ? "If the request contains enough details, return one valid platform tool call using the provided schema. If required details are missing, answer in plain text with the missing details instead."
             : "Answer in plain text only because no platform tool schema is available for this request.";
 
         return $"""

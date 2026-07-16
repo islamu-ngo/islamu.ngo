@@ -1,5 +1,5 @@
 // ABOUTME: REST API controller for custom property definition CRUD operations.
-// ABOUTME: Allows organizations to define custom fields for events and registrations with type validation.
+// ABOUTME: Allows organizations to define typed custom fields for supported resource scopes.
 
 using Asp.Versioning;
 using Explore.API.Attributes;
@@ -100,8 +100,7 @@ public class CustomPropertyDefinitionController : ControllerBase
     [EndpointClassification(EndpointClass.Authenticated)]
     [HttpGet("{id:guid}", Name = RouteNames.GetCustomPropertyDefinitionById)]
     [EndpointSummary("Get CustomPropertyDefinition Details")]
-    [EndpointDescription("Get full details of a custom property definition including its options. " +
-        "Response includes links to related resources (events, members).")]
+    [EndpointDescription("Get full details of a custom property definition including its options.")]
     [ProducesResponseType(typeof(HalResource<CustomPropertyDefinitionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [OutputCache(PolicyName = "DetailData")]

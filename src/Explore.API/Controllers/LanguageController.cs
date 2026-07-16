@@ -1,5 +1,5 @@
 // ABOUTME: API controller for language lookup and discovery endpoints.
-// ABOUTME: Provides read-only access to supported languages for event sessions and localization.
+// ABOUTME: Provides read-only access to supported languages for localization.
 
 using Asp.Versioning;
 using Explore.API.Attributes;

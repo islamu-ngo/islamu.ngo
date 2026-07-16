@@ -1,10 +1,9 @@
-@* ABOUTME: Public group profile with banner, subscription affordance, and group-hosted events. *@
-@* ABOUTME: Reuses shared EventList cards and the event preview workspace for group event browsing. *@
+@* ABOUTME: Public group profile with banner, subscription affordance, and notification preferences. *@
+@* ABOUTME: Keeps group identity and HAL-gated subscription behavior independent of product content feeds. *@
 @using MudBlazor
 @using Explore.Blazor.Client.Services
 @using Explore.Blazor.Client.Clients
 @using Explore.Blazor.Client.Components.Notifications
-@using Explore.Blazor.Client.Components.Events
 @using Explore.Blazor.Client.Helpers
 @using Explore.Blazor.Client.Shared
 @using Blazouter.Services
@@ -74,34 +73,6 @@ else
             <MudDivider Class="my-6" />
 
             <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-6 bg-transparent" Class="mt-6 bg-transparent" Color="Color.Transparent" SliderColor="Color.Primary">
-                <MudTabPanel Text="Posts">
-                    <ProfileEventSections IsLoading="@_isLoadingEvents"
-                                          NavigationEvents="@PostEvents"
-                                          UpcomingEvents="@_upcomingEvents"
-                                          PastEventsByDate="@_pastEventsByDate"
-                                          CssPrefix="group-profile"
-                                          UpcomingTitle="Upcoming Events"
-                                          PastTitle="Past Events"
-                                          UpcomingAriaLabel="Upcoming group events"
-                                          PastAriaLabelPrefix="Past group events on"
-                                          EmptyTitle="No upcoming events"
-                                          EmptyCopy="Subscribe to get notified when new events are posted." />
-                </MudTabPanel>
-
-                <MudTabPanel Text="Registration">
-                    <ProfileEventSections IsLoading="@_isLoadingRegistrationEvents"
-                                          NavigationEvents="@RegistrationEvents"
-                                          UpcomingEvents="@_upcomingRegistrationEvents"
-                                          PastEventsByDate="@_pastRegistrationEventsByDate"
-                                          CssPrefix="group-profile"
-                                          UpcomingTitle="Upcoming Events"
-                                          PastTitle="Past Events"
-                                          UpcomingAriaLabel="Upcoming group registration events"
-                                          PastAriaLabelPrefix="Past group registration events on"
-                                          EmptyTitle="No registered events"
-                                          EmptyCopy="Events this group attends will appear here." />
-                </MudTabPanel>
-
                 <MudTabPanel Text="Notifications">
                     <NotificationPreferenceMatrix Scope="group"
                                                   GroupId="@Id"

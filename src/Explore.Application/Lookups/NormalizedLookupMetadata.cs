@@ -17,7 +17,7 @@ public static class NormalizedLookupMetadata
             (int)RoleScopeEnum.Tenant => new(id, "TENANT", "Tenant"),
             (int)RoleScopeEnum.Organization => new(id, "ORGANIZATION", "Organization"),
             (int)RoleScopeEnum.Group => new(id, "GROUP", "Group"),
-            (int)RoleScopeEnum.Event => new(id, "EVENT", "Event"),
+
             _ => Unknown(id)
         };
     }

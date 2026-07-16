@@ -1,5 +1,5 @@
 // ABOUTME: Unified REST controller for hierarchical settings management at user and tenant scopes.
-// ABOUTME: Exposes generic CRUD + lock/unlock endpoints consumed by any settings UI (EventList is first consumer).
+// ABOUTME: Exposes generic CRUD + lock/unlock endpoints consumed by settings interfaces.
 
 using Asp.Versioning;
 using Explore.API.Attributes;

@@ -28,16 +28,7 @@ public interface IAdminService
     Task<bool> RejectOrganizationAsync(Guid id);
     Task<bool> RevertToPendingAsync(Guid id);
 
-    // Lookup tables - Event related
-    Task<ICollection<EventTypeListDto>> GetEventTypesAsync();
-    Task<ICollection<AudienceGenderListDto>> GetAudienceGendersAsync();
-    Task<ICollection<AudienceAgeListDto>> GetAudienceAgesAsync();
-    Task<ICollection<EventFormatListDto>> GetEventFormatsAsync();
-    Task<ICollection<EventStatusListDto>> GetEventStatusesAsync();
     Task<ICollection<MadhabListDto>> GetMadhabsAsync();
-    Task<ICollection<VisibilityTypeListDto>> GetVisibilityTypesAsync();
-    Task<ICollection<RegistrationModeListDto>> GetRegistrationModesAsync();
-    Task<ICollection<EventSessionKindListDto>> GetEventSessionKindsAsync();
     Task<ICollection<LanguageListDto>> GetLanguagesAsync();
 
     // Lookup tables - Organization/Actor related
@@ -202,96 +193,6 @@ public class AdminService : IAdminService
         }
     }
 
-    public async Task<ICollection<EventTypeListDto>> GetEventTypesAsync()
-    {
-        try
-        {
-            return await _apiClient.GetEventTypesAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventTypesAsync] API error fetching event types. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<EventTypeListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventTypesAsync] Unexpected error fetching event types");
-            return new List<EventTypeListDto>();
-        }
-    }
-
-    public async Task<ICollection<AudienceGenderListDto>> GetAudienceGendersAsync()
-    {
-        try
-        {
-            return await _apiClient.GetAudienceGenderOptionsAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetAudienceGendersAsync] API error fetching audience genders. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<AudienceGenderListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetAudienceGendersAsync] Unexpected error fetching audience genders");
-            return new List<AudienceGenderListDto>();
-        }
-    }
-
-    public async Task<ICollection<AudienceAgeListDto>> GetAudienceAgesAsync()
-    {
-        try
-        {
-            return await _apiClient.GetAudienceAgeOptionsAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetAudienceAgesAsync] API error fetching audience ages. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<AudienceAgeListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetAudienceAgesAsync] Unexpected error fetching audience ages");
-            return new List<AudienceAgeListDto>();
-        }
-    }
-
-    public async Task<ICollection<EventFormatListDto>> GetEventFormatsAsync()
-    {
-        try
-        {
-            return await _apiClient.GetEventFormatOptionsAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventFormatsAsync] API error fetching event formats. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<EventFormatListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventFormatsAsync] Unexpected error fetching event formats");
-            return new List<EventFormatListDto>();
-        }
-    }
-
-    public async Task<ICollection<EventStatusListDto>> GetEventStatusesAsync()
-    {
-        try
-        {
-            return await _apiClient.GetEventStatusesAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventStatusesAsync] API error fetching event statuses. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<EventStatusListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventStatusesAsync] Unexpected error fetching event statuses");
-            return new List<EventStatusListDto>();
-        }
-    }
-
     public async Task<ICollection<MadhabListDto>> GetMadhabsAsync()
     {
         try
@@ -307,60 +208,6 @@ public class AdminService : IAdminService
         {
             _logger.LogError(ex, "[AdminService.GetMadhabsAsync] Unexpected error fetching madhabs");
             return new List<MadhabListDto>();
-        }
-    }
-
-    public async Task<ICollection<VisibilityTypeListDto>> GetVisibilityTypesAsync()
-    {
-        try
-        {
-            return await _apiClient.GetVisibilityTypesAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetVisibilityTypesAsync] API error fetching visibility types. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<VisibilityTypeListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetVisibilityTypesAsync] Unexpected error fetching visibility types");
-            return new List<VisibilityTypeListDto>();
-        }
-    }
-
-    public async Task<ICollection<RegistrationModeListDto>> GetRegistrationModesAsync()
-    {
-        try
-        {
-            return await _apiClient.GetRegistrationModesAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetRegistrationModesAsync] API error fetching registration modes. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<RegistrationModeListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetRegistrationModesAsync] Unexpected error fetching registration modes");
-            return new List<RegistrationModeListDto>();
-        }
-    }
-
-    public async Task<ICollection<EventSessionKindListDto>> GetEventSessionKindsAsync()
-    {
-        try
-        {
-            return await _apiClient.GetEventSessionKindsAsync();
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventSessionKindsAsync] API error fetching event session kinds. StatusCode: {StatusCode}", ex.StatusCode);
-            return new List<EventSessionKindListDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AdminService.GetEventSessionKindsAsync] Unexpected error fetching event session kinds");
-            return new List<EventSessionKindListDto>();
         }
     }
 

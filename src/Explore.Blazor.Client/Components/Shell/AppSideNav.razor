@@ -36,38 +36,6 @@
             </div>
         }
 
-        <div class="app-side-nav__header">
-            <MudText Typo="Typo.h6" Class="app-side-nav__title">
-                @ResolvedEventCatalogLabel
-            </MudText>
-        </div>
-        @if (IsOrganizationCentric)
-        {
-            <MudNavLink Href="@ResolvedEventCatalogUrl"
-                        Icon="@Icons.Material.Filled.Event"
-                        Match="NavLinkMatch.Prefix">
-                @ResolvedEventCatalogLabel
-            </MudNavLink>
-        }
-        else
-        {
-            <MudNavLink Href="/events"
-                        Icon="@Icons.Material.Filled.ManageSearch"
-                        Match="NavLinkMatch.All">
-                Advanced Search
-            </MudNavLink>
-            <MudNavLink Href="/events?sort=recent"
-                        Icon="@Icons.Material.Filled.NewReleases">
-                Recently Added
-            </MudNavLink>
-            <MudNavLink Href="/events?sort=random"
-                        Icon="@Icons.Material.Filled.Shuffle">
-                Random
-            </MudNavLink>
-        }
-
-        <MudDivider Class="my-2" />
-
         @if (!string.IsNullOrWhiteSpace(ResolvedBrandDisplayName))
         {
             <MudText Typo="Typo.h6" Class="app-side-nav__brand-label">

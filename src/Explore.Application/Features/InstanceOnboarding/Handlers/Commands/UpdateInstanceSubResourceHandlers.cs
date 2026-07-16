@@ -46,40 +46,6 @@ public class UpdateModuleSettingsCommandHandler : IRequestHandler<UpdateModuleSe
     }
 }
 
-public class UpdateEventPolicyCommandHandler : IRequestHandler<UpdateEventPolicyCommand, BaseCommandResponse<Guid>>
-{
-    private readonly IAdminContext _adminContext;
-    private readonly IInstanceGovernanceSettingService _service;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public UpdateEventPolicyCommandHandler(IAdminContext adminContext, IInstanceGovernanceSettingService service, IUnitOfWork unitOfWork)
-    {
-        _adminContext = adminContext;
-        _service = service;
-        _unitOfWork = unitOfWork;
-    }
-
-    public async Task<BaseCommandResponse<Guid>> Handle(UpdateEventPolicyCommand request, CancellationToken cancellationToken)
-    {
-        var response = new BaseCommandResponse<Guid>();
-        if (!await _adminContext.IsInstanceAdminAsync(request.UserId, cancellationToken))
-            return Unauthorized(response);
-
-        await _unitOfWork.ExecuteInTransactionAsync(ct =>
-            _service.ApplyEventPolicyAsync(request.Settings, request.UserId), cancellationToken);
-        response.Success = true;
-        response.Message = "Event policy updated successfully.";
-        return response;
-    }
-
-    private static BaseCommandResponse<Guid> Unauthorized(BaseCommandResponse<Guid> r)
-    {
-        r.Success = false;
-        r.Message = "Only instance administrators can update instance governance settings.";
-        return r;
-    }
-}
-
 public class UpdateOrganizationPolicyCommandHandler : IRequestHandler<UpdateOrganizationPolicyCommand, BaseCommandResponse<Guid>>
 {
     private readonly IAdminContext _adminContext;

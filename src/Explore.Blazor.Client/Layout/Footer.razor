@@ -81,7 +81,7 @@
     private string _copyrightText = string.Empty;
     private bool _showCookieSettingsLink = true;
     private List<FooterLinkGroupDto> _linkGroups = [];
-    private bool _showCommunityGuidelinesLink;
+    private bool _showCommunityGuidelinesLink = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,11 +102,6 @@
         _socialLinks = footerSettings?.SocialLinks?.ToList() ?? [];
         _showCookieSettingsLink = footerSettings?.ShowCookieSettingsLink ?? _showCookieSettingsLink;
         _linkGroups = footer?.LinkGroups?.ToList() ?? [];
-
-        // Same rule as sidebar (MainLayout): show community guidelines when non-admin users can publish events
-        _showCommunityGuidelinesLink = settings.AllowUserSubmittedEvents == true
-            || settings.AllowOrganizationSubmittedEvents == true
-            || settings.AllowGroupSubmittedEvents == true;
 
         _copyrightText = string.IsNullOrWhiteSpace(footerSettings?.CopyrightText)
             ? $"© {DateTime.Now.Year} {_brandDisplayName}. All rights reserved."

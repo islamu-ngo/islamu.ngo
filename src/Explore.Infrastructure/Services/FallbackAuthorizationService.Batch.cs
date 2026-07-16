@@ -3,7 +3,6 @@
 
 using Explore.Application.Authorization;
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.Contracts.Services;
 using Explore.Domain;
 
 namespace Explore.Infrastructure.Services;
@@ -35,7 +34,6 @@ public partial class FallbackAuthorizationService
         }
 
         var profile = await ResolveAuthorityProfileAsync(cancellationToken);
-        var eventAuthority = await ResolveBatchEventAuthorityAsync(profile, checks, cancellationToken);
 
         var results = new bool[checks.Count];
         for (var i = 0; i < checks.Count; i++)
@@ -44,7 +42,7 @@ public partial class FallbackAuthorizationService
             var attributes = check.ResourceAttributes is null
                 ? null
                 : new Dictionary<string, object>(check.ResourceAttributes);
-            results[i] = EvaluateWithProfile(profile, eventAuthority, check.ResourceKind, check.ResourceId, check.Action, attributes);
+            results[i] = EvaluateWithProfile(profile, check.ResourceKind, check.ResourceId, check.Action, attributes);
         }
 
         return results;
@@ -70,13 +68,12 @@ public partial class FallbackAuthorizationService
 
     private bool EvaluateWithProfile(
         AuthorityProfile profile,
-        EventAuthoritySnapshot? eventAuthority,
         string resourceKind,
         string resourceId,
         string action,
         IDictionary<string, object>? resourceAttributes)
     {
-        if (profile.IsInstanceAdmin && !RequiresDirectEventAuthority(resourceKind, action))
+        if (profile.IsInstanceAdmin)
         {
             LogDecision("allow", "is_instance_admin", resourceKind, resourceId, action);
             return true;
@@ -114,22 +111,6 @@ public partial class FallbackAuthorizationService
             "islamuevent_organization_review" => action is "create" or "view" || IsAdminForOrgScope(profile, resourceAttributes, resourceId),
             "islamuevent_group" => action is "view" || IsAdminForOrgScope(profile, resourceAttributes, resourceId),
             "islamuevent_group_member" => action is "view" or "create" || IsAdminForOrgScope(profile, resourceAttributes, resourceId),
-            "islamuevent_event" when action is "create" => IsEventCreateAllowedForProfile(profile, resourceAttributes),
-            "islamuevent_event" or "islamuevent_event_session" or "islamuevent_event_session_group" or "islamuevent_event_session_agenda_item" or "islamuevent_event_day" or "islamuevent_event_agenda_item"
-                => HasEventContextForProfile(profile, resourceKind, resourceId, resourceAttributes)
-                    && (resourceKind == ResourceKinds.Event && IsEventModerationAction(action)
-                        ? IsTenantAdminForResourceTenant(profile, resourceKind, resourceId, resourceAttributes)
-                        : (IsTenantAdminForResourceTenant(profile, resourceKind, resourceId, resourceAttributes)
-                            && (resourceKind != ResourceKinds.Event || IsTenantAdminEventAction(action)))
-                            || IsOrgAdminFromProfile(profile, resourceAttributes, resourceId)
-                            || IsActorUserOwnerFromProfile(profile, resourceAttributes)
-                            || HasEventRolePermission(eventAuthority, resourceKind, resourceId, action, resourceAttributes)),
-            "islamuevent_event_registration" => HasEventContextForProfile(profile, resourceKind, resourceId, resourceAttributes)
-                && (action is "create" or "view"
-                    || IsAdminForOrgScope(profile, resourceAttributes, resourceId)
-                    || HasEventRolePermission(eventAuthority, resourceKind, resourceId, action, resourceAttributes)),
-            "islamuevent_event_contact_share_consent" => action is "viewsharedcontacts" or "exportsharedcontacts"
-                && IsAdminForOrgScope(profile, resourceAttributes, resourceId),
             "islamuevent_storage_object" => EvaluateStorageObjectWithProfile(profile, resourceId, action, resourceAttributes),
             "islamuevent_user" => EvaluateUserWithProfile(profile, resourceId, action),
             "islamuevent_notification" => true,
@@ -245,14 +226,6 @@ public partial class FallbackAuthorizationService
             && string.Equals(createdBy, currentUserId, StringComparison.OrdinalIgnoreCase);
     }
 
-    private bool IsEventCreateAllowedForProfile(
-        AuthorityProfile profile,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        var tenantId = ResolveTenantId(resourceAttributes);
-        return tenantId == profile.TenantId && profile.UserId.HasValue;
-    }
-
     private bool IsOrganizationCreateAllowedForProfile(
         AuthorityProfile profile,
         IDictionary<string, object>? resourceAttributes)
@@ -278,15 +251,6 @@ public partial class FallbackAuthorizationService
         return orgId.HasValue && profile.AdminOrgIds.Contains(orgId.Value);
     }
 
-    private static bool IsActorUserOwnerFromProfile(
-        AuthorityProfile profile,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        return profile.UserId.HasValue
-            && TryResolveGuidAttribute(resourceAttributes, "userId", out var ownerUserId)
-            && ownerUserId == profile.UserId.Value;
-    }
-
     private static bool IsAdminForOrgScope(
         AuthorityProfile profile,
         IDictionary<string, object>? resourceAttributes,
@@ -298,72 +262,4 @@ public partial class FallbackAuthorizationService
         return IsOrgAdminFromProfile(profile, resourceAttributes, resourceId);
     }
 
-    private static bool HasEventContextForProfile(
-        AuthorityProfile profile,
-        string resourceKind,
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        return TryResolveEventContext(resourceKind, resourceId, resourceAttributes, out var tenantId, out _)
-            && tenantId == profile.TenantId;
-    }
-
-    private static bool IsTenantAdminForResourceTenant(
-        AuthorityProfile profile,
-        string resourceKind,
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        return profile.IsTenantAdmin
-            && TryResolveEventContext(resourceKind, resourceId, resourceAttributes, out var tenantId, out _)
-            && tenantId == profile.TenantId;
-    }
-
-    private async Task<EventAuthoritySnapshot?> ResolveBatchEventAuthorityAsync(
-        AuthorityProfile profile,
-        IReadOnlyList<AuthorizationCheck> checks,
-        CancellationToken cancellationToken)
-    {
-        if (!profile.UserId.HasValue)
-            return null;
-
-        var eventIds = checks
-            .Where(check => IsEventScopedResourceKind(check.ResourceKind))
-            .Select(check => TryResolveEventContext(
-                check.ResourceKind,
-                check.ResourceId,
-                check.ResourceAttributes is null ? null : new Dictionary<string, object>(check.ResourceAttributes),
-                out var tenantId,
-                out var eventId)
-                && tenantId == profile.TenantId
-                    ? eventId
-                    : Guid.Empty)
-            .Where(eventId => eventId != Guid.Empty)
-            .Distinct()
-            .ToArray();
-
-        if (eventIds.Length == 0)
-            return null;
-
-        return await _eventAuthoritySnapshotService.GetForUserAndEventsAsync(
-            profile.TenantId,
-            profile.UserId.Value,
-            eventIds,
-            cancellationToken);
-    }
-
-    private static bool HasEventRolePermission(
-        EventAuthoritySnapshot? eventAuthority,
-        string resourceKind,
-        string resourceId,
-        string action,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        if (eventAuthority is null)
-            return false;
-
-        return TryResolveEventContext(resourceKind, resourceId, resourceAttributes, out _, out var eventId)
-            && eventAuthority.Events.TryGetValue(eventId, out var authority)
-            && authority.PermissionCodes.Contains(PermissionCodeFor(resourceKind, action));
-    }
 }

@@ -20,7 +20,6 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
 {
     private readonly IAdminContext _adminContext;
     private readonly IMachinePrincipalAccessor _machinePrincipalAccessor;
-    private readonly IEventAuthoritySnapshotService _eventAuthoritySnapshotService;
     private readonly IHierarchicalSettingsResolver _resolver;
     private readonly ITenantContext _tenantContext;
     private readonly ILogger<FallbackAuthorizationService> _logger;
@@ -57,14 +56,12 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
     public FallbackAuthorizationService(
         IAdminContext adminContext,
         IMachinePrincipalAccessor machinePrincipalAccessor,
-        IEventAuthoritySnapshotService eventAuthoritySnapshotService,
         IHierarchicalSettingsResolver resolver,
         ITenantContext tenantContext,
         ILogger<FallbackAuthorizationService> logger)
     {
         _adminContext = adminContext;
         _machinePrincipalAccessor = machinePrincipalAccessor;
-        _eventAuthoritySnapshotService = eventAuthoritySnapshotService;
         _resolver = resolver;
         _tenantContext = tenantContext;
         _logger = logger;
@@ -78,7 +75,7 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
         CancellationToken cancellationToken = default)
     {
         var isInstanceAdmin = await _adminContext.IsInstanceAdminAsync(cancellationToken);
-        if (isInstanceAdmin && !RequiresDirectEventAuthority(resourceKind, action))
+        if (isInstanceAdmin)
         {
             LogDecision("allow", "is_instance_admin", resourceKind, resourceId, action);
             return true;
@@ -132,20 +129,6 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
             // Group resources: org-scoped (tenant admin or org admin), view open
             "islamuevent_group" => await EvaluateViewableOrgResourceAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_group_member" => await EvaluateGroupMemberAccessAsync(resourceId, action, resourceAttributes, cancellationToken),
-
-            // Event resources require explicit tenant/event context before inherited authority checks.
-            "islamuevent_event" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_event_session" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_event_session_group" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_event_session_agenda_item" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_event_day" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_event_agenda_item" => await EvaluateEventScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-
-            // Event registration: all authenticated can create/view only when the parent event context is present.
-            "islamuevent_event_registration" => await EvaluateEventRegistrationAccessAsync(resourceId, action, resourceAttributes, cancellationToken),
-
-            // Contact share consent: tenant/org admin can view and export shared contacts
-            "islamuevent_event_contact_share_consent" => await EvaluateContactShareConsentAccessAsync(resourceId, action, resourceAttributes, cancellationToken),
 
             // Storage: all authenticated can create, tenant admin for full management
             "islamuevent_storage_object" => await EvaluateStorageObjectAccessAsync(resourceId, action, resourceAttributes, cancellationToken),
@@ -271,75 +254,6 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
         }
 
         return Guid.TryParse(resourceId, out var fromId) ? fromId : null;
-    }
-
-    private static bool HasRequiredEventContext(
-        string resourceKind,
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes) =>
-        TryResolveEventContext(resourceKind, resourceId, resourceAttributes, out _, out _);
-
-    private static bool IsEventScopedResourceKind(string resourceKind) =>
-        resourceKind is "islamuevent_event"
-            or "islamuevent_event_session"
-            or "islamuevent_event_session_group"
-            or "islamuevent_event_session_agenda_item"
-            or "islamuevent_event_day"
-            or "islamuevent_event_agenda_item"
-            or "islamuevent_event_registration";
-
-    private static bool RequiresDirectEventAuthority(string resourceKind, string action) =>
-        resourceKind == ResourceKinds.Event &&
-        action is AuthorizationActions.Update
-            or AuthorizationActions.Delete
-            or AuthorizationActions.Events.ManageTeam
-            or AuthorizationActions.Events.ManageOwner
-            or AuthorizationActions.Events.TransferOwnership
-            or AuthorizationActions.Events.ManageFinance;
-
-    private static bool IsTenantAdminEventAction(string action) =>
-        action is AuthorizationActions.View
-            or AuthorizationActions.Events.ViewManagement
-            or AuthorizationActions.Events.ModerateLight
-            or AuthorizationActions.Events.ModerateHeavy
-            or AuthorizationActions.Events.Unmoderate;
-
-    private static bool IsEventModerationAction(string action) =>
-        action is AuthorizationActions.Events.ModerateLight
-            or AuthorizationActions.Events.ModerateHeavy
-            or AuthorizationActions.Events.Unmoderate;
-
-    private static string PermissionCodeFor(string resourceKind, string action)
-    {
-        const string productNamespacePrefix = "islamuevent_";
-
-        var permissionResourceKind = resourceKind.StartsWith(productNamespacePrefix, StringComparison.Ordinal)
-            ? resourceKind[productNamespacePrefix.Length..]
-            : resourceKind;
-        var permissionAction = resourceKind == ResourceKinds.Event && action == AuthorizationActions.Events.ViewManagement
-            ? AuthorizationActions.View
-            : action;
-
-        return string.Concat(permissionResourceKind, ":", permissionAction);
-    }
-
-    private static bool TryResolveEventContext(
-        string resourceKind,
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes,
-        out Guid tenantId,
-        out Guid eventId)
-    {
-        tenantId = Guid.Empty;
-        eventId = Guid.Empty;
-
-        if (!TryResolveGuidAttribute(resourceAttributes, "tenantId", out tenantId))
-            return false;
-
-        if (TryResolveGuidAttribute(resourceAttributes, "eventId", out eventId))
-            return true;
-
-        return resourceKind == "islamuevent_event" && Guid.TryParse(resourceId, out eventId);
     }
 
     private static bool TryResolveGuidAttribute(

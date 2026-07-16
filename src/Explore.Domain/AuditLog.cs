@@ -11,7 +11,7 @@ public class AuditLog : ITenantEntity
     public Guid Id { get; set; }
 
     /// <summary>
-    /// The CLR type name of the entity that was changed (e.g., "Event", "Organization").
+    /// The CLR type name of the entity that was changed (for example, "Organization").
     /// </summary>
     public required string EntityType { get; set; }
 

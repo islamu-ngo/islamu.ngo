@@ -13,12 +13,6 @@ public class UpdateModuleSettingsCommand : IRequest<BaseCommandResponse<Guid>>
     public required ModuleSettingsDto Settings { get; set; }
 }
 
-public class UpdateEventPolicyCommand : IRequest<BaseCommandResponse<Guid>>
-{
-    public Guid UserId { get; set; }
-    public required EventPolicyDto Settings { get; set; }
-}
-
 public class UpdateOrganizationPolicyCommand : IRequest<BaseCommandResponse<Guid>>
 {
     public Guid UserId { get; set; }

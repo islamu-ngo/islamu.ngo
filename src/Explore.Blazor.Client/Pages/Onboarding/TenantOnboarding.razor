@@ -77,8 +77,8 @@
                        OnClick="RefreshAsync">
                 @T("ui.onboarding.tenant.try_again", "Try again")
             </MudButton>
-            <MudButton Elevation="0" Variant="Variant.Text" Color="Color.Primary" Href="/events">
-                @T("ui.onboarding.tenant.go_to_events", "Go to events")
+            <MudButton Elevation="0" Variant="Variant.Text" Color="Color.Primary" Href="/">
+                @T("ui.onboarding.tenant.go_home", "Go home")
             </MudButton>
         </div>
     }
@@ -108,7 +108,7 @@
                             @T("ui.onboarding.tenant.completion.title", "Tenant onboarding is complete")
                         </MudText>
                         <MudText Typo="Typo.body2">
-                            @T("ui.onboarding.tenant.completion.description", "The server confirmed this tenant is ready. Continue to administration or browse events.")
+                            @T("ui.onboarding.tenant.completion.description", "The server confirmed this tenant is ready. Continue to administration or return home.")
                         </MudText>
                     </MudAlert>
                 </div>
@@ -126,9 +126,9 @@
                     <MudButton Elevation="0"
                                Variant="Variant.Outlined"
                                Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Event"
-                               Href="/events">
-                        @T("ui.onboarding.tenant.go_to_events", "Go to events")
+                               StartIcon="@Icons.Material.Filled.Home"
+                               Href="/">
+                        @T("ui.onboarding.tenant.go_home", "Go home")
                     </MudButton>
                 </div>
             </section>
@@ -152,12 +152,6 @@
 
                 <fieldset class="tenant-onboarding__fieldset">
                     <legend>@T("ui.onboarding.tenant.policies.title", "Content governance")</legend>
-                    <MudSwitch T="bool?" @bind-Value="_model.AllowUserSubmittedEvents" Color="Color.Primary">
-                        @T("ui.onboarding.tenant.policies.allow_user_submissions", "Allow users to submit events")
-                    </MudSwitch>
-                    <MudSwitch T="bool?" @bind-Value="_model.RequireEventApproval" Color="Color.Primary">
-                        @T("ui.onboarding.tenant.policies.require_approval", "Require approval before user-submitted events are published")
-                    </MudSwitch>
                     <MudSwitch T="bool?"
                                @bind-Value="_model.RequireOrganizationVerification"
                                Disabled="@(_model.CanTenantOmitVerification != true)"
@@ -170,30 +164,6 @@
 
                 <fieldset class="tenant-onboarding__fieldset">
                     <legend>@T("ui.onboarding.tenant.experience.title", "Tenant experience")</legend>
-                    <MudSelect T="string"
-                               Label="@WithLockState(T("ui.onboarding.tenant.experience.home_page", "Preferred home page (Required)"), _model.CanOverrideHomePagePreference != true)"
-                               @bind-Value="_model.PreferredHomePage"
-                               Disabled="@(_model.CanOverrideHomePagePreference != true)"
-                               Variant="Variant.Outlined"
-                               Required="true"
-                               RequiredError="@T("ui.onboarding.tenant.experience.home_page_required", "Preferred home page is required.")">
-                        <MudSelectItem Value="@("EventList")">
-                            @T("ui.onboarding.tenant.experience.home_page.event_list", "Event list")
-                        </MudSelectItem>
-                        <MudSelectItem Value="@("LandingPage")">
-                            @T("ui.onboarding.tenant.experience.home_page.landing_page", "Landing page")
-                        </MudSelectItem>
-                    </MudSelect>
-
-                    <MudSwitch T="bool?"
-                               @bind-Value="_model.EventCardClickOpensDetailPage"
-                               Color="Color.Primary"
-                               Disabled="@(_model.CanOverrideEventCardClickBehavior != true)">
-                        @WithLockState(
-                            T("ui.onboarding.tenant.experience.event_card_detail", "Event card click opens the detail page"),
-                            _model.CanOverrideEventCardClickBehavior != true)
-                    </MudSwitch>
-
                     <MudTextField T="string"
                                   Label="@WithLockState(T("ui.onboarding.tenant.experience.subdomain", "Subdomain (Optional)"), _model.CanOverrideSubdomain != true)"
                                   Variant="Variant.Outlined"
@@ -205,7 +175,7 @@
                     <MudTextField T="string"
                                   Label="@WithLockState(T("ui.onboarding.tenant.experience.custom_domain", "Custom domain (Optional)"), _model.CanOverrideCustomDomain != true)"
                                   Variant="Variant.Outlined"
-                                  Placeholder="events.example.org"
+                                  Placeholder="community.example.org"
                                   @bind-Value="_model.CustomDomain"
                                   Disabled="@(_model.CanOverrideCustomDomain != true)" />
                 </fieldset>
@@ -269,8 +239,6 @@
 
     private bool HasLockedSettings =>
         _model.CanTenantOmitVerification != true
-        || _model.CanOverrideHomePagePreference != true
-        || _model.CanOverrideEventCardClickBehavior != true
         || _model.CanOverrideSubdomain != true
         || _model.CanOverrideCustomDomain != true;
 
@@ -286,7 +254,7 @@
             T("ui.onboarding.tenant.tasks.context.authority", "Server-confirmed tenant context")),
         new(
             T("ui.onboarding.tenant.tasks.policies.title", "Set tenant policies and experience"),
-            T("ui.onboarding.tenant.tasks.policies.description", "Confirm submission, moderation, verification, home page, and domain preferences."),
+            T("ui.onboarding.tenant.tasks.policies.description", "Confirm verification and domain preferences."),
             true,
             T("ui.onboarding.tenant.tasks.required", "Required"),
             _status?.IsCompleted == true

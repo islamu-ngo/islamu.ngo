@@ -32,15 +32,6 @@ public class NotificationIntent : ITenantEntity, IAuditableEntity, ISoftDeletabl
     public Guid? UserId { get; set; }
     public User? User { get; set; }
 
-    public Guid? EventId { get; set; }
-    public Event? Event { get; set; }
-
-    public Guid? ReportId { get; set; }
-    public EventReport? Report { get; set; }
-
-    public Guid? ReportDecisionId { get; set; }
-    public EventReportDecision? ReportDecision { get; set; }
-
     public ICollection<NotificationDelivery> Deliveries { get; set; } = [];
     public ICollection<NotificationExternalDelegation> ExternalDelegations { get; set; } = [];
 

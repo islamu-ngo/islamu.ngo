@@ -10,15 +10,6 @@ using Explore.Application.DTOs.AtprotoRecord;
 using Explore.Application.DTOs.Category;
 using Explore.Application.DTOs.CustomPropertyDefinition;
 using Explore.Application.DTOs.EmailDispatch;
-using Explore.Application.DTOs.Event;
-using Explore.Application.DTOs.EventAgendaItem;
-using Explore.Application.DTOs.EventDay;
-using Explore.Application.DTOs.EventRegistration;
-using Explore.Application.DTOs.EventSession;
-using Explore.Application.DTOs.EventSessionAgendaItem;
-using Explore.Application.DTOs.EventSessionGroup;
-using Explore.Application.DTOs.EventSessionSpeaker;
-using Explore.Application.DTOs.EventTemplate;
 using Explore.Application.DTOs.Group;
 using Explore.Application.DTOs.GroupMember;
 using Explore.Application.DTOs.IndexedDid;
@@ -57,16 +48,6 @@ public static class ResourceDescriptorRegistry
 
         // Tenant Settings
         [typeof(TenantBrandingSettingsDocumentDto)] = global::Explore.Application.Authorization.ResourceKinds.TenantSetting,
-
-        // Event
-        [typeof(EventDto)] = global::Explore.Application.Authorization.ResourceKinds.Event,
-        [typeof(EventListDto)] = global::Explore.Application.Authorization.ResourceKinds.Event,
-
-        [typeof(EventAgendaItemDto)] = global::Explore.Application.Authorization.ResourceKinds.EventAgendaItem,
-        [typeof(EventAgendaItemListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventAgendaItem,
-
-        [typeof(EventDayDto)] = global::Explore.Application.Authorization.ResourceKinds.EventDay,
-        [typeof(EventDayListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventDay,
 
         // Tenant
         [typeof(TenantDto)] = global::Explore.Application.Authorization.ResourceKinds.Tenant,
@@ -108,28 +89,6 @@ public static class ResourceDescriptorRegistry
         // Indexed DID
         [typeof(IndexedDidDto)] = global::Explore.Application.Authorization.ResourceKinds.IndexedDid,
         [typeof(IndexedDidListDto)] = global::Explore.Application.Authorization.ResourceKinds.IndexedDid,
-
-        // Event Session
-        [typeof(EventSessionDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSession,
-        [typeof(EventSessionListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSession,
-
-        // Event Session Group
-        [typeof(EventSessionGroupDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSessionGroup,
-        [typeof(EventSessionGroupListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSessionGroup,
-
-        [typeof(EventTemplateDto)] = global::Explore.Application.Authorization.ResourceKinds.Tenant,
-        [typeof(EventTemplateListDto)] = global::Explore.Application.Authorization.ResourceKinds.Tenant,
-
-        // Event Session Agenda Item
-        [typeof(EventSessionAgendaItemDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSessionAgendaItem,
-        [typeof(EventSessionAgendaItemListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSessionAgendaItem,
-
-        [typeof(EventSessionSpeakerDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSession,
-        [typeof(EventSessionSpeakerListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventSession,
-
-        // Event Registration
-        [typeof(EventRegistrationDto)] = global::Explore.Application.Authorization.ResourceKinds.EventRegistration,
-        [typeof(EventRegistrationListDto)] = global::Explore.Application.Authorization.ResourceKinds.EventRegistration,
 
         // Category
         [typeof(CategoryDto)] = global::Explore.Application.Authorization.ResourceKinds.Category,

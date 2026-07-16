@@ -365,7 +365,7 @@
                 {
                     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="ai-rail__empty-hint">
                         @(ConversationState.CanCreateConversation
-                            ? "Start a conversation to ask for event planning help."
+                            ? "Start a conversation to ask for community support."
                             : "Conversation creation is not available for your account.")
                     </MudText>
                 }
@@ -1044,7 +1044,9 @@
             return;
         }
 
-        SetReferenceResults(MergeReferenceResults(actorReferences, references));
+        SetReferenceResults(MergeReferenceResults(
+            actorReferences,
+            references?.Where(reference => !IsRemovedEventReference(reference))));
         _isReferenceSearchRunning = false;
     }
 
@@ -1556,25 +1558,25 @@
 
     private static string GetReferenceIcon(HalResourceOfAiReferenceSearchResultDto reference) => GetReferenceDisplayKind(reference) switch
     {
-        "Event" => Icons.Material.Filled.Event,
         "Organization" => Icons.Material.Filled.Business,
         "Actor" => Icons.Material.Filled.Person,
         "User" => Icons.Material.Filled.Person,
         "Group" => Icons.Material.Filled.Groups,
-        "EventSession" => Icons.Material.Filled.Schedule,
         _ => Icons.Material.Filled.Tag
     };
 
     private static string GetReferenceKindLabel(HalResourceOfAiReferenceSearchResultDto reference) => GetReferenceDisplayKind(reference) switch
     {
-        "Event" => "Event",
         "Organization" => "Org",
         "Actor" => "User",
         "User" => "User",
         "Group" => "Group",
-        "EventSession" => "Session",
         _ => "Ref"
     };
+
+    private static bool IsRemovedEventReference(HalResourceOfAiReferenceSearchResultDto reference) =>
+        string.Equals(reference.Kind, "Event", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(reference.Kind, "EventSession", StringComparison.OrdinalIgnoreCase);
 
     private static string GetReferenceDisplayKind(HalResourceOfAiReferenceSearchResultDto reference)
     {

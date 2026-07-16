@@ -76,7 +76,7 @@ public class ModuleController : ControllerBase
     [HttpGet("enabled", Name = RouteNames.GetEnabledModules)]
     [EndpointSummary("Get Enabled Modules")]
     [EndpointDescription("Returns modules enabled for the current tenant. " +
-        "These modules determine which aspects/features are available for events. " +
+        "These modules determine which optional capabilities are available. " +
         "Used by the frontend to drive dynamic form generation.")]
     [ProducesResponseType(typeof(IReadOnlyList<ModuleInfo>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ModuleInfo>>> GetEnabledModules(CancellationToken cancellationToken)

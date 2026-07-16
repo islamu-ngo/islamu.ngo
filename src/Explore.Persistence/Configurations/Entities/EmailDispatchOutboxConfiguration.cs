@@ -33,19 +33,9 @@ public class EmailDispatchOutboxConfiguration : IEntityTypeConfiguration<EmailDi
             .HasForeignKey(e => e.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.RegistrationIntent)
-            .WithMany()
-            .HasForeignKey(e => e.RegistrationIntentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Event)
-            .WithMany()
-            .HasForeignKey(e => e.EventId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => new { e.Status, e.NextAttemptAt, e.CreatedAt })

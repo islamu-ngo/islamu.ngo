@@ -1,5 +1,5 @@
 // ABOUTME: Adapts Microsoft.Extensions.AI IChatClient implementations to the platform AI provider contract.
-// ABOUTME: Keeps SDK abstractions inside Infrastructure while preserving safe ATCR proposal and error semantics.
+// ABOUTME: Keeps SDK abstractions inside Infrastructure while preserving safe text-chat and error semantics.
 
 using System.Diagnostics;
 using System.Net.Http;
@@ -15,9 +15,6 @@ namespace Explore.Infrastructure.Ai;
 public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiModelCatalog
 {
     public const string ProviderName = "microsoft-extensions-ai";
-
-    private const string CreateEventDraftToolName = "create_event_draft";
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IChatClient _chatClient;
     private readonly IOptions<AiProviderSettings> _options;
@@ -50,7 +47,7 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
                 settings.ModelId.Trim(),
                 settings.MaxInputTokens,
                 settings.MaxOutputTokens,
-                SupportsToolProposals: true,
+                SupportsToolProposals: false,
                 SupportsStreaming: false)
         ];
 
@@ -306,63 +303,25 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
             ToolMode = ChatToolMode.None
         };
 
-        if (!request.Options.ToolProposalsEnabled || request.ActionSchema is null)
+        if (request.Options.StructuredOutputEnabled && request.StructuredOutputSchema is not null)
         {
-            if (request.Options.StructuredOutputEnabled && request.StructuredOutputSchema is not null)
+            if (!TryCreateJsonSchema(
+                    request.StructuredOutputSchema.JsonSchema,
+                    providerName,
+                    "invalid_structured_output_schema",
+                    "AI structured output schema must be a valid JSON object.",
+                    out var responseSchema,
+                    out failure))
             {
-                if (!TryCreateJsonSchema(
-                        request.StructuredOutputSchema.JsonSchema,
-                        providerName,
-                        "invalid_structured_output_schema",
-                        "AI structured output schema must be a valid JSON object.",
-                        out var responseSchema,
-                        out failure))
-                {
-                    return false;
-                }
-
-                chatOptions.ResponseFormat = ChatResponseFormat.ForJsonSchema(
-                    responseSchema!.Value,
-                    request.StructuredOutputSchema.Name.Trim(),
-                    request.StructuredOutputSchema.Description.Trim());
+                return false;
             }
 
-            return true;
+            chatOptions.ResponseFormat = ChatResponseFormat.ForJsonSchema(
+                responseSchema!.Value,
+                request.StructuredOutputSchema.Name.Trim(),
+                request.StructuredOutputSchema.Description.Trim());
         }
 
-        if (!TryCreateJsonSchema(
-                request.ActionSchema.JsonSchema,
-                providerName,
-                "invalid_action_schema",
-                "AI action schema must be a valid JSON object.",
-                out var schema,
-                out failure))
-        {
-            return false;
-        }
-
-        var tools = new List<AITool>();
-        foreach (var kind in request.ActionSchema.AllowedKinds.Distinct())
-        {
-            if (kind != AiProposedActionKind.CreateEventDraft)
-            {
-                continue;
-            }
-
-            tools.Add(new SchemaBackedFunctionDeclaration(
-                CreateEventDraftToolName,
-                "Propose a draft event payload. The platform persists this as a proposal that still requires explicit user confirmation.",
-                schema!.Value));
-        }
-
-        if (tools.Count == 0)
-        {
-            return true;
-        }
-
-        chatOptions.Tools = tools;
-        chatOptions.ToolMode = ChatToolMode.Auto;
-        chatOptions.AllowMultipleToolCalls = true;
         return true;
     }
 
@@ -412,14 +371,6 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
             return false;
         }
 
-        IEnumerable<ChatMessage> toolMessages = request.Options.ToolProposalsEnabled
-            ? providerResponse.Messages
-            : Array.Empty<ChatMessage>();
-        if (!TryMapProposedActions(toolMessages, providerName, out var proposedActions, out failure))
-        {
-            return false;
-        }
-
         if (!AiStructuredOutputResponseMapper.TryMapAssistantMessage(
                 request,
                 providerResponse.Text,
@@ -430,7 +381,7 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(assistantMessage) && proposedActions.Count == 0)
+        if (string.IsNullOrWhiteSpace(assistantMessage))
         {
             failure = RecordFailure(providerName, "invalid_response", "AI provider returned an empty text response.");
             return false;
@@ -438,7 +389,7 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
 
         chatResponse = new AiChatResponse(
             assistantMessage,
-            proposedActions,
+            [],
             new AiTokenUsage(
                 ToIntTokenCount(providerResponse.Usage?.InputTokenCount),
                 ToIntTokenCount(providerResponse.Usage?.OutputTokenCount),
@@ -446,64 +397,6 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
             providerResponse.ResponseId,
             providerResponse.FinishReason?.Value);
 
-        return true;
-    }
-
-    private bool TryMapProposedActions(
-        IEnumerable<ChatMessage> messages,
-        string providerName,
-        out IReadOnlyList<AiProposedActionCandidate> proposedActions,
-        out AiChatProviderResult? failure)
-    {
-        proposedActions = [];
-        failure = null;
-
-        var actions = new List<AiProposedActionCandidate>();
-        foreach (var functionCall in messages.SelectMany(message => message.Contents).OfType<FunctionCallContent>())
-        {
-            if (!string.Equals(functionCall.Name, CreateEventDraftToolName, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (functionCall.Exception is not null || !TryNormalizeToolArguments(functionCall.Arguments, providerName, out var payloadJson, out failure))
-            {
-                return false;
-            }
-
-            actions.Add(new AiProposedActionCandidate(
-                AiProposedActionKind.CreateEventDraft,
-                payloadJson!,
-                "Create an event draft"));
-        }
-
-        proposedActions = actions;
-        return true;
-    }
-
-    private bool TryNormalizeToolArguments(
-        IDictionary<string, object?>? arguments,
-        string providerName,
-        out string? payloadJson,
-        out AiChatProviderResult? failure)
-    {
-        payloadJson = null;
-        failure = null;
-
-        if (arguments is null || arguments.Count == 0)
-        {
-            failure = RecordFailure(providerName, "invalid_tool_arguments", "AI provider returned invalid action arguments.");
-            return false;
-        }
-
-        using var document = JsonSerializer.SerializeToDocument(arguments, JsonOptions);
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-        {
-            failure = RecordFailure(providerName, "invalid_tool_arguments", "AI provider returned invalid action arguments.");
-            return false;
-        }
-
-        payloadJson = document.RootElement.GetRawText();
         return true;
     }
 
@@ -545,7 +438,7 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
         _metrics.RecordAiProviderProposedActions(
             providerName,
             response.ProposedActions.Count,
-            "create_event_draft");
+            response.ProposedActions.Count == 0 ? "none" : "unknown");
         AiProviderTelemetry.MarkSuccess(telemetryActivity, response);
     }
 
@@ -569,23 +462,5 @@ public sealed class MicrosoftExtensionsAiChatProvider : IAiChatProvider, IAiMode
     {
         _metrics.RecordAiProviderRequest(providerName, "failed", code);
         return AiChatProviderResult.Failure(code, message, isTransient);
-    }
-
-    private sealed class SchemaBackedFunctionDeclaration : AIFunctionDeclaration
-    {
-        private readonly JsonElement _jsonSchema;
-
-        public SchemaBackedFunctionDeclaration(string name, string description, JsonElement jsonSchema)
-        {
-            Name = name;
-            Description = description;
-            _jsonSchema = jsonSchema;
-        }
-
-        public override string Name { get; }
-
-        public override string Description { get; }
-
-        public override JsonElement JsonSchema => _jsonSchema;
     }
 }

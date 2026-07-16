@@ -1,11 +1,11 @@
-@* ABOUTME: Top navigation shell with tenant links, search, preferences, and profile/admin dropdown. *@
+@* ABOUTME: Top navigation shell with tenant links, preferences, and profile/admin dropdown. *@
 @* ABOUTME: Uses BFF/API-backed status models for admin affordance visibility instead of browser claims. *@
 @using Explore.Blazor.Client.Routing.ControlPlane
 @*
     NavMenu Component - BEM Methodology
     Block: navbar
     Elements: __content, __brand, __brand-icon, __brand-text, __brand-highlight,
-              __links, __link, __actions, __theme-toggle, __create-event-btn, __login-btn,
+               __links, __link, __actions, __theme-toggle, __login-btn,
               __user-dropdown, __user-btn, __user-avatar, __user-name, __user-arrow,
               __dropdown-menu, __dropdown-header, __dropdown-divider, __dropdown-section-label,
               __dropdown-item, __dropdown-item-label, __dropdown-item-arrow,
@@ -44,25 +44,6 @@
             <div class="navbar__brand-text">@_brandDisplayName</div>
         </a>
 
-        <!-- Global Search (Ctrl+K to focus) -->
-        <div class="navbar__search">
-            <MudTextField @ref="_searchField"
-                          T="string"
-                          Placeholder="@($"Search {_eventCatalogLabel}…  ⌘K")"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          IconSize="Size.Medium"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Class="navbar__search-input"
-                          @bind-Value="SearchQuery"
-                          @onkeyup="@HandleSearchKeyPress" />
-        </div>
-
-        <MudHotkey Key="JsKey.KeyK"
-                   KeyModifiers="@(new[] { JsKeyModifier.ControlLeft })"
-                   OnHotkeyPressed="FocusSearchAsync" />
-
         <!-- Center Navigation -->
         <div class="navbar__links">
             @* Dynamic tenant navigation links *@
@@ -95,17 +76,6 @@
                         <LanguagePicker Enabled="@_languagePickerEnabled" />
                         <ThemeQuickSwitcher />
                     </div>
-
-                    @if (_eventCreationEligibility.CanCreate)
-                    {
-                        <a href="@_eventCreationEligibility.CreateEventRoute" style="text-decoration: none;">
-                            <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                                       Size="Size.Small"
-                                       Class="navbar__create-event-btn">
-                                Add Event
-                            </MudButton>
-                        </a>
-                    }
 
                     <!-- Notification Bell -->
                     <NotificationBell />
@@ -320,15 +290,6 @@
                         <ThemeQuickSwitcher />
                     </div>
 
-                    @if (_showAddEventForAnonymous)
-                    {
-                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                                   Size="Size.Small"
-                                   Class="navbar__create-event-btn"
-                                   OnClick="@(() => OpenLoginPrompt("/events/create", "Sign in to add an event. After you sign in, we will bring you back to the event form."))">
-                            Add Event
-                        </MudButton>
-                    }
                     <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" Class="navbar__login-btn"
                                 StartIcon="@Icons.Material.Filled.Login"
                                 OnClick="StartLogin">

@@ -1,5 +1,5 @@
 // ABOUTME: Emits redacted AI provider tracing metadata for platform-owned observability.
-// ABOUTME: Keeps prompts, responses, tool payloads, model IDs, endpoints, tenant IDs, and provider request IDs out of spans.
+// ABOUTME: Keeps prompts, responses, model IDs, endpoints, tenant IDs, and provider request IDs out of spans.
 
 using System.Diagnostics;
 using Explore.Application.Contracts.Infrastructure.Ai;
@@ -90,7 +90,6 @@ public static class AiProviderTelemetry
     {
         "stop" => "stop",
         "length" => "length",
-        "tool_calls" => "tool_calls",
         "content_filter" => "content_filter",
         "content_filtered" => "content_filtered",
         _ => "unknown"
@@ -125,7 +124,6 @@ public static class AiProviderTelemetry
             "invalid_response" => "invalid_response",
             "provider_failure" => "provider_failure",
             "content_filtered" => "content_filtered",
-            "invalid_tool_arguments" => "invalid_tool_arguments",
             _ => "unknown"
         };
     }
@@ -137,8 +135,6 @@ public static class AiProviderTelemetry
             return "none";
         }
 
-        return proposedActions.All(action => action.Kind == AiProposedActionKind.CreateEventDraft)
-            ? "create_event_draft"
-            : "unknown";
+        return "unknown";
     }
 }

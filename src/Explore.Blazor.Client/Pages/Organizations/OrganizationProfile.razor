@@ -1,10 +1,9 @@
-@* ABOUTME: Public organization profile with banner, subscription affordance, events, and reviews. *@
-@* ABOUTME: Displays organization events through shared EventList cards and the reusable preview workspace. *@
+@* ABOUTME: Public organization profile with banner, subscription affordance, notifications, and reviews. *@
+@* ABOUTME: Keeps public identity and HAL-gated subscription behavior independent of product content feeds. *@
 @using MudBlazor
 @using Explore.Blazor.Client.Services
 @using Explore.Blazor.Client.Clients
 @using Explore.Blazor.Client.Components.Notifications
-@using Explore.Blazor.Client.Components.Events
 @using Explore.Blazor.Client.Helpers
 @using Explore.Blazor.Client.Shared
 @using Blazouter.Services
@@ -100,34 +99,6 @@ else
             <MudDivider Class="my-6" />
 
             <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-6 bg-transparent" Class="mt-6 bg-transparent" Color="Color.Transparent" SliderColor="Color.Primary">
-                <MudTabPanel Text="Posts">
-                    <ProfileEventSections IsLoading="@_isLoadingEvents"
-                                          NavigationEvents="@PostEvents"
-                                          UpcomingEvents="@_upcomingEvents"
-                                          PastEventsByDate="@_pastEventsByDate"
-                                          CssPrefix="org-profile"
-                                          UpcomingTitle="Upcoming Events"
-                                          PastTitle="Past Events"
-                                          UpcomingAriaLabel="Upcoming organization events"
-                                          PastAriaLabelPrefix="Past organization events on"
-                                          EmptyTitle="No upcoming events"
-                                          EmptyCopy="Subscribe to get notified when new events are posted." />
-                </MudTabPanel>
-
-                <MudTabPanel Text="Registration">
-                    <ProfileEventSections IsLoading="@_isLoadingRegistrationEvents"
-                                          NavigationEvents="@RegistrationEvents"
-                                          UpcomingEvents="@_upcomingRegistrationEvents"
-                                          PastEventsByDate="@_pastRegistrationEventsByDate"
-                                          CssPrefix="org-profile"
-                                          UpcomingTitle="Upcoming Events"
-                                          PastTitle="Past Events"
-                                          UpcomingAriaLabel="Upcoming organization registration events"
-                                          PastAriaLabelPrefix="Past organization registration events on"
-                                          EmptyTitle="No registered events"
-                                          EmptyCopy="Events this organization attends will appear here." />
-                </MudTabPanel>
-
                 <MudTabPanel Text="Notifications">
                     <NotificationPreferenceMatrix Scope="organization"
                                                   OrganizationId="@Id"

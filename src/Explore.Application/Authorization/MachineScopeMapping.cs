@@ -6,7 +6,7 @@ using Explore.Domain.Constants;
 namespace Explore.Application.Authorization;
 
 /// <summary>
-/// Translates between external API key scopes (e.g. <c>events:write</c>) and the fine-grained
+/// Translates between external API key scopes and the fine-grained
 /// <see cref="AuthorizationActions"/> used by handlers and Cerbos policies.
 /// Used by authorization services to enforce that a machine principal's scopes permit a given
 /// resource + action pair before delegating to authority checks.
@@ -37,22 +37,6 @@ public static class MachineScopeMapping
 
         switch (resourceKind)
         {
-            case ResourceKinds.Event:
-            case ResourceKinds.EventSession:
-            case ResourceKinds.EventSessionGroup:
-            case ResourceKinds.EventSessionAgendaItem:
-            case ResourceKinds.EventDay:
-            case ResourceKinds.EventAgendaItem:
-            case ResourceKinds.EventContactShareConsent:
-                return isWrite
-                    ? HasAny(scopeSet, ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.AdminTenant)
-                    : HasAny(scopeSet, ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.AdminTenant);
-
-            case ResourceKinds.EventRegistration:
-                return action == AuthorizationActions.View
-                    ? HasAny(scopeSet, ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.RegistrationsWrite, ExternalApiKeyScopes.AdminTenant)
-                    : HasAny(scopeSet, ExternalApiKeyScopes.RegistrationsWrite, ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.AdminTenant);
-
             case ResourceKinds.Organization:
             case ResourceKinds.OrganizationMember:
             case ResourceKinds.OrganizationReview:
@@ -99,7 +83,6 @@ public static class MachineScopeMapping
             case ResourceKinds.CustomPropertyDefinition:
             case ResourceKinds.CustomPropertyTemplate:
             case ResourceKinds.CustomPropertyValue:
-            case ResourceKinds.CustomPropertyProjection:
             case ResourceKinds.CustomPropertyGovernance:
                 return isWrite
                     ? HasAny(scopeSet, ExternalApiKeyScopes.AdminTenant)
@@ -120,8 +103,8 @@ public static class MachineScopeMapping
 
             case ResourceKinds.StorageObject:
                 return isWrite
-                    ? HasAny(scopeSet, ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.OrganizationsWrite, ExternalApiKeyScopes.AdminTenant)
-                    : HasAny(scopeSet, ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.OrganizationsRead, ExternalApiKeyScopes.AdminTenant);
+                    ? HasAny(scopeSet, ExternalApiKeyScopes.OrganizationsWrite, ExternalApiKeyScopes.AdminTenant)
+                    : HasAny(scopeSet, ExternalApiKeyScopes.OrganizationsRead, ExternalApiKeyScopes.AdminTenant);
 
             case ResourceKinds.Actor:
                 return HasAny(scopeSet, ExternalApiKeyScopes.AdminTenant);
@@ -142,11 +125,7 @@ public static class MachineScopeMapping
         AuthorizationActions.ManageMembers => true,
         AuthorizationActions.Lock => true,
         AuthorizationActions.Unlock => true,
-        AuthorizationActions.Events.ModerateLight => true,
-        AuthorizationActions.Events.ModerateHeavy => true,
-        AuthorizationActions.Events.Unmoderate => true,
         AuthorizationActions.SyncApply => true,
-        AuthorizationActions.ExportSharedContacts => true,
         AuthorizationActions.SendMessage => true,
         AuthorizationActions.ConfirmAction => true,
         AuthorizationActions.RejectAction => true,

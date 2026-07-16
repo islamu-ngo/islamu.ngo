@@ -50,7 +50,7 @@ public class HalDtoSchemaTransformer : IOpenApiDocumentTransformer
         PopulateHalCollectionEmbeddedSchemas(document);
 
         // Fix inline array item schemas that should be $ref references to component schemas.
-        // GetOrCreateSchemaAsync inlines nested DTO types (e.g., EventDto.Tags = List<TagListDto>)
+        // GetOrCreateSchemaAsync inlines nested DTO types (e.g., OrganizationDto.Tags = List<TagListDto>)
         // which causes NSwag to generate duplicate types with conflicting names.
         ReplaceInlineArrayItemsWithReferences(document);
         ReplaceInlineObjectPropertiesWithReferences(document);
@@ -109,7 +109,7 @@ public class HalDtoSchemaTransformer : IOpenApiDocumentTransformer
     /// <summary>
     /// Replaces inline array item schemas with $ref references to registered component schemas.
     /// When GetOrCreateSchemaAsync generates a schema for a DTO with List&lt;T&gt; properties
-    /// (e.g., EventDto.Tags = List&lt;TagListDto&gt;), the inner T schema is inlined.
+    /// (e.g., OrganizationDto.Tags = List&lt;TagListDto&gt;), the inner T schema is inlined.
     /// This causes NSwag to generate duplicate types with conflicting names (Tags/tags).
     /// This method uses reflection to find such properties and replaces inline schemas
     /// with proper $ref references to the component schemas registered above.

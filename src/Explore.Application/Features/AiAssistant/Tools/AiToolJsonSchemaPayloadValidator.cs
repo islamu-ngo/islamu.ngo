@@ -78,7 +78,7 @@ internal static class AiToolJsonSchemaPayloadValidator
                 return AiToolValidationResult.ClarificationFailure(
                     "missing_tool_argument",
                     "AI tool payload is missing a required field.",
-                    "Please provide the required event draft details before this action can be proposed.",
+                    "Please provide the required details before this action can be proposed.",
                     AiToolCorrectionMessages.SchemaExactRetry);
             }
         }

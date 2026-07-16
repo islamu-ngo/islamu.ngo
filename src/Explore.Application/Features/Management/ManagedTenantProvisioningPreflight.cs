@@ -36,13 +36,7 @@ public sealed class ManagedTenantProvisioningPreflight(
     [
         AppearanceSettingDefinitions.Language.Key,
         AppearanceSettingDefinitions.ThemeMode.Key,
-        EventSettingDefinitions.MaxSessionsPerEvent.Key,
-        EventSettingDefinitions.UserSubmissionEnabled.Key,
-        EventSettingDefinitions.RequireApproval.Key,
-        EventSettingDefinitions.OrganizationSubmissionEnabled.Key,
-        EventSettingDefinitions.GroupSubmissionEnabled.Key,
         RoutingSettingDefinitions.DefaultPublicHomePage.Key,
-        PublicExperienceSettingDefinitions.EventCatalogLabel.Key,
         TenantSettingDefinitions.WhiteLabelingEnabled.Key
     ];
 

@@ -14,46 +14,6 @@ public static class DataBuilder
 {
     #region Core Entities
 
-    public static Faker<Explore.Domain.Event> Event => new Faker<Explore.Domain.Event>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.Title, f => f.Lorem.Sentence())
-        .RuleFor(e => e.Description, f => f.Lorem.Sentence(8))
-        .RuleFor(e => e.Content, f => f.Lorem.Paragraph())
-        .RuleFor(e => e.FirstSessionDate, f => f.Date.FutureDateOnly())
-        .RuleFor(e => e.LastSessionDate, (f, e) => e.FirstSessionDate?.AddDays(1))
-        .RuleFor(e => e.IsRegistrationRequired, f => f.Random.Bool())
-        .RuleFor(e => e.TotalViews, f => f.Random.Int(0, 10000))
-        .RuleFor(e => e.EventTypeId, f => f.Random.Int(1, 5))
-        .RuleFor(e => e.AudienceGenderId, f => f.Random.Int(1, 4))
-        .RuleFor(e => e.AudienceAgeId, f => f.Random.Int(1, 5))
-        .RuleFor(e => e.VisibilityTypeId, f => f.Random.Int(1, 3))
-        .RuleFor(e => e.EventStatusId, f => f.Random.Int(1, 4))
-        .RuleFor(e => e.EventFormatId, f => f.Random.Int(1, 3))
-        .RuleFor(e => e.Price, f => f.Finance.Amount(0, 100))
-        .RuleFor(e => e.CurrencyCode, f => f.Finance.Currency().Code)
-        .RuleFor(e => e.Slug, f => f.Lorem.Slug());
-
-    public static Faker<EventSession> EventSession => new Faker<EventSession>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.Title, f => f.Lorem.Sentence())
-        .RuleFor(e => e.Description, f => f.Lorem.Paragraph())
-        .RuleFor(e => e.StartTime, f => f.Date.FutureOffset())
-        .RuleFor(e => e.EndTime, (f, e) => e.StartTime!.Value.AddHours(2))
-        .RuleFor(e => e.MaxAudienceAttendees, f => f.Random.Int(10, 500))
-        .RuleFor(e => e.CurrentAudienceAttendees, f => 0)
-        .RuleFor(e => e.Slug, f => f.Lorem.Slug());
-
-    public static Faker<EventSessionAgendaItem> EventSessionAgendaItem => new Faker<EventSessionAgendaItem>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.Title, f => f.Lorem.Sentence())
-        .RuleFor(e => e.Description, f => f.Lorem.Paragraph())
-        .RuleFor(e => e.StartTime, f => f.Date.FutureOffset())
-        .RuleFor(e => e.EndTime, (f, e) => e.StartTime.AddMinutes(30));
-
-    public static Faker<EventRegistration> EventRegistration => new Faker<EventRegistration>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.ApprovalStatusId, f => f.Random.Int(1, 4));
-
     #endregion
 
     #region User & Actor Entities
@@ -151,26 +111,6 @@ public static class DataBuilder
 
     #region Scheduling & Registration Entities
 
-    public static Faker<EventDay> EventDay => new Faker<EventDay>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.EventId, f => Guid.NewGuid())
-        .RuleFor(e => e.LocalDate, f => f.Date.FutureDateOnly())
-        .RuleFor(e => e.Label, f => f.Lorem.Sentence(3))
-        .RuleFor(e => e.Description, f => f.Lorem.Paragraph())
-        .RuleFor(e => e.BannerText, f => f.Lorem.Sentence())
-        .RuleFor(e => e.IsPublished, f => true)
-        .RuleFor(e => e.SortOrder, f => f.Random.Int(0, 10))
-        .RuleFor(e => e.AllowsDayScopeRegistration, f => f.Random.Bool());
-
-    public static Faker<EventAgendaItem> EventAgendaItem => new Faker<EventAgendaItem>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.EventId, f => Guid.NewGuid())
-        .RuleFor(e => e.Title, f => f.Lorem.Sentence())
-        .RuleFor(e => e.Description, f => f.Lorem.Paragraph())
-        .RuleFor(e => e.StartTime, f => f.Date.FutureOffset())
-        .RuleFor(e => e.EndTime, (f, e) => e.StartTime.AddMinutes(45))
-        .RuleFor(e => e.SortOrder, f => f.Random.Int(0, 10));
-
     public static Faker<LocationRoom> LocationRoom => new Faker<LocationRoom>()
         .RuleFor(e => e.Id, f => Guid.NewGuid())
         .RuleFor(e => e.LocationId, f => Guid.NewGuid())
@@ -179,23 +119,6 @@ public static class DataBuilder
         .RuleFor(e => e.Description, f => f.Lorem.Paragraph())
         .RuleFor(e => e.Capacity, f => f.Random.Int(10, 500))
         .RuleFor(e => e.SortOrder, f => f.Random.Int(0, 10));
-
-    public static Faker<EventRegistrationIntent> EventRegistrationIntent => new Faker<EventRegistrationIntent>()
-        .RuleFor(e => e.Id, f => Guid.NewGuid())
-        .RuleFor(e => e.EventId, f => Guid.NewGuid())
-        .RuleFor(e => e.UserId, f => Guid.NewGuid())
-        .RuleFor(e => e.RegistrationScopeId, f => f.Random.Int(1, 3))
-        .RuleFor(e => e.ApprovalStatusId, f => f.Random.Int(1, 4));
-
-    public static Faker<RegistrationScope> RegistrationScope => new Faker<RegistrationScope>()
-        .RuleFor(e => e.Id, f => f.Random.Int(1, 3))
-        .RuleFor(e => e.MasterCode, f => f.PickRandom("EVENT", "DAY", "SESSION_SELECTION"))
-        .RuleFor(e => e.FullName, f => f.PickRandom("Event", "Day", "Session Selection"));
-
-    public static Faker<ScheduleItemKind> ScheduleItemKind => new Faker<ScheduleItemKind>()
-        .RuleFor(e => e.Id, f => f.Random.Int(1, 5))
-        .RuleFor(e => e.MasterCode, f => f.Random.AlphaNumeric(10).ToUpper())
-        .RuleFor(e => e.FullName, f => f.Lorem.Word());
 
     #endregion
 

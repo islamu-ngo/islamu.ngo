@@ -8,7 +8,7 @@ using Explore.Domain.Constants;
 
 public class RoutingSettingGroup : ISettingGroup
 {
-    public string DefaultPublicHomePage { get; private set; } = "EventList";
+    public string DefaultPublicHomePage { get; private set; } = "LandingPage";
     public bool ResolverHeaderEnabled { get; private set; } = true;
     public bool ResolverSubdomainEnabled { get; private set; } = true;
     public bool ResolverCustomDomainEnabled { get; private set; }
@@ -28,7 +28,7 @@ public class RoutingSettingGroup : ISettingGroup
     public void Populate(IReadOnlyDictionary<string, ResolvedSetting> settings)
     {
         if (settings.TryGetValue(GovernanceSettingKeys.Routing.DefaultPublicHomePage, out var home))
-            DefaultPublicHomePage = SettingValueSerializer.Deserialize(home.Value, "EventList");
+            DefaultPublicHomePage = SettingValueSerializer.Deserialize(home.Value, "LandingPage");
         if (settings.TryGetValue(GovernanceSettingKeys.Routing.ResolverHeaderEnabled, out var header))
             ResolverHeaderEnabled = SettingValueSerializer.Deserialize(header.Value, true);
         if (settings.TryGetValue(GovernanceSettingKeys.Routing.ResolverSubdomainEnabled, out var sub))

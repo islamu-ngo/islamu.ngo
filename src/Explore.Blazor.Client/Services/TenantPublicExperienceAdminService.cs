@@ -24,26 +24,18 @@ public sealed class TenantPublicExperienceAdminService(
 {
     private const string Category = "PublicExperience";
     private const string ModeKey = "public_experience.mode";
-    private const string EventCatalogLabelKey = "public_experience.event_catalog_label";
     private const string PrimaryOrganizationIdKey = "public_experience.primary_organization_id";
     private const string HomeBlocksKey = "public_experience.home_blocks";
     private const string CtasKey = "public_experience.ctas";
-    private const string EventSectionPresetsKey = "public_experience.event_section_presets";
     private const string AnnouncementBarEnabledKey = "public_experience.announcement_bar.enabled";
     private const string AnnouncementBarMessageKey = "public_experience.announcement_bar.message";
     private const string AnnouncementBarLinkTextKey = "public_experience.announcement_bar.link_text";
     private const string AnnouncementBarLinkUrlKey = "public_experience.announcement_bar.link_url";
     private const string AnnouncementBarRevisionKey = "public_experience.announcement_bar.revision";
 
-    private const string EventsCategory = "Events";
     private const string OrganizationsCategory = "Organizations";
     private const string GroupsCategory = "Groups";
     private const string AiAssistantCategory = "AiAssistant";
-    private const string EventsUserSubmissionEnabledKey = "events.user_submission_enabled";
-    private const string EventsOrganizationSubmissionEnabledKey = "events.organization_submission_enabled";
-    private const string EventsGroupSubmissionEnabledKey = "events.group_submission_enabled";
-    private const string EventsRequireApprovalKey = "events.require_approval";
-    private const string EventsCardClickOpensDetailPageKey = "events.card_click_opens_detail_page";
     private const string OrganizationsVerificationRequiredKey = "organizations.verification_required";
     private const string OrganizationsSelfRegistrationEnabledKey = "organizations.self_registration_enabled";
     private const string GroupsSelfRegistrationEnabledKey = "groups.self_registration_enabled";
@@ -58,10 +50,8 @@ public sealed class TenantPublicExperienceAdminService(
     private const string AiProviderAnthropicCompatible = "anthropic-compatible";
 
     private const string DefaultMode = "DiscoveryCentric";
-    private const string DefaultEventCatalogLabel = "Events";
     private const string DefaultHomeBlocksJson = "{\"schemaVersion\":1,\"blocks\":[]}";
     private const string DefaultCtasJson = "{\"schemaVersion\":1,\"ctas\":[]}";
-    private const string DefaultEventSectionPresetsJson = "{\"schemaVersion\":1,\"presets\":[]}";
 
     public async Task<TenantPublicExperienceAdminModel> GetSettingsAsync(CancellationToken cancellationToken = default)
     {
@@ -78,17 +68,13 @@ public sealed class TenantPublicExperienceAdminService(
             return new TenantPublicExperienceAdminModel
             {
                 Mode = GetString(settings, ModeKey, DefaultMode),
-                EventCatalogLabel = GetString(settings, EventCatalogLabelKey, DefaultEventCatalogLabel),
                 PrimaryOrganizationId = GetGuid(settings, PrimaryOrganizationIdKey),
                 HomeBlocksJson = GetString(settings, HomeBlocksKey, DefaultHomeBlocksJson),
                 CtasJson = GetString(settings, CtasKey, DefaultCtasJson),
-                EventSectionPresetsJson = GetString(settings, EventSectionPresetsKey, DefaultEventSectionPresetsJson),
                 CanEditMode = CanEdit(settings, ModeKey),
-                CanEditEventCatalogLabel = CanEdit(settings, EventCatalogLabelKey),
                 CanEditPrimaryOrganization = CanEdit(settings, PrimaryOrganizationIdKey),
                 CanEditHomeBlocks = CanEdit(settings, HomeBlocksKey),
-                CanEditCtas = CanEdit(settings, CtasKey),
-                CanEditEventSectionPresets = CanEdit(settings, EventSectionPresetsKey)
+                CanEditCtas = CanEdit(settings, CtasKey)
             };
         }
         catch (Exception ex)
@@ -103,14 +89,10 @@ public sealed class TenantPublicExperienceAdminService(
         CancellationToken cancellationToken = default)
     {
         model.CanTenantOmitVerification = true;
-        model.CanOverrideEventCardClickBehavior = true;
         model.CanOverrideAiAssistant = true;
 
         try
         {
-            Dictionary<string, EffectiveSettingDto> eventSettings = await GetTenantSettingsDictionaryAsync(
-                EventsCategory,
-                cancellationToken);
             Dictionary<string, EffectiveSettingDto> organizationSettings = await GetTenantSettingsDictionaryAsync(
                 OrganizationsCategory,
                 cancellationToken);
@@ -121,26 +103,6 @@ public sealed class TenantPublicExperienceAdminService(
                 AiAssistantCategory,
                 cancellationToken);
 
-            model.AllowUserSubmittedEvents = GetBoolean(
-                eventSettings,
-                EventsUserSubmissionEnabledKey,
-                model.AllowUserSubmittedEvents ?? true);
-            model.AllowOrganizationSubmittedEvents = GetBoolean(
-                eventSettings,
-                EventsOrganizationSubmissionEnabledKey,
-                model.AllowOrganizationSubmittedEvents ?? true);
-            model.AllowGroupSubmittedEvents = GetBoolean(
-                eventSettings,
-                EventsGroupSubmissionEnabledKey,
-                model.AllowGroupSubmittedEvents ?? true);
-            model.RequireEventApproval = GetBoolean(
-                eventSettings,
-                EventsRequireApprovalKey,
-                model.RequireEventApproval == true);
-            model.EventCardClickOpensDetailPage = GetBoolean(
-                eventSettings,
-                EventsCardClickOpensDetailPageKey,
-                model.EventCardClickOpensDetailPage == true);
             model.RequireOrganizationVerification = GetBoolean(
                 organizationSettings,
                 OrganizationsVerificationRequiredKey,
@@ -279,22 +241,6 @@ public sealed class TenantPublicExperienceAdminService(
 
         try
         {
-            PublicExperienceAdminSaveResult eventsResult = await SaveBatchAsync(
-                EventsCategory,
-                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    [EventsUserSubmissionEnabledKey] = FormatBoolean(model.AllowUserSubmittedEvents ?? true),
-                    [EventsOrganizationSubmissionEnabledKey] = FormatBoolean(model.AllowOrganizationSubmittedEvents ?? true),
-                    [EventsGroupSubmissionEnabledKey] = FormatBoolean(model.AllowGroupSubmittedEvents ?? true),
-                    [EventsRequireApprovalKey] = FormatBoolean(model.RequireEventApproval == true),
-                    [EventsCardClickOpensDetailPageKey] = FormatBoolean(model.EventCardClickOpensDetailPage == true)
-                },
-                cancellationToken);
-            if (!eventsResult.Success)
-            {
-                return eventsResult;
-            }
-
             PublicExperienceAdminSaveResult organizationsResult = await SaveBatchAsync(
                 OrganizationsCategory,
                 new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -390,13 +336,6 @@ public sealed class TenantPublicExperienceAdminService(
             values[ModeKey] = string.IsNullOrWhiteSpace(model.Mode) ? DefaultMode : model.Mode;
         }
 
-        if (model.CanEditEventCatalogLabel)
-        {
-            values[EventCatalogLabelKey] = string.IsNullOrWhiteSpace(model.EventCatalogLabel)
-                ? DefaultEventCatalogLabel
-                : model.EventCatalogLabel.Trim();
-        }
-
         if (model.CanEditPrimaryOrganization)
         {
             values[PrimaryOrganizationIdKey] = model.PrimaryOrganizationId?.ToString("D") ?? string.Empty;
@@ -410,11 +349,6 @@ public sealed class TenantPublicExperienceAdminService(
         if (model.CanEditCtas)
         {
             values[CtasKey] = NormalizeJson(model.CtasJson, DefaultCtasJson);
-        }
-
-        if (model.CanEditEventSectionPresets)
-        {
-            values[EventSectionPresetsKey] = NormalizeJson(model.EventSectionPresetsJson, DefaultEventSectionPresetsJson);
         }
 
         return values;
@@ -591,24 +525,18 @@ public sealed class TenantPublicExperienceAdminService(
 public sealed class TenantPublicExperienceAdminModel
 {
     public string Mode { get; set; } = "DiscoveryCentric";
-    public string EventCatalogLabel { get; set; } = "Events";
     public Guid? PrimaryOrganizationId { get; set; }
     public string HomeBlocksJson { get; set; } = "{\"schemaVersion\":1,\"blocks\":[]}";
     public string CtasJson { get; set; } = "{\"schemaVersion\":1,\"ctas\":[]}";
-    public string EventSectionPresetsJson { get; set; } = "{\"schemaVersion\":1,\"presets\":[]}";
     public bool CanEditMode { get; set; } = true;
-    public bool CanEditEventCatalogLabel { get; set; } = true;
     public bool CanEditPrimaryOrganization { get; set; } = true;
     public bool CanEditHomeBlocks { get; set; } = true;
     public bool CanEditCtas { get; set; } = true;
-    public bool CanEditEventSectionPresets { get; set; } = true;
 
     public bool CanEditAny => CanEditMode
-        || CanEditEventCatalogLabel
         || CanEditPrimaryOrganization
         || CanEditHomeBlocks
-        || CanEditCtas
-        || CanEditEventSectionPresets;
+        || CanEditCtas;
 }
 
 public sealed record PublicExperienceAdminSaveResult(bool Success, string Message)

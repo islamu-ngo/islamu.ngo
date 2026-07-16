@@ -229,13 +229,6 @@ public partial class FallbackAuthorizationService
         resourceKind == ResourceKinds.Organization
         || resourceKind == ResourceKinds.OrganizationMember
         || resourceKind == ResourceKinds.OrganizationReview
-        || resourceKind == ResourceKinds.Event
-        || resourceKind == ResourceKinds.EventSession
-        || resourceKind == ResourceKinds.EventSessionAgendaItem
-        || resourceKind == ResourceKinds.EventDay
-        || resourceKind == ResourceKinds.EventAgendaItem
-        || resourceKind == ResourceKinds.EventRegistration
-        || resourceKind == ResourceKinds.EventContactShareConsent
         || resourceKind == ResourceKinds.StorageObject
         || resourceKind == ResourceKinds.CustomPropertyValue;
 

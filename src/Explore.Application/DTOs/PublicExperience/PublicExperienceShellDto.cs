@@ -14,16 +14,14 @@ public class PublicExperienceShellDto
     public PublicExperienceMode Mode { get; set; } = PublicExperienceMode.DiscoveryCentric;
     public PublicExperienceHomeDto Home { get; set; } = new();
     public PublicExperienceNavigationDto Navigation { get; set; } = new();
-    public PublicExperienceEventCatalogDto EventCatalog { get; set; } = new();
     public PublicExperiencePrimaryOrganizationDto PrimaryOrganization { get; set; } = new();
-    public List<PublicExperienceEventSectionDto> EventSections { get; set; } = new();
     public List<PublicExperienceCtaDto> Ctas { get; set; } = new();
     public FooterConfigDto Footer { get; set; } = new();
 }
 
 public class PublicExperienceHomeDto
 {
-    public string PreferredHomePage { get; set; } = "EventList";
+    public string PreferredHomePage { get; set; } = "LandingPage";
     public string BrandDisplayName { get; set; } = string.Empty;
     public string BrandLogoUrl { get; set; } = string.Empty;
     public string BrandFaviconUrl { get; set; } = string.Empty;
@@ -55,12 +53,6 @@ public class PublicExperienceNavigationLinkDto
     public int SortOrder { get; set; }
 }
 
-public class PublicExperienceEventCatalogDto
-{
-    public string Label { get; set; } = "Events";
-    public string Url { get; set; } = "/events";
-}
-
 public class PublicExperiencePrimaryOrganizationDto
 {
     public PublicExperiencePrimaryOrganizationState State { get; set; } = PublicExperiencePrimaryOrganizationState.NotConfigured;
@@ -70,15 +62,6 @@ public class PublicExperiencePrimaryOrganizationDto
     public string Handle { get; set; } = string.Empty;
     public string WebsiteUrl { get; set; } = string.Empty;
     public string ProfilePictureUri { get; set; } = string.Empty;
-}
-
-public class PublicExperienceEventSectionDto
-{
-    public string Key { get; set; } = string.Empty;
-    public string Label { get; set; } = string.Empty;
-    public string Url { get; set; } = "/events";
-    public string Icon { get; set; } = string.Empty;
-    public int SortOrder { get; set; }
 }
 
 public class PublicExperienceCtaDto

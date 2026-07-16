@@ -54,15 +54,6 @@
                         <MudSelectItem Value="@("OrganizationCentric")">Organization-centric</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudTextField T="string"
-                                  @bind-Value="Model.EventCatalogLabel"
-                                  Label="Event catalog label"
-                                  Variant="Variant.Outlined"
-                                  FullWidth="true"
-                                  ReadOnly="!Model.CanEditEventCatalogLabel"
-                                  HelperText="For example: Events, Program, Classes, or Gatherings." />
-                </MudItem>
             </MudGrid>
 
             <MudSelect T="Guid?"
@@ -110,17 +101,6 @@
                                   HelperText="Versioned config, for example { schemaVersion: 1, ctas: [] }." />
                     @RenderJsonWarning(Model.CtasJson, "CTAs")
                 </MudExpansionPanel>
-                <MudExpansionPanel Text="Advanced event section presets JSON">
-                    <MudTextField T="string"
-                                  @bind-Value="Model.EventSectionPresetsJson"
-                                  Label="Event section presets JSON"
-                                  Variant="Variant.Outlined"
-                                  Lines="10"
-                                  FullWidth="true"
-                                  ReadOnly="!Model.CanEditEventSectionPresets"
-                                  HelperText="Typed preset config powers curated public event sections without storing raw query strings." />
-                    @RenderJsonWarning(Model.EventSectionPresetsJson, "event section presets")
-                </MudExpansionPanel>
             </MudExpansionPanels>
         </MudStack>
     }
@@ -135,8 +115,7 @@
     public TenantPublicExperienceAdminModel Model { get; set; } = new();
 
     public bool HasValidJson => IsValidJson(Model.HomeBlocksJson)
-        && IsValidJson(Model.CtasJson)
-        && IsValidJson(Model.EventSectionPresetsJson);
+        && IsValidJson(Model.CtasJson);
 
     private bool IsOrganizationCentricWithoutPrimaryOrganization =>
         string.Equals(Model.Mode, "OrganizationCentric", StringComparison.OrdinalIgnoreCase)

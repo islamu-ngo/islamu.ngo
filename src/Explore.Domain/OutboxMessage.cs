@@ -15,7 +15,7 @@ public class OutboxMessage
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Type name of the source aggregate (e.g., "Event", "Registration").
+    /// Type name of the source aggregate.
     /// </summary>
     public required string AggregateType { get; set; }
 
@@ -25,7 +25,7 @@ public class OutboxMessage
     public Guid AggregateId { get; set; }
 
     /// <summary>
-    /// Discriminator for the kind of side effect (e.g., "EventPublished", "RegistrationConfirmed").
+    /// Discriminator for the kind of side effect.
     /// Consumers use this to route dispatch logic.
     /// </summary>
     public required string EventType { get; set; }

@@ -24,7 +24,6 @@ public static class SettingRegistry
         all.AddRange(TenantSettingDefinitions.All);
         all.AddRange(AdminPortalSettingDefinitions.All);
         all.AddRange(RoutingSettingDefinitions.All);
-        all.AddRange(EventSettingDefinitions.All);
         all.AddRange(OrganizationSettingDefinitions.All);
         all.AddRange(GroupSettingDefinitions.All);
         all.AddRange(ModuleSettingDefinitions.All);
@@ -37,7 +36,6 @@ public static class SettingRegistry
         all.AddRange(SecuritySettingDefinitions.All);
         all.AddRange(SupportAccessSettingDefinitions.All);
         all.AddRange(CerbosSettingDefinitions.All);
-        all.AddRange(ReportingSettingDefinitions.All);
         all.AddRange(IntegrationSettingDefinitions.All);
         all.AddRange(AnalyticsSettingDefinitions.All);
         all.AddRange(McpSettingDefinitions.All);
@@ -45,7 +43,6 @@ public static class SettingRegistry
         all.AddRange(AiAssistantPreferenceSettingDefinitions.All);
         all.AddRange(TenantDelegationSettingDefinitions.All);
         all.AddRange(FooterSettingDefinitions.All);
-        all.AddRange(EventListSettingDefinitions.All);
         all.AddRange(NotificationSettingDefinitions.All);
         all.AddRange(CustomPropertyQuotaSettingDefinitions.All);
         all.AddRange(LocalizationSettingDefinitions.All);

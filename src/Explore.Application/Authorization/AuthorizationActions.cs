@@ -43,12 +43,6 @@ public static class AuthorizationActions
     /// <summary>Unlock a previously locked setting.</summary>
     public const string Unlock = "unlock";
 
-    /// <summary>View shared contact information from consented registrants.</summary>
-    public const string ViewSharedContacts = "viewsharedcontacts";
-
-    /// <summary>Export shared contact information from consented registrants.</summary>
-    public const string ExportSharedContacts = "exportsharedcontacts";
-
     /// <summary>Send a message into an AI assistant conversation.</summary>
     public const string SendMessage = "send_message";
 
@@ -70,68 +64,6 @@ public static class AuthorizationActions
     // Standard CRUD resources reference top-level constants.
     // Resources with restricted or extended action sets are explicit.
 
-    /// <summary>Valid actions for the <c>islamuevent_event</c> resource kind.</summary>
-    public static class Events
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-        public const string ModerateLight = "moderate-light";
-        public const string ModerateHeavy = "moderate-heavy";
-        public const string Unmoderate = "unmoderate";
-        public const string ViewManagement = "view-management";
-        public const string ManageTeam = "manage-team";
-        public const string ManageOwner = "manage-owner";
-        public const string TransferOwnership = "transfer-ownership";
-        public const string ManageFinance = "manage-finance";
-    }
-
-    /// <summary>Valid actions for the <c>islamuevent_event_session</c> resource kind.</summary>
-    public static class EventSessions
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-    }
-
-    /// <summary>Valid actions for the <c>islamuevent_event_session_agenda_item</c> resource kind.</summary>
-    public static class EventSessionAgendaItems
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-    }
-
-    /// <summary>Valid actions for the <c>islamuevent_event_day</c> resource kind.</summary>
-    public static class EventDays
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-    }
-
-    /// <summary>Valid actions for the <c>islamuevent_event_agenda_item</c> resource kind.</summary>
-    public static class EventAgendaItems
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-    }
-
-    /// <summary>Valid actions for the <c>islamuevent_event_registration</c> resource kind.</summary>
-    public static class EventRegistrations
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Create = AuthorizationActions.Create;
-        public const string Update = AuthorizationActions.Update;
-        public const string Delete = AuthorizationActions.Delete;
-    }
-
     public static class SupportAccessSessions
     {
         public const string View = AuthorizationActions.View;
@@ -140,16 +72,6 @@ public static class AuthorizationActions
         public const string Stop = "stop";
         public const string ViewAudit = "view_audit";
         public const string ForceStop = "force_stop";
-    }
-
-    /// <summary>
-    /// Valid actions for the <c>islamuevent_event_contact_share_consent</c> resource kind.
-    /// Uses domain-specific actions instead of standard CRUD.
-    /// </summary>
-    public static class EventContactShareConsents
-    {
-        public const string ViewSharedContacts = AuthorizationActions.ViewSharedContacts;
-        public const string ExportSharedContacts = AuthorizationActions.ExportSharedContacts;
     }
 
     /// <summary>
@@ -358,17 +280,6 @@ public static class AuthorizationActions
         public const string Create = AuthorizationActions.Create;
         public const string Update = AuthorizationActions.Update;
         public const string Delete = AuthorizationActions.Delete;
-    }
-
-    /// <summary>
-    /// Valid actions for the <c>custom_property_projection</c> resource kind.
-    /// Covers projection rebuild, dirty-scope drain, and status inspection.
-    /// Authorized through explicit custom-property projection resource metadata.
-    /// </summary>
-    public static class CustomPropertyProjections
-    {
-        public const string View = AuthorizationActions.View;
-        public const string Update = AuthorizationActions.Update;
     }
 
     /// <summary>

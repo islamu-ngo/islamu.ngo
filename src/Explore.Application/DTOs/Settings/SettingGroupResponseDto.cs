@@ -1,5 +1,5 @@
 // ABOUTME: DTO wrapping a category's worth of effective settings for API responses.
-// ABOUTME: Generic across all setting categories — EventList, Appearance, Branding, etc.
+// ABOUTME: Generic across all setting categories, including Appearance, Branding, and Routing.
 
 namespace Explore.Application.DTOs.Settings;
 

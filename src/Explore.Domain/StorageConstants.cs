@@ -34,12 +34,11 @@ public static class StorageObjectPurposes
 {
     public const string LegacyImage = "legacy_image";
     public const string ProfileImage = "profile_image";
-    public const string EventImage = "event_image";
     public const string Attachment = "attachment";
     public const string Document = "document";
     public const string SystemAsset = "system_asset";
 
-    public static readonly string[] All = [LegacyImage, ProfileImage, EventImage, Attachment, Document, SystemAsset];
+    public static readonly string[] All = [LegacyImage, ProfileImage, Attachment, Document, SystemAsset];
 }
 
 public static class StorageObjectLifecycleStates

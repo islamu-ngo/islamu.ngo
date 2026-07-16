@@ -1,4 +1,4 @@
-// ABOUTME: AutoMapper profile for Notification and CustomPropertyProjection entities.
+// ABOUTME: AutoMapper profile for notification entities.
 // ABOUTME: Split from monolithic MappingProfile.cs for domain-cohesion.
 
 using AutoMapper;
@@ -24,10 +24,5 @@ public class NotificationMappingProfile : Profile
             .ForMember(d => d.NotificationReasonName, opt => opt.MapFrom(s => s.NotificationReason != null ? s.NotificationReason.FullName : null))
             .ForMember(d => d.SourceActorName, opt => opt.MapFrom(s => s.SourceActor != null && s.SourceActor.Pii != null ? s.SourceActor.Pii.DisplayName : null))
             .ForMember(d => d.RecipientContextActorName, opt => opt.MapFrom(s => s.RecipientContextActor != null && s.RecipientContextActor.Pii != null ? s.RecipientContextActor.Pii.DisplayName : null));
-
-        CreateMap<CustomPropertyProjectionStatus, DTOs.CustomPropertyProjection.ProjectionStatusDto>();
-        CreateMap<CustomPropertyProjectionDirtyScope, DTOs.CustomPropertyProjection.ProjectionDirtyScopeDto>();
-        CreateMap<EventCustomPropertyProjection, DTOs.CustomPropertyProjection.EventCustomPropertyProjectionDto>();
-        CreateMap<EventSessionCustomPropertyProjection, DTOs.CustomPropertyProjection.EventSessionCustomPropertyProjectionDto>();
     }
 }

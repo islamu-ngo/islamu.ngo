@@ -86,7 +86,7 @@
                         </div>
                         @if (_currentSection == "governance")
                         {
-                            <InstanceGovernanceSection Delegation="_delegation" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="general" />
+                            <InstanceGovernanceSection Delegation="_delegation" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="general" />
                             @if (IsSingleTenantMode)
                             {
                                 <MudDivider Class="my-6" />
@@ -114,7 +114,7 @@
                         }
                         else if (_currentSection == "modules")
                         {
-                            <InstanceModulesSection Model="_modules" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" IsSingleTenant="IsSingleTenantMode" />
+                            <InstanceModulesSection Model="_modules" OrganizationPolicy="_orgPolicy" IsSingleTenant="IsSingleTenantMode" />
                         }
                         else if (_currentSection == "storage")
                         {
@@ -183,7 +183,7 @@
                         }
                         else if (_currentSection == "advanced")
                         {
-                            <InstanceGovernanceSection Delegation="_delegation" EventPolicy="_eventPolicy" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="advanced" />
+                            <InstanceGovernanceSection Delegation="_delegation" OrganizationPolicy="_orgPolicy" RenderPolicy="_renderPolicy" Mcp="_mcp" DeploymentMode="@_deploymentMode" DisplayMode="advanced" />
                         }
                         else if (_currentSection == "access-tokens")
                         {
@@ -264,7 +264,6 @@
     // Sub-resource models
     private string _deploymentMode = "SingleTenant";
     private ModuleSettingsDto _modules = new();
-    private EventPolicyDto _eventPolicy = new();
     private OrganizationPolicyDto _orgPolicy = new();
     private BrandingSettingsDto _branding = new();
     private DomainSettingsDto _domain = new();
@@ -319,7 +318,6 @@
         // Load all sub-resources in parallel
         var deploymentTask = InstanceOnboardingService.GetDeploymentModeAsync();
         var modulesTask = InstanceOnboardingService.GetModuleSettingsAsync();
-        var eventTask = InstanceOnboardingService.GetEventPolicyAsync();
         var orgTask = InstanceOnboardingService.GetOrganizationPolicyAsync();
         var brandingTask = InstanceOnboardingService.GetBrandingSettingsAsync();
         var domainTask = InstanceOnboardingService.GetDomainSettingsAsync();
@@ -335,13 +333,12 @@
         var footerGovTask = InstanceOnboardingService.GetFooterGovernanceSettingsAsync();
         var tenantCountTask = InstanceOnboardingService.GetActiveTenantCountAsync();
 
-        await Task.WhenAll(deploymentTask, modulesTask, eventTask, orgTask, brandingTask,
+        await Task.WhenAll(deploymentTask, modulesTask, orgTask, brandingTask,
             domainTask, delegationTask, renderTask, aiAssistantTask, mcpTask, storageTask, smtpTask, authTask,
             authorizationTask, analyticsTask, footerGovTask, tenantCountTask);
 
         _deploymentMode = deploymentTask.Result.Mode?.ToString() ?? _deploymentMode;
         _modules = modulesTask.Result;
-        _eventPolicy = eventTask.Result;
         _orgPolicy = orgTask.Result;
         _branding = brandingTask.Result;
         _domain = domainTask.Result;
@@ -403,7 +400,6 @@
         {
             case "governance":
                 tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
-                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
                 tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
                 if (IsSingleTenantMode)
                 {
@@ -425,7 +421,6 @@
                 break;
             case "modules":
                 tasks.Add(InstanceOnboardingService.UpdateModuleSettingsAsync(_modules));
-                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
                 tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
                 break;
             case "storage":
@@ -441,10 +436,6 @@
                 tasks.Add(InstanceOnboardingService.UpdateTenantDelegationAsync(_delegation));
                 break;
             case "policies" when IsSingleTenantMode:
-                _eventPolicy.AllowUserSubmittedEvents = _tenantModel.AllowUserSubmittedEvents ?? _eventPolicy.AllowUserSubmittedEvents;
-                _eventPolicy.AllowOrganizationSubmittedEvents = _tenantModel.AllowOrganizationSubmittedEvents ?? _eventPolicy.AllowOrganizationSubmittedEvents;
-                _eventPolicy.AllowGroupSubmittedEvents = _tenantModel.AllowGroupSubmittedEvents ?? _eventPolicy.AllowGroupSubmittedEvents;
-                _eventPolicy.EventCardClickOpensDetailPage = _tenantModel.EventCardClickOpensDetailPage ?? _eventPolicy.EventCardClickOpensDetailPage;
                 _orgPolicy.RequireOrganizationVerification = _tenantModel.RequireOrganizationVerification ?? _orgPolicy.RequireOrganizationVerification;
                 _orgPolicy.AllowOrganizationSelfRegistration = _tenantModel.AllowOrganizationSelfRegistration ?? _orgPolicy.AllowOrganizationSelfRegistration;
                 _orgPolicy.AllowGroupSelfRegistration = _tenantModel.AllowGroupSelfRegistration ?? _orgPolicy.AllowGroupSelfRegistration;
@@ -459,7 +450,6 @@
                     return;
                 }
 
-                tasks.Add(InstanceOnboardingService.UpdateEventPolicyAsync(_eventPolicy));
                 tasks.Add(InstanceOnboardingService.UpdateOrganizationPolicyAsync(_orgPolicy));
                 break;
             case "announcement-bar" when IsSingleTenantMode:

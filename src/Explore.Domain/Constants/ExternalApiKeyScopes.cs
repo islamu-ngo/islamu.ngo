@@ -10,7 +10,6 @@ namespace Explore.Domain.Constants;
 public static class ExternalApiKeyScopes
 {
     // ===== Read Scopes =====
-    public const string EventsRead = "events:read";
     public const string OrganizationsRead = "organizations:read";
     public const string GroupsRead = "groups:read";
     public const string UsersRead = "users:read";
@@ -18,11 +17,9 @@ public static class ExternalApiKeyScopes
     public const string McpRead = "mcp:read";
 
     // ===== Write Scopes =====
-    public const string EventsWrite = "events:write";
     public const string OrganizationsWrite = "organizations:write";
     public const string GroupsWrite = "groups:write";
     public const string UsersWrite = "users:write";
-    public const string RegistrationsWrite = "registrations:write";
     public const string McpPropose = "mcp:propose";
 
     // ===== Management Scopes =====
@@ -37,17 +34,14 @@ public static class ExternalApiKeyScopes
     /// </summary>
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        EventsRead,
         OrganizationsRead,
         GroupsRead,
         UsersRead,
         LookupsRead,
         McpRead,
-        EventsWrite,
         OrganizationsWrite,
         GroupsWrite,
         UsersWrite,
-        RegistrationsWrite,
         McpPropose,
         ApiKeysManage,
         AdminTenant,

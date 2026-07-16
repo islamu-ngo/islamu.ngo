@@ -1,5 +1,5 @@
-// ABOUTME: Repository contract for the custom-property projection dirty-scope backlog.
-// ABOUTME: Inline writers upsert pending rows during rebuild contention; rebuild worker drains on completion.
+// ABOUTME: Repository contract for custom-property projection dirty-scope backlog.
+// ABOUTME: Idempotent upsert + pending scan + drain marking coordinate inline writers with rebuild workers.
 
 using Explore.Domain;
 using Explore.Domain.Enums;

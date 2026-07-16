@@ -49,10 +49,7 @@ public class DockLayoutArchitectureTests
             new Regex(@"width\s*:\s*calc\(\s*100%\s*\+", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)
         };
 
-        var knownLegacyCompensation = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Pages/Events/EventList.razor.css"
-        };
+        var knownLegacyCompensation = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var violations = new List<string>();
         var pagesRoot = Path.Combine(BlazorClientRoot, "Pages");

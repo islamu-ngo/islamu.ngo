@@ -1,5 +1,5 @@
 // ABOUTME: Implements the Anthropic-compatible chat provider adapter using Refit and platform contracts.
-// ABOUTME: Maps Anthropic Messages API responses into safe provider-neutral results with full tool calling support.
+// ABOUTME: Maps Anthropic Messages API text responses into safe provider-neutral results.
 
 using System.Diagnostics;
 using System.Net;
@@ -19,7 +19,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
 {
     public const string HttpClientName = "AnthropicCompatibleAiClient";
 
-    private const string CreateEventDraftToolName = "create_event_draft";
     private static readonly RefitSettings RefitSettings = new()
     {
         ContentSerializer = new SystemTextJsonContentSerializer(new JsonSerializerOptions(JsonSerializerDefaults.Web)
@@ -289,12 +288,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         payload = null;
         failure = null;
 
-        if (!TryBuildTools(request, out var tools))
-        {
-            failure = RecordFailure("invalid_action_schema", "AI action schema must be a valid JSON object.");
-            return false;
-        }
-
         if (!TryBuildMessages(request, out var messages, out failure))
         {
             return false;
@@ -307,7 +300,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
             System = string.IsNullOrWhiteSpace(request.SystemPrompt) ? null : request.SystemPrompt.Trim(),
             Messages = messages,
             Temperature = request.Options.Temperature,
-            Tools = tools.Count == 0 ? null : tools,
             ChatTemplateKwargs = CreateChatTemplateKwargs(settings, request)
         };
 
@@ -374,38 +366,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         }
 
         return false;
-    }
-
-    private bool TryBuildTools(AiChatPayload request, out IReadOnlyList<AnthropicApiTool> tools)
-    {
-        var builtTools = new List<AnthropicApiTool>();
-        if (!request.Options.ToolProposalsEnabled || request.ActionSchema is null)
-        {
-            tools = builtTools;
-            return true;
-        }
-
-        foreach (var kind in request.ActionSchema.AllowedKinds.Distinct())
-        {
-            if (kind != AiProposedActionKind.CreateEventDraft)
-            {
-                continue;
-            }
-
-            if (!TryCreateJsonSchema(request.ActionSchema.JsonSchema, out var schema))
-            {
-                tools = [];
-                return false;
-            }
-
-            builtTools.Add(new AnthropicApiTool(
-                CreateEventDraftToolName,
-                "Propose a draft event payload. The platform persists this as a proposal that still requires explicit user confirmation.",
-                schema!.Value));
-        }
-
-        tools = builtTools;
-        return true;
     }
 
     private bool TryBuildMessages(
@@ -492,26 +452,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         return AnthropicApiMessage.WithContentBlocks("user", blocks);
     }
 
-    private bool TryCreateJsonSchema(string schemaJson, out JsonElement? schema)
-    {
-        schema = null;
-        try
-        {
-            using var document = JsonDocument.Parse(schemaJson);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                return false;
-            }
-
-            schema = document.RootElement.Clone();
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
-
     private bool TryMapResponse(
         AnthropicMessageResponse providerResponse,
         string? providerRequestId,
@@ -532,50 +472,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         {
             failure = RecordFailure("invalid_response", "AI provider returned an empty response.");
             return false;
-        }
-
-        var toolUseBlocks = providerResponse.Content
-            .Where(b => string.Equals(b.Type, "tool_use", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        if (!request.Options.ToolProposalsEnabled && toolUseBlocks.Count > 0)
-        {
-            failure = RecordFailure(
-                "unexpected_tool_response",
-                "AI provider returned a tool response, but tool proposals were not enabled for this run.");
-            return false;
-        }
-
-        if (request.Options.ToolProposalsEnabled && toolUseBlocks.Count > 0)
-        {
-            if (!TryMapProposedActions(toolUseBlocks, out var proposedActions, out failure))
-            {
-                return false;
-            }
-
-            var textFromToolResponse = string.Join("\n", providerResponse.Content
-                .Where(b => string.Equals(b.Type, "text", StringComparison.OrdinalIgnoreCase))
-                .Select(b => b.Text ?? string.Empty)
-                .Where(t => !string.IsNullOrWhiteSpace(t)));
-
-            if (!AiStructuredOutputResponseMapper.TryMapAssistantMessage(
-                    request,
-                    string.IsNullOrWhiteSpace(textFromToolResponse) ? "Event draft proposed." : textFromToolResponse,
-                    out var toolAssistantMessage,
-                    out var toolStructuredFailure))
-            {
-                failure = RecordFailure(toolStructuredFailure!.Code, toolStructuredFailure.Message);
-                return false;
-            }
-
-            chatResponse = new AiChatResponse(
-                toolAssistantMessage,
-                proposedActions,
-                MapUsage(providerResponse.Usage),
-                providerRequestId,
-                providerResponse.StopReason);
-
-            return true;
         }
 
         var assistantText = string.Join("\n", providerResponse.Content
@@ -613,39 +509,6 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         usage?.InputTokens,
         usage?.OutputTokens,
         (usage?.InputTokens) + (usage?.OutputTokens));
-
-    private bool TryMapProposedActions(
-        IReadOnlyList<AnthropicApiContentBlock> toolUseBlocks,
-        out IReadOnlyList<AiProposedActionCandidate> proposedActions,
-        out AiChatProviderResult? failure)
-    {
-        proposedActions = [];
-        failure = null;
-
-        var actions = new List<AiProposedActionCandidate>();
-        foreach (var block in toolUseBlocks)
-        {
-            if (!string.Equals(block.Name, CreateEventDraftToolName, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (block.Input is null)
-            {
-                failure = RecordFailure("invalid_tool_arguments", "AI provider returned invalid action arguments.");
-                return false;
-            }
-
-            var payloadJson = block.Input.Value.GetRawText();
-            actions.Add(new AiProposedActionCandidate(
-                AiProposedActionKind.CreateEventDraft,
-                payloadJson,
-                "Create an event draft"));
-        }
-
-        proposedActions = actions;
-        return true;
-    }
 
     private static bool IsContentFiltered(string? stopReason) =>
         string.Equals(stopReason, "content_filtered", StringComparison.OrdinalIgnoreCase);
@@ -705,7 +568,7 @@ public class AnthropicCompatibleChatProvider : IAiChatProvider
         _metrics.RecordAiProviderProposedActions(
             _providerName,
             response.ProposedActions.Count,
-            "create_event_draft");
+            response.ProposedActions.Count == 0 ? "none" : "unknown");
         AiProviderTelemetry.MarkSuccess(telemetryActivity, response);
     }
 

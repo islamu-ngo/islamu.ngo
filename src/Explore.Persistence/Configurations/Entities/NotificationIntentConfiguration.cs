@@ -50,21 +50,6 @@ public sealed class NotificationIntentConfiguration : IEntityTypeConfiguration<N
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Event)
-            .WithMany()
-            .HasForeignKey(e => e.EventId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Report)
-            .WithMany()
-            .HasForeignKey(e => e.ReportId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.ReportDecision)
-            .WithMany()
-            .HasForeignKey(e => e.ReportDecisionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasIndex(e => new { e.TenantId, e.DeduplicationKey })
             .HasDatabaseName("ux_notification_intents_tenant_deduplication_key")
             .IsUnique()
@@ -165,16 +150,6 @@ public sealed class NotificationExternalDelegationConfiguration : IEntityTypeCon
         builder.HasOne(e => e.RecipientKind)
             .WithMany()
             .HasForeignKey(e => e.RecipientKindId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Report)
-            .WithMany()
-            .HasForeignKey(e => e.ReportId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.ReportDecision)
-            .WithMany()
-            .HasForeignKey(e => e.ReportDecisionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => new { e.TenantId, e.NotificationIntentId })

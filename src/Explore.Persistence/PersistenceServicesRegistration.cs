@@ -9,7 +9,6 @@ using Explore.Application.Contracts.Persistence;
 using Explore.Application.Contracts.Services;
 using Explore.Domain;
 using Explore.Persistence.Caching;
-using Explore.Persistence.Extensions;
 using Explore.Persistence.Repositories;
 using Explore.Persistence.Security;
 using Explore.Persistence.Services;
@@ -112,10 +111,6 @@ public static class PersistenceServicesRegistration
         services.AddScoped<IUnitOfWork, EfCoreUnitOfWork>();
         services.AddScoped<ISettingMutationLock, PostgresSettingMutationLock>();
 
-        services.AddScoped<IGenericRepository<EventReportDecision, Guid>, GenericRepository<EventReportDecision, Guid>>();
-        services.AddScoped<IGenericRepository<EventReportTarget, Guid>, GenericRepository<EventReportTarget, Guid>>();
-        services.AddScoped<IGenericRepository<EventReportEvidence, Guid>, GenericRepository<EventReportEvidence, Guid>>();
-        services.AddScoped<IGenericRepository<EventReportCase, Guid>, GenericRepository<EventReportCase, Guid>>();
         services.AddScoped<IGenericRepository<UserPii, Guid>, GenericRepository<UserPii, Guid>>();
         services.AddScoped<IGenericRepository<ActorPii, Guid>, GenericRepository<ActorPii, Guid>>();
 
@@ -128,19 +123,7 @@ public static class PersistenceServicesRegistration
 
         // Lookup Table Repositories
         services.AddScoped<IApprovalStatusRepository, ApprovalStatusRepository>();
-        services.AddScoped<IAudienceAgeRepository, AudienceAgeRepository>();
-        services.AddScoped<IAudienceGenderRepository, AudienceGenderRepository>();
-        services.AddScoped<IEventTypeRepository, EventTypeRepository>();
-        services.AddScoped<IEventStatusRepository, EventStatusRepository>();
-        services.AddScoped<IEventSessionStatusRepository, EventSessionStatusRepository>();
-        services.AddScoped<IEventFormatRepository, EventFormatRepository>();
         services.AddScoped<IVisibilityTypeRepository, VisibilityTypeRepository>();
-        services.AddScoped<IRegistrationModeRepository, RegistrationModeRepository>();
-        services.AddScoped<IEventRegistrationPolicyRepository, EventRegistrationPolicyRepository>();
-        services.AddScoped<IRegistrationScopeRepository, RegistrationScopeRepository>();
-        services.AddScoped<IEventSessionKindRepository, EventSessionKindRepository>();
-        services.AddScoped<IScheduleItemKindRepository, ScheduleItemKindRepository>();
-        services.AddScoped<IMadhabRepository, MadhabRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
         services.AddScoped<IOrganizationPositionRepository, OrganizationPositionRepository>();
         services.AddScoped<IGroupPositionRepository, GroupPositionRepository>();
@@ -193,54 +176,13 @@ public static class PersistenceServicesRegistration
         services.AddScoped<IGroupMemberRepository, GroupMemberRepository>();
         services.AddScoped<ICustomPropertyDefinitionRepository, CustomPropertyDefinitionRepository>();
 
-        // Event Repositories
-        services.AddScoped<IEventRepository, EventRepository>();
-        services.AddScoped<IEventHeavyRedactionRepository, EventHeavyRedactionRepository>();
-        services.AddScoped<IEventModerationRecordRepository, EventModerationRecordRepository>();
-        services.AddScoped<IEventReportRepository, EventReportRepository>();
-        services.AddScoped<IEventSessionRepository, EventSessionRepository>();
-        services.AddScoped<IEventSessionGroupRepository, EventSessionGroupRepository>();
-        services.AddScoped<IEventSessionGroupSessionRepository, EventSessionGroupSessionRepository>();
-        services.AddScoped<IEventSessionIslamicAspectRepository, EventSessionIslamicAspectRepository>();
-        services.AddScoped<IEventRegistrationRepository, EventRegistrationRepository>();
-        services.AddScoped<IEventRegistrationIntentRepository, EventRegistrationIntentRepository>();
-        services.AddScoped<IEventDayRepository, EventDayRepository>();
-        services.AddScoped<IEventAgendaItemRepository, EventAgendaItemRepository>();
-        services.AddScoped<IEventSessionAgendaItemRepository, EventSessionAgendaItemRepository>();
-        services.AddScoped<IEventSessionLanguageRepository, EventSessionLanguageRepository>();
-        services.AddScoped<IEventSessionSpeakerRepository, EventSessionSpeakerRepository>();
-
-        // Event Custom Property Repositories
-        services.AddScoped<IEventTemplateRepository, EventTemplateRepository>();
-        services.AddScoped<IEventCustomPropertyRepository, EventCustomPropertyRepository>();
-
-        // Event Session Custom Property Repositories
-        services.AddScoped<IEventSessionTemplateRepository, EventSessionTemplateRepository>();
-        services.AddScoped<IEventSessionCustomPropertyRepository, EventSessionCustomPropertyRepository>();
-
-        // Custom Property Projection Coordination
-        services.AddScoped<ICustomPropertyProjectionStatusRepository, CustomPropertyProjectionStatusRepository>();
-        services.AddScoped<ICustomPropertyProjectionDirtyScopeRepository, CustomPropertyProjectionDirtyScopeRepository>();
         services.AddScoped<ICustomPropertyQuotaResolver, Services.CustomPropertyQuotaResolver>();
-        services.AddScoped<IEventCustomPropertyProjectionUpdater, Projections.EventCustomPropertyProjectionUpdater>();
-        services.AddScoped<IEventSessionCustomPropertyProjectionUpdater, Projections.EventSessionCustomPropertyProjectionUpdater>();
-
-        // Custom Property Projection Query Repositories
-        services.AddScoped<IEventCustomPropertyProjectionRepository, EventCustomPropertyProjectionRepository>();
-        services.AddScoped<IEventSessionCustomPropertyProjectionRepository, EventSessionCustomPropertyProjectionRepository>();
-        services.AddScoped<IEventAggregateViewRepository, EventAggregateViewRepository>();
-        services.AddScoped<ICustomPropertyGovernanceRepository, CustomPropertyGovernanceRepository>();
-
-        // Event Aspect Repositories
-        services.AddScoped<IEventIslamicAspectRepository, EventIslamicAspectRepository>();
-        services.AddScoped<IEventTechAspectRepository, EventTechAspectRepository>();
-        services.AddScoped<IEventSeriesRepository, EventSeriesRepository>();
-        services.AddScoped<IEventContactShareConsentRepository, EventContactShareConsentRepository>();
-        services.AddScoped<IEventContactShareExportRepository, EventContactShareExportRepository>();
 
         // Location Repository
         services.AddScoped<ILocationRepository, LocationRepository>();
         services.AddScoped<ILocationRoomRepository, LocationRoomRepository>();
+        services.AddScoped<ICustomPropertyProjectionDirtyScopeRepository, CustomPropertyProjectionDirtyScopeRepository>();
+        services.AddScoped<ICustomPropertyProjectionStatusRepository, CustomPropertyProjectionStatusRepository>();
 
         // Storage Repository
         services.AddScoped<IStorageObjectRepository, StorageObjectRepository>();
@@ -254,8 +196,6 @@ public static class PersistenceServicesRegistration
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ICategoryTypeRepository, CategoryTypeRepository>();
         services.AddScoped<ICategoryTypeCategoriesRepository, CategoryTypeCategoriesRepository>();
-        services.AddScoped<IEventTagsRepository, EventTagsRepository>();
-        services.AddScoped<IEventCategoriesRepository, EventCategoriesRepository>();
 
         // ATProto/Federation Repositories
         services.AddScoped<IAtprotoRecordRepository, AtprotoRecordRepository>();
@@ -307,8 +247,6 @@ public static class PersistenceServicesRegistration
         // Authorization (RBAC) Repositories
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
-        services.AddScoped<IEventRoleAssignmentRepository, EventRoleAssignmentRepository>();
-        services.AddScoped<IEventAuthoritySnapshotService, Services.EventAuthoritySnapshotService>();
 
         // Configuration Audit Repositories
         services.AddScoped<IConfigurationChangeLogRepository, ConfigurationChangeLogRepository>();

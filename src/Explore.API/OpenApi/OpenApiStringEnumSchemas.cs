@@ -3,10 +3,8 @@
 
 using System.Text.Json.Nodes;
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.DTOs.CustomPropertyProjection;
 using Explore.Application.DTOs.ManagedProviderProvisioning;
 using Explore.Application.DTOs.Settings;
-using Explore.Application.Features.EventReporting.Models;
 using Explore.Application.Models;
 using Explore.Application.Models.PublicExperience;
 using Explore.Application.Onboarding;
@@ -26,16 +24,9 @@ internal static class OpenApiStringEnumSchemaCatalog
 {
     public static IReadOnlyCollection<Type> EnumTypes { get; } =
     [
-        typeof(CustomPropertyProjectionScopeType),
-        typeof(CustomPropertyProjectionState),
         typeof(CustomPropertyFilterOperator),
         typeof(DeclineBehavior),
         typeof(EntityTypeName),
-        typeof(EventReportDecisionKind),
-        typeof(EventReportProviderEvidenceMode),
-        typeof(EventReportPriority),
-        typeof(EventReportSeverityHint),
-        typeof(EventRoleAssignmentStatus),
         typeof(ExposureLevel),
         typeof(GenderSegregationMode),
         typeof(KeycloakBootstrapMode),

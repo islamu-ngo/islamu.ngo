@@ -3,7 +3,6 @@
 
 using Blazouter.Services;
 using Explore.Blazor.Client.Clients;
-using Explore.Blazor.Client.Components.Events;
 using Explore.Blazor.Client.Components.Forms;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Services;
@@ -16,7 +15,6 @@ namespace Explore.Blazor.Client.Pages.Organizations;
 public partial class OrganizationDetails
 {
     [Inject] protected IOrganizationService OrganizationService { get; set; } = null!;
-    [Inject] protected IEventService EventService { get; set; } = null!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = null!;
     [Inject] protected RouterStateService RouterState { get; set; } = null!;
     [Inject] protected ILogger<OrganizationDetails> Logger { get; set; } = null!;
@@ -31,23 +29,12 @@ public partial class OrganizationDetails
     private string? errorMessage;
     private string? successMessage;
 
-    private ICollection<EventListDto> _orgEvents = new List<EventListDto>();
-    private EventPreviewWorkspace? _eventPreviewWorkspace;
-
     private OrganizationProfileEditModel editModel = new();
     private AppearanceSettings _appearance = new();
 
     private EditContext _editContext = default!;
     private FormSubmitState _submitState = new();
     private ServerValidationErrorStore _errorStore = new();
-
-    private IEnumerable<EventListDto> UpcomingEvents =>
-        _orgEvents.Where(e => e.IsPast != true)
-                  .OrderBy(e => e.FirstSessionDate ?? DateTimeOffset.MaxValue);
-
-    private IEnumerable<EventListDto> PastEvents =>
-        _orgEvents.Where(e => e.IsPast == true)
-                  .OrderByDescending(e => e.FirstSessionDate ?? DateTimeOffset.MinValue);
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,7 +103,6 @@ public partial class OrganizationDetails
             {
                 Logger.LogDebug("Loaded organization: {OrganizationName}", organization.FullName);
                 CheckEditPermissions();
-                _orgEvents = await EventService.GetPublicEventsByOrganizationAsync(Id);
                 InitializeEditModel();
             }
             else
@@ -344,23 +330,4 @@ public partial class OrganizationDetails
         };
     }
 
-    private Task HandleEventSelected(EventListDto evt) =>
-        _eventPreviewWorkspace?.SelectEventAsync(evt) ?? Task.CompletedTask;
-
-    private void HandleEventEdit(EventListDto evt)
-    {
-        _eventPreviewWorkspace?.NavigateToEdit(evt);
-    }
-
-    private Task HandleEventDelete(EventListDto evt) =>
-        _eventPreviewWorkspace?.OpenDeleteDialogAsync(evt) ?? Task.CompletedTask;
-
-    private Task HandleEventShare(EventListDto evt) =>
-        _eventPreviewWorkspace?.ShareEventAsync(evt) ?? Task.CompletedTask;
-
-    private Task HandleEventDeleted(EventListDto evt)
-    {
-        _orgEvents = _orgEvents.Where(orgEvent => orgEvent.Id != evt.Id).ToList();
-        return Task.CompletedTask;
-    }
 }

@@ -1,10 +1,9 @@
-@* ABOUTME: Authenticated user profile page with identity, stats, posts, registrations, and reviews. *@
-@* ABOUTME: Reuses shared EventList cards and preview workspaces for user-owned and attended event lists. *@
+@* ABOUTME: Authenticated user profile page with identity, account details, and reviews. *@
+@* ABOUTME: Keeps profile settings and review history available without product-specific content feeds. *@
 @page "/my/profile"
 @using MudBlazor
 @using Explore.Blazor.Client.Services
 @using Explore.Blazor.Client.Clients
-@using Explore.Blazor.Client.Components.Events
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
@@ -77,10 +76,6 @@
 
                     <div class="d-flex align-center gap-4 mt-4 mb-4">
                         <div class="d-flex gap-1 align-center">
-                            <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">@EventsAttended</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">events attended</MudText>
-                        </div>
-                        <div class="d-flex gap-1 align-center">
                             <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">@ReviewsGiven</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary">reviews</MudText>
                         </div>
@@ -108,50 +103,6 @@
 
                 <!-- Tabs Section -->
                 <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-6 bg-transparent" Class="mt-6 bg-transparent" Color="Color.Transparent" SliderColor="Color.Primary">
-                    <MudTabPanel Text="Posts">
-                        <div class="org-profile__section">
-                            @if (IsLoading)
-                            {
-                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
-                            }
-                            else if (_posts.Any())
-                            {
-                                <EventPreviewWorkspace @ref="_eventPreviewWorkspace"
-                                                       NavigationEvents="_posts"
-                                                       OnEventDeleted="HandlePostDeleted">
-                                    <EventCardList Events="@_posts"
-                                                   SelectedEventId="@(_eventPreviewWorkspace?.SelectedEventId)"
-                                                   AriaLabel="Your posted events"
-                                                   OnEventSelected="HandleEventSelected"
-                                                   OnEditRequested="HandleEventEdit"
-                                                   OnDeleteRequested="HandleEventDelete"
-                                                   OnShareRequested="HandleEventShare" />
-                                </EventPreviewWorkspace>
-                            }
-                            else
-                            {
-                                <MudPaper Elevation="0" Class="pa-6 text-center border-solid border-1 mud-border-lines-default rounded-lg">
-                                    <MudIcon Icon="@Icons.Material.Outlined.EventBusy" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
-                                    <MudText Typo="Typo.body1" Color="Color.Secondary">No posts yet</MudText>
-                                </MudPaper>
-                            }
-                        </div>
-                    </MudTabPanel>
-                    
-                    <MudTabPanel Text="Registration">
-                        <ProfileEventSections IsLoading="@_isLoadingRegistrationEvents"
-                                              NavigationEvents="@RegistrationEvents"
-                                              UpcomingEvents="@_upcomingRegistrationEvents"
-                                              PastEventsByDate="@_pastRegistrationEventsByDate"
-                                              CssPrefix="org-profile"
-                                              UpcomingTitle="Upcoming Events"
-                                              PastTitle="Past Events"
-                                              UpcomingAriaLabel="Upcoming registered events"
-                                              PastAriaLabelPrefix="Past registered events on"
-                                              EmptyTitle="No registered events"
-                                              EmptyCopy="Events you register for will appear here." />
-                    </MudTabPanel>
-
                     <MudTabPanel Text="Reviews">
                         <div class="org-profile__section">
                             @if (MyReviews != null && MyReviews.Any())

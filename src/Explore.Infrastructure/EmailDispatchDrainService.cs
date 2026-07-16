@@ -645,29 +645,9 @@ public sealed class EmailDispatchDrainService(
         return string.IsNullOrWhiteSpace(body) ? footer : body + footer;
     }
 
-    private static string? ResolvePreferenceCategory(EmailDispatchKind kind) => kind switch
-    {
-        EmailDispatchKind.RegistrationConfirmation => NotificationPreferenceCategories.RegistrationConfirmations,
-        EmailDispatchKind.EventReminder => NotificationPreferenceCategories.EventReminders,
-        EmailDispatchKind.OrganizerNotification => NotificationPreferenceCategories.OrganizerAnnouncements,
-        EmailDispatchKind.RegistrationApproved
-            or EmailDispatchKind.RegistrationRejected
-            or EmailDispatchKind.WaitlistPromoted
-            or EmailDispatchKind.EventCancelled => NotificationPreferenceCategories.EventUpdates,
-        _ => null
-    };
+    private static string? ResolvePreferenceCategory(EmailDispatchKind kind) => null;
 
-    private static string? ResolveMatrixPreferenceCategory(EmailDispatchKind kind) => kind switch
-    {
-        EmailDispatchKind.RegistrationConfirmation
-            or EmailDispatchKind.RegistrationApproved
-            or EmailDispatchKind.RegistrationRejected
-            or EmailDispatchKind.WaitlistPromoted => NotificationPreferenceCategoryCodes.RegistrationStatus,
-        EmailDispatchKind.EventReminder
-            or EmailDispatchKind.EventCancelled
-            or EmailDispatchKind.OrganizerNotification => NotificationPreferenceCategoryCodes.EventUpdates,
-        _ => null
-    };
+    private static string? ResolveMatrixPreferenceCategory(EmailDispatchKind kind) => null;
 
     private static bool IsSettled(EmailDispatchStatus status)
     {

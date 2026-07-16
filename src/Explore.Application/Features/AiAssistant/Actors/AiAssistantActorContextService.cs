@@ -4,7 +4,6 @@
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.DTOs.Ai;
 using Explore.Domain;
-using Explore.Domain.Constants;
 using Explore.Domain.Enums;
 
 namespace Explore.Application.Features.AiAssistant.Actors;
@@ -36,15 +35,11 @@ public sealed class AiAssistantActorContextService(
 
         AddActorContext(contexts, seenActorIds, userActor, nameof(ActorTypeEnum.User));
 
-        var allowedOrganizationIds = (await organizationMemberRepository.GetOrganizationIdsWhereUserHasPermission(
-            userId,
-            PermissionCodes.EventCreate)).ToHashSet();
         var organizationMemberships = await organizationMemberRepository.GetMembershipsByUser(userId);
         foreach (var membership in organizationMemberships
-                     .Where(membership => membership.TenantId == tenantId
-                         && membership.Organization.ActorId is Guid
-                         && allowedOrganizationIds.Contains(membership.OrganizationId))
-                     .OrderBy(membership => membership.Organization.FullName, StringComparer.OrdinalIgnoreCase))
+                      .Where(membership => membership.TenantId == tenantId
+                          && membership.Organization.ActorId is Guid)
+                      .OrderBy(membership => membership.Organization.FullName, StringComparer.OrdinalIgnoreCase))
         {
             AddActorContext(
                 contexts,
@@ -54,15 +49,11 @@ public sealed class AiAssistantActorContextService(
                 membership.Organization.FullName);
         }
 
-        var allowedGroupIds = (await groupMemberRepository.GetGroupIdsWhereUserHasPermission(
-            userId,
-            PermissionCodes.EventCreate)).ToHashSet();
         var groupMemberships = await groupMemberRepository.GetMembershipsByUser(userId);
         foreach (var membership in groupMemberships
-                     .Where(membership => membership.TenantId == tenantId
-                         && membership.Group.ActorId is Guid
-                         && allowedGroupIds.Contains(membership.GroupId))
-                     .OrderBy(membership => membership.Group.FullName, StringComparer.OrdinalIgnoreCase))
+                      .Where(membership => membership.TenantId == tenantId
+                          && membership.Group.ActorId is Guid)
+                      .OrderBy(membership => membership.Group.FullName, StringComparer.OrdinalIgnoreCase))
         {
             AddActorContext(
                 contexts,

@@ -2,6 +2,7 @@
 // ABOUTME: Creates consumers and endpoints, then triggers a real failed delivery through generated contracts.
 
 using Explore.Blazor.Client.Clients;
+using Explore.Blazor.Client.E2ETests.Helpers;
 
 namespace Explore.Blazor.Client.E2ETests.Seeds;
 
@@ -30,7 +31,7 @@ public static class WebhookManagementScenarioSeed
             .First(candidate => string.Equals(candidate.Name, "webhook.test", StringComparison.OrdinalIgnoreCase));
         var eventTypeId = Required(eventType.Id, "webhook event type id");
 
-        var localConsumerId = EventApiScenario.SuccessfulId(
+        var localConsumerId = ApiResponseHelpers.SuccessfulId(
             await api.CreateWebhookConsumerAsync(new CreateWebhookConsumerRequestDto
             {
                 ConsumerKindId = SystemIntegrationConsumerKind,
@@ -38,7 +39,7 @@ public static class WebhookManagementScenarioSeed
                 Name = "Operations local bridge"
             }),
             "creating the local webhook consumer");
-        var dryRunConsumerId = EventApiScenario.SuccessfulId(
+        var dryRunConsumerId = ApiResponseHelpers.SuccessfulId(
             await api.CreateWebhookConsumerAsync(new CreateWebhookConsumerRequestDto
             {
                 ConsumerKindId = SystemIntegrationConsumerKind,
@@ -62,7 +63,7 @@ public static class WebhookManagementScenarioSeed
             "DryRun endpoint",
             eventTypeId);
 
-        EventApiScenario.EnsureSuccess(
+        ApiResponseHelpers.EnsureSuccess(
             await api.TestWebhookEndpointAsync(existingEndpointId),
             "triggering a real failed webhook delivery");
         var failedAttempt = await WaitForFailedAttemptAsync(api, existingEndpointId);
@@ -84,7 +85,7 @@ public static class WebhookManagementScenarioSeed
         string url,
         string description,
         Guid eventTypeId) =>
-        EventApiScenario.SuccessfulId(
+        ApiResponseHelpers.SuccessfulId(
             await api.CreateWebhookEndpointAsync(new CreateWebhookEndpointRequestDto
             {
                 ConsumerId = consumerId,

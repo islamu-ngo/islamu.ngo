@@ -1,5 +1,5 @@
-// ABOUTME: REST API controller for event category CRUD operations with HATEOAS support.
-// ABOUTME: Manages event categories used for discovery, filtering, and event classification.
+// ABOUTME: REST API controller for category CRUD operations with HATEOAS support.
+// ABOUTME: Manages categories used for discovery, filtering, and classification.
 
 using Asp.Versioning;
 using Explore.API.Attributes;
@@ -64,7 +64,7 @@ public class CategoryController : ControllerBase
     [EndpointClassification(EndpointClass.Public)]
     [HttpGet(Name = RouteNames.GetCategories)]
     [EndpointSummary("Get all Categories")]
-    [EndpointDescription("Retrieve a paginated list of all event categories. " +
+    [EndpointDescription("Retrieve a paginated list of all categories. " +
         "Default page size is 20, max is 100. " +
         "Response includes HATEOAS navigation links. " +
         "Send 'Prefer: return=minimal' header to strip links.")]
@@ -98,7 +98,7 @@ public class CategoryController : ControllerBase
     [HttpGet("{id:guid}", Name = RouteNames.GetCategoryById)]
     [EndpointSummary("Get Category Details")]
     [EndpointDescription("Get detailed information about a specific category. " +
-        "Response includes links to parent category, children, and events.")]
+        "Response includes links to parent and child categories.")]
     [ProducesResponseType(typeof(HalResource<CategoryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [OutputCache(PolicyName = "DetailData")]
@@ -121,7 +121,7 @@ public class CategoryController : ControllerBase
     [EndpointClassification(EndpointClass.Authenticated)]
     [HttpPost(Name = RouteNames.CreateCategory)]
     [EndpointSummary("Create Category")]
-    [EndpointDescription("Create a new event category. Categories can be nested with parent_id.")]
+    [EndpointDescription("Create a new category. Categories can be nested with parent_id.")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(BaseCommandResponse<Guid>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]

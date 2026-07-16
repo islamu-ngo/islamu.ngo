@@ -1,5 +1,5 @@
 // ABOUTME: HATEOAS link policies for custom-property governance report endpoints.
-// ABOUTME: Provides discovery links to the governance report and related projection admin actions.
+// ABOUTME: Provides discovery links for the custom-property governance report.
 
 using System.Security.Claims;
 using Explore.Application.Contracts.Hateoas;
@@ -10,17 +10,11 @@ namespace Explore.API.Hateoas.Policies;
 
 /// <summary>
 /// Link policy for CustomPropertyGovernanceRowDto collection items.
-/// Each row links to the projection status for the tenant.
+/// Rows are embedded in the governance report collection.
 /// </summary>
 public sealed class CustomPropertyGovernanceCollectionLinkPolicy : ICollectionLinkPolicy<CustomPropertyGovernanceRowDto>
 {
-    public IEnumerable<LinkDefinition> GetItemLinks(CustomPropertyGovernanceRowDto dto, ClaimsPrincipal? user)
-    {
-        yield return new LinkDefinition(
-            "projection-status",
-            RouteNames.GetCustomPropertyProjectionStatus,
-            new { tenantId = dto.TenantId });
-    }
+    public IEnumerable<LinkDefinition> GetItemLinks(CustomPropertyGovernanceRowDto dto, ClaimsPrincipal? user) => [];
 
     public IEnumerable<LinkDefinition> GetCollectionLinks(ClaimsPrincipal? user)
     {

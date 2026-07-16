@@ -7,7 +7,6 @@ public sealed class InstancePolicySet
 {
     public Guid Id { get; set; }
     public ModulePolicy Modules { get; set; } = new();
-    public EventPolicy Events { get; set; } = new();
     public OrganizationPolicy Organizations { get; set; } = new();
     public BrandingPolicy Branding { get; set; } = new();
     public DomainPolicy Domains { get; set; } = new();

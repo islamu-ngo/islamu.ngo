@@ -1,5 +1,5 @@
 // ABOUTME: API controller for visibility type lookup table (read-only enumeration).
-// ABOUTME: Provides visibility options (public, private, etc.) for events and organizations.
+// ABOUTME: Provides visibility options (public, private, etc.) for organizations and other resources.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -32,7 +32,7 @@ public class VisibilityTypeController : ControllerBase
     // GET: api/visibilitytype
     [HttpGet(Name = RouteNames.GetVisibilityTypes)]
     [EndpointSummary("Get all Visibility Types")]
-    [EndpointDescription("Retrieve a list of all event visibility types (Public, Private, Unlisted)")]
+    [EndpointDescription("Retrieve all visibility types (Public, Private, Unlisted)")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(List<VisibilityTypeListDto>), StatusCodes.Status200OK)]
     [OutputCache(PolicyName = "LookupData")]
@@ -45,7 +45,7 @@ public class VisibilityTypeController : ControllerBase
     // GET: api/visibilitytype/{id}
     [HttpGet("{id}", Name = RouteNames.GetVisibilityTypeById)]
     [EndpointSummary("Get Visibility Type by ID")]
-    [EndpointDescription("Retrieve details of a specific event visibility type")]
+    [EndpointDescription("Retrieve details of a specific visibility type")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(VisibilityTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

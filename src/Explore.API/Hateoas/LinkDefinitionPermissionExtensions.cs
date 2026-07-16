@@ -74,7 +74,7 @@ public static class LinkDefinitionPermissionExtensions
     /// </summary>
     /// <example>
     /// <code>
-    /// .RequirePermission(AuthorizationActions.Update, ResourceDescriptors.Event, dto)
+    /// .RequirePermission(AuthorizationActions.Update, ResourceDescriptors.Organization, dto)
     /// </code>
     /// </example>
     public static LinkDefinition RequirePermission<TResource>(

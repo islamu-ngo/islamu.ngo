@@ -1,4 +1,4 @@
-// ABOUTME: Persists optional managed-mode trust between one Event instance and one external Control Plane.
+// ABOUTME: Persists optional managed-mode trust between one application instance and one external Control Plane.
 // ABOUTME: Stores credential hashes and lifecycle metadata while plaintext remains in the secret subsystem.
 
 using Explore.Domain.Enums;

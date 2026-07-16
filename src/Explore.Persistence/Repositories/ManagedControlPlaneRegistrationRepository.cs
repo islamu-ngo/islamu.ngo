@@ -1,5 +1,5 @@
 // ABOUTME: Persists and authenticates the singleton optional managed Control Plane registration.
-// ABOUTME: Reads active inbound credential metadata without bypassing tenant-owned Event business data.
+// ABOUTME: Reads active inbound credential metadata without bypassing tenant-owned application data.
 
 using Explore.Application.Contracts.Persistence;
 using Explore.Domain;

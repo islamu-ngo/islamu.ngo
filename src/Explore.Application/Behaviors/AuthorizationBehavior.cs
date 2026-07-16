@@ -28,25 +28,19 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
 
     private readonly IAuthorizationProvider _authorizationProvider;
     private readonly ILogger<AuthorizationBehavior<TRequest, TResponse>> _logger;
-    private readonly IEventRepository? _eventRepository;
     private readonly IOrganizationMemberRepository? _organizationMemberRepository;
     private readonly IStorageObjectRepository? _storageObjectRepository;
-    private readonly IEventSessionRepository? _eventSessionRepository;
 
     public AuthorizationBehavior(
         IAuthorizationProvider authorizationProvider,
         ILogger<AuthorizationBehavior<TRequest, TResponse>> logger,
-        IEventRepository? eventRepository = null,
         IOrganizationMemberRepository? organizationMemberRepository = null,
-        IStorageObjectRepository? storageObjectRepository = null,
-        IEventSessionRepository? eventSessionRepository = null)
+        IStorageObjectRepository? storageObjectRepository = null)
     {
         _authorizationProvider = authorizationProvider;
         _logger = logger;
-        _eventRepository = eventRepository;
         _organizationMemberRepository = organizationMemberRepository;
         _storageObjectRepository = storageObjectRepository;
-        _eventSessionRepository = eventSessionRepository;
     }
 
     public async Task<TResponse> Handle(
@@ -114,115 +108,10 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
     {
         return resourceKind switch
         {
-            ResourceKinds.Event => await EnrichEventResourceAttributesAsync(resourceId, resourceAttributes, cancellationToken),
-            ResourceKinds.EventSession => await EnrichEventSessionResourceAttributesAsync(resourceId, resourceAttributes, cancellationToken),
             ResourceKinds.OrganizationMember => await EnrichOrganizationMemberResourceAttributesAsync(resourceId, resourceAttributes, cancellationToken),
             ResourceKinds.StorageObject => await EnrichStorageObjectResourceAttributesAsync(resourceId, resourceAttributes, cancellationToken),
-            ResourceKinds.CustomPropertyProjection => await EnrichCustomPropertyProjectionResourceAttributesAsync(resourceAttributes, cancellationToken),
             _ => resourceAttributes
         };
-    }
-
-    private async Task<IDictionary<string, object>?> EnrichCustomPropertyProjectionResourceAttributesAsync(
-        IDictionary<string, object>? resourceAttributes,
-        CancellationToken cancellationToken)
-    {
-        if (resourceAttributes is null || resourceAttributes.ContainsKey("tenantId"))
-            return resourceAttributes;
-
-        if (TryGetGuidAttribute(resourceAttributes, "eventId", out var eventId))
-        {
-            if (_eventRepository is null)
-                return resourceAttributes;
-
-            var eventEntity = await _eventRepository.GetEventWithDetails(eventId);
-            if (eventEntity is null)
-                return resourceAttributes;
-
-            var enriched = new Dictionary<string, object>(resourceAttributes);
-            AddIfMissing(enriched, "eventId", eventEntity.Id.ToString("D"));
-            AddIfMissing(enriched, "tenantId", eventEntity.TenantId.ToString("D"));
-            return enriched;
-        }
-
-        if (TryGetGuidAttribute(resourceAttributes, "eventSessionId", out var eventSessionId))
-        {
-            if (_eventSessionRepository is null)
-                return resourceAttributes;
-
-            var session = await _eventSessionRepository.GetSessionWithDetails(eventSessionId);
-            if (session is null)
-                return resourceAttributes;
-
-            var enriched = new Dictionary<string, object>(resourceAttributes);
-            AddIfMissing(enriched, "eventSessionId", session.Id.ToString("D"));
-            AddIfMissing(enriched, "eventId", session.EventId.ToString("D"));
-            AddIfMissing(enriched, "tenantId", session.TenantId.ToString("D"));
-            return enriched;
-        }
-
-        return resourceAttributes;
-    }
-
-    private async Task<IDictionary<string, object>?> EnrichEventResourceAttributesAsync(
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes,
-        CancellationToken cancellationToken)
-    {
-        if (_eventRepository is null ||
-            !Guid.TryParse(resourceId, out var eventId))
-        {
-            return resourceAttributes;
-        }
-
-        if (HasEventAuthorizationContext(resourceAttributes))
-            return resourceAttributes;
-
-        var eventEntity = await _eventRepository.GetEventWithDetails(eventId);
-        if (eventEntity is null)
-            return resourceAttributes;
-
-        var enriched = resourceAttributes is null
-            ? new Dictionary<string, object>()
-            : new Dictionary<string, object>(resourceAttributes);
-
-        AddIfMissing(enriched, "eventId", eventEntity.Id.ToString());
-        AddIfMissing(enriched, "tenantId", eventEntity.TenantId.ToString());
-        AddIfMissing(enriched, "actorId", eventEntity.ActorId.ToString());
-        AddIfMissing(enriched, "userId", eventEntity.Actor?.UserId);
-        AddIfMissing(enriched, "organizationId", eventEntity.Actor?.OrganizationId);
-        AddIfMissing(enriched, "groupId", eventEntity.Actor?.GroupId);
-
-        return enriched;
-    }
-
-    private async Task<IDictionary<string, object>?> EnrichEventSessionResourceAttributesAsync(
-        string resourceId,
-        IDictionary<string, object>? resourceAttributes,
-        CancellationToken cancellationToken)
-    {
-        if (_eventSessionRepository is null ||
-            !Guid.TryParse(resourceId, out var eventSessionId))
-        {
-            return resourceAttributes;
-        }
-
-        if (HasEventAuthorizationContext(resourceAttributes))
-            return resourceAttributes;
-
-        var session = await _eventSessionRepository.GetSessionWithDetails(eventSessionId);
-        if (session is null)
-            return resourceAttributes;
-
-        var enriched = resourceAttributes is null
-            ? new Dictionary<string, object>()
-            : new Dictionary<string, object>(resourceAttributes);
-
-        AddIfMissing(enriched, "eventSessionId", session.Id.ToString());
-        AddIfMissing(enriched, "eventId", session.EventId.ToString());
-        AddIfMissing(enriched, "tenantId", session.TenantId.ToString());
-
-        return enriched;
     }
 
     private async Task<IDictionary<string, object>?> EnrichStorageObjectResourceAttributesAsync(
@@ -286,11 +175,6 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
         return enriched;
     }
 
-    private static bool HasEventAuthorizationContext(IDictionary<string, object>? attributes) =>
-        attributes?.ContainsKey("eventId") == true &&
-        attributes.ContainsKey("tenantId") &&
-        (attributes.ContainsKey("organizationId") || attributes.ContainsKey("userId") || attributes.ContainsKey("groupId"));
-
     private static bool HasOrganizationMemberAuthorizationContext(IDictionary<string, object>? attributes) =>
         attributes?.ContainsKey("tenantId") == true &&
         attributes.ContainsKey("organizationId") &&
@@ -299,25 +183,6 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
     private static bool IsStorageObjectCollectionScope(IDictionary<string, object>? attributes) =>
         attributes?.TryGetValue("authorizationScope", out var scope) == true &&
         string.Equals(scope?.ToString(), "collection", StringComparison.Ordinal);
-
-    private static bool TryGetGuidAttribute(
-        IDictionary<string, object> attributes,
-        string attributeName,
-        out Guid value)
-    {
-        value = Guid.Empty;
-
-        if (!attributes.TryGetValue(attributeName, out var attributeValue))
-            return false;
-
-        if (attributeValue is Guid guidValue)
-        {
-            value = guidValue;
-            return true;
-        }
-
-        return attributeValue is string stringValue && Guid.TryParse(stringValue, out value);
-    }
 
     private static void AddIfMissing(IDictionary<string, object> attributes, string key, string? value)
     {

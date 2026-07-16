@@ -26,7 +26,7 @@ public class Notification : ITenantEntity, IAuditableEntity, ISoftDeletable
     public DateTime? ReadAt { get; set; }
 
     /// <summary>
-    /// Optional: the type of entity this notification relates to (e.g., Event, Organization).
+    /// Optional: the type of entity this notification relates to.
     /// </summary>
     [ForeignKey("NotificationEntityType")]
     public int? NotificationEntityTypeId { get; set; }

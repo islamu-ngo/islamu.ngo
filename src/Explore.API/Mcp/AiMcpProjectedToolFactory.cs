@@ -265,7 +265,7 @@ public sealed class AiMcpProjectedProposalTool : McpServerTool
     }
 
     private static string BuildDescription(AiToolDefinition definition)
-        => $"Propose {definition.DisplayName} through ISLAMU Event's confirmation workflow. " +
+        => $"Propose {definition.DisplayName} through ISLAMU's confirmation workflow. " +
             "This MCP tool only persists a proposed action; it never directly creates, updates, publishes, or deletes domain data.";
 
     private static JsonElement BuildInputSchema(AiToolDefinition definition)

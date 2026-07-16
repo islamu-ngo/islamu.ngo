@@ -7,7 +7,6 @@ using Explore.API.ExceptionHandling;
 using Explore.API.Extensions;
 using Explore.API.Hateoas;
 using Explore.API.Services;
-using Explore.Application.Telemetry;
 using Explore.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +23,6 @@ namespace Explore.API.Controllers;
 public sealed class IncomingWebhooksController(
     IIncomingWebhookIntakeService incomingWebhookIntakeService,
     IOptionsMonitor<WebhookOptions> webhookOptions,
-    BusinessMetrics metrics,
     ILogger<IncomingWebhooksController> logger) : ExploreControllerBase
 {
     [HttpPost("svix/operational", Name = RouteNames.IntegrationSvixOperationalCallback)]
@@ -49,7 +47,6 @@ public sealed class IncomingWebhooksController(
             cancellationToken);
         if (!incoming.Succeeded)
         {
-            metrics.RecordEventReportProviderCallback("svix", "failed", incoming.Code);
             logger.LogWarning(
                 "Svix operational webhook rejected with status {StatusCode} failure {FailureCategory}",
                 incoming.StatusCode,
@@ -67,7 +64,6 @@ public sealed class IncomingWebhooksController(
         var capture = await incomingWebhookIntakeService.CaptureAsync(incoming, cancellationToken);
         if (!capture.Succeeded)
         {
-            metrics.RecordEventReportProviderCallback("svix", "failed", capture.Code);
             return ApiProblemFactory.ToProblemResult(ApiProblemFactory.CreateProblem(
                 HttpContext,
                 capture.StatusCode,
@@ -77,10 +73,6 @@ public sealed class IncomingWebhooksController(
                 capture.Code));
         }
 
-        metrics.RecordEventReportProviderCallback(
-            "svix",
-            "succeeded",
-            "none");
         return Accepted();
     }
 

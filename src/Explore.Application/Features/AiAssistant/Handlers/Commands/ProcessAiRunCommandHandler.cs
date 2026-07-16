@@ -1,22 +1,17 @@
 // ABOUTME: Processes queued AI assistant runs outside the HTTP request path.
 // ABOUTME: Persists assistant text and proposal-only tool output while respecting Ask vs Build mode.
 
-using System.Globalization;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Infrastructure.Ai;
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.DTOs.Ai;
-using Explore.Application.DTOs.Event;
-using Explore.Application.Features.AiAssistant.Disclosure;
 using Explore.Application.Features.AiAssistant.Prompting;
 using Explore.Application.Features.AiAssistant.Requests.Commands;
 using Explore.Application.Features.AiAssistant.Tools;
-using Explore.Application.Features.Events.Requests.Queries;
 using Explore.Application.Models;
 using Explore.Application.Settings;
 using Explore.Application.Settings.Groups;
 using Explore.Domain.Ai;
-using Explore.Domain.Enums;
 using MediatR;
 
 namespace Explore.Application.Features.AiAssistant.Handlers.Commands;
@@ -25,25 +20,16 @@ public sealed class ProcessAiRunCommandHandler : IRequestHandler<ProcessAiRunCom
 {
     private readonly IAiConversationRepository _conversationRepository;
     private readonly IHierarchicalSettingsResolver _settingsResolver;
-    private readonly IMediator _mediator;
     private readonly AiPromptContextBuilder _promptContextBuilder;
     private readonly AiProviderResponseResolver _providerResponseResolver;
-    private readonly IAiContextGateway _contextGateway;
-    private readonly IAiProviderTrustResolver _providerTrustResolver;
 
     public ProcessAiRunCommandHandler(
         IAiConversationRepository conversationRepository,
         IHierarchicalSettingsResolver settingsResolver,
-        IAiChatProvider chatProvider,
-        IMediator mediator,
-        IAiContextGateway contextGateway,
-        IAiProviderTrustResolver providerTrustResolver)
+        IAiChatProvider chatProvider)
     {
         _conversationRepository = conversationRepository;
         _settingsResolver = settingsResolver;
-        _mediator = mediator;
-        _contextGateway = contextGateway;
-        _providerTrustResolver = providerTrustResolver;
         var toolRegistry = AiToolContractRegistry.CreateDefault();
         _promptContextBuilder = new AiPromptContextBuilder(new AiSystemPromptFactory(toolRegistry));
         _providerResponseResolver = new AiProviderResponseResolver(
@@ -99,10 +85,7 @@ public sealed class ProcessAiRunCommandHandler : IRequestHandler<ProcessAiRunCom
         run.Start(startedAt);
         await _conversationRepository.Update(conversation!);
 
-        var selectedReferences = await BuildSelectedReferenceContextAsync(
-            conversation!,
-            settings,
-            cancellationToken);
+        var selectedReferences = BuildSelectedReferenceContext(conversation!, settings);
         var providerPayload = _promptContextBuilder.Build(
             conversation!,
             settings,
@@ -261,12 +244,10 @@ public sealed class ProcessAiRunCommandHandler : IRequestHandler<ProcessAiRunCom
             : "The AI provider returned an empty response.";
     }
 
-    private async Task<IReadOnlyList<AiSelectedReferenceDto>> BuildSelectedReferenceContextAsync(
+    private static IReadOnlyList<AiSelectedReferenceDto> BuildSelectedReferenceContext(
         AiConversation conversation,
-        AiAssistantSettingGroup settings,
-        CancellationToken cancellationToken)
-    {
-        var selectedReferences = conversation.References
+        AiAssistantSettingGroup settings)
+        => conversation.References
             .OrderBy(reference => reference.CreatedAt)
             .ThenBy(reference => reference.Id)
             .Take(settings.SelectedReferenceLimit)
@@ -276,121 +257,4 @@ public sealed class ProcessAiRunCommandHandler : IRequestHandler<ProcessAiRunCom
                 reference.DisplayName,
                 reference.Summary))
             .ToList();
-
-        if (selectedReferences.Count == 0)
-        {
-            return [];
-        }
-
-        var enrichedReferences = new List<AiSelectedReferenceDto>(selectedReferences.Count);
-        var providerTrustTier = _providerTrustResolver.Resolve(new AiProviderTrustResolutionContext(
-            EndpointUrl: settings.EndpointUrl,
-            TenantControlled: false,
-            PlatformDefault: true));
-        var viewerScope = conversation.ActorId != Guid.Empty
-            ? AiViewerScopeEnum.OrganizerTeam
-            : AiViewerScopeEnum.Public;
-        var grantedFieldKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var piiDisclosureEnabled = settings.PiiDisclosureEnabled;
-
-        foreach (AiSelectedReferenceDto reference in selectedReferences)
-        {
-            if (IsEventReference(reference))
-            {
-                var eventDetails = await _mediator.Send(
-                    new GetEventDetailsRequest { Id = reference.ReferenceId },
-                    cancellationToken);
-                if (eventDetails is not null)
-                {
-                    var sanitizationInput = new AiContextSanitizationInput(
-                        EntityName: "Event",
-                        Fields: BuildEventReferenceFieldMap(eventDetails),
-                        ProviderTrustTier: providerTrustTier,
-                        ViewerScope: viewerScope,
-                        GrantedFieldKeys: grantedFieldKeys,
-                        PiiDisclosureEnabled: piiDisclosureEnabled,
-                        MaxSensitivity: (AiContextSensitivityEnum)settings.MaxAiContextSensitivity);
-                    var envelope = _contextGateway.Sanitize(sanitizationInput);
-                    enrichedReferences.Add(new AiSelectedReferenceDto(
-                        AiReferenceKind.Event.ToString(),
-                        eventDetails.Id,
-                        eventDetails.Title,
-                        BuildEventReferenceSummaryFromEnvelope(envelope)));
-                    continue;
-                }
-            }
-
-            enrichedReferences.Add(reference);
-        }
-
-        return enrichedReferences;
-    }
-
-    private static bool IsEventReference(AiSelectedReferenceDto reference)
-        => string.Equals(reference.Kind, AiReferenceKind.Event.ToString(), StringComparison.OrdinalIgnoreCase);
-
-    private static IReadOnlyDictionary<string, object?> BuildEventReferenceFieldMap(EventDto eventDetails)
-    {
-        var fields = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["status"] = eventDetails.EventStatusFullName,
-            ["format"] = eventDetails.EventFormatFullName,
-            ["visibility"] = eventDetails.VisibilityTypeFullName,
-            ["host"] = eventDetails.ActorDisplayName
-        };
-
-        if (!string.IsNullOrWhiteSpace(eventDetails.Subtitle))
-        {
-            fields["subtitle"] = eventDetails.Subtitle.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(eventDetails.Description))
-        {
-            fields["description"] = eventDetails.Description.Trim();
-        }
-
-        if (eventDetails.FirstSessionDate.HasValue || eventDetails.LastSessionDate.HasValue)
-        {
-            var firstSessionDate = eventDetails.FirstSessionDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "unknown";
-            var lastSessionDate = eventDetails.LastSessionDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "unknown";
-            fields["dates"] = $"{firstSessionDate} to {lastSessionDate}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(eventDetails.Timezone))
-        {
-            fields["timezone"] = eventDetails.Timezone.Trim();
-        }
-
-        if (eventDetails.SessionCount.HasValue)
-        {
-            fields["sessions"] = eventDetails.SessionCount.Value.ToString(CultureInfo.InvariantCulture);
-        }
-
-        return fields;
-    }
-
-    private static string BuildEventReferenceSummaryFromEnvelope(AiContextSanitizedEnvelope envelope)
-    {
-        if (!envelope.Succeeded)
-        {
-            return envelope.FailureMessage ?? envelope.FailureCode ?? "context_unavailable";
-        }
-
-        var parts = new List<string>(envelope.DisclosedFields.Count);
-        foreach (var field in envelope.DisclosedFields)
-        {
-            var displayValue = field.Value switch
-            {
-                null => string.Empty,
-                string s => s,
-                _ => field.Value.ToString()
-            };
-            if (!string.IsNullOrWhiteSpace(displayValue))
-            {
-                parts.Add($"{field.Name}: {displayValue}");
-            }
-        }
-
-        return string.Join("; ", parts);
-    }
 }

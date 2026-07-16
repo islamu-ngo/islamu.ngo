@@ -1,4 +1,4 @@
-// ABOUTME: AutoMapper profile for all lookup/taxonomy entities (Location, Tag, Language, CategoryType, TagType, Madhab, EventStatus, etc.).
+// ABOUTME: AutoMapper profile for shared lookup and taxonomy entities.
 // ABOUTME: Split from monolithic MappingProfile.cs for domain-cohesion.
 
 using AutoMapper;
@@ -6,9 +6,6 @@ using Explore.Application.DTOs.ActorType;
 using Explore.Application.DTOs.CategoryType;
 using Explore.Application.DTOs.CategoryTypeCategories;
 using Explore.Application.DTOs.DidCustodyType;
-using Explore.Application.DTOs.EventFormat;
-using Explore.Application.DTOs.EventSessionStatus;
-using Explore.Application.DTOs.EventStatus;
 using Explore.Application.DTOs.FileType;
 using Explore.Application.DTOs.Language;
 using Explore.Application.DTOs.Location;
@@ -79,15 +76,6 @@ public class LookupMappingProfile : Profile
 
         CreateMap<Madhab, MadhabDto>().ReverseMap();
         CreateMap<Madhab, MadhabListDto>().ReverseMap();
-
-        CreateMap<Domain.EventStatus, EventStatusDto>().ReverseMap();
-        CreateMap<Domain.EventStatus, EventStatusListDto>().ReverseMap();
-
-        CreateMap<Domain.EventSessionStatus, EventSessionStatusDto>().ReverseMap();
-        CreateMap<Domain.EventSessionStatus, EventSessionStatusListDto>().ReverseMap();
-
-        CreateMap<EventFormat, EventFormatDto>().ReverseMap();
-        CreateMap<EventFormat, EventFormatListDto>().ReverseMap();
 
         CreateMap<VisibilityType, VisibilityTypeDto>().ReverseMap();
         CreateMap<VisibilityType, VisibilityTypeListDto>().ReverseMap();

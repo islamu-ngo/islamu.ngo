@@ -117,8 +117,7 @@ public static class AuthenticationScenarios
             .WithDefaultTenant()
             .WithRole(AuthenticationTestConstants.OrganizationOwnerRole)
             .WithOrganizationClaim(organizationId, "Owner")
-            .WithPolicy(AuthenticationTestConstants.ManageOrganizationPolicy)
-            .WithPolicy(AuthenticationTestConstants.CreateEventPolicy);
+            .WithPolicy(AuthenticationTestConstants.ManageOrganizationPolicy);
     }
 
     /// <summary>
@@ -136,8 +135,7 @@ public static class AuthenticationScenarios
             .WithUser(userId ?? Guid.NewGuid(), "Org Admin")
             .WithDefaultTenant()
             .WithRole(AuthenticationTestConstants.OrganizationAdminRole)
-            .WithOrganizationClaim(organizationId, "Admin")
-            .WithPolicy(AuthenticationTestConstants.CreateEventPolicy);
+            .WithOrganizationClaim(organizationId, "Admin");
     }
 
     /// <summary>
@@ -177,29 +175,6 @@ public static class AuthenticationScenarios
             .WithRoles(AuthenticationTestConstants.AdminRole, AuthenticationTestConstants.UserRole)
             .WithPolicy(AuthenticationTestConstants.AdminPolicy)
             .WithPolicy(AuthenticationTestConstants.ContentModerationPolicy);
-    }
-
-    #endregion
-
-    #region Event Scenarios
-
-    /// <summary>
-    /// Creates an event organizer scenario.
-    /// Event organizers can create and manage events.
-    /// </summary>
-    /// <param name="organizationId">Organization for which the user organizes events</param>
-    /// <param name="userId">Optional custom user ID</param>
-    /// <returns>Builder configured for event organizer</returns>
-    public static AuthenticationTestBuilder EventOrganizer(
-        Guid organizationId,
-        Guid? userId = null)
-    {
-        return new AuthenticationTestBuilder()
-            .WithUser(userId ?? Guid.NewGuid(), "Event Organizer")
-            .WithDefaultTenant()
-            .WithRoles(AuthenticationTestConstants.EventOrganizerRole, AuthenticationTestConstants.UserRole)
-            .WithOrganizationClaim(organizationId, "Organizer")
-            .WithPolicy(AuthenticationTestConstants.CreateEventPolicy);
     }
 
     #endregion

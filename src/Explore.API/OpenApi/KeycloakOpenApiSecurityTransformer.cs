@@ -1,5 +1,5 @@
 // ABOUTME: Native OpenAPI document transformer that mirrors Swashbuckle Keycloak OAuth2 metadata.
-// ABOUTME: Keeps /openapi/event-api.json security components aligned with the transitional Swagger baseline.
+// ABOUTME: Keeps /openapi/v1.json security components aligned with the transitional Swagger baseline.
 
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;

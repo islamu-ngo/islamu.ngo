@@ -26,14 +26,6 @@ public class TenantPolicySetConfiguration : IEntityTypeConfiguration<TenantPolic
 
         builder.HasIndex(x => x.TenantId).IsUnique();
 
-        builder.OwnsOne(x => x.Events, events =>
-        {
-            ConfigureSlot(events, e => e.AllowUserSubmittedEvents);
-            ConfigureSlot(events, e => e.AllowOrganizationSubmittedEvents);
-            ConfigureSlot(events, e => e.AllowGroupSubmittedEvents);
-            ConfigureSlot(events, e => e.EventCardClickOpensDetailPage);
-        });
-
         builder.OwnsOne(x => x.Organizations, orgs =>
         {
             ConfigureSlot(orgs, o => o.RequireVerification);

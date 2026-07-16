@@ -34,7 +34,7 @@ public class Permission : IAuditableEntity
     public required string MasterCode { get; set; }
 
     /// <summary>
-    /// Human-readable display name (e.g., "Edit Event Description").
+    /// Human-readable display name.
     /// </summary>
     public required string FullName { get; set; }
 
@@ -44,12 +44,12 @@ public class Permission : IAuditableEntity
     public string? Description { get; set; }
 
     /// <summary>
-    /// UI grouping category (e.g., "Events", "Organizations", "Settings").
+    /// UI grouping category.
     /// </summary>
     public required string GroupName { get; set; }
 
     /// <summary>
-    /// Which scope level can use this permission (Platform, Tenant, Organization, Group, or Event).
+    /// Which scope level can use this permission (Platform, Tenant, Organization, or Group).
     /// </summary>
     public int RoleScopeId { get; set; }
     public RoleScope RoleScope { get; set; } = null!;

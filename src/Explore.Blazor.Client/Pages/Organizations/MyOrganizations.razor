@@ -121,14 +121,6 @@
                                                EndIcon="@Icons.Material.Filled.ArrowForward">
                                         Details
                                     </MudButton>
-                                    <MudSpacer />
-                                    @if (CanCreateEvents(org))
-                                    {
-                                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                                                   Href="@($"/organizations/{org.Id}/events/create")">
-                                            Event
-                                        </MudButton>
-                                    }
                                 </MudCardActions>
                             </MudCard>
                         </MudItem>

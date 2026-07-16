@@ -30,8 +30,8 @@ namespace Explore.Blazor.Client.Tests.Common;
 /// <code>
 /// using var ctx = new BlazorTestContext();
 /// ctx.SetAuthenticatedUser(Guid.NewGuid(), "Test User");
-/// ctx.AddMockService&lt;IEventService&gt;(svc => svc.GetAllEventsAsync().Returns(events));
-/// var cut = ctx.Render&lt;EventList&gt;();
+/// ctx.AddMockService&lt;IOrganizationService&gt;(svc => svc.GetAllOrganizationsAsync().Returns(orgs));
+/// var cut = ctx.Render&lt;OrganizationList&gt;();
 /// </code>
 /// </para>
 /// </remarks>

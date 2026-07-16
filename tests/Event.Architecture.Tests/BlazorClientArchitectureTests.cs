@@ -20,11 +20,7 @@ public class BlazorClientArchitectureTests
     // Every entry represents a deliberate deferral. Shrink these aggressively.
     // --------------------------------------------------------------------------------------------
 
-    private static readonly HashSet<string> Known_IEventApiClient_ComponentExceptions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Keep legacy instance-admin section until a dedicated service wraps it.
-        "Pages/Admin/Instance/Components/InstanceTenantsSection.razor",
-    };
+    private static readonly HashSet<string> Known_IEventApiClient_ComponentExceptions = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly HashSet<string> Known_ConsoleWriteLine_Files = new(StringComparer.OrdinalIgnoreCase);
 
@@ -117,53 +113,7 @@ public class BlazorClientArchitectureTests
         "Handle", // DispatcherTimer / legacy event handlers
     };
 
-    private static readonly HashSet<string> Known_AsyncVoid_Exceptions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Timer + list callbacks that cannot be Task-returning due to signature constraints.
-        "Explore.Blazor.Client/Pages/Events/EventList.razor.cs:FlushPendingChanges",
-        "Explore.Blazor.Client/Pages/Events/EventEdit.razor.cs:RemoveSession",
-        "Explore.Blazor.Client/Pages/Events/CreateEvent.razor.cs:RemoveSession",
-    };
-
-    // ============================================================================================
-    // RULE 1.1 — Components must not inject IEventApiClient directly.
-    // ============================================================================================
-
-    [Test]
-    public async Task Rule_1_01_Components_MustNotInject_IEventApiClient_Directly()
-    {
-        if (BlazorClientRoot is null)
-        {
-            await Assert.That(true).IsTrue().Because("Blazor.Client source not found — skipping");
-            return;
-        }
-
-        var violations = new List<string>();
-        var razorDirs = new[] { "Pages", "Shared" };
-
-        foreach (var dir in razorDirs)
-        {
-            var searchPath = Path.Combine(BlazorClientRoot, dir);
-            if (!Directory.Exists(searchPath)) continue;
-
-            foreach (var file in Directory.EnumerateFiles(searchPath, "*.razor", SearchOption.AllDirectories))
-            {
-                if (IsGenerated(file)) continue;
-                var content = await File.ReadAllTextAsync(file);
-                if (Regex.IsMatch(content, @"@inject\s+IEventApiClient\b", RegexOptions.CultureInvariant))
-                {
-                    var relative = NormalisePath(Path.GetRelativePath(BlazorClientRoot, file));
-                    if (!IsKnownComponentException(relative, Known_IEventApiClient_ComponentExceptions))
-                    {
-                        violations.Add(relative);
-                    }
-                }
-            }
-        }
-
-        await Assert.That(violations).IsEmpty()
-            .Because($"Components must not inject IEventApiClient directly — use a typed service in Services/. Violations: {string.Join(", ", violations)}");
-    }
+    private static readonly HashSet<string> Known_AsyncVoid_Exceptions = new(StringComparer.OrdinalIgnoreCase);
 
     // ============================================================================================
     // RULE 1.2 — No Console.WriteLine in Blazor production code (use ILogger).

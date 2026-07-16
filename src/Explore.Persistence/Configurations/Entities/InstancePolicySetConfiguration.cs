@@ -23,33 +23,12 @@ public class InstancePolicySetConfiguration : IEntityTypeConfiguration<InstanceP
             .HasColumnName("xmin")
             .IsRowVersion();
 
-        ConfigureModules(builder);
-        ConfigureEvents(builder);
+        builder.Ignore("Modules");
         ConfigureOrganizations(builder);
         ConfigureBranding(builder);
         ConfigureDomains(builder);
         ConfigureTenantDelegation(builder);
         ConfigureRenderPolicy(builder);
-    }
-
-    private static void ConfigureModules(EntityTypeBuilder<InstancePolicySet> builder)
-    {
-        builder.OwnsOne(x => x.Modules, modules =>
-        {
-            ConfigurePolicySlot(modules, m => m.EnableIslamicModule);
-            ConfigurePolicySlot(modules, m => m.EnableTechModule);
-        });
-    }
-
-    private static void ConfigureEvents(EntityTypeBuilder<InstancePolicySet> builder)
-    {
-        builder.OwnsOne(x => x.Events, events =>
-        {
-            ConfigurePolicySlot(events, e => e.AllowUserSubmittedEvents);
-            ConfigurePolicySlot(events, e => e.AllowOrganizationSubmittedEvents);
-            ConfigurePolicySlot(events, e => e.AllowGroupSubmittedEvents);
-            ConfigurePolicySlot(events, e => e.EventCardClickOpensDetailPage);
-        });
     }
 
     private static void ConfigureOrganizations(EntityTypeBuilder<InstancePolicySet> builder)

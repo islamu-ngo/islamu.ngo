@@ -1,27 +1,19 @@
-// ABOUTME: Tenant-scoped rebuild status row for a named custom-property projection version.
-// ABOUTME: Tracks last rebuild window, checkpoint, row counters, and failure metadata for operator observability.
-
-using System.ComponentModel.DataAnnotations.Schema;
-using Explore.Domain.Enums;
-using Explore.Domain.Interfaces;
+// ABOUTME: EF Core entity for custom-property projection rebuild status.
+// ABOUTME: Composite-key entity with ProjectionName, Version, TenantId, State, rebuild counters, checkpoint, error.
 
 namespace Explore.Domain;
 
-public class CustomPropertyProjectionStatus : ITenantEntity, IConcurrencyAware
+public class CustomPropertyProjectionStatus : ITenantEntity
 {
-    public required string ProjectionName { get; set; }
+    public string ProjectionName { get; set; } = string.Empty;
     public int ProjectionVersion { get; set; }
-
-    [ForeignKey(nameof(Tenant))]
     public Guid TenantId { get; set; }
     public Tenant? Tenant { get; set; }
-
     public CustomPropertyProjectionState State { get; set; }
-    public DateTimeOffset? LastRebuildStartedAt { get; set; }
-    public DateTimeOffset? LastRebuildCompletedAt { get; set; }
+    public DateTime? LastRebuildStartedAt { get; set; }
+    public DateTime? LastRebuildCompletedAt { get; set; }
     public long RowsProcessed { get; set; }
     public long RowsFailed { get; set; }
     public string? LastCheckpoint { get; set; }
     public string? LastErrorMessage { get; set; }
-    public Guid ConcurrencyStamp { get; set; }
 }

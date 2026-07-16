@@ -8,7 +8,6 @@
 @using Explore.Blazor.Client.Layout
 @using Explore.Blazor.Client.Pages
 @using Explore.Blazor.Client.Pages.Auth
-@using Explore.Blazor.Client.Pages.Events
 @using Explore.Blazor.Client.Pages.Errors
 @using Explore.Blazor.Client.Pages.User
 @using Explore.Blazor.Client.Pages.Organizations
@@ -23,9 +22,6 @@
 @using Explore.Blazor.Client.Pages.Contact
 @using Explore.Blazor.Client.Pages.About
 @using Explore.Blazor.Client.Pages.Onboarding
-@using Explore.Blazor.Client.Pages.Events.Sessions
-@using Explore.Blazor.Client.Components.EventReporting
-@using Explore.Blazor.Client.Components.Moderation
 @using Explore.Blazor.Client.Providers
 @using Explore.Blazor.Client.Routing.Guards
 @using Microsoft.AspNetCore.Components.Authorization
@@ -59,7 +55,6 @@
             // Public routes - accessible to everyone (no guards)
             // NOTE: literal/specific routes MUST come before parameterized routes at the same depth
             new RouteConfig { Path = "/", Component = typeof(HomeStart), Transition = RouteTransition.Fade, EnableCache = false },
-            new RouteConfig { Path = "/events", Component = typeof(EventList), Transition = RouteTransition.Fade },
             new RouteConfig { Path = "/welcome", Component = typeof(LandingPageForNonUsers), Transition = RouteTransition.Fade },
             new RouteConfig { Path = "/home", Component = typeof(Home), Transition = RouteTransition.Fade },
             new RouteConfig { Path = "/errors/404", Component = typeof(NotFound), Transition = RouteTransition.Fade, EnableCache = false },
@@ -91,7 +86,6 @@
             // User authenticated routes
             new RouteConfig { Path = "/my/profile", Component = typeof(UserProfile), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
             new RouteConfig { Path = "/my/reviews", Component = typeof(MyReviews), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/my/reports", Component = typeof(MyReportsPage), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
             new RouteConfig { Path = "/settings", Component = typeof(Settings), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
             // Organization management routes
             new RouteConfig { Path = "/my/organizations", Component = typeof(MyOrganizations), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
@@ -105,18 +99,6 @@
 
             // Group routes
             new RouteConfig { Path = "/group/profile/:id", Component = typeof(GroupProfile), Transition = RouteTransition.Fade },
-
-            // Event management routes — specific literals before parameterized at same depth
-            new RouteConfig { Path = "/events/create", Component = typeof(CreateEvent), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/events/:eventId/edit", Component = typeof(EventEdit), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/events/:EventId/moderation/reports", Component = typeof(ModerationReportQueuePage), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/events/:eventId/sessions/create", Component = typeof(CreateSession), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/events/:eventId/sessions/:sessionId/edit", Component = typeof(EditSession), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/events/:eventId/sessions/:sessionId", Component = typeof(EventSessionDetail), Transition = RouteTransition.Fade },
-            new RouteConfig { Path = "/event-created/:eventId", Component = typeof(EventCreated), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            new RouteConfig { Path = "/organizations/:organizationId/events/create", Component = typeof(CreateEvent), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
-            // Parameterized event route last — catches /events/{slug}-{publicCode}
-            new RouteConfig { Path = "/events/:slugCode", Component = typeof(EventDetail), Transition = RouteTransition.Fade },
 
             // Legal & informational routes — public, no guards
             new RouteConfig { Path = "/about", Component = typeof(AboutUs), Transition = RouteTransition.Fade },

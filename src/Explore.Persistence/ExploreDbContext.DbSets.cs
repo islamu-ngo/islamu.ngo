@@ -1,5 +1,5 @@
 // ABOUTME: Partial class containing all DbSet property declarations for the Explore platform.
-// ABOUTME: Organized by domain area: Tenancy, Users, Auth, Actors, Organizations, Groups, Events, etc.
+// ABOUTME: Organized by retained platform areas including tenancy, identity, organizations, storage, and messaging.
 
 using Explore.Domain;
 using Explore.Domain.Ai;
@@ -7,7 +7,6 @@ using Explore.Domain.Federation;
 using Explore.Domain.Modules;
 using Explore.Domain.Secrets;
 using Explore.Domain.Settings.Documents;
-using Explore.Domain.Views;
 using Microsoft.EntityFrameworkCore;
 using StorageObject = Explore.Domain.StorageObject;
 
@@ -66,7 +65,6 @@ public partial class ExploreDbContext
     public DbSet<RoleScope> RoleScopes { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
-    public DbSet<EventRoleAssignment> EventRoleAssignments { get; set; }
 
     // ===== Actors (Federation/ATProto) =====
     public DbSet<Actor> Actors { get; set; }
@@ -94,69 +92,7 @@ public partial class ExploreDbContext
     public DbSet<CustomPropertyDefinition> CustomPropertyDefinitions { get; set; }
     public DbSet<CustomPropertyOption> CustomPropertyOptions { get; set; }
     public DbSet<CustomPropertyValue> CustomPropertyValues { get; set; }
-    public DbSet<EventTemplate> EventTemplates { get; set; }
-    public DbSet<EventTemplateCustomPropertyDefinition> EventTemplateCustomPropertyDefinitions { get; set; }
-    public DbSet<EventTemplateCustomPropertyOption> EventTemplateCustomPropertyOptions { get; set; }
-    public DbSet<EventCustomPropertyDefinition> EventCustomPropertyDefinitions { get; set; }
-    public DbSet<EventCustomPropertyOption> EventCustomPropertyOptions { get; set; }
-    public DbSet<EventCustomPropertyValue> EventCustomPropertyValues { get; set; }
-    public DbSet<EventCustomPropertyProjection> EventCustomPropertyProjections { get; set; }
-    public DbSet<EventWithSessionsView> EventsWithSessions => Set<EventWithSessionsView>();
-    public DbSet<CustomPropertyProjectionStatus> CustomPropertyProjectionStatuses { get; set; }
-    public DbSet<CustomPropertyProjectionDirtyScope> CustomPropertyProjectionDirtyScopes { get; set; }
-
-    // ===== Events =====
-    public DbSet<Event> Events { get; set; }
-    public DbSet<EventSession> EventSessions { get; set; }
-    public DbSet<EventSessionGroup> EventSessionGroups { get; set; }
-    public DbSet<EventSessionGroupSession> EventSessionGroupSessions { get; set; }
-    public DbSet<EventSessionIslamicAspect> EventSessionIslamicAspects { get; set; }
-    public DbSet<EventRegistration> EventRegistrations { get; set; }
-    public DbSet<EventModerationRecord> EventModerationRecords { get; set; }
-    public DbSet<EventReport> EventReports { get; set; }
-    public DbSet<EventReportTarget> EventReportTargets { get; set; }
-    public DbSet<EventReportEvidence> EventReportEvidenceItems { get; set; }
-    public DbSet<EventReportCase> EventReportCases { get; set; }
-    public DbSet<EventReportSignal> EventReportSignals { get; set; }
-    public DbSet<EventReportDecision> EventReportDecisions { get; set; }
-    public DbSet<EventReportExternalLink> EventReportExternalLinks { get; set; }
-    public DbSet<EventSessionLanguage> EventSessionLanguages { get; set; }
-    public DbSet<EventSessionSpeaker> EventSessionSpeakers { get; set; }
-    public DbSet<EventSessionAgendaItem> EventSessionAgendaItems { get; set; }
-    public DbSet<EventSessionTemplate> EventSessionTemplates { get; set; }
-    public DbSet<EventSessionTemplateCustomPropertyDefinition> EventSessionTemplateCustomPropertyDefinitions { get; set; }
-    public DbSet<EventSessionTemplateCustomPropertyOption> EventSessionTemplateCustomPropertyOptions { get; set; }
-    public DbSet<EventSessionCustomPropertyDefinition> EventSessionCustomPropertyDefinitions { get; set; }
-    public DbSet<EventSessionCustomPropertyOption> EventSessionCustomPropertyOptions { get; set; }
-    public DbSet<EventSessionCustomPropertyValue> EventSessionCustomPropertyValues { get; set; }
-    public DbSet<EventSessionCustomPropertyProjection> EventSessionCustomPropertyProjections { get; set; }
-    public DbSet<EventIslamicAspect> EventIslamicAspects { get; set; }
-    public DbSet<EventTechAspect> EventTechAspects { get; set; }
-
-    // ===== Event Scheduling Refactor (Phase 1 additive) =====
-    public DbSet<EventDay> EventDays { get; set; }
-    public DbSet<EventAgendaItem> EventAgendaItems { get; set; }
-    public DbSet<LocationRoom> LocationRooms { get; set; }
-    public DbSet<EventSessionCategory> EventSessionCategories { get; set; }
-    public DbSet<EventSessionTag> EventSessionTags { get; set; }
-    public DbSet<EventRegistrationIntent> EventRegistrationIntents { get; set; }
-
-    // ===== Event Lookup Tables =====
-    public DbSet<EventType> EventTypes { get; set; }
-    public DbSet<EventStatus> EventStatuses { get; set; }
-    public DbSet<EventSessionStatus> EventSessionStatuses { get; set; }
-    public DbSet<EventFormat> EventFormats { get; set; }
     public DbSet<VisibilityType> VisibilityTypes { get; set; }
-    public DbSet<RegistrationMode> RegistrationModes { get; set; }
-    public DbSet<EventSessionKind> EventSessionKinds { get; set; }
-    public DbSet<ScheduleItemKind> ScheduleItemKinds { get; set; }
-    public DbSet<EventRegistrationPolicy> EventRegistrationPolicies { get; set; }
-    public DbSet<RegistrationScope> RegistrationScopes { get; set; }
-
-    // ===== Event Metadata =====
-    public DbSet<AudienceAge> AudienceAges { get; set; }
-    public DbSet<AudienceGender> AudienceGenders { get; set; }
-    public DbSet<Madhab> Madhabs { get; set; }
     public DbSet<Language> Languages { get; set; }
     public DbSet<ApprovalStatus> ApprovalStatuses { get; set; }
     public DbSet<TenantStatus> TenantStatuses { get; set; }
@@ -172,12 +108,13 @@ public partial class ExploreDbContext
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TagType> TagTypes { get; set; }
     public DbSet<TagTypeTags> TagTypeTags { get; set; }
-    public DbSet<EventCategories> EventCategories { get; set; }
-    public DbSet<EventTags> EventTags { get; set; }
 
     // ===== Locations =====
     public DbSet<Location> Locations { get; set; }
     public DbSet<LocationPii> LocationPii { get; set; }
+    public DbSet<LocationRoom> LocationRooms { get; set; }
+    public DbSet<CustomPropertyProjectionDirtyScope> CustomPropertyProjectionDirtyScopes { get; set; }
+    public DbSet<CustomPropertyProjectionStatus> CustomPropertyProjectionStatuses { get; set; }
 
     // ===== Storage =====
     public DbSet<StorageObject> StorageObjects { get; set; }
@@ -255,14 +192,6 @@ public partial class ExploreDbContext
 
     // ===== Native Integration Sync Outbox =====
     public DbSet<IntegrationSyncOutbox> IntegrationSyncOutbox { get; set; }
-
-    // ===== Event Series =====
-    public DbSet<EventSeries> EventSeries { get; set; }
-
-    // ===== Contact Share Consents =====
-    public DbSet<EventContactShareConsent> EventContactShareConsents { get; set; }
-    public DbSet<EventContactShareExport> EventContactShareExports { get; set; }
-    public DbSet<EventContactShareExportItem> EventContactShareExportItems { get; set; }
 
     // ===== Idempotency =====
     public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }

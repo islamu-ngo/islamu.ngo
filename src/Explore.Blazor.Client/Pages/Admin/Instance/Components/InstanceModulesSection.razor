@@ -1,5 +1,5 @@
 @* ABOUTME: Renders module and policy default fields for the Instance Admin Settings sidebar. *@
-@* ABOUTME: Includes module toggles, user submission policy, and organization verification controls. *@
+@* ABOUTME: Includes module toggles and organization verification controls. *@
 
 @using MudBlazor
 @using Explore.Blazor.Client.Services
@@ -8,7 +8,7 @@
     <div class="settings-section-header">
         <MudText Typo="Typo.h5" Style="font-weight: 700;">Modules &amp; Policy Defaults</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
-            Enable or disable platform modules and configure default policies for event submissions and verification.
+            Enable or disable platform modules and configure organization verification defaults.
         </MudText>
     </div>
     <MudStack Spacing="3">
@@ -24,13 +24,6 @@
                    ValueChanged="@(value => Model.EnableTechModule = value)"
                    Color="Color.Primary">
             Enable Tech module
-        </MudSwitch>
-
-        <MudSwitch T="bool"
-                   Value="EventPolicy.AllowUserSubmittedEvents == true"
-                   ValueChanged="@(value => EventPolicy.AllowUserSubmittedEvents = value)"
-                   Color="Color.Primary">
-            Allow user-submitted events
         </MudSwitch>
 
         <MudSwitch T="bool"
@@ -55,9 +48,6 @@
 @code {
     [Parameter, EditorRequired]
     public ModuleSettingsDto Model { get; set; } = null!;
-
-    [Parameter, EditorRequired]
-    public EventPolicyDto EventPolicy { get; set; } = null!;
 
     [Parameter, EditorRequired]
     public OrganizationPolicyDto OrganizationPolicy { get; set; } = null!;

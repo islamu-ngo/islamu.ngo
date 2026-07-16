@@ -26,7 +26,7 @@ public sealed class AiAssistantMcpTools(IMediator mediator)
     public async Task<string> ProposeAiToolActionAsync(
         [Description("AI conversation identifier that will own the proposed action.")]
         Guid conversationId,
-        [Description("Registry tool name to validate, for example CreateEventDraft.")]
+        [Description("Registry tool name to validate, for example UpdateOrganization.")]
         string toolName,
         [Description("JSON object payload that matches the selected registry tool schema.")]
         string payloadJson,

@@ -1,5 +1,5 @@
 // ABOUTME: Defines custom OpenTelemetry business metrics for the platform.
-// ABOUTME: Tracks domain activity plus moderation, external API-key, email-dispatch, storage, notification fanout, and governance signals.
+// ABOUTME: Tracks domain activity plus external API-key, email-dispatch, storage, notification fanout, and governance signals.
 
 using System.Diagnostics.Metrics;
 using Explore.Application.Features.SupportAccess;
@@ -18,21 +18,12 @@ public sealed class BusinessMetrics : IDisposable
     public const string MeterName = "Explore.Business";
 
     private readonly Meter _meter;
-    private readonly Counter<long> _eventsCreated;
-    private readonly Counter<long> _eventsPublished;
-    private readonly Counter<long> _eventModerationActions;
-    private readonly Counter<long> _eventReportSubmissions;
-    private readonly Counter<long> _eventReportWorkflowActions;
-    private readonly Counter<long> _eventReportProviderSyncs;
-    private readonly Counter<long> _eventReportProviderCallbacks;
-    private readonly Counter<long> _registrationsCreated;
     private readonly Counter<long> _organizationsCreated;
     private readonly Counter<long> _authorizationDecisions;
     private readonly Counter<long> _supportAccessLifecycleEvents;
     private readonly Counter<long> _supportAccessRequestAudits;
     private readonly Counter<long> _supportAccessSessionValidationDenials;
     private readonly Counter<long> _supportAccessBoundaryDenials;
-    private readonly Counter<long> _eventRoleAssignmentChanged;
     private readonly Counter<long> _externalApiKeysCreated;
     private readonly Counter<long> _externalApiKeysRevoked;
     private readonly Counter<long> _externalApiKeyAuthenticationAttempts;
@@ -77,46 +68,6 @@ public sealed class BusinessMetrics : IDisposable
         _meter = meterFactory.Create(MeterName);
         var meter = _meter;
 
-        _eventsCreated = meter.CreateCounter<long>(
-            "explore.events.created",
-            unit: "{event}",
-            description: "Total number of events created");
-
-        _eventsPublished = meter.CreateCounter<long>(
-            "explore.events.published",
-            unit: "{event}",
-            description: "Total number of events published");
-
-        _eventModerationActions = meter.CreateCounter<long>(
-            "explore.events.moderation_actions",
-            unit: "{action}",
-            description: "Total event moderation lifecycle decisions by bounded action kind, outcome, and failure category");
-
-        _eventReportSubmissions = meter.CreateCounter<long>(
-            "explore.event_reports.submissions",
-            unit: "{submission}",
-            description: "Total event-report submission outcomes by bounded failure category");
-
-        _eventReportWorkflowActions = meter.CreateCounter<long>(
-            "explore.event_reports.workflow_actions",
-            unit: "{action}",
-            description: "Total event-report moderation workflow actions by bounded action, outcome, and failure category");
-
-        _eventReportProviderSyncs = meter.CreateCounter<long>(
-            "explore.event_reports.provider_syncs",
-            unit: "{sync}",
-            description: "Total event-report provider sync outcomes by bounded provider, outcome, and failure category");
-
-        _eventReportProviderCallbacks = meter.CreateCounter<long>(
-            "explore.event_reports.provider_callbacks",
-            unit: "{callback}",
-            description: "Total moderation provider callback outcomes by bounded provider, outcome, and failure category");
-
-        _registrationsCreated = meter.CreateCounter<long>(
-            "explore.registrations.created",
-            unit: "{registration}",
-            description: "Total number of event registrations created");
-
         _organizationsCreated = meter.CreateCounter<long>(
             "explore.organizations.created",
             unit: "{organization}",
@@ -146,11 +97,6 @@ public sealed class BusinessMetrics : IDisposable
             "explore.support_access.authorization_boundary_denials",
             unit: "{denial}",
             description: "Total support-access authorization boundary denials by bounded reason, mode, and action class");
-
-        _eventRoleAssignmentChanged = meter.CreateCounter<long>(
-            "event_role_assignment.changed",
-            unit: "{change}",
-            description: "Total event-role assignment lifecycle changes by operation and outcome");
 
         _externalApiKeysCreated = meter.CreateCounter<long>(
             "explore.external_api_keys.created",
@@ -348,88 +294,6 @@ public sealed class BusinessMetrics : IDisposable
         _meter.Dispose();
     }
 
-    public void RecordEventCreated(string? tenantId = null, string? eventType = null)
-    {
-        _eventsCreated.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"),
-            new KeyValuePair<string, object?>("event_type", eventType ?? "unknown"));
-    }
-
-    public void RecordEventPublished(string? tenantId = null)
-    {
-        _eventsPublished.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"));
-    }
-
-    public void RecordEventModerationAction(
-        string? tenantId,
-        string? actionKind,
-        string? outcome,
-        string? failureCategory = null,
-        bool? irreversible = null)
-    {
-        _eventModerationActions.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"),
-            new KeyValuePair<string, object?>("action_kind", NormalizeModerationActionKind(actionKind)),
-            new KeyValuePair<string, object?>("outcome", NormalizeModerationOutcome(outcome)),
-            new KeyValuePair<string, object?>("failure_category", NormalizeModerationFailureCategory(failureCategory)),
-            new KeyValuePair<string, object?>("irreversible", irreversible?.ToString().ToLowerInvariant() ?? "unknown"));
-    }
-
-    public void RecordEventReportSubmission(
-        string? tenantId,
-        string? outcome,
-        string? failureCategory = null)
-    {
-        _eventReportSubmissions.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"),
-            new KeyValuePair<string, object?>("outcome", NormalizeEventReportSubmissionOutcome(outcome)),
-            new KeyValuePair<string, object?>("failure_category", NormalizeEventReportSubmissionFailureCategory(failureCategory)));
-    }
-
-    public void RecordEventReportWorkflowAction(
-        string? tenantId,
-        string? action,
-        string? outcome,
-        string? failureCategory = null)
-    {
-        _eventReportWorkflowActions.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"),
-            new KeyValuePair<string, object?>("action", NormalizeEventReportWorkflowAction(action)),
-            new KeyValuePair<string, object?>("outcome", NormalizeEventReportOutcome(outcome)),
-            new KeyValuePair<string, object?>("failure_category", NormalizeEventReportFailureCategory(failureCategory)));
-    }
-
-    public void RecordEventReportProviderSync(
-        string? tenantId,
-        string? provider,
-        string? outcome,
-        string? failureCategory = null)
-    {
-        _eventReportProviderSyncs.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"),
-            new KeyValuePair<string, object?>("provider", NormalizeEventReportProvider(provider)),
-            new KeyValuePair<string, object?>("outcome", NormalizeEventReportOutcome(outcome)),
-            new KeyValuePair<string, object?>("failure_category", NormalizeEventReportFailureCategory(failureCategory)));
-    }
-
-    public void RecordEventReportProviderCallback(
-        string? provider,
-        string? outcome,
-        string? failureCategory = null)
-    {
-        _eventReportProviderCallbacks.Add(1,
-            new KeyValuePair<string, object?>("provider", NormalizeEventReportProvider(provider)),
-            new KeyValuePair<string, object?>("outcome", NormalizeEventReportOutcome(outcome)),
-            new KeyValuePair<string, object?>("failure_category", NormalizeEventReportFailureCategory(failureCategory)));
-    }
-
-    public void RecordRegistrationCreated(string? tenantId = null)
-    {
-        _registrationsCreated.Add(1,
-            new KeyValuePair<string, object?>("tenant_id", tenantId ?? "default"));
-    }
-
     public void RecordOrganizationCreated(string? tenantId = null)
     {
         _organizationsCreated.Add(1,
@@ -483,14 +347,6 @@ public sealed class BusinessMetrics : IDisposable
         _supportAccessSessionValidationDenials.Add(1,
             new KeyValuePair<string, object?>("reason", NormalizeSupportAccessFailureCategory(reason)),
             new KeyValuePair<string, object?>("mode", NormalizeSupportAccessMode(mode)));
-    }
-
-    public void RecordEventRoleAssignmentChanged(string operation, string outcome, string? roleCode = null)
-    {
-        _eventRoleAssignmentChanged.Add(1,
-            new KeyValuePair<string, object?>("operation", operation),
-            new KeyValuePair<string, object?>("outcome", outcome),
-            new KeyValuePair<string, object?>("role", roleCode ?? "unknown"));
     }
 
     public void RecordExternalApiKeyCreated(string? tenantId = null, string? ownerType = null)
@@ -744,7 +600,7 @@ public sealed class BusinessMetrics : IDisposable
 
         _aiProviderProposedActions.Add(count,
             new KeyValuePair<string, object?>("provider", NormalizeAiProvider(provider)),
-            new KeyValuePair<string, object?>("action_kind", NormalizeAiProposedActionKind(actionKind)));
+            new KeyValuePair<string, object?>("action_kind", "unknown"));
     }
 
     public void RecordStorageUploadSession(
@@ -1183,204 +1039,6 @@ public sealed class BusinessMetrics : IDisposable
             "input" => "input",
             "output" => "output",
             "total" => "total",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeAiProposedActionKind(string? actionKind)
-    {
-        return NormalizeTag(actionKind) switch
-        {
-            "create_event_draft" or "createeventdraft" => "create_event_draft",
-            "update_event_draft" or "updateeventdraft" => "update_event_draft",
-            "publish_event" or "publishevent" => "publish_event",
-            "delete_event" or "deleteevent" => "delete_event",
-            "upsert_event_islamic_aspect" or "upserteventislamicaspect" => "upsert_event_islamic_aspect",
-            "delete_event_islamic_aspect" or "deleteeventislamicaspect" => "delete_event_islamic_aspect",
-            "upsert_event_tech_aspect" or "upserteventtechaspect" => "upsert_event_tech_aspect",
-            "delete_event_tech_aspect" or "deleteeventtechaspect" => "delete_event_tech_aspect",
-            "create_event_session" or "createeventsession" => "create_event_session",
-            "update_event_session" or "updateeventsession" => "update_event_session",
-            "delete_event_session" or "deleteeventsession" => "delete_event_session",
-            "create_event_session_group" or "createeventsessiongroup" => "create_event_session_group",
-            "update_event_session_group" or "updateeventsessiongroup" => "update_event_session_group",
-            "delete_event_session_group" or "deleteeventsessiongroup" => "delete_event_session_group",
-            "assign_session_to_event_session_group" or "assignsessiontoeventsessiongroup" => "assign_session_to_event_session_group",
-            "unassign_session_from_event_session_group" or "unassignsessionfromeventsessiongroup" => "unassign_session_from_event_session_group",
-            "create_event_day" or "createeventday" => "create_event_day",
-            "update_event_day" or "updateeventday" => "update_event_day",
-            "delete_event_day" or "deleteeventday" => "delete_event_day",
-            "create_event_agenda_item" or "createeventagendaitem" => "create_event_agenda_item",
-            "update_event_agenda_item" or "updateeventagendaitem" => "update_event_agenda_item",
-            "delete_event_agenda_item" or "deleteeventagendaitem" => "delete_event_agenda_item",
-            "create_event_custom_property_definition" or "createeventcustompropertydefinition" => "create_event_custom_property_definition",
-            "update_event_custom_property_definition" or "updateeventcustompropertydefinition" => "update_event_custom_property_definition",
-            "delete_event_custom_property_definition" or "deleteeventcustompropertydefinition" => "delete_event_custom_property_definition",
-            "purge_event_custom_property_definition" or "purgeeventcustompropertydefinition" => "purge_event_custom_property_definition",
-            "set_event_custom_property_value" or "seteventcustompropertyvalue" => "set_event_custom_property_value",
-            "set_event_custom_property_multi_values" or "seteventcustompropertymultivalues" => "set_event_custom_property_multi_values",
-            "create_event_registration" or "createeventregistration" => "create_event_registration",
-            "update_event_registration" or "updateeventregistration" => "update_event_registration",
-            "delete_event_registration" or "deleteeventregistration" => "delete_event_registration",
-            "assign_event_team_role" or "assigneventteamrole" => "assign_event_team_role",
-            "revoke_event_team_role" or "revokeeventteamrole" => "revoke_event_team_role",
-            "create_event_template" or "createeventtemplate" => "create_event_template",
-            "update_event_template" or "updateeventtemplate" => "update_event_template",
-            "delete_event_template" or "deleteeventtemplate" => "delete_event_template",
-            "create_event_session_template" or "createeventsessiontemplate" => "create_event_session_template",
-            "update_event_session_template" or "updateeventsessiontemplate" => "update_event_session_template",
-            "delete_event_session_template" or "deleteeventsessiontemplate" => "delete_event_session_template",
-            "apply_event_template_sync" or "applyeventtemplatesync" => "apply_event_template_sync",
-            "apply_event_session_template_sync" or "applyeventsessiontemplatesync" => "apply_event_session_template_sync",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeModerationActionKind(string? actionKind)
-    {
-        return NormalizeTag(actionKind) switch
-        {
-            "light_moderated" or "lightmoderated" or "moderate-light" or "light" => "light_moderated",
-            "heavy_redacted" or "heavyredacted" or "moderate-heavy" or "heavy" => "heavy_redacted",
-            "unmoderated" or "unmoderate" => "unmoderated",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeModerationOutcome(string? outcome)
-    {
-        return NormalizeTag(outcome) switch
-        {
-            "succeeded" => "succeeded",
-            "failed" => "failed",
-            "idempotent" => "idempotent",
-            "pending_storage_deletion" => "pending_storage_deletion",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeModerationFailureCategory(string? failureCategory)
-    {
-        return NormalizeTag(failureCategory ?? "none") switch
-        {
-            "none" => "none",
-            "not_found" => "not_found",
-            "invalid_status" => "invalid_status",
-            "not_reversible" => "not_reversible",
-            "user_unresolved" => "user_unresolved",
-            "storage_deletion_pending" => "storage_deletion_pending",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportSubmissionOutcome(string? outcome)
-    {
-        return NormalizeEventReportOutcome(outcome) switch
-        {
-            "succeeded" => "succeeded",
-            "failed" => "failed",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportSubmissionFailureCategory(string? failureCategory)
-    {
-        return NormalizeEventReportFailureCategory(failureCategory) switch
-        {
-            "none" => "none",
-            "validation_failed" => "validation_failed",
-            "tenant_unresolved" => "tenant_unresolved",
-            "user_unresolved" => "user_unresolved",
-            "actor_unresolved" => "actor_unresolved",
-            "event_not_found" => "event_not_found",
-            "invalid_status" => "invalid_status",
-            "duplicate" => "duplicate",
-            FailureCodes.QuotaExceeded => FailureCodes.QuotaExceeded,
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportWorkflowAction(string? action)
-    {
-        return NormalizeTag(action) switch
-        {
-            "triage" or "triage_report" or "triagereport" => "triage",
-            "assign" or "assign_report" or "assignreport" => "assign",
-            "decide" or "decision" or "decide_report" or "decidereport" => "decide",
-            "execute" or "execute_decision" or "execute_report_decision" or "executereportdecision" => "execute",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportProvider(string? provider)
-    {
-        return NormalizeTag(provider) switch
-        {
-            "local" or "localonly" or "local_only" => "local",
-            "osprey" => "osprey",
-            "coop" => "coop",
-            "composite" => "composite",
-            "none" or "disabled" => "none",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportOutcome(string? outcome)
-    {
-        return NormalizeTag(outcome) switch
-        {
-            "succeeded" or "success" => "succeeded",
-            "failed" or "failure" => "failed",
-            "retryable_failure" or "retryable" => "retryable_failure",
-            "nonretryable_failure" or "non_retryable_failure" or "nonretryable" => "nonretryable_failure",
-            "disabled" => "disabled",
-            "skipped" => "skipped",
-            "idempotent" => "idempotent",
-            _ => "unknown"
-        };
-    }
-
-    private static string NormalizeEventReportFailureCategory(string? failureCategory)
-    {
-        return NormalizeTag(failureCategory ?? "none") switch
-        {
-            "none" => "none",
-            "validation_failed" => "validation_failed",
-            "tenant_unresolved" => "tenant_unresolved",
-            "user_unresolved" => "user_unresolved",
-            "actor_unresolved" => "actor_unresolved",
-            "event_not_found" => "event_not_found",
-            "event_mismatch" => "event_mismatch",
-            "report_not_found" => "report_not_found",
-            "case_not_found" => "case_not_found",
-            "case_concurrency_conflict" => "case_concurrency_conflict",
-            "case_invalid_status" => "case_invalid_status",
-            "report_invalid_status" => "report_invalid_status",
-            "moderator_unavailable" => "moderator_unavailable",
-            "assignee_unavailable" => "assignee_unavailable",
-            "assignment_mismatch" => "assignment_mismatch",
-            "duplicate_group_required" => "duplicate_group_required",
-            "decision_not_found" => "decision_not_found",
-            "decision_invalid" => "decision_invalid",
-            "decision_execution_failed" => "decision_execution_failed",
-            "duplicate" => "duplicate",
-            FailureCodes.QuotaExceeded => FailureCodes.QuotaExceeded,
-            "provider_disabled" => "provider_disabled",
-            "provider_sync_failed" => "provider_sync_failed",
-            "provider_timeout" => "provider_timeout",
-            "provider_unreachable" => "provider_unreachable",
-            "provider_auth_failed" => "provider_auth_failed",
-            "provider_invalid_request" => "provider_invalid_request",
-            "provider_conflict" => "provider_conflict",
-            "provider_rate_limited" => "provider_rate_limited",
-            "provider_transient_http" => "provider_transient_http",
-            "provider_invalid_response" => "provider_invalid_response",
-            "coop_timeout" => "provider_timeout",
-            "coop_webhook_signature_invalid" => "webhook_signature_invalid",
-            "coop_webhook_secret_missing" => "webhook_secret_missing",
-            "coop_webhook_body_too_large" => "webhook_body_too_large",
-            "coop_webhook_json_invalid" => "webhook_json_invalid",
-            "coop_webhook_body_required" => "webhook_body_required",
             _ => "unknown"
         };
     }

@@ -14,7 +14,7 @@ using MediatR;
 public class ResolveSettingGroupQuery : IRequest<SettingGroupResponseDto>
 {
     /// <summary>
-    /// Setting category (e.g., "EventList", "Appearance"). Must exist in SettingRegistry.
+    /// Setting category (e.g., "Branding", "Appearance"). Must exist in SettingRegistry.
     /// </summary>
     public required string Category { get; init; }
 

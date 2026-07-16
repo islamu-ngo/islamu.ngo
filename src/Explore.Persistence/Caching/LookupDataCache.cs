@@ -49,16 +49,9 @@ public class LookupDataCache : ILookupDataCache
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
 
-        await LoadLookupAsync<EventType>(dbContext, cancellationToken);
-        await LoadLookupAsync<EventFormat>(dbContext, cancellationToken);
-        await LoadLookupAsync<EventStatus>(dbContext, cancellationToken);
-        await LoadLookupAsync<AudienceAge>(dbContext, cancellationToken);
-        await LoadLookupAsync<AudienceGender>(dbContext, cancellationToken);
-        await LoadLookupAsync<Madhab>(dbContext, cancellationToken);
         await LoadLookupAsync<Language>(dbContext, cancellationToken);
         await LoadLookupAsync<VisibilityType>(dbContext, cancellationToken);
         await LoadLookupAsync<ApprovalStatus>(dbContext, cancellationToken);
-        await LoadLookupAsync<RegistrationMode>(dbContext, cancellationToken);
         await LoadLookupAsync<Role>(dbContext, cancellationToken);
         await LoadLookupAsync<OrganizationPosition>(dbContext, cancellationToken);
         await LoadLookupAsync<ActorType>(dbContext, cancellationToken);

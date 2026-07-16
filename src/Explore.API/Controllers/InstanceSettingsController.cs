@@ -96,34 +96,6 @@ public class InstanceSettingsController : ExploreControllerBase
         return HandleCommandResponse(response);
     }
 
-    [HttpGet("events", Name = RouteNames.GetInstanceEventPolicy)]
-    [EndpointSummary("Get Event Policy")]
-    [EndpointDescription("Returns instance event lifecycle policy settings.")]
-    [ProducesResponseType(typeof(EventPolicyDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<EventPolicyDto>> GetEventPolicy(CancellationToken cancellationToken = default)
-    {
-        if (!await IsInstanceAdminOrSetupAuthenticated(cancellationToken)) return this.ToForbiddenProblem(detail: "Instance administrator or active setup secret authority is required for this operation.");
-        var settings = await _mediator.Send(new GetInstanceGovernanceSettingsQuery(), cancellationToken);
-        return Ok(settings.EventPolicy);
-    }
-
-    [HttpPut("events", Name = RouteNames.UpdateInstanceEventPolicy)]
-    [EndpointSummary("Update Event Policy")]
-    [EndpointDescription("Updates instance event lifecycle policy. Requires instance administrator.")]
-    [ProducesResponseType(typeof(BaseCommandResponse<Guid>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<BaseCommandResponse<Guid>>> UpdateEventPolicy(
-        [FromBody] EventPolicyDto settings, CancellationToken cancellationToken = default)
-    {
-        var userId = await ResolveCurrentUserIdAsync(_mediator, cancellationToken);
-        if (!userId.HasValue) return this.ToAuthenticationRequiredProblem(detail: "The authenticated principal could not be resolved to an application user.");
-
-        var response = await _mediator.Send(new UpdateEventPolicyCommand { UserId = userId.Value, Settings = settings }, cancellationToken);
-        return HandleCommandResponse(response);
-    }
-
     [HttpGet("organizations", Name = RouteNames.GetInstanceOrganizationPolicy)]
     [EndpointSummary("Get Organization Policy")]
     [EndpointDescription("Returns instance organization registration policy settings.")]

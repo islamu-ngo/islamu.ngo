@@ -201,34 +201,11 @@ public static class AuthenticationExtensions
                     context.User,
                     ExternalApiKeyScopes.McpRead,
                     ExternalApiKeyScopes.McpPropose)))
-            .AddPolicy(McpAuthorizationPolicies.EventManagementRead, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireAssertion(context => ApiKeyCallerHasMcpReadAndEventReadAuthorityOrIsUser(context.User)))
             .AddPolicy(McpAuthorizationPolicies.Propose, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireAssertion(context => ApiKeyCallerHasAnyScopeOrIsUser(
                     context.User,
                     ExternalApiKeyScopes.McpPropose)))
-            .AddPolicy(ModerationIntegrationAuthorizationPolicies.OspreyCallback, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireAssertion(context => ApiKeyCallerPassesScopeGate(
-                    context.User,
-                    scopes => MachineScopeMapping.ScopesPermit(
-                        scopes,
-                        ResourceKinds.Event,
-                        AuthorizationActions.Events.ModerateLight))))
-            .AddPolicy(ModerationIntegrationAuthorizationPolicies.CoopCallback, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireAssertion(context => ApiKeyCallerPassesScopeGate(
-                    context.User,
-                    scopes => MachineScopeMapping.ScopesPermit(
-                                  scopes,
-                                  ResourceKinds.Event,
-                                  AuthorizationActions.Events.ModerateLight)
-                              || MachineScopeMapping.ScopesPermit(
-                                  scopes,
-                                  ResourceKinds.Event,
-                                  AuthorizationActions.Events.ModerateHeavy))))
             .AddPolicy(TickerQSchedulerOptions.InstanceAdminPolicyName, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireClaim(AdminClaimTypes.InstanceAdmin, "true"))
@@ -268,13 +245,6 @@ public static class AuthenticationExtensions
             ? ApiAuthenticationSchemeNames.ApiKey
             : JwtBearerDefaults.AuthenticationScheme;
     }
-
-    private static bool ApiKeyCallerHasMcpReadAndEventReadAuthorityOrIsUser(ClaimsPrincipal principal)
-        => ApiKeyCallerHasAnyScopeOrIsUser(principal, ExternalApiKeyScopes.McpRead)
-           && ApiKeyCallerPassesScopeGateOrIsUser(principal, scopes => MachineScopeMapping.ScopesPermit(
-               scopes,
-               ResourceKinds.Event,
-               AuthorizationActions.View));
 
     private static bool ApiKeyCallerHasAnyScopeOrIsUser(ClaimsPrincipal principal, params string[] scopes)
     {

@@ -2,13 +2,10 @@
 // ABOUTME: Uses PostgreSQL-backed scheduler state while keeping business outbox truth in Explore.Persistence.
 
 using Explore.API.Configuration;
-using Explore.API.Scheduling;
-using Explore.Application.Contracts.Infrastructure;
 using Explore.Secrets.Bootstrap;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using TickerQ.Dashboard.DependencyInjection;
 using TickerQ.DependencyInjection;
@@ -44,9 +41,6 @@ public static class TickerQSchedulerExtensions
         }
 
         var connectionString = ResolvePostgresConnectionString(configuration);
-
-        services.RemoveAll<IScheduledEmailDispatchTrigger>();
-        services.AddScoped<IScheduledEmailDispatchTrigger, TickerQScheduledEmailDispatchTrigger>();
 
         services.AddTickerQ<TimeTickerEntity, CronTickerEntity>(tickerOptions =>
         {

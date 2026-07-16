@@ -75,7 +75,7 @@ public class PdsSyncOutbox
     public DateTime? NextRetryAt { get; set; }
 
     /// <summary>
-    /// Source entity type (e.g., "Event", "EventSession") for debugging.
+    /// Source entity type for debugging.
     /// </summary>
     public string? SourceEntityType { get; set; }
 

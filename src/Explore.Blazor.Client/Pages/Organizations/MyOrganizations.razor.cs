@@ -94,8 +94,6 @@ public partial class MyOrganizations : ComponentBase
     /// <summary>
     /// Check if the server advertised event creation for this organization.
     /// </summary>
-    private static bool CanCreateEvents(OrganizationListDto org) => org.HasHalLink("create-event");
-
     /// <summary>
     /// Gets a consistent color based on organization name.
     /// </summary>

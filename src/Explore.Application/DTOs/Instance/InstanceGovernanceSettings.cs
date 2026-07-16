@@ -7,7 +7,6 @@ public sealed class InstanceGovernanceSettings
 {
     public required DeploymentModeDto DeploymentMode { get; init; }
     public required ModuleSettingsDto Modules { get; init; }
-    public required EventPolicyDto EventPolicy { get; init; }
     public required OrganizationPolicyDto OrganizationPolicy { get; init; }
     public required BrandingSettingsDto Branding { get; init; }
     public required DomainSettingsDto Domains { get; init; }

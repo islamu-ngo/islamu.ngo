@@ -10,7 +10,7 @@ public class PublicExperienceSettingsDto
     public Guid TenantId { get; set; }
     public Explore.Application.Models.PublicExperienceMode Mode { get; set; } = Explore.Application.Models.PublicExperienceMode.DiscoveryCentric;
     public string DeploymentMode { get; set; } = "SingleTenant";
-    public string PreferredHomePage { get; set; } = "EventList";
+    public string PreferredHomePage { get; set; } = "LandingPage";
     public string BrandDisplayName { get; set; } = string.Empty;
     public string BrandLogoUrl { get; set; } = string.Empty;
     public string BrandFaviconUrl { get; set; } = string.Empty;
@@ -20,12 +20,8 @@ public class PublicExperienceSettingsDto
     public string CustomDomain { get; set; } = string.Empty;
     public bool IsIslamicModuleEnabled { get; set; }
     public bool IsTechModuleEnabled { get; set; }
-    public bool AllowUserSubmittedEvents { get; set; } = true;
-    public bool AllowOrganizationSubmittedEvents { get; set; } = true;
-    public bool AllowGroupSubmittedEvents { get; set; } = true;
     public bool AllowOrganizationSelfRegistration { get; set; } = true;
     public bool AllowGroupSelfRegistration { get; set; } = true;
-    public bool EventCardClickOpensDetailPage { get; set; }
     public bool AnnouncementBarEnabled { get; set; }
     public string AnnouncementBarMessage { get; set; } = string.Empty;
     public string AnnouncementBarLinkText { get; set; } = string.Empty;

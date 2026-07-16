@@ -62,26 +62,17 @@ public static class LookupTableSeeder
         await SeedTenantPlanStatusesAsync(context, cancellationToken);
         await SeedTenantPlanAssignmentStatusesAsync(context, cancellationToken);
         await SeedTenantPlanApplicationStatusesAsync(context, cancellationToken);
-        await SeedAudienceAgesAsync(context, cancellationToken);
-        await SeedAudienceGendersAsync(context, cancellationToken);
         await SeedDidCustodyTypesAsync(context, cancellationToken);
-        await SeedEventFormatsAsync(context, cancellationToken);
-        await SeedEventStatusesAsync(context, cancellationToken);
-        await SeedEventSessionStatusesAsync(context, cancellationToken);
-        await SeedEventTypesAsync(context, cancellationToken);
         await SeedFileTypesAsync(context, cancellationToken);
         await SeedLanguagesAsync(context, cancellationToken);
-        await SeedMadhabsAsync(context, cancellationToken);
         await SeedModuleDefinitionsAsync(context, cancellationToken);
         await SeedOrganizationPositionsAsync(context, cancellationToken);
         await SeedGroupPositionsAsync(context, cancellationToken);
-        await SeedRegistrationModesAsync(context, cancellationToken);
         await SeedRolesAsync(context, cancellationToken);
         await SeedSystemSettingsAsync(context, cancellationToken);
         await SeedTagTypesAsync(context, cancellationToken);
         await SeedVisibilityTypesAsync(context, cancellationToken);
         await SeedPermissionsAsync(context, cancellationToken);
-        await SeedEventRolePermissionsAsync(context, cancellationToken);
         await SeedNotificationTypesAsync(context, cancellationToken);
         await SeedNotificationEntityTypesAsync(context, cancellationToken);
         await SeedDefaultFooterLinkGroupsAsync(context, cancellationToken);
@@ -92,13 +83,8 @@ public static class LookupTableSeeder
         await SeedAiMessageRolesAsync(context, cancellationToken);
         await SeedAiRunStatusesAsync(context, cancellationToken);
         await SeedAiReferenceKindsAsync(context, cancellationToken);
-        await SeedAiProposedActionKindsAsync(context, cancellationToken);
         await SeedAiProposedActionStatusesAsync(context, cancellationToken);
         await SeedAiProviderKindsAsync(context, cancellationToken);
-        await SeedEventSessionKindsAsync(context, cancellationToken);
-        await SeedScheduleItemKindsAsync(context, cancellationToken);
-        await SeedEventRegistrationPoliciesAsync(context, cancellationToken);
-        await SeedRegistrationScopesAsync(context, cancellationToken);
         await SeedUiThemePresetsAsync(context, cancellationToken);
     }
 
@@ -396,72 +382,8 @@ public static class LookupTableSeeder
         if (await context.Set<AiReferenceKindLookup>().AnyAsync(ct)) return;
 
         context.Set<AiReferenceKindLookup>().AddRange(
-            new AiReferenceKindLookup { Id = (int)AiReferenceKind.Event, MasterCode = "EVENT", FullName = "Event", Description = "Conversation references an event" },
-            new AiReferenceKindLookup { Id = (int)AiReferenceKind.EventSession, MasterCode = "EVENT_SESSION", FullName = "Event session", Description = "Conversation references an event session" },
             new AiReferenceKindLookup { Id = (int)AiReferenceKind.Actor, MasterCode = "ACTOR", FullName = "Actor", Description = "Conversation references an actor" },
             new AiReferenceKindLookup { Id = (int)AiReferenceKind.Organization, MasterCode = "ORGANIZATION", FullName = "Organization", Description = "Conversation references an organization" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedAiProposedActionKindsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        var requiredLookups = new[]
-        {
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventDraft, MasterCode = "CREATE_EVENT_DRAFT", FullName = "Create event draft", Description = "Create a draft event after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventDraft, MasterCode = "UPDATE_EVENT_DRAFT", FullName = "Update event draft", Description = "Propose draft event changes after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.PublishEvent, MasterCode = "PUBLISH_EVENT", FullName = "Publish event", Description = "Propose publishing an event after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEvent, MasterCode = "DELETE_EVENT", FullName = "Delete event", Description = "Propose deleting an event after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpsertEventIslamicAspect, MasterCode = "UPSERT_EVENT_ISLAMIC_ASPECT", FullName = "Upsert event Islamic aspect", Description = "Propose saving an event Islamic aspect after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventIslamicAspect, MasterCode = "DELETE_EVENT_ISLAMIC_ASPECT", FullName = "Delete event Islamic aspect", Description = "Propose deleting an event Islamic aspect after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpsertEventTechAspect, MasterCode = "UPSERT_EVENT_TECH_ASPECT", FullName = "Upsert event Tech aspect", Description = "Propose saving an event Tech aspect after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventTechAspect, MasterCode = "DELETE_EVENT_TECH_ASPECT", FullName = "Delete event Tech aspect", Description = "Propose deleting an event Tech aspect after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventSession, MasterCode = "CREATE_EVENT_SESSION", FullName = "Create event session", Description = "Propose creating an event session after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventSession, MasterCode = "UPDATE_EVENT_SESSION", FullName = "Update event session", Description = "Propose updating an event session after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventSession, MasterCode = "DELETE_EVENT_SESSION", FullName = "Delete event session", Description = "Propose deleting an event session after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventSessionGroup, MasterCode = "CREATE_EVENT_SESSION_GROUP", FullName = "Create event session group", Description = "Propose creating an event session group after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventSessionGroup, MasterCode = "UPDATE_EVENT_SESSION_GROUP", FullName = "Update event session group", Description = "Propose updating an event session group after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventSessionGroup, MasterCode = "DELETE_EVENT_SESSION_GROUP", FullName = "Delete event session group", Description = "Propose deleting an event session group after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.AssignSessionToEventSessionGroup, MasterCode = "ASSIGN_SESSION_TO_EVENT_SESSION_GROUP", FullName = "Assign session to event session group", Description = "Propose assigning a session to an event session group after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UnassignSessionFromEventSessionGroup, MasterCode = "UNASSIGN_SESSION_FROM_EVENT_SESSION_GROUP", FullName = "Unassign session from event session group", Description = "Propose unassigning a session from an event session group after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventDay, MasterCode = "CREATE_EVENT_DAY", FullName = "Create event day", Description = "Propose creating an event day after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventDay, MasterCode = "UPDATE_EVENT_DAY", FullName = "Update event day", Description = "Propose updating an event day after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventDay, MasterCode = "DELETE_EVENT_DAY", FullName = "Delete event day", Description = "Propose deleting an event day after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventAgendaItem, MasterCode = "CREATE_EVENT_AGENDA_ITEM", FullName = "Create event agenda item", Description = "Propose creating an event agenda item after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventAgendaItem, MasterCode = "UPDATE_EVENT_AGENDA_ITEM", FullName = "Update event agenda item", Description = "Propose updating an event agenda item after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventAgendaItem, MasterCode = "DELETE_EVENT_AGENDA_ITEM", FullName = "Delete event agenda item", Description = "Propose deleting an event agenda item after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventCustomPropertyDefinition, MasterCode = "CREATE_EVENT_CUSTOM_PROPERTY_DEFINITION", FullName = "Create event custom property definition", Description = "Propose creating an event custom property definition after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventCustomPropertyDefinition, MasterCode = "UPDATE_EVENT_CUSTOM_PROPERTY_DEFINITION", FullName = "Update event custom property definition", Description = "Propose updating an event custom property definition after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventCustomPropertyDefinition, MasterCode = "DELETE_EVENT_CUSTOM_PROPERTY_DEFINITION", FullName = "Delete event custom property definition", Description = "Propose deleting an event custom property definition after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.PurgeEventCustomPropertyDefinition, MasterCode = "PURGE_EVENT_CUSTOM_PROPERTY_DEFINITION", FullName = "Purge event custom property definition", Description = "Propose purging an event custom property definition after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.SetEventCustomPropertyValue, MasterCode = "SET_EVENT_CUSTOM_PROPERTY_VALUE", FullName = "Set event custom property value", Description = "Propose setting an event custom property value after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.SetEventCustomPropertyMultiValues, MasterCode = "SET_EVENT_CUSTOM_PROPERTY_MULTI_VALUES", FullName = "Set event custom property multi-values", Description = "Propose replacing event custom property multi-values after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventRegistration, MasterCode = "CREATE_EVENT_REGISTRATION", FullName = "Create event registration", Description = "Propose creating an event registration after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventRegistration, MasterCode = "UPDATE_EVENT_REGISTRATION", FullName = "Update event registration", Description = "Propose updating an event registration after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventRegistration, MasterCode = "DELETE_EVENT_REGISTRATION", FullName = "Delete event registration", Description = "Propose deleting an event registration after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.AssignEventTeamRole, MasterCode = "ASSIGN_EVENT_TEAM_ROLE", FullName = "Assign event team role", Description = "Propose assigning an event team role after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.RevokeEventTeamRole, MasterCode = "REVOKE_EVENT_TEAM_ROLE", FullName = "Revoke event team role", Description = "Propose revoking an event team role after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventTemplate, MasterCode = "CREATE_EVENT_TEMPLATE", FullName = "Create event template", Description = "Propose creating an event template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventTemplate, MasterCode = "UPDATE_EVENT_TEMPLATE", FullName = "Update event template", Description = "Propose updating an event template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventTemplate, MasterCode = "DELETE_EVENT_TEMPLATE", FullName = "Delete event template", Description = "Propose deleting an event template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.CreateEventSessionTemplate, MasterCode = "CREATE_EVENT_SESSION_TEMPLATE", FullName = "Create event session template", Description = "Propose creating an event session template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UpdateEventSessionTemplate, MasterCode = "UPDATE_EVENT_SESSION_TEMPLATE", FullName = "Update event session template", Description = "Propose updating an event session template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.DeleteEventSessionTemplate, MasterCode = "DELETE_EVENT_SESSION_TEMPLATE", FullName = "Delete event session template", Description = "Propose deleting an event session template after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.ApplyEventTemplateSync, MasterCode = "APPLY_EVENT_TEMPLATE_SYNC", FullName = "Apply event template sync", Description = "Propose applying event template sync changes after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.ApplyEventSessionTemplateSync, MasterCode = "APPLY_EVENT_SESSION_TEMPLATE_SYNC", FullName = "Apply event session template sync", Description = "Propose applying event session template sync changes after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.LightModerateEvent, MasterCode = "LIGHT_MODERATE_EVENT", FullName = "Light moderate event", Description = "Propose reversible event moderation after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.HeavyModerateEvent, MasterCode = "HEAVY_MODERATE_EVENT", FullName = "Heavy moderate event", Description = "Propose irreversible event heavy moderation after human confirmation" },
-            new AiProposedActionKindLookup { Id = (int)AiProposedActionKind.UnmoderateEvent, MasterCode = "UNMODERATE_EVENT", FullName = "Unmoderate event", Description = "Propose unmoderating a reversible event moderation after human confirmation" }
-        };
-
-        var existingIds = await context.Set<AiProposedActionKindLookup>()
-            .Select(lookup => lookup.Id)
-            .ToListAsync(ct);
-        var missingLookups = requiredLookups
-            .Where(lookup => !existingIds.Contains(lookup.Id))
-            .ToArray();
-        if (missingLookups.Length == 0) return;
-
-        context.Set<AiProposedActionKindLookup>().AddRange(missingLookups);
         await context.SaveChangesAsync(ct);
     }
 
@@ -523,67 +445,6 @@ public static class LookupTableSeeder
         }
     }
 
-    private static async Task SeedRegistrationScopesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<RegistrationScope>().AnyAsync(ct)) return;
-
-        context.Set<RegistrationScope>().AddRange(
-            new RegistrationScope { Id = (int)RegistrationScopeEnum.Event, MasterCode = "EVENT", FullName = "Whole event", Description = "User registered for the entire event" },
-            new RegistrationScope { Id = (int)RegistrationScopeEnum.Day, MasterCode = "DAY", FullName = "Event day", Description = "User registered for a single event day" },
-            new RegistrationScope { Id = (int)RegistrationScopeEnum.SessionSelection, MasterCode = "SESSION_SELECTION", FullName = "Session selection", Description = "User registered for a chosen set of sessions" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventRegistrationPoliciesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<EventRegistrationPolicy>().AnyAsync(ct)) return;
-
-        context.Set<EventRegistrationPolicy>().AddRange(
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.WholeEventOnly, MasterCode = "WHOLE_EVENT_ONLY", FullName = "Whole event only", Description = "Only whole-event registration is accepted" },
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.WholeDayOnly, MasterCode = "WHOLE_DAY_ONLY", FullName = "Whole day only", Description = "Only whole-day registration is accepted" },
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.SessionSelectionOnly, MasterCode = "SESSION_SELECTION_ONLY", FullName = "Session selection only", Description = "Only per-session selection is accepted" },
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.WholeEventOrDay, MasterCode = "WHOLE_EVENT_OR_DAY", FullName = "Whole event or day", Description = "Whole-event and whole-day registrations are accepted" },
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.WholeEventOrSession, MasterCode = "WHOLE_EVENT_OR_SESSION", FullName = "Whole event or session", Description = "Whole-event and per-session registrations are accepted" },
-            new EventRegistrationPolicy { Id = (int)EventRegistrationPolicyEnum.Flexible, MasterCode = "FLEXIBLE", FullName = "Flexible", Description = "All registration scopes are accepted" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedScheduleItemKindsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<ScheduleItemKind>().AnyAsync(ct)) return;
-
-        context.Set<ScheduleItemKind>().AddRange(
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Intro, MasterCode = "INTRO", FullName = "Intro", Description = "Opening remarks or welcome block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Talk, MasterCode = "TALK", FullName = "Talk", Description = "Main speaker content block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.QAndA, MasterCode = "Q_AND_A", FullName = "Q&A", Description = "Audience questions and answers block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Break, MasterCode = "BREAK", FullName = "Break", Description = "Refreshment or rest block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Prayer, MasterCode = "PRAYER", FullName = "Prayer", Description = "Scheduled prayer block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Outro, MasterCode = "OUTRO", FullName = "Outro", Description = "Closing remarks or farewell block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Logistics, MasterCode = "LOGISTICS", FullName = "Logistics", Description = "Registration, seating, or housekeeping block" },
-            new ScheduleItemKind { Id = (int)ScheduleItemKindEnum.Custom, MasterCode = "CUSTOM", FullName = "Custom", Description = "Tenant-defined block not covered by standard kinds" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventSessionKindsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<EventSessionKind>().AnyAsync(ct)) return;
-
-        context.Set<EventSessionKind>().AddRange(
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Talk, MasterCode = "TALK", FullName = "Talk", Description = "A standard presentation or talk" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Workshop, MasterCode = "WORKSHOP", FullName = "Workshop", Description = "An interactive hands-on session" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Panel, MasterCode = "PANEL", FullName = "Panel", Description = "A moderated discussion with multiple panelists" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Lecture, MasterCode = "LECTURE", FullName = "Lecture", Description = "A formal instructional presentation" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Class, MasterCode = "CLASS", FullName = "Class", Description = "A structured learning session" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Activity, MasterCode = "ACTIVITY", FullName = "Activity", Description = "An activity or participatory program item" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Keynote, MasterCode = "KEYNOTE", FullName = "Keynote", Description = "A featured keynote session" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.LightningTalk, MasterCode = "LIGHTNING_TALK", FullName = "Lightning talk", Description = "A short, focused presentation" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.BOF, MasterCode = "BOF", FullName = "Birds of a feather", Description = "An informal discussion around a shared topic" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Demo, MasterCode = "DEMO", FullName = "Demo", Description = "A demonstration or showcase" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.QAndA, MasterCode = "Q_AND_A", FullName = "Q&A", Description = "A question-and-answer session" },
-            new EventSessionKind { Id = (int)EventSessionKindEnum.Other, MasterCode = "OTHER", FullName = "Other", Description = "A program item not covered by standard kinds" });
-        await context.SaveChangesAsync(ct);
-    }
-
     private static async Task SeedActorTypesAsync(ExploreDbContext context, CancellationToken ct)
     {
         if (await context.Set<ActorType>().AnyAsync(ct)) return;
@@ -625,8 +486,7 @@ public static class LookupTableSeeder
             new RoleScope { Id = (int)RoleScopeEnum.Platform, MasterCode = "PLATFORM", FullName = "Platform", Description = "Platform-wide roles and permissions" },
             new RoleScope { Id = (int)RoleScopeEnum.Tenant, MasterCode = "TENANT", FullName = "Tenant", Description = "Tenant-scoped roles and permissions" },
             new RoleScope { Id = (int)RoleScopeEnum.Organization, MasterCode = "ORGANIZATION", FullName = "Organization", Description = "Organization-scoped roles and permissions" },
-            new RoleScope { Id = (int)RoleScopeEnum.Group, MasterCode = "GROUP", FullName = "Group", Description = "Group-scoped roles and permissions" },
-            new RoleScope { Id = (int)RoleScopeEnum.Event, MasterCode = "EVENT", FullName = "Event", Description = "Event-scoped roles and permissions" });
+            new RoleScope { Id = (int)RoleScopeEnum.Group, MasterCode = "GROUP", FullName = "Group", Description = "Group-scoped roles and permissions" });
         await context.SaveChangesAsync(ct);
     }
 
@@ -725,8 +585,6 @@ public static class LookupTableSeeder
             {
                 new() { Id = (int)NotificationCategoryEnum.IdentityLifecycle, MasterCode = "IDENTITY_LIFECYCLE", FullName = "Identity lifecycle", Description = "Credential-token lifecycle notifications owned by an account authority" },
                 new() { Id = (int)NotificationCategoryEnum.ProductLifecycle, MasterCode = "PRODUCT_LIFECYCLE", FullName = "Product lifecycle", Description = "ISLAMU product-domain lifecycle notifications" },
-                new() { Id = (int)NotificationCategoryEnum.EventLifecycle, MasterCode = "EVENT_LIFECYCLE", FullName = "Event lifecycle", Description = "Event publication, reminder, cancellation, and lifecycle notifications" },
-                new() { Id = (int)NotificationCategoryEnum.RegistrationLifecycle, MasterCode = "REGISTRATION_LIFECYCLE", FullName = "Registration lifecycle", Description = "Registration, waitlist, approval, and rejection notifications" },
                 new() { Id = (int)NotificationCategoryEnum.TrustSafetyReporting, MasterCode = "TRUST_SAFETY_REPORTING", FullName = "Trust and safety reporting", Description = "Report intake and reporter-facing trust and safety notifications" },
                 new() { Id = (int)NotificationCategoryEnum.TrustSafetyModeration, MasterCode = "TRUST_SAFETY_MODERATION", FullName = "Trust and safety moderation", Description = "Moderation decision and safety enforcement notifications" },
                 new() { Id = (int)NotificationCategoryEnum.ProviderInternal, MasterCode = "PROVIDER_INTERNAL", FullName = "Provider internal", Description = "External provider console or workflow notifications not sent as ISLAMU user-facing email" },
@@ -745,8 +603,6 @@ public static class LookupTableSeeder
             {
                 new() { Id = (int)NotificationPreferenceCategoryEnum.AccountSecurity, MasterCode = NotificationPreferenceCategoryCodes.AccountSecurity, FullName = "Account security", Description = "Credential, login, and account safety notifications", IsRequired = true, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 10 },
                 new() { Id = (int)NotificationPreferenceCategoryEnum.BillingLegal, MasterCode = NotificationPreferenceCategoryCodes.BillingLegal, FullName = "Billing and legal", Description = "Billing, receipt, compliance, and legal notices", IsRequired = true, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 20 },
-                new() { Id = (int)NotificationPreferenceCategoryEnum.RegistrationStatus, MasterCode = NotificationPreferenceCategoryCodes.RegistrationStatus, FullName = "Registration status", Description = "Registration, waitlist, approval, cancellation, and attendee status changes", IsRequired = false, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 30 },
-                new() { Id = (int)NotificationPreferenceCategoryEnum.EventUpdates, MasterCode = NotificationPreferenceCategoryCodes.EventUpdates, FullName = "Event updates", Description = "Event reminders, updates, cancellations, and organizer announcements", IsRequired = false, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 40 },
                 new() { Id = (int)NotificationPreferenceCategoryEnum.OrganizationUpdates, MasterCode = NotificationPreferenceCategoryCodes.OrganizationUpdates, FullName = "Organization updates", Description = "Organization-level announcements and membership updates", IsRequired = false, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 50 },
                 new() { Id = (int)NotificationPreferenceCategoryEnum.GroupUpdates, MasterCode = NotificationPreferenceCategoryCodes.GroupUpdates, FullName = "Group updates", Description = "Group-level announcements and membership updates", IsRequired = false, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 60 },
                 new() { Id = (int)NotificationPreferenceCategoryEnum.TrustSafety, MasterCode = NotificationPreferenceCategoryCodes.TrustSafety, FullName = "Trust and safety", Description = "Report, moderation, safety, and enforcement notices", IsRequired = true, DefaultEmailEnabled = true, DefaultInAppEnabled = true, DefaultPushEnabled = true, SortOrder = 70 },
@@ -763,7 +619,7 @@ public static class LookupTableSeeder
             context,
             new NotificationPreferenceChannel[]
             {
-                new() { Id = (int)NotificationPreferenceChannelEnum.Email, MasterCode = NotificationPreferenceChannelCodes.Email, FullName = "Email", Description = "Email delivery through ISLAMU Event email dispatch infrastructure", SortOrder = 10 },
+                new() { Id = (int)NotificationPreferenceChannelEnum.Email, MasterCode = NotificationPreferenceChannelCodes.Email, FullName = "Email", Description = "Email delivery through the durable dispatch infrastructure", SortOrder = 10 },
                 new() { Id = (int)NotificationPreferenceChannelEnum.InApp, MasterCode = NotificationPreferenceChannelCodes.InApp, FullName = "In-App", Description = "Durable in-app notification rows surfaced by the notification inbox", SortOrder = 20 },
                 new() { Id = (int)NotificationPreferenceChannelEnum.Push, MasterCode = NotificationPreferenceChannelCodes.Push, FullName = "Browser Push", Description = "Browser Web Push delivery through a user-owned subscription", SortOrder = 30 }
             },
@@ -777,7 +633,6 @@ public static class LookupTableSeeder
             context,
             new NotificationOwnershipType[]
             {
-                new() { Id = (int)NotificationOwnershipTypeEnum.IslamuEvent, MasterCode = "ISLAMU_EVENT", FullName = "ISLAMU Event", Description = "ISLAMU Event owns the notification decision, delivery audit, and retry lifecycle" },
                 new() { Id = (int)NotificationOwnershipTypeEnum.AccountAuthority, MasterCode = "ACCOUNT_AUTHORITY", FullName = "Account authority", Description = "The credential-token owner creates and verifies the lifecycle email" },
                 new() { Id = (int)NotificationOwnershipTypeEnum.ExternalWorkflowProvider, MasterCode = "EXTERNAL_WORKFLOW_PROVIDER", FullName = "External workflow provider", Description = "An external workflow provider owns its internal notification workflow" },
                 new() { Id = (int)NotificationOwnershipTypeEnum.Disabled, MasterCode = "DISABLED", FullName = "Disabled", Description = "The notification is intentionally disabled for this category and route" }
@@ -921,7 +776,6 @@ public static class LookupTableSeeder
             new ApprovalStatus { Id = (int)ApprovalStatusEnum.Pending, MasterCode = "PENDING", FullName = "Pending", Description = "Status is pending approval of Admin verifying the Existence of Legal Entity" },
             new ApprovalStatus { Id = (int)ApprovalStatusEnum.Approved, MasterCode = "APPROVED", FullName = "Approved", Description = "Status has been approved by Admin after verifying the Existence of Legal Entity" },
             new ApprovalStatus { Id = (int)ApprovalStatusEnum.Rejected, MasterCode = "REJECTED", FullName = "Rejected", Description = "Status has been rejected by Admin after failing to verify the Existence of Legal Entity" },
-            new ApprovalStatus { Id = (int)ApprovalStatusEnum.Waitlisted, MasterCode = "WAITLISTED", FullName = "Waitlisted", Description = "Registration is waitlisted because the event session is currently at capacity" }
         }.Where(status => !existingIds.Contains(status.Id));
 
         context.Set<ApprovalStatus>().AddRange(missingStatuses);
@@ -986,34 +840,6 @@ public static class LookupTableSeeder
         await context.SaveChangesAsync(ct);
     }
 
-    private static async Task SeedAudienceAgesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<AudienceAge>().AnyAsync(ct)) return;
-
-        context.Set<AudienceAge>().AddRange(
-            new AudienceAge { Id = (int)AudienceAgeEnum.AllAges, MasterCode = "ALL_AGES", FullName = "All Ages", MinAge = null, MaxAge = null },
-            new AudienceAge { Id = (int)AudienceAgeEnum.AdultsOnly18Plus, MasterCode = "ADULTS_18_PLUS", FullName = "Adults Only (18+)", MinAge = 18, MaxAge = null },
-            new AudienceAge { Id = (int)AudienceAgeEnum.Teens16Plus, MasterCode = "TEENS_16_PLUS", FullName = "Teens & Adults (16+)", MinAge = 16, MaxAge = null },
-            new AudienceAge { Id = (int)AudienceAgeEnum.Preteens12Plus, MasterCode = "PRETEENS_12_PLUS", FullName = "Preteens & Up (12+)", MinAge = 12, MaxAge = null },
-            new AudienceAge { Id = (int)AudienceAgeEnum.ChildrenUnder6, MasterCode = "CHILDREN_UNDER_6", FullName = "Young Children (0-6)", MinAge = null, MaxAge = 6 },
-            new AudienceAge { Id = (int)AudienceAgeEnum.YouthUnder12, MasterCode = "YOUTH_UNDER_12", FullName = "Children (0-12)", MinAge = null, MaxAge = 12 },
-            new AudienceAge { Id = (int)AudienceAgeEnum.YouthUnder16, MasterCode = "YOUTH_UNDER_16", FullName = "Children & Young Teens (0-16)", MinAge = null, MaxAge = 16 },
-            new AudienceAge { Id = (int)AudienceAgeEnum.YouthUnder18, MasterCode = "YOUTH_UNDER_18", FullName = "Youth (0-18)", MinAge = null, MaxAge = 18 });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedAudienceGendersAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<AudienceGender>().AnyAsync(ct)) return;
-
-        context.Set<AudienceGender>().AddRange(
-            new AudienceGender { Id = (int)AudienceGenderEnum.Man, MasterCode = "MAN", FullName = "Man", Description = "Only for Man Audience" },
-            new AudienceGender { Id = (int)AudienceGenderEnum.Woman, MasterCode = "WOMAN", FullName = "Woman", Description = "Only for Woman Audience" },
-            new AudienceGender { Id = (int)AudienceGenderEnum.Both, MasterCode = "BOTH_SEGREGATED", FullName = "Both Segregated", Description = "For Both Man and Woman but Segregated so no free mixing" },
-            new AudienceGender { Id = 4, MasterCode = "BOTH_FREE_MIXING", FullName = "Both Free Mixing", Description = "For Both Man and Woman but Free Mixing" });
-        await context.SaveChangesAsync(ct);
-    }
-
     private static async Task SeedDidCustodyTypesAsync(ExploreDbContext context, CancellationToken ct)
     {
         if (await context.Set<DidCustodyType>().AnyAsync(ct)) return;
@@ -1021,84 +847,6 @@ public static class LookupTableSeeder
         context.Set<DidCustodyType>().AddRange(
             new DidCustodyType { Id = (int)DidCustodyTypeEnum.Custodial, MasterCode = "CUSTODIAL", FullName = "Custodial", Description = "Platform manages the DID keys" },
             new DidCustodyType { Id = (int)DidCustodyTypeEnum.SelfCustody, MasterCode = "SELF_CUSTODY", FullName = "Self-Custody", Description = "User manages their own DID keys" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventFormatsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<EventFormat>().AnyAsync(ct)) return;
-
-        context.Set<EventFormat>().AddRange(
-            new EventFormat { Id = (int)EventFormatEnum.Local, MasterCode = "LOCAL", FullName = "Local (In-Person)", Description = "Event takes place at a physical location" },
-            new EventFormat { Id = (int)EventFormatEnum.Digital, MasterCode = "DIGITAL", FullName = "Digital (Online)", Description = "Event takes place online" },
-            new EventFormat { Id = (int)EventFormatEnum.Hybrid, MasterCode = "HYBRID", FullName = "Hybrid", Description = "Event takes place both in-person and online" });
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventStatusesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        var statuses = new EventStatus[]
-        {
-            new EventStatus { Id = (int)EventStatusEnum.Draft, MasterCode = "DRAFT", FullName = "Draft", Description = "Event is in draft state and not visible to the public" },
-            new EventStatus { Id = (int)EventStatusEnum.Published, MasterCode = "PUBLISHED", FullName = "Published", Description = "Event is published and visible to the public" },
-            new EventStatus { Id = (int)EventStatusEnum.Cancelled, MasterCode = "CANCELLED", FullName = "Cancelled", Description = "Event has been cancelled" },
-            new EventStatus { Id = (int)EventStatusEnum.Completed, MasterCode = "COMPLETED", FullName = "Completed", Description = "Event has been completed" },
-            new EventStatus { Id = (int)EventStatusEnum.Archived, MasterCode = "ARCHIVED", FullName = "Archived", Description = "Event has been archived" },
-            new EventStatus { Id = (int)EventStatusEnum.Moderated, MasterCode = "MODERATED", FullName = "Moderated", Description = "Event was hidden by administration after moderation" }
-        };
-
-        var existingIds = await context.Set<EventStatus>()
-            .Select(status => status.Id)
-            .ToListAsync(ct);
-        var existingIdSet = existingIds.ToHashSet();
-        var missingStatuses = statuses
-            .Where(status => !existingIdSet.Contains(status.Id))
-            .ToArray();
-
-        if (missingStatuses.Length == 0) return;
-
-        context.Set<EventStatus>().AddRange(missingStatuses);
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventSessionStatusesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        var statuses = new EventSessionStatus[]
-        {
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Draft, MasterCode = "DRAFT", FullName = "Draft", Description = "Session is in draft state and not visible to the public" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Submitted, MasterCode = "SUBMITTED", FullName = "Submitted", Description = "Session has been submitted for review" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.UnderReview, MasterCode = "UNDER_REVIEW", FullName = "Under review", Description = "Session is currently being reviewed" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Approved, MasterCode = "APPROVED", FullName = "Approved", Description = "Session has been approved but is not yet published" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Published, MasterCode = "PUBLISHED", FullName = "Published", Description = "Session is published and visible to the public" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Rejected, MasterCode = "REJECTED", FullName = "Rejected", Description = "Session was rejected during review" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Cancelled, MasterCode = "CANCELLED", FullName = "Cancelled", Description = "Session has been cancelled" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Archived, MasterCode = "ARCHIVED", FullName = "Archived", Description = "Session has been archived" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Completed, MasterCode = "COMPLETED", FullName = "Completed", Description = "Session has been completed" },
-            new EventSessionStatus { Id = (int)EventSessionStatusEnum.Moderated, MasterCode = "MODERATED", FullName = "Moderated", Description = "Session was hidden by event-level moderation" }
-        };
-
-        var existingIds = await context.Set<EventSessionStatus>()
-            .Select(status => status.Id)
-            .ToListAsync(ct);
-        var existingIdSet = existingIds.ToHashSet();
-        var missingStatuses = statuses
-            .Where(status => !existingIdSet.Contains(status.Id))
-            .ToArray();
-
-        if (missingStatuses.Length == 0) return;
-
-        context.Set<EventSessionStatus>().AddRange(missingStatuses);
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventTypesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<EventType>().AnyAsync(ct)) return;
-
-        context.Set<EventType>().AddRange(
-            new EventType { Id = (int)EventTypeEnum.Conference, MasterCode = "CONFERENCE", FullName = "Conference" },
-            new EventType { Id = (int)EventTypeEnum.Webinar, MasterCode = "WEBINAR", FullName = "Webinar" },
-            new EventType { Id = (int)EventTypeEnum.Workshop, MasterCode = "WORKSHOP", FullName = "Workshop" });
         await context.SaveChangesAsync(ct);
     }
 
@@ -1135,27 +883,13 @@ public static class LookupTableSeeder
         await context.SaveChangesAsync(ct);
     }
 
-    private static async Task SeedMadhabsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<Madhab>().AnyAsync(ct)) return;
-
-        context.Set<Madhab>().AddRange(
-            new Madhab { Id = (int)MadhabEnum.Hanafi, MasterCode = "HANAFI", FullName = "Hanafi", Description = "Hanafi school of Islamic jurisprudence" },
-            new Madhab { Id = (int)MadhabEnum.Maliki, MasterCode = "MALIKI", FullName = "Maliki", Description = "Maliki school of Islamic jurisprudence" },
-            new Madhab { Id = (int)MadhabEnum.Shafii, MasterCode = "SHAFII", FullName = "Shafi'i", Description = "Shafi'i school of Islamic jurisprudence" },
-            new Madhab { Id = (int)MadhabEnum.Hanbali, MasterCode = "HANBALI", FullName = "Hanbali", Description = "Hanbali school of Islamic jurisprudence" });
-        await context.SaveChangesAsync(ct);
-    }
-
     private static async Task SeedModuleDefinitionsAsync(ExploreDbContext context, CancellationToken ct)
     {
         if (await context.Set<ModuleDefinition>().AnyAsync(ct)) return;
 
         var seedTimestamp = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        context.Set<ModuleDefinition>().AddRange(
-            new ModuleDefinition { Id = SeedIds.ModuleCoreId, ModuleKey = "Mod_Core", Name = "Core Events", Description = "Basic event functionality - title, description, sessions, locations", IconName = "Event", Category = "Core", DisplayOrder = 0, IsActive = true, CreatedAt = seedTimestamp },
-            new ModuleDefinition { Id = SeedIds.ModuleIslamicId, ModuleKey = "Mod_Islamic", Name = "Islamic Events", Description = "Islamic-specific features: Madhab selection, prayer time scheduling, gender segregation", IconName = "Mosque", Category = "Domain", DisplayOrder = 1, IsActive = true, CreatedAt = seedTimestamp },
-            new ModuleDefinition { Id = SeedIds.ModuleTechId, ModuleKey = "Mod_Tech", Name = "Tech Events", Description = "Developer event features: GitHub repositories, skill levels, live coding sessions", IconName = "Code", Category = "Domain", DisplayOrder = 2, IsActive = true, CreatedAt = seedTimestamp });
+        context.Set<ModuleDefinition>().Add(
+            new ModuleDefinition { Id = SeedIds.ModuleCoreId, ModuleKey = "Mod_Core", Name = "Core", Description = "Shared platform capabilities", IconName = "Foundation", Category = "Core", DisplayOrder = 0, IsActive = true, CreatedAt = seedTimestamp });
         await context.SaveChangesAsync(ct);
     }
 
@@ -1170,7 +904,7 @@ public static class LookupTableSeeder
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Teacher, MasterCode = "TEACHER", FullName = "Teacher", Description = "Teacher or instructor" },
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Secretary, MasterCode = "SECRETARY", FullName = "Secretary", Description = "Organization secretary" },
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Treasurer, MasterCode = "TREASURER", FullName = "Treasurer", Description = "Organization treasurer" },
-            new OrganizationPosition { Id = (int)OrganizationPositionEnum.Coordinator, MasterCode = "COORDINATOR", FullName = "Coordinator", Description = "Event or activity coordinator" },
+            new OrganizationPosition { Id = (int)OrganizationPositionEnum.Coordinator, MasterCode = "COORDINATOR", FullName = "Coordinator", Description = "Organization coordinator" },
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Volunteer, MasterCode = "VOLUNTEER", FullName = "Volunteer", Description = "Organization volunteer" },
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Intern, MasterCode = "INTERN", FullName = "Intern", Description = "Organization intern" },
             new OrganizationPosition { Id = (int)OrganizationPositionEnum.Advisor, MasterCode = "ADVISOR", FullName = "Advisor", Description = "Organization advisor" },
@@ -1199,36 +933,17 @@ public static class LookupTableSeeder
         await context.SaveChangesAsync(ct);
     }
 
-    private static async Task SeedRegistrationModesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        if (await context.Set<RegistrationMode>().AnyAsync(ct)) return;
-
-        context.Set<RegistrationMode>().AddRange(
-            new RegistrationMode { Id = (int)RegistrationModeEnum.Open, MasterCode = "OPEN", FullName = "Open", Description = "Anyone can register" },
-            new RegistrationMode { Id = (int)RegistrationModeEnum.ApprovalRequired, MasterCode = "APPROVAL_REQUIRED", FullName = "Approval Required", Description = "Registration requires approval" },
-            new RegistrationMode { Id = (int)RegistrationModeEnum.InviteOnly, MasterCode = "INVITE_ONLY", FullName = "Invite Only", Description = "Only invited users can register" },
-            new RegistrationMode { Id = (int)RegistrationModeEnum.Closed, MasterCode = "CLOSED", FullName = "Closed", Description = "Registration is closed" });
-        await context.SaveChangesAsync(ct);
-    }
-
     private static async Task SeedSystemSettingsAsync(ExploreDbContext context, CancellationToken ct)
     {
         var seedTimestamp = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var expectedSettings = new[]
         {
             new SystemSetting { Id = SeedIds.SystemSettingDeploymentModeId, SettingKey = GovernanceSettingKeys.Deployment.Mode, Value = "\"SingleTenant\"", ValueType = SettingValueType.String, IsLocked = true, AllowedValues = "[\"SingleTenant\", \"MultiTenant\"]", Description = "Deployment mode of the application", Category = "System", DisplayOrder = 1, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingMaxSessionsPerEventId, SettingKey = "events.max_sessions_per_event", Value = "100", ValueType = SettingValueType.Integer, IsLocked = false, Description = "Maximum number of sessions allowed per event", Category = "Events", DisplayOrder = 1, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingRequireApprovalId, SettingKey = "events.require_approval", Value = "false", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether events require admin approval before publishing", Category = "Events", DisplayOrder = 2, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingIslamicModuleId, SettingKey = GovernanceSettingKeys.Modules.IslamicEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Enable Islamic event module", Category = "Modules", DisplayOrder = 1, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingTechModuleId, SettingKey = GovernanceSettingKeys.Modules.TechEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Enable Tech event module", Category = "Modules", DisplayOrder = 2, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingTenantSelfServiceRegistrationId, SettingKey = GovernanceSettingKeys.Tenants.SelfServiceRegistration, Value = "false", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether tenants can self-register without manual instance admin invitation", Category = "Tenant", DisplayOrder = 1, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingTenantWhiteLabelingEnabledId, SettingKey = GovernanceSettingKeys.Tenants.WhiteLabelingEnabled, Value = "false", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether tenant-level white-label branding overrides are enabled in multi-tenant mode", Category = "Tenant", DisplayOrder = 2, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingRoutingDefaultPublicHomePageId, SettingKey = GovernanceSettingKeys.Routing.DefaultPublicHomePage, Value = "\"EventList\"", ValueType = SettingValueType.String, IsLocked = false, AllowedValues = "[\"EventList\", \"LandingPage\"]", Description = "Default public home page for tenants", Category = "Routing", DisplayOrder = 1, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingUserSubmissionEnabledId, SettingKey = GovernanceSettingKeys.Events.UserSubmissionEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether tenant users are allowed to submit events", Category = "Events", DisplayOrder = 3, CreatedAt = seedTimestamp },
+            new SystemSetting { Id = SeedIds.SystemSettingRoutingDefaultPublicHomePageId, SettingKey = GovernanceSettingKeys.Routing.DefaultPublicHomePage, Value = "\"LandingPage\"", ValueType = SettingValueType.String, IsLocked = false, AllowedValues = "[\"LandingPage\"]", Description = "Default public home page for tenants", Category = "Routing", DisplayOrder = 1, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingOrganizationVerificationRequiredId, SettingKey = GovernanceSettingKeys.Organizations.VerificationRequired, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether organization verification is required before organizations can operate", Category = "Organizations", DisplayOrder = 1, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingOrganizationTenantCanOmitVerificationId, SettingKey = GovernanceSettingKeys.Organizations.TenantCanOmitVerification, Value = "false", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether tenant administrators may omit organization verification requirements", Category = "Organizations", DisplayOrder = 2, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingOrgSubmissionEnabledId, SettingKey = GovernanceSettingKeys.Events.OrganizationSubmissionEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether organizations are allowed to submit events", Category = "Events", DisplayOrder = 4, CreatedAt = seedTimestamp },
-            new SystemSetting { Id = SeedIds.SystemSettingGroupSubmissionEnabledId, SettingKey = GovernanceSettingKeys.Events.GroupSubmissionEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether groups are allowed to submit events", Category = "Events", DisplayOrder = 5, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingOrgSelfRegistrationEnabledId, SettingKey = GovernanceSettingKeys.Organizations.SelfRegistrationEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether users can self-register organizations", Category = "Organizations", DisplayOrder = 3, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingGroupSelfRegistrationEnabledId, SettingKey = GovernanceSettingKeys.Groups.SelfRegistrationEnabled, Value = "true", ValueType = SettingValueType.Boolean, IsLocked = false, Description = "Whether users can self-register groups", Category = "Groups", DisplayOrder = 1, CreatedAt = seedTimestamp },
             new SystemSetting { Id = SeedIds.SystemSettingDomainsInstanceBaseDomainId, SettingKey = GovernanceSettingKeys.Domains.InstanceBaseDomain, Value = "\"\"", ValueType = SettingValueType.String, IsLocked = false, Description = "Instance base domain used for tenant subdomain generation", Category = "Domains", DisplayOrder = 1, CreatedAt = seedTimestamp },
@@ -1351,11 +1066,6 @@ public static class LookupTableSeeder
             new Role { Id = (int)RoleEnum.OrgModerator, MasterCode = "org.moderator", FullName = "Moderator", Description = "Organization moderator", Scope = RoleScopeEnum.Organization, IsSystem = true },
             new Role { Id = (int)RoleEnum.OrgMember, MasterCode = "org.member", FullName = "Member", Description = "Regular organization member", Scope = RoleScopeEnum.Organization, IsSystem = true },
 
-            // Event scope (40-49) - first-release operational roles only
-            new Role { Id = (int)RoleEnum.EventOwner, MasterCode = "event.owner", FullName = "Event Owner", Description = "Owns event team authority and ownership transfer", Scope = RoleScopeEnum.Event, IsSystem = true },
-            new Role { Id = (int)RoleEnum.EventManager, MasterCode = "event.manager", FullName = "Event Manager", Description = "Manages day-to-day event operations", Scope = RoleScopeEnum.Event, IsSystem = true },
-            new Role { Id = (int)RoleEnum.RegistrationManager, MasterCode = "event.registration_manager", FullName = "Registration Manager", Description = "Manages registrations for one event", Scope = RoleScopeEnum.Event, IsSystem = true },
-            new Role { Id = (int)RoleEnum.CheckInStaff, MasterCode = "event.check_in_staff", FullName = "Check-in Staff", Description = "Handles attendee check-in for one event", Scope = RoleScopeEnum.Event, IsSystem = true }
         };
 
         var existingIds = await context.Roles
@@ -1406,14 +1116,6 @@ public static class LookupTableSeeder
         string[] readOnly = ["view"];
         string[] noDelete = ["view", "create", "update"];
 
-        // Events group
-        AddPermissions("event", "Events", RoleScopeEnum.Event, crud);
-        AddPermissions("event_day", "Events", RoleScopeEnum.Event, crud);
-        AddPermissions("event_agenda_item", "Events", RoleScopeEnum.Event, crud);
-        AddPermissions("event_session", "Events", RoleScopeEnum.Event, crud);
-        AddPermissions("event_session_agenda_item", "Events", RoleScopeEnum.Event, crud);
-        AddPermissions("event_registration", "Events", RoleScopeEnum.Event, crud);
-
         // Organizations group
         AddPermissions("organization", "Organizations", RoleScopeEnum.Organization, crud);
         AddPermissions("organization_member", "Organizations", RoleScopeEnum.Organization, crud);
@@ -1440,11 +1142,6 @@ public static class LookupTableSeeder
         AddPermissions("indexed_did", "Federation", RoleScopeEnum.Platform, noDelete);
         AddPermissions("atproto_record", "Federation", RoleScopeEnum.Platform, noDelete);
 
-        // Event operational roles group (event-scoped v1 vocabulary)
-        AddPermissions("event", "Event Operations", RoleScopeEnum.Event, ["manage-team", "manage-owner", "transfer-ownership", "manage-finance"]);
-        AddPermissions("event_registration", "Event Operations", RoleScopeEnum.Event, ["manage"]);
-        AddPermissions("event_check_in", "Event Operations", RoleScopeEnum.Event, ["view", "manage"]);
-
         var existingCodes = await context.Permissions
             .AsNoTracking()
             .Select(x => x.MasterCode)
@@ -1461,200 +1158,6 @@ public static class LookupTableSeeder
             await context.SaveChangesAsync(ct);
         }
 
-        await EnsureEventPermissionScopesAsync(context, ct);
-    }
-
-    private static async Task EnsureEventPermissionScopesAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        var eventPermissionCodes = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "event:view",
-            PermissionCodes.EventCreate,
-            PermissionCodes.EventUpdate,
-            PermissionCodes.EventDelete,
-            PermissionCodes.EventPublish,
-            "event_day:view",
-            PermissionCodes.EventDayCreate,
-            PermissionCodes.EventDayUpdate,
-            PermissionCodes.EventDayDelete,
-            "event_agenda_item:view",
-            PermissionCodes.EventAgendaItemCreate,
-            PermissionCodes.EventAgendaItemUpdate,
-            PermissionCodes.EventAgendaItemDelete,
-            "event_session:view",
-            PermissionCodes.EventSessionCreate,
-            PermissionCodes.EventSessionUpdate,
-            PermissionCodes.EventSessionDelete,
-            "event_session_agenda_item:view",
-            "event_session_agenda_item:create",
-            "event_session_agenda_item:update",
-            "event_session_agenda_item:delete",
-            PermissionCodes.EventRegistrationView,
-            "event_registration:create",
-            "event_registration:update",
-            "event_registration:delete",
-            PermissionCodes.EventManageTeam,
-            PermissionCodes.EventManageOwner,
-            PermissionCodes.EventTransferOwnership,
-            PermissionCodes.EventManageFinance,
-            PermissionCodes.EventRegistrationManage,
-            PermissionCodes.EventCheckInView,
-            PermissionCodes.EventCheckInManage
-        };
-
-        var eventPermissions = await context.Permissions
-            .Where(p => eventPermissionCodes.Contains(p.MasterCode) && p.RoleScopeId != (int)RoleScopeEnum.Event)
-            .ToListAsync(ct);
-
-        if (eventPermissions.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var permission in eventPermissions)
-        {
-            permission.Scope = RoleScopeEnum.Event;
-        }
-
-        await context.SaveChangesAsync(ct);
-    }
-
-    private static async Task SeedEventRolePermissionsAsync(ExploreDbContext context, CancellationToken ct)
-    {
-        var rolePermissionCodes = new Dictionary<RoleEnum, string[]>
-        {
-            [RoleEnum.EventOwner] =
-            [
-                "event:view",
-                PermissionCodes.EventCreate,
-                PermissionCodes.EventUpdate,
-                PermissionCodes.EventDelete,
-                PermissionCodes.EventPublish,
-                PermissionCodes.EventManageTeam,
-                PermissionCodes.EventManageOwner,
-                PermissionCodes.EventTransferOwnership,
-                PermissionCodes.EventManageFinance,
-                "event_day:view",
-                PermissionCodes.EventDayCreate,
-                PermissionCodes.EventDayUpdate,
-                PermissionCodes.EventDayDelete,
-                "event_agenda_item:view",
-                PermissionCodes.EventAgendaItemCreate,
-                PermissionCodes.EventAgendaItemUpdate,
-                PermissionCodes.EventAgendaItemDelete,
-                "event_session:view",
-                PermissionCodes.EventSessionCreate,
-                PermissionCodes.EventSessionUpdate,
-                PermissionCodes.EventSessionDelete,
-                "event_session_agenda_item:view",
-                "event_session_agenda_item:create",
-                "event_session_agenda_item:update",
-                "event_session_agenda_item:delete",
-                PermissionCodes.EventRegistrationView,
-                "event_registration:create",
-                "event_registration:update",
-                "event_registration:delete",
-                PermissionCodes.EventRegistrationManage,
-                PermissionCodes.EventCheckInView,
-                PermissionCodes.EventCheckInManage
-            ],
-            [RoleEnum.EventManager] =
-            [
-                "event:view",
-                PermissionCodes.EventUpdate,
-                PermissionCodes.EventPublish,
-                PermissionCodes.EventManageTeam,
-                "event_day:view",
-                PermissionCodes.EventDayCreate,
-                PermissionCodes.EventDayUpdate,
-                PermissionCodes.EventDayDelete,
-                "event_agenda_item:view",
-                PermissionCodes.EventAgendaItemCreate,
-                PermissionCodes.EventAgendaItemUpdate,
-                PermissionCodes.EventAgendaItemDelete,
-                "event_session:view",
-                PermissionCodes.EventSessionCreate,
-                PermissionCodes.EventSessionUpdate,
-                PermissionCodes.EventSessionDelete,
-                "event_session_agenda_item:view",
-                "event_session_agenda_item:create",
-                "event_session_agenda_item:update",
-                "event_session_agenda_item:delete",
-                PermissionCodes.EventRegistrationView,
-                PermissionCodes.EventRegistrationManage,
-                PermissionCodes.EventCheckInView,
-                PermissionCodes.EventCheckInManage
-            ],
-            [RoleEnum.RegistrationManager] =
-            [
-                "event:view",
-                PermissionCodes.EventRegistrationView,
-                PermissionCodes.EventRegistrationManage
-            ],
-            [RoleEnum.CheckInStaff] =
-            [
-                "event:view",
-                PermissionCodes.EventRegistrationView,
-                PermissionCodes.EventCheckInView,
-                PermissionCodes.EventCheckInManage
-            ]
-        };
-
-        var requiredPermissionCodes = rolePermissionCodes.Values
-            .SelectMany(codes => codes)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-        var permissionIdsByCode = await context.Permissions
-            .AsNoTracking()
-            .Where(p => requiredPermissionCodes.Contains(p.MasterCode))
-            .ToDictionaryAsync(p => p.MasterCode, p => p.Id, ct);
-
-        var roleIds = rolePermissionCodes.Keys
-            .Select(role => (int)role)
-            .ToArray();
-
-        var existingPairs = await context.RolePermissions
-            .AsNoTracking()
-            .Where(rp => roleIds.Contains(rp.RoleId))
-            .Select(rp => new { rp.RoleId, rp.PermissionId })
-            .ToListAsync(ct);
-
-        var existingPairSet = existingPairs
-            .Select(pair => (pair.RoleId, pair.PermissionId))
-            .ToHashSet();
-
-        var grantedAt = DateTime.UtcNow;
-        var missingRolePermissions = new List<RolePermission>();
-
-        foreach (var (role, permissionCodes) in rolePermissionCodes)
-        {
-            foreach (var permissionCode in permissionCodes)
-            {
-                if (!permissionIdsByCode.TryGetValue(permissionCode, out var permissionId) ||
-                    existingPairSet.Contains(((int)role, permissionId)))
-                {
-                    continue;
-                }
-
-                missingRolePermissions.Add(new RolePermission
-                {
-                    RoleId = (int)role,
-                    PermissionId = permissionId,
-                    GrantedAt = grantedAt,
-                    Role = null!,
-                    Permission = null!
-                });
-            }
-        }
-
-        if (missingRolePermissions.Count == 0)
-        {
-            return;
-        }
-
-        context.RolePermissions.AddRange(missingRolePermissions);
-        await context.SaveChangesAsync(ct);
     }
 
     /// <summary>
@@ -1671,13 +1174,8 @@ public static class LookupTableSeeder
         if (await context.Set<NotificationType>().AnyAsync(ct)) return;
 
         context.Set<NotificationType>().AddRange(
-            new NotificationType { Id = (int)NotificationTypeEnum.RegistrationConfirmed, MasterCode = "REGISTRATION_CONFIRMED", FullName = "Registration Confirmed", Description = "RSVP or registration was confirmed" },
             new NotificationType { Id = (int)NotificationTypeEnum.ApprovalGranted, MasterCode = "APPROVAL_GRANTED", FullName = "Approval Granted", Description = "An approval request was granted" },
             new NotificationType { Id = (int)NotificationTypeEnum.ApprovalRejected, MasterCode = "APPROVAL_REJECTED", FullName = "Approval Rejected", Description = "An approval request was rejected" },
-            new NotificationType { Id = (int)NotificationTypeEnum.WaitlistPromoted, MasterCode = "WAITLIST_PROMOTED", FullName = "Waitlist Promoted", Description = "Promoted from waitlist to confirmed" },
-            new NotificationType { Id = (int)NotificationTypeEnum.EventCreated, MasterCode = "EVENT_CREATED", FullName = "Event Created", Description = "A new event was created" },
-            new NotificationType { Id = (int)NotificationTypeEnum.EventUpdated, MasterCode = "EVENT_UPDATED", FullName = "Event Updated", Description = "An event was updated" },
-            new NotificationType { Id = (int)NotificationTypeEnum.EventCancelled, MasterCode = "EVENT_CANCELLED", FullName = "Event Cancelled", Description = "An event was cancelled" },
             new NotificationType { Id = (int)NotificationTypeEnum.MemberInvited, MasterCode = "MEMBER_INVITED", FullName = "Member Invited", Description = "Invited to join an organization or group" },
             new NotificationType { Id = (int)NotificationTypeEnum.MemberRemoved, MasterCode = "MEMBER_REMOVED", FullName = "Member Removed", Description = "Removed from an organization or group" },
             new NotificationType { Id = (int)NotificationTypeEnum.General, MasterCode = "GENERAL", FullName = "General", Description = "General purpose notification" });
@@ -1689,11 +1187,8 @@ public static class LookupTableSeeder
         if (await context.Set<NotificationEntityType>().AnyAsync(ct)) return;
 
         context.Set<NotificationEntityType>().AddRange(
-            new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.Event, MasterCode = "EVENT", FullName = "Event", Description = "Links to an event" },
             new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.Organization, MasterCode = "ORGANIZATION", FullName = "Organization", Description = "Links to an organization" },
             new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.Group, MasterCode = "GROUP", FullName = "Group", Description = "Links to a group" },
-            new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.EventRegistration, MasterCode = "EVENT_REGISTRATION", FullName = "Event Registration", Description = "Links to an event registration" },
-            new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.EventSession, MasterCode = "EVENT_SESSION", FullName = "Event Session", Description = "Links to an event session" },
             new NotificationEntityType { Id = (int)NotificationEntityTypeEnum.User, MasterCode = "USER", FullName = "User", Description = "Links to a user" });
         await context.SaveChangesAsync(ct);
     }
@@ -1744,17 +1239,6 @@ public static class LookupTableSeeder
                 Url = "/about",
                 OpenInNewTab = false,
                 Order = 0,
-                IsActive = true,
-                CreatedAt = now,
-            },
-            new TenantFooterLink
-            {
-                Id = Guid.Parse("019573a0-0004-7000-8000-000000000001"),
-                FooterLinkGroupId = quickLinksGroup.Id,
-                Label = "Events",
-                Url = "/events",
-                OpenInNewTab = false,
-                Order = 1,
                 IsActive = true,
                 CreatedAt = now,
             },

@@ -24,22 +24,6 @@
                     </MudAlert>
                 }
 
-                @if (ShowSearch)
-                {
-                    <div class="error-page__search" role="search" aria-label="Search events">
-                        <MudTextField Variant="Variant.Outlined" T="string"
-                                      Value="@_searchTerm"
-                                      ValueChanged="OnSearchTermChanged"
-                                      Placeholder="Search events"
-                                      FullWidth="true"
-                                      Immediate="true"
-                                      DebounceInterval="150" />
-                        <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" OnClick="RunSearch" StartIcon="@Icons.Material.Filled.Search">
-                            Search
-                        </MudButton>
-                    </div>
-                }
-
                 <MudStack Row="true" Spacing="2" Justify="Justify.Center" Class="error-page__actions">
                     <MudButton Elevation="0" Color="Color.Primary" Variant="Variant.Filled" Href="@PrimaryHref" StartIcon="@PrimaryIcon">
                         @PrimaryText
@@ -59,7 +43,6 @@
 
 @code {
     private readonly string TitleId = $"error-page-title-{Guid.NewGuid():N}";
-    private string _searchTerm = string.Empty;
 
     [Parameter]
     public string StatusCode { get; set; } = string.Empty;
@@ -97,24 +80,4 @@
     [Parameter]
     public string? SecondaryIcon { get; set; }
 
-    [Parameter]
-    public bool ShowSearch { get; set; }
-
-    private Task OnSearchTermChanged(string? value)
-    {
-        _searchTerm = value ?? string.Empty;
-        return Task.CompletedTask;
-    }
-
-    private void RunSearch()
-    {
-        var trimmed = _searchTerm.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-        {
-            Navigation.NavigateTo("/events");
-            return;
-        }
-
-        Navigation.NavigateTo($"/events?search={Uri.EscapeDataString(trimmed)}");
-    }
 }

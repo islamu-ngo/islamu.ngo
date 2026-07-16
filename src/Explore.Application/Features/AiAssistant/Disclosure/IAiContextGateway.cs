@@ -20,8 +20,7 @@ public interface IAiContextGateway
     AiContextSanitizedEnvelope Sanitize(AiContextSanitizationInput request);
 
     /// <summary>
-    /// Sanitizes multiple entities in one call (e.g. an event + its sessions + its
-    /// speakers). Each envelope is independent — a failure on one entity does NOT
+    /// Sanitizes multiple entities in one call. Each envelope is independent — a failure on one entity does NOT
     /// fail the others. The order of returned envelopes matches the input order.
     /// </summary>
     IReadOnlyList<AiContextSanitizedEnvelope> SanitizeMany(IReadOnlyList<AiContextSanitizationInput> requests);

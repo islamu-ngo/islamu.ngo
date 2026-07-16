@@ -1,5 +1,5 @@
 // ABOUTME: Carries safe citation metadata for future AI RAG search results.
-// ABOUTME: Provides linkable reference identity without exposing private event content or provider data.
+// ABOUTME: Provides linkable reference identity without exposing private content or provider data.
 
 namespace Explore.Application.Features.AiAssistant.Rag;
 

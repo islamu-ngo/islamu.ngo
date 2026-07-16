@@ -1,5 +1,6 @@
-@using Explore.Blazor.Client.Pages.Events
-@using Explore.Blazor.Client.Pages.Events.Components
+@* ABOUTME: Resolves the root route between setup, administration, authentication, and the public home experience. *@
+@* ABOUTME: Keeps tenant-aware startup routing separate from the home page presentation. *@
+
 @using Explore.Blazor.Client.Helpers
 @using Explore.Blazor.Client.Pages.Landing
 @using Explore.Blazor.Client.Models
@@ -19,23 +20,12 @@
 @switch (_state)
 {
     case RootState.Loading:
-        <MudContainer Class="pb-8">
-            <MudSkeleton Width="200px" Height="20px" Class="mt-4 mb-4" />
-            <MudGrid Spacing="4">
-                @for (int i = 0; i < 8; i++)
-                {
-                    <MudItem xs="12" sm="6" md="4" lg="3">
-                        <EventCardSkeleton Layout="LayoutMode.CompactGrid" />
-                    </MudItem>
-                }
-            </MudGrid>
+        <MudContainer Class="d-flex justify-center py-12">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
         </MudContainer>
         break;
     case RootState.ShowLanding:
         <Home />
-        break;
-    case RootState.ShowEvents:
-        <EventList />
         break;
     case RootState.ShowMultiTenantLogin:
         <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 75vh;">
@@ -94,17 +84,7 @@
         </MudContainer>
         break;
     default:
-        <MudContainer Class="pb-8">
-            <MudSkeleton Width="200px" Height="20px" Class="mt-4 mb-4" />
-            <MudGrid Spacing="4">
-                @for (int i = 0; i < 4; i++)
-                {
-                    <MudItem xs="12" sm="6" md="4" lg="3">
-                        <EventCardSkeleton Layout="LayoutMode.CompactGrid" />
-                    </MudItem>
-                }
-            </MudGrid>
-        </MudContainer>
+        <Home />
         break;
 }
 
@@ -143,7 +123,7 @@
         var instanceStatus = await InstanceOnboardingService.GetStatusAsync();
         if (instanceStatus == null)
         {
-            _state = RootState.ShowEvents;
+            _state = RootState.ShowLanding;
             PersistedRootState = _state;
             return;
         }
@@ -205,7 +185,7 @@
                 PersistedRootState = _state;
                 return;
             default:
-                _state = RootState.ShowEvents;
+                _state = RootState.ShowLanding;
                 PersistedRootState = _state;
                 return;
         }
@@ -225,7 +205,6 @@
     {
         Loading,
         ShowLanding,
-        ShowEvents,
         ShowMultiTenantLogin
     }
 }

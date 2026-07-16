@@ -1,4 +1,4 @@
-// ABOUTME: Query contract for bounded AI reference search across tenant-visible event references.
+// ABOUTME: Query contract for bounded AI reference search across tenant-visible references.
 // ABOUTME: Keeps provider prompt candidates lightweight and leaves authorization/data shaping in Application handlers.
 
 using Explore.Application.DTOs.Ai;

@@ -34,10 +34,7 @@ using Explore.Infrastructure.Messaging;
 using Explore.Infrastructure.Services;
 using Explore.Infrastructure.Services.Federation;
 using Explore.Infrastructure.Services.Keycloak;
-using Explore.Infrastructure.Services.Moderation;
-using Explore.Infrastructure.Services.Moderation.Coop;
 using Explore.Infrastructure.Storage;
-using Explore.Infrastructure.Strategies;
 using Explore.Infrastructure.SupportAccess;
 using Explore.Infrastructure.Webhooks;
 using Explore.Infrastructure.WebPush;
@@ -96,44 +93,6 @@ public static class InfrastructureServicesRegistration
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ISupportAccessSessionService, SupportAccessSessionService>();
         services.AddScoped<IPublicUrlBuilder, PublicUrlBuilder>();
-        services.AddScoped<IEventReportEvidenceProtector, EventReportEvidenceProtector>();
-        services.AddOptions<ModerationProviderOptions>()
-            .Bind(configuration.GetSection(ModerationProviderOptions.SectionName))
-            .ValidateOnStart();
-        services.AddSingleton<IValidateOptions<ModerationProviderOptions>, ModerationProviderOptionsValidator>();
-        services.AddOptions<OspreyProviderOptions>()
-            .Bind(configuration.GetSection(OspreyProviderOptions.SectionName))
-            .ValidateOnStart();
-        services.AddSingleton<IValidateOptions<OspreyProviderOptions>, OspreyProviderOptionsValidator>();
-        services.AddOptions<CoopProviderOptions>()
-            .Bind(configuration.GetSection(CoopProviderOptions.SectionName))
-            .ValidateOnStart();
-        services.AddSingleton<IValidateOptions<CoopProviderOptions>, CoopProviderOptionsValidator>();
-        services.AddScoped<LocalEventReportProvider>();
-        services.AddScoped<NoopModerationSignalProvider>();
-        services.AddHttpClient(OspreyModerationSignalProvider.HttpClientName, client =>
-        {
-            client.Timeout = Timeout.InfiniteTimeSpan;
-        });
-        services.AddScoped<OspreyModerationSignalProvider>();
-        services.AddHttpClient(CoopReviewQueueProvider.HttpClientName, client =>
-        {
-            client.Timeout = Timeout.InfiniteTimeSpan;
-        });
-        services.AddScoped<CoopReviewQueueProvider>();
-        services.AddScoped<NoopReviewQueueProvider>();
-        services.AddScoped<IReportingRoutingPolicyResolver, ReportingRoutingPolicyResolver>();
-        services.AddScoped<CompositeEventReportProvider>(sp => new CompositeEventReportProvider(
-            sp.GetRequiredService<LocalEventReportProvider>(),
-            sp.GetRequiredService<OspreyModerationSignalProvider>(),
-            sp.GetRequiredService<CoopReviewQueueProvider>(),
-            sp.GetRequiredService<IReportingRoutingPolicyResolver>()));
-        services.AddScoped<RuntimeModerationProviderResolver>();
-        services.AddScoped<IReportProviderSyncDispatcher, ReportProviderSyncDispatcher>();
-        services.AddScoped<IEventReportProvider>(sp => sp.GetRequiredService<RuntimeModerationProviderResolver>());
-        services.AddScoped<IModerationSignalProvider>(sp => sp.GetRequiredService<RuntimeModerationProviderResolver>());
-        services.AddScoped<IReviewQueueProvider>(sp => sp.GetRequiredService<RuntimeModerationProviderResolver>());
-        services.AddScoped<IReportDecisionExecutor>(sp => sp.GetRequiredService<RuntimeModerationProviderResolver>());
 
         // Webhook providers: Local is the self-hostable default; Runtime provider selects configured mode.
         services.AddOptions<WebhookOptions>()
@@ -293,11 +252,6 @@ public static class InfrastructureServicesRegistration
         services.AddScoped<IAuthorizationProviderModeCacheInvalidator>(sp => sp.GetRequiredService<RuntimeAuthorizationProvider>());
         services.AddScoped<IPolicyPackageService, CerbosPolicyPackageService>();
         services.AddScoped<IPolicySyncService, PolicySyncService>();
-
-        // Event Strategies
-        services.AddScoped<IEventStrategy, IslamicEventStrategy>();
-        services.AddScoped<IEventStrategy, TechEventStrategy>();
-        services.AddScoped<IStrategyResolver, StrategyResolver>();
 
         // Analytics providers (runtime-switchable via SystemSetting "analytics.provider")
         // All concrete providers are always registered; RuntimeAnalyticsProvider delegates at runtime.

@@ -1,5 +1,5 @@
-// ABOUTME: EF Core configuration for tenant-scoped projection rebuild status rows.
-// ABOUTME: Composite PK on (projection_name, projection_version, tenant_id) with optimistic concurrency.
+// ABOUTME: EF Core configuration for the CustomPropertyProjectionStatus entity.
+// ABOUTME: Defines the composite-key rebuild-status schema for custom-property projection observability.
 
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -11,30 +11,38 @@ public class CustomPropertyProjectionStatusConfiguration : IEntityTypeConfigurat
 {
     public void Configure(EntityTypeBuilder<CustomPropertyProjectionStatus> builder)
     {
-        builder.ToTable("custom_property_projection_status");
+        builder.Property(s => s.ProjectionName)
+            .IsRequired()
+            .HasMaxLength(100);
 
-        builder.HasKey(e => new { e.ProjectionName, e.ProjectionVersion, e.TenantId });
+        builder.Property(s => s.ProjectionVersion);
 
-        builder.Property(e => e.ProjectionName)
-            .HasMaxLength(100)
-            .IsRequired();
-
-        builder.Property(e => e.State)
-            .HasConversion<string>()
+        builder.Property(s => s.State)
+            .IsRequired()
             .HasMaxLength(50);
 
-        builder.Property(e => e.LastCheckpoint)
+        builder.Property(s => s.LastCheckpoint)
             .HasMaxLength(200);
 
-        builder.Property(e => e.LastErrorMessage)
+        builder.Property(s => s.LastErrorMessage)
             .HasMaxLength(2000);
 
-        builder.Property(e => e.ConcurrencyStamp)
-            .IsConcurrencyToken();
+        builder.Property(s => s.RowsProcessed);
 
-        builder.HasOne(e => e.Tenant)
+        builder.Property(s => s.RowsFailed);
+
+        builder.HasKey("ProjectionName", "ProjectionVersion", "TenantId")
+            .HasName("pk_custom_property_projection_status");
+
+        builder.HasIndex("TenantId")
+            .HasDatabaseName("ix_custom_property_projection_status_tenant_id");
+
+        builder.HasOne(s => s.Tenant)
             .WithMany()
-            .HasForeignKey(e => e.TenantId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(s => s.TenantId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_custom_property_projection_status_tenants_tenant_id");
+
+        builder.ToTable("custom_property_projection_status", (string)null);
     }
 }

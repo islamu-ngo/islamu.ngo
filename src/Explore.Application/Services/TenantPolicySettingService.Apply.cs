@@ -27,11 +27,6 @@ public partial class TenantPolicySettingService
         GovernanceSettingKeys.Domains.AllowTenantCustomDomain,
         GovernanceSettingKeys.Domains.TenantCustomDomain,
         GovernanceSettingKeys.Domains.TenantSubdomain,
-        GovernanceSettingKeys.Events.CardClickOpensDetailPage,
-        GovernanceSettingKeys.Events.GroupSubmissionEnabled,
-        GovernanceSettingKeys.Events.OrganizationSubmissionEnabled,
-        GovernanceSettingKeys.Events.RequireApproval,
-        GovernanceSettingKeys.Events.UserSubmissionEnabled,
         GovernanceSettingKeys.Groups.SelfRegistrationEnabled,
         GovernanceSettingKeys.Mcp.EnableLegacySse,
         GovernanceSettingKeys.Mcp.Enabled,
@@ -113,11 +108,6 @@ public partial class TenantPolicySettingService
                 id, key, value, actor, notifications, cancellationToken);
         }
 
-        var userSubmissionSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Events.UserSubmissionEnabled);
-        var orgSubmissionSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Events.OrganizationSubmissionEnabled);
-        var groupSubmissionSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Events.GroupSubmissionEnabled);
-        var requireApprovalSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Events.RequireApproval);
-        var eventCardClickSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Events.CardClickOpensDetailPage);
         var requireVerificationSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Organizations.VerificationRequired);
         var canOmitVerificationSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Organizations.TenantCanOmitVerification);
         var orgSelfRegSetting = systemSettings.GetValueOrDefault(GovernanceSettingKeys.Organizations.SelfRegistrationEnabled);
@@ -138,41 +128,6 @@ public partial class TenantPolicySettingService
         var tenant = await _tenantRepository.GetByIdAsNoTrackingAsync(tenantId, cancellationToken);
         var fallbackSubdomain = NormalizeSubdomain(tenant?.Slug) ?? "default";
         var isMultiTenant = DeserializeString(deploymentModeSetting?.Value, "SingleTenant").Equals("MultiTenant", StringComparison.OrdinalIgnoreCase);
-
-        await SetBooleanTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Events.UserSubmissionEnabled,
-            settings.AllowUserSubmittedEvents,
-            userSubmissionSetting?.IsLocked != true,
-            actorUserId);
-
-        await SetBooleanTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Events.OrganizationSubmissionEnabled,
-            settings.AllowOrganizationSubmittedEvents,
-            orgSubmissionSetting?.IsLocked != true,
-            actorUserId);
-
-        await SetBooleanTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Events.GroupSubmissionEnabled,
-            settings.AllowGroupSubmittedEvents,
-            groupSubmissionSetting?.IsLocked != true,
-            actorUserId);
-
-        await SetBooleanTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Events.RequireApproval,
-            settings.RequireEventApproval,
-            requireApprovalSetting?.IsLocked != true,
-            actorUserId);
-
-        await SetBooleanTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Events.CardClickOpensDetailPage,
-            settings.EventCardClickOpensDetailPage,
-            eventCardClickSetting?.IsLocked != true,
-            actorUserId);
 
         var canTenantOmitVerification = DeserializeBoolean(canOmitVerificationSetting?.Value, false)
             && requireVerificationSetting?.IsLocked != true;

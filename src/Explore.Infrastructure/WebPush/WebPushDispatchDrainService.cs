@@ -285,8 +285,7 @@ internal sealed record WebPushDeliveryPolicy(int TimeToLiveSeconds, string Topic
         NotificationPreferenceCategoryCodes.AccountSecurity => new(300, categoryCode, WebPushUrgency.High),
         NotificationPreferenceCategoryCodes.TrustSafety => new(3600, categoryCode, WebPushUrgency.High),
         NotificationPreferenceCategoryCodes.BillingLegal => new(86400, categoryCode, WebPushUrgency.Normal),
-        NotificationPreferenceCategoryCodes.RegistrationStatus => new(21600, categoryCode, WebPushUrgency.Normal),
-        NotificationPreferenceCategoryCodes.EventUpdates => new(21600, categoryCode, WebPushUrgency.Normal),
+
         NotificationPreferenceCategoryCodes.OrganizationUpdates => new(86400, categoryCode, WebPushUrgency.Low),
         NotificationPreferenceCategoryCodes.GroupUpdates => new(86400, categoryCode, WebPushUrgency.Low),
         NotificationPreferenceCategoryCodes.ProductAnnouncements => new(86400, categoryCode, WebPushUrgency.Low),

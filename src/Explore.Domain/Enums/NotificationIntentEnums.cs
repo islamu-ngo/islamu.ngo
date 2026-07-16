@@ -7,10 +7,6 @@ public enum NotificationCategoryEnum
 {
     IdentityLifecycle = 1,
     ProductLifecycle = 2,
-    EventLifecycle = 3,
-    RegistrationLifecycle = 4,
-    TrustSafetyReporting = 5,
-    TrustSafetyModeration = 6,
     ProviderInternal = 7,
     PlatformOperations = 8,
     Marketing = 9
@@ -18,7 +14,6 @@ public enum NotificationCategoryEnum
 
 public enum NotificationOwnershipTypeEnum
 {
-    IslamuEvent = 1,
     AccountAuthority = 2,
     ExternalWorkflowProvider = 3,
     Disabled = 4
@@ -38,9 +33,6 @@ public enum NotificationRecipientKindEnum
 {
     User = 1,
     TenantAdmin = 2,
-    Organizer = 3,
-    Reporter = 4,
-    Moderator = 5,
     ProviderOperator = 6,
     System = 7,
     Other = 8
@@ -70,8 +62,6 @@ public enum NotificationExternalDelegationStatusEnum
 public enum ExternalWorkflowProviderKindEnum
 {
     None = 1,
-    Coop = 2,
-    Osprey = 3,
     TicketingProvider = 4,
     WebhookProvider = 5,
     Other = 6

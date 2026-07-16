@@ -49,32 +49,8 @@ public static class SeedIds
     public static readonly Guid ModeratorTenantUserId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000075");
 
     // ===== Storage Objects (Development) =====
-    public static readonly Guid DefaultEventImageId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000050");
     public static readonly Guid DefaultProfileImageId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000051");
     public static readonly Guid DefaultOrganizationLogoId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000052");
-
-    // ===== Events (Development) =====
-    public static readonly Guid SampleEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000060");
-    public static readonly Guid QuranTafsirWomenEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000061");
-    public static readonly Guid BrothersFiqhEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000062");
-    public static readonly Guid FamilySeerahEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000063");
-    public static readonly Guid SegregatedRamadanEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000064");
-    public static readonly Guid OnlineHadithEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000065");
-    public static readonly Guid ArabicWorkshopEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000066");
-    public static readonly Guid YouthAqeedahEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000067");
-    public static readonly Guid CommunityIftarEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000068");
-
-    public static readonly Guid[] IslamicEventCatalogIds =
-    [
-        QuranTafsirWomenEventId,
-        BrothersFiqhEventId,
-        FamilySeerahEventId,
-        SegregatedRamadanEventId,
-        OnlineHadithEventId,
-        ArabicWorkshopEventId,
-        YouthAqeedahEventId,
-        CommunityIftarEventId
-    ];
 
     // ===== Categories (Development) =====
     public static readonly Guid IslamicStudiesCategoryId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000100");
@@ -84,7 +60,6 @@ public static class SeedIds
     public static readonly Guid AqeedahCategoryId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000104");
     public static readonly Guid SeerahCategoryId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000105");
     public static readonly Guid ArabicLanguageCategoryId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000106");
-    public static readonly Guid CommunityEventsCategoryId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000107");
 
     // ===== Tags (Development) =====
     public static readonly Guid BeginnerTagId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000200");
@@ -97,33 +72,13 @@ public static class SeedIds
 
     // ===== Locations (Development) =====
     public static readonly Guid OnlineLocationId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000300");
-    public static readonly Guid BrusselsIslamicCenterLocationId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000301");
-    public static readonly Guid AntwerpMasjidLocationId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000302");
-
-    public static Guid RoomId(int roomNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000003{roomNumber:00}");
-    public static Guid EventDayId(int eventNumber, int dayNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000007{eventNumber}{dayNumber}");
-    public static Guid EventSessionId(int eventNumber, int sessionNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000008{eventNumber}{sessionNumber}");
-    public static Guid EventSessionGroupId(int eventNumber, int groupNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000009{eventNumber}{groupNumber}");
-    public static Guid EventAgendaItemId(int eventNumber, int itemNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000010{eventNumber}{itemNumber}");
-    public static Guid EventSessionAgendaItemId(int eventNumber, int sessionNumber, int itemNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-000000001{eventNumber}{sessionNumber}{itemNumber}");
-    public static Guid EventCategoryId(int eventNumber, int categoryNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000020{eventNumber}{categoryNumber}");
-    public static Guid EventTagId(int eventNumber, int tagNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-0000000021{eventNumber}{tagNumber}");
-    public static Guid EventSessionCategoryId(int eventNumber, int sessionNumber, int categoryNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-000000002{eventNumber}{sessionNumber}{categoryNumber}");
-    public static Guid EventSessionTagId(int eventNumber, int sessionNumber, int tagNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-000000003{eventNumber}{sessionNumber}{tagNumber}");
-    public static Guid EventSessionSpeakerId(int eventNumber, int sessionNumber, int speakerNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-000000004{eventNumber}{sessionNumber}{speakerNumber}");
-    public static Guid EventSessionGroupSessionId(int eventNumber, int sessionNumber, int groupNumber) => Guid.Parse($"018e4e5c-7f00-7000-8000-000000005{eventNumber}{sessionNumber}{groupNumber}");
 
     // ===== Tenant Settings (Development) =====
 
     // ===== System Settings =====
     public static readonly Guid SystemSettingDeploymentModeId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000500");
-    public static readonly Guid SystemSettingMaxSessionsPerEventId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000501");
-    public static readonly Guid SystemSettingRequireApprovalId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000502");
-    public static readonly Guid SystemSettingIslamicModuleId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000503");
-    public static readonly Guid SystemSettingTechModuleId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000504");
     public static readonly Guid SystemSettingTenantSelfServiceRegistrationId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000505");
     public static readonly Guid SystemSettingTenantWhiteLabelingEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000518");
-    public static readonly Guid SystemSettingUserSubmissionEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000506");
     public static readonly Guid SystemSettingOrganizationVerificationRequiredId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000507");
     public static readonly Guid SystemSettingOrganizationTenantCanOmitVerificationId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000508");
     public static readonly Guid SystemSettingBrandingDisplayNameId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000509");
@@ -169,8 +124,6 @@ public static class SeedIds
     public static readonly Guid SystemSettingAnalyticsPersonalApiKeyId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000544");
 
     // ===== System Settings — Entity Submission & Self-Registration =====
-    public static readonly Guid SystemSettingOrgSubmissionEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000550");
-    public static readonly Guid SystemSettingGroupSubmissionEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000551");
     public static readonly Guid SystemSettingOrgSelfRegistrationEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000552");
     public static readonly Guid SystemSettingGroupSelfRegistrationEnabledId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000553");
 
@@ -194,10 +147,7 @@ public static class SeedIds
 
     // ===== Module Definitions =====
     public static readonly Guid ModuleCoreId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000600");
-    public static readonly Guid ModuleIslamicId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000601");
-    public static readonly Guid ModuleTechId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000602");
 
     // ===== Tenant Capabilities (Development) =====
     public static readonly Guid DefaultTenantCoreCapabilityId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000610");
-    public static readonly Guid DefaultTenantIslamicCapabilityId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000611");
 }

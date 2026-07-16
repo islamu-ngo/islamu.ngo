@@ -111,53 +111,6 @@ public sealed class BlazorIsolationArchitectureTests
             .Because($"Blazor source must use generated API contracts or Blazor-owned types. Violations: {string.Join(", ", violations)}");
     }
 
-    [Test]
-    public async Task BlazorProductionBackendContracts_ShouldComeFromGeneratedApiClient()
-    {
-        var repositoryRoot = ResolveRepositoryRoot();
-        var generatedClient = Path.Combine(
-            ResolveProjectPath(repositoryRoot, "Explore.Blazor.Client"),
-            "Clients",
-            "EventApiClient.g.cs");
-        var generatedContractNames = FindDeclaredTypeNames(await File.ReadAllTextAsync(generatedClient))
-            .Select(NormalizeContractName)
-            .ToHashSet(StringComparer.Ordinal);
-        var violations = new List<string>();
-
-        foreach (var projectName in new[] { "Explore.Blazor", "Explore.Blazor.Client" })
-        {
-            var projectRoot = ResolveProjectPath(repositoryRoot, projectName);
-            foreach (var file in Directory.EnumerateFiles(projectRoot, "*.cs", SearchOption.AllDirectories)
-                         .Where(file => !file.EndsWith("EventApiClient.g.cs", StringComparison.OrdinalIgnoreCase))
-                         .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-                             && !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)))
-            {
-                var relativePath = Path.GetRelativePath(repositoryRoot, file).Replace('\\', '/');
-                var source = RemoveComments(await File.ReadAllTextAsync(file));
-
-                foreach (Match declaration in TypeDeclaration.Matches(source))
-                {
-                    var typeName = declaration.Groups["name"].Value;
-                    var modifiers = declaration.Groups["modifiers"].Value;
-                    if (IsStaticType(modifiers)
-                        || IsPermittedLocalProtocolShape(relativePath, typeName)
-                        || IsPresentationType(typeName))
-                    {
-                        continue;
-                    }
-
-                    if (IsBackendContractShape(relativePath, typeName, generatedContractNames))
-                    {
-                        violations.Add($"{relativePath}: {typeName}");
-                    }
-                }
-            }
-        }
-
-        await Assert.That(violations).IsEmpty()
-            .Because($"Backend/domain contracts must be generated with IEventApiClient; only presentation state and local protocol/provider shapes may be Blazor-owned. Violations: {string.Join(", ", violations)}");
-    }
-
     private static bool IsBackendContractShape(
         string relativePath,
         string typeName,

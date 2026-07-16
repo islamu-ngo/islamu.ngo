@@ -1,8 +1,7 @@
 // ABOUTME: Code-behind for the authenticated user profile page.
-// ABOUTME: Loads profile stats and delegates post-event card actions to the reusable preview workspace.
+// ABOUTME: Loads account identity, appearance, and organization review history.
 
 using Explore.Blazor.Client.Clients;
-using Explore.Blazor.Client.Components.Events;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Services;
 using Microsoft.AspNetCore.Components;
@@ -13,12 +12,11 @@ namespace Explore.Blazor.Client.Pages.User;
 
 /// <summary>
 /// Code-behind for the User Profile page.
-/// Displays user information, event attendance stats, and reviews.
+/// Displays user information and reviews.
 /// </summary>
 public partial class UserProfile : ComponentBase
 {
     [Inject] private IUserService UserService { get; set; } = default!;
-    [Inject] private IEventService EventService { get; set; } = default!;
     [Inject] private IOrganizationReviewService OrganizationReviewService { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
     [Inject] private ILogger<UserProfile> Logger { get; set; } = default!;
@@ -32,18 +30,8 @@ public partial class UserProfile : ComponentBase
     private string _bannerStyle = AppearanceStyleBuilder.BuildBannerStyle(new AppearanceSettings(), DefaultBannerFallback);
 
     // Statistics
-    private int EventsAttended { get; set; }
     private int ReviewsGiven { get; set; }
     private ICollection<OrganizationReviewDto> MyReviews { get; set; } = new List<OrganizationReviewDto>();
-    private ICollection<EventListDto> _posts = new List<EventListDto>();
-    private List<EventListDto> _upcomingRegistrationEvents = new();
-    private List<EventListDto> _pastRegistrationEvents = new();
-    private List<KeyValuePair<DateTime, List<EventListDto>>> _pastRegistrationEventsByDate = new();
-    private bool _isLoadingRegistrationEvents;
-    private EventPreviewWorkspace? _eventPreviewWorkspace;
-
-    private List<EventListDto> RegistrationEvents =>
-        _upcomingRegistrationEvents.Concat(_pastRegistrationEvents).ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,62 +110,7 @@ public partial class UserProfile : ComponentBase
 
     private async Task LoadStatisticsAsync(Guid userId)
     {
-        // Load event registrations, reviews, and posts in parallel
-        var registrationsTask = LoadEventRegistrationsAsync(userId);
-        var reviewsTask = LoadReviewsAsync(userId);
-        var postsTask = LoadPostsAsync();
-
-        await Task.WhenAll(registrationsTask, reviewsTask, postsTask);
-    }
-
-    private async Task LoadEventRegistrationsAsync(Guid userId)
-    {
-        _isLoadingRegistrationEvents = true;
-
-        try
-        {
-            var registrationEvents = await EventService.GetRegistrationEventsByUserAsync(userId);
-
-            _upcomingRegistrationEvents = registrationEvents
-                .Where(evt => evt.IsPast != true)
-                .OrderBy(evt => evt.FirstSessionDate)
-                .ToList();
-
-            _pastRegistrationEvents = registrationEvents
-                .Where(evt => evt.IsPast == true)
-                .OrderByDescending(evt => evt.FirstSessionDate)
-                .ToList();
-
-            _pastRegistrationEventsByDate = GroupEventsByDate(_pastRegistrationEvents);
-            EventsAttended = RegistrationEvents.Count;
-            Logger.LogInformation("[UserProfile] Loaded {Count} event registrations", EventsAttended);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "[UserProfile] Error loading registrations");
-            _upcomingRegistrationEvents = new List<EventListDto>();
-            _pastRegistrationEvents = new List<EventListDto>();
-            _pastRegistrationEventsByDate = new List<KeyValuePair<DateTime, List<EventListDto>>>();
-            EventsAttended = 0;
-        }
-        finally
-        {
-            _isLoadingRegistrationEvents = false;
-        }
-    }
-
-    private async Task LoadPostsAsync()
-    {
-        try
-        {
-            _posts = await EventService.GetMyEventsAsync();
-            Logger.LogInformation("[UserProfile] Loaded {Count} posts", _posts.Count);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "[UserProfile] Error loading posts");
-            _posts = new List<EventListDto>();
-        }
+        await LoadReviewsAsync(userId);
     }
 
     private async Task LoadReviewsAsync(Guid userId)
@@ -194,35 +127,6 @@ public partial class UserProfile : ComponentBase
             MyReviews = new List<OrganizationReviewDto>();
             ReviewsGiven = 0;
         }
-    }
-
-    private Task HandleEventSelected(EventListDto evt) =>
-        _eventPreviewWorkspace?.SelectEventAsync(evt) ?? Task.CompletedTask;
-
-    private void HandleEventEdit(EventListDto evt)
-    {
-        _eventPreviewWorkspace?.NavigateToEdit(evt);
-    }
-
-    private Task HandleEventDelete(EventListDto evt) =>
-        _eventPreviewWorkspace?.OpenDeleteDialogAsync(evt) ?? Task.CompletedTask;
-
-    private Task HandleEventShare(EventListDto evt) =>
-        _eventPreviewWorkspace?.ShareEventAsync(evt) ?? Task.CompletedTask;
-
-    private Task HandlePostDeleted(EventListDto evt)
-    {
-        _posts = _posts.Where(post => post.Id != evt.Id).ToList();
-        return Task.CompletedTask;
-    }
-
-    private static List<KeyValuePair<DateTime, List<EventListDto>>> GroupEventsByDate(IEnumerable<EventListDto> events)
-    {
-        return events
-            .GroupBy(evt => evt.FirstSessionDate?.Date ?? DateTime.MinValue)
-            .OrderByDescending(group => group.Key)
-            .Select(group => new KeyValuePair<DateTime, List<EventListDto>>(group.Key, group.ToList()))
-            .ToList();
     }
 
     /// <summary>

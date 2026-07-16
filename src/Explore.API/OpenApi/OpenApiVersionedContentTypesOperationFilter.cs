@@ -1,5 +1,5 @@
 // ABOUTME: Swashbuckle operation filter that mirrors native OpenAPI media-type version aliases.
-// ABOUTME: Keeps the transitional Swagger baseline semantically aligned with /openapi/event-api.json.
+// ABOUTME: Keeps the transitional Swagger baseline semantically aligned with /openapi/v1.json.
 
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;

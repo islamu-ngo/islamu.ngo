@@ -92,26 +92,6 @@ public sealed partial class CacheGovernanceTests
     }
 
     [Test]
-    public async Task TenantScopedEventLists_ShouldUseTenantNamespaceAndTenantInvalidationTag()
-    {
-        var handler = File.ReadAllText(Path.Combine(
-            SourceRoot,
-            "src",
-            "Explore.Application",
-            "Features",
-            "Events",
-            "Handlers",
-            "Queries",
-            "GetEventListRequestHandler.cs"));
-
-        await Assert.That(handler).Contains("events:list:tenant:{tenantCacheKey}");
-        await Assert.That(handler).Contains("CacheTags.EventListByTenant(_tenantContext.TenantId)");
-
-        var cacheTags = File.ReadAllText(Path.Combine(SourceRoot, "src", "Explore.Application", "Caching", "CacheTags.cs"));
-        await Assert.That(cacheTags).Contains("events:list:tenant:{tenantId:N}");
-    }
-
-    [Test]
     public async Task FilterDerivedEventAggregateKeys_ShouldRemainDocumentedAsUnsafeForRawTelemetryLabels()
     {
         var classification = ApprovedHybridCacheFamilies["event-aggregate:list"];

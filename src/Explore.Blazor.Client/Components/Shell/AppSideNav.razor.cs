@@ -61,13 +61,6 @@ public partial class AppSideNav : ComponentBase, IDisposable
     private string ResolvedOverlayBrandAriaLabel => string.IsNullOrWhiteSpace(ResolvedBrandDisplayName)
         ? "Home"
         : ResolvedBrandDisplayName;
-    private string ResolvedEventCatalogLabel => string.IsNullOrWhiteSpace(_shell?.EventCatalog?.Label)
-        ? "Events"
-        : _shell.EventCatalog.Label;
-    private string ResolvedEventCatalogUrl => string.IsNullOrWhiteSpace(_shell?.EventCatalog?.Url)
-        ? "/events"
-        : _shell.EventCatalog.Url;
-    private bool IsOrganizationCentric => _shell?.Mode == PublicExperienceMode.OrganizationCentric;
     private bool HasCloseAction => OnCloseRequested.HasDelegate;
     private bool ShouldRenderOverlayHeader => HasCloseAction
         && DockPanelEntry?.State.Mode is DockMode.Overlay or DockMode.Temporary or DockMode.Inspector;
@@ -97,9 +90,6 @@ public partial class AppSideNav : ComponentBase, IDisposable
                 return;
             }
 
-            _showCommunityGuidelinesLink = settings.AllowUserSubmittedEvents == true
-                || settings.AllowOrganizationSubmittedEvents == true
-                || settings.AllowGroupSubmittedEvents == true;
             _brandDisplayName = string.IsNullOrWhiteSpace(_brandDisplayName)
                 ? settings.BrandDisplayName
                 : _brandDisplayName;

@@ -169,33 +169,6 @@
         @if (!IsSingleTenant)
         {
             <MudDivider Class="my-2" />
-            <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Event Submission Policies</MudText>
-            <MudSwitch T="bool" Value="EventPolicy.AllowUserSubmittedEvents == true"
-                       ValueChanged="value => EventPolicy.AllowUserSubmittedEvents = value"
-                       Color="Color.Primary">
-                Allow user-submitted events
-            </MudSwitch>
-            <MudSwitch T="bool" Value="EventPolicy.AllowOrganizationSubmittedEvents == true"
-                       ValueChanged="value => EventPolicy.AllowOrganizationSubmittedEvents = value"
-                       Color="Color.Primary">
-                Allow organization-submitted events
-            </MudSwitch>
-            <MudSwitch T="bool" Value="EventPolicy.AllowGroupSubmittedEvents == true"
-                       ValueChanged="value => EventPolicy.AllowGroupSubmittedEvents = value"
-                       Color="Color.Primary">
-                Allow group-submitted events
-            </MudSwitch>
-
-            @if (EventPolicy.AllowUserSubmittedEvents == false
-                 && EventPolicy.AllowOrganizationSubmittedEvents == false
-                 && EventPolicy.AllowGroupSubmittedEvents == false)
-            {
-                <MudAlert Severity="Severity.Info" Dense="true">
-                    No entity types are allowed to submit events. Only administrators will be able to create events through entities they manage.
-                </MudAlert>
-            }
-
-            <MudDivider Class="my-2" />
             <MudText Typo="Typo.subtitle1" Style="font-weight:600;">Self-Registration Controls</MudText>
             <MudSwitch T="bool" Value="OrganizationPolicy.AllowOrganizationSelfRegistration == true"
                        ValueChanged="value => OrganizationPolicy.AllowOrganizationSelfRegistration = value"
@@ -484,9 +457,6 @@
     public TenantDelegationSettingsDto Delegation { get; set; } = null!;
 
     [Parameter, EditorRequired]
-    public EventPolicyDto EventPolicy { get; set; } = null!;
-
-    [Parameter, EditorRequired]
     public OrganizationPolicyDto OrganizationPolicy { get; set; } = null!;
 
     [Parameter, EditorRequired]
@@ -527,7 +497,7 @@
     private string SectionDescription => DisplayMode switch
     {
         "general" => IsSingleTenant
-            ? "Configure event submission policies, self-registration, and general platform behavior."
+            ? "Configure self-registration and general platform behavior."
             : "Configure tenant registration and general platform behavior.",
         "advanced" => "Manage runtime render policies and platform deployment mode.",
         _ => "Control deployment mode, tenant registration, and default home page behavior."
@@ -574,10 +544,6 @@
         if (Delegation is null)
         {
             Delegation = new();
-        }
-        if (EventPolicy is null)
-        {
-            EventPolicy = new();
         }
         if (OrganizationPolicy is null)
         {

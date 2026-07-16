@@ -7,23 +7,19 @@ using Explore.Application.Behaviors;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Notifications;
-using Explore.Application.Contracts.Scheduling;
 using Explore.Application.Contracts.Services;
 using Explore.Application.Contracts.Webhooks;
 using Explore.Application.Features.AiAssistant.Actors;
 using Explore.Application.Features.AiAssistant.Disclosure;
 using Explore.Application.Features.AiAssistant.Tools;
 using Explore.Application.Features.ControlPlane.Plans;
-using Explore.Application.Features.EventReporting;
 using Explore.Application.Features.ManagedProviderProvisioning;
 using Explore.Application.Features.ManagedProviderProvisioning.Handlers.Commands;
 using Explore.Application.Features.Management;
 using Explore.Application.Notifications;
 using Explore.Application.Services;
-using Explore.Application.Services.Lifecycle;
 using Explore.Application.Settings;
 using Explore.Application.Webhooks;
-using Explore.Domain.Services.Scheduling;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,7 +64,6 @@ public static class ApplicationServicesRegistration
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
-        services.Configure<EventReportSubmissionOptions>(configuration.GetSection(EventReportSubmissionOptions.SectionName));
         services.Configure<NotificationRoutingOptions>(configuration.GetSection(NotificationRoutingOptions.SectionName));
         services.Configure<AccountAuthorityLifecycleEmailOptions>(configuration.GetSection(AccountAuthorityLifecycleEmailOptions.SectionName));
         services.AddSingleton<IAiToolContractRegistry>(_ => AiToolContractRegistry.CreateDefault());
@@ -88,7 +83,6 @@ public static class ApplicationServicesRegistration
         services.AddScoped<IInstanceSmtpSettingService, InstanceSmtpSettingService>();
         services.AddScoped<IInstanceBootstrapAuditLogger, InstanceBootstrapAuditLogger>();
         services.AddScoped<IAuthProviderConfigurationService, AuthProviderConfigurationService>();
-        services.AddScoped<IKeycloakIdentityContractContributor, EventKeycloakIdentityContractContributor>();
         services.AddScoped<IAccountAuthorityLifecycleEmailService, DefaultAccountAuthorityLifecycleEmailService>();
         services.AddScoped<IKeycloakRealmDesiredStateBuilder, KeycloakRealmDesiredStateBuilder>();
         services.AddScoped<IAnalyticsGovernanceService, AnalyticsGovernanceService>();
@@ -107,30 +101,12 @@ public static class ApplicationServicesRegistration
 
         // Authorization: dynamic permission infrastructure
         services.AddScoped<ICapabilityCeilingService, CapabilityCeilingService>();
-        services.AddScoped<IEventRoleAuthorityCeilingService, EventRoleAuthorityCeilingService>();
         services.AddScoped<ICustomPropertyGovernancePolicy, CustomPropertyGovernancePolicy>();
         services.AddScoped<ICustomPropertyAutomationConditionPolicy, CustomPropertyAutomationConditionPolicy>();
-        services.AddScoped<IEventActorResolver, EventActorResolver>();
-        services.AddScoped<IEventTemplateInstantiationService, EventTemplateInstantiationService>();
-        services.AddScoped<IEventSessionTemplateInstantiationService, EventSessionTemplateInstantiationService>();
-        services.AddScoped<IEventTemplateDiffService, EventTemplateDiffService>();
-        services.AddScoped<IEventTemplateSyncService, EventTemplateSyncService>();
-        services.AddScoped<IEventSessionTemplateDiffService, EventSessionTemplateDiffService>();
-        services.AddScoped<IEventSessionTemplateSyncService, EventSessionTemplateSyncService>();
         services.AddScoped<IPermissionRegistryService, PermissionRegistryService>();
-        services.AddScoped<IContactShareConsentService, ContactShareConsentService>();
         services.AddScoped<INotificationOwnershipResolver, DefaultNotificationOwnershipResolver>();
         services.AddScoped<INotificationOrchestrator, DefaultNotificationOrchestrator>();
-        services.AddScoped<IEventLifecycleEmailOutboxFactory, EventLifecycleEmailOutboxFactory>();
-        services.AddScoped<IListmonkRegistrationSyncOutboxFactory, ListmonkRegistrationSyncOutboxFactory>();
-        services.AddScoped<IRegistrationNotificationDeliveryService, RegistrationNotificationDeliveryService>();
-        services.AddScoped<IEventPublishedNotificationFanoutService, EventPublishedNotificationFanoutService>();
-        services.AddScoped<IEventModerationNotificationFanoutService, EventModerationNotificationFanoutService>();
-        services.AddScoped<IEventDetailsProjectionService, EventDetailsProjectionService>();
         services.AddScoped<INotificationRefreshStreamService, NotificationRefreshStreamService>();
-        services.AddScoped<IEventLifecycleScheduler, EventLifecycleScheduler>();
-        services.AddScoped<IEventLifecyclePolicyProvider, EventLifecyclePolicyProvider>();
-        services.AddScoped<IEventLifecycleReadinessEvaluator, EventLifecycleReadinessEvaluator>();
         services.AddScoped<IScheduledEmailDispatchTrigger, NoOpScheduledEmailDispatchTrigger>();
         services.AddSingleton<IScheduledJobRegistry, ScheduledJobRegistry>();
         services.AddSingleton<IWebhookEventTypeRegistry, WebhookEventTypeRegistry>();
@@ -139,9 +115,6 @@ public static class ApplicationServicesRegistration
         services.AddSingleton<IWebhookDeliveryPlanResolver, FailClosedWebhookDeliveryPlanResolver>();
         services.AddScoped<IWebhookEventTypeCatalogSyncService, WebhookEventTypeCatalogSyncService>();
         services.AddScoped<IWebhookEventPublisher, DefaultWebhookEventPublisher>();
-
-        // Scheduling domain services (stateless, safe as singleton).
-        services.AddSingleton<IEventScheduleProjectionCalculator, EventScheduleProjectionCalculator>();
 
         // Appearance resolution and palette generation
         services.AddScoped<IAppearanceResolutionService, AppearanceResolutionService>();

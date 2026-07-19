@@ -225,7 +225,7 @@ public class ContractInvariantsTests
             .IsEqualTo("string")
             .Because("The API serializes enums with JsonStringEnumConverter, so RoleEnum must not be documented as an integer.");
         await Assert.That(GetEnumValues(roleEnum))
-            .IsEquivalentTo(["Admin", "Moderator", "Member", "TenantAdmin", "TenantModerator", "TenantMember", "OrgAdmin", "OrgModerator", "OrgMember", "GroupAdmin", "GroupModerator", "GroupMember", "EventOwner", "EventManager", "RegistrationManager", "CheckInStaff"])
+            .IsEquivalentTo(["Admin", "Moderator", "Member", "TenantAdmin", "TenantModerator", "TenantMember", "OrgAdmin", "OrgModerator", "OrgMember", "GroupAdmin", "GroupModerator", "GroupMember"])
             .Because("RoleEnum must expose the public string literals clients receive over JSON.");
 
         await Assert.That(GetStringProperty(deploymentMode, "type"))
@@ -292,7 +292,6 @@ public class ContractInvariantsTests
 
         (string Path, string Method)[] protectedOperations =
         [
-            ("/api/management/instance", "get"),
             ("/api/management/version", "get"),
             ("/api/management/health", "get"),
             ("/api/management/upgrade/preflight", "post"),

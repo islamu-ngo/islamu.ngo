@@ -34,7 +34,7 @@ public class ProblemDetailsContractTests
     [Test]
     public async Task GlobalExceptionHandler_OnNotFoundException_ReturnsProblemDetailsWithTraceIdAndTimestamp()
     {
-        using var client = CreateClientThatThrows(new NotFoundException("Event", Guid.NewGuid()));
+        using var client = CreateClientThatThrows(new NotFoundException("Actor", Guid.NewGuid()));
 
         var response = await client.GetAsync($"/api/actor/{Guid.NewGuid()}");
 
@@ -453,10 +453,10 @@ public class ProblemDetailsContractTests
     [Test]
     public async Task ProblemDetails_InstanceField_ContainsRequestPath()
     {
-        var eventId = Guid.NewGuid();
-        using var client = CreateClientThatThrows(new NotFoundException("Event", eventId));
+        var actorId = Guid.NewGuid();
+        using var client = CreateClientThatThrows(new NotFoundException("Actor", actorId));
 
-        var response = await client.GetAsync($"/api/actor/{eventId}");
+        var response = await client.GetAsync($"/api/actor/{actorId}");
 
         using var document = await ProblemDetailsAssertions.ReadAsJsonAsync(response);
         var root = document.RootElement;

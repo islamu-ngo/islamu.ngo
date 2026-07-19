@@ -96,17 +96,19 @@ public sealed class PublicQueryValidationTests
     }
 
     [Test]
-    public async Task CustomPropertyGovernanceReportQueryRequest_WhenTenantAndEnumAreInvalid_IsInvalid()
+    public async Task CustomPropertyGovernanceReportQueryRequest_WhenTenantScopeAndEnumAreInvalid_IsInvalid()
     {
         var request = new CustomPropertyGovernanceReportQueryRequest
         {
             TenantId = Guid.Empty,
+            Scope = "Event",
             Recommendation = (PromotionRecommendation)999
         };
 
         var results = Validate(request);
 
         await Assert.That(results.Any(result => HasMember(result, nameof(CustomPropertyGovernanceReportQueryRequest.TenantId)))).IsTrue();
+        await Assert.That(results.Any(result => HasMember(result, nameof(CustomPropertyGovernanceReportQueryRequest.Scope)))).IsTrue();
         await Assert.That(results.Any(result => HasMember(result, nameof(CustomPropertyGovernanceReportQueryRequest.Recommendation)))).IsTrue();
     }
 

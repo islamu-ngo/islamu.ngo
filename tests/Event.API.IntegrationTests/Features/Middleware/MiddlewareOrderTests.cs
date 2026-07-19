@@ -99,7 +99,7 @@ public class MiddlewareOrderTests
     [Test]
     public async Task ExceptionHandler_CatchesNotFound_ReturnsProblemDetails()
     {
-        using var client = CreateClientThatThrows(new NotFoundException("Event", Guid.NewGuid()));
+        using var client = CreateClientThatThrows(new NotFoundException("Actor", Guid.NewGuid()));
 
         var response = await client.GetAsync($"/api/actor/{Guid.NewGuid()}");
 

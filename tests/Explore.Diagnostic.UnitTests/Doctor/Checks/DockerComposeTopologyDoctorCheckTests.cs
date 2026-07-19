@@ -29,7 +29,7 @@ public class DockerComposeTopologyDoctorCheckTests
     public async Task RunAsync_WhenComposeUsesIslamuServiceNames_ReturnsPass()
     {
         var fileSystem = new FakeDoctorFileSystem();
-        fileSystem.AddFile(ComposePath, RequiredServices() + "\n      API_ENDPOINT: ${API_ENDPOINT:-http://islamu-event-api:8080/}");
+        fileSystem.AddFile(ComposePath, RequiredServices() + "\n      API_ENDPOINT: ${API_ENDPOINT:-http://islamu-ngo-api:8080/}");
         var check = new DockerComposeTopologyDoctorCheck(fileSystem, Root);
 
         var result = await check.RunAsync(CancellationToken.None);

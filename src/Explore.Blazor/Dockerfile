@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:7644f992230d35cf230017189d4038c
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
+EXPOSE 9090
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:ea8bde36c11b6e7eec2656d0e59101d4462f6bd630730f2c8201ed0572b295d5 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -51,6 +51,7 @@ WORKDIR /app
 
 # Copy published application
 COPY --from=publish /app/publish .
+COPY --from=build --chmod=0555 /src/docker/healthcheck.sh /opt/islamu/healthcheck.sh
 
 # Secret management is handled by the application via AddSecretManagement()
 # Configure via environment variables:
@@ -58,5 +59,13 @@ COPY --from=publish /app/publish .
 #   Infisical__ProjectId, Infisical__ClientId, Infisical__ClientSecret, etc.
 #   Licensing__AutoMapper__LicenseKey, Licensing__MediatR__LicenseKey (commercial builds only)
 # See docs/CONFIGURATION.md for full list of options
+
+ENV ISLAMU_HEALTHCHECK_HOST=127.0.0.1 \
+    ISLAMU_HEALTHCHECK_PORT=8080 \
+    ISLAMU_HEALTHCHECK_PATH=/alive \
+    ISLAMU_HEALTHCHECK_TIMEOUT_SECONDS=5
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD ["bash", "/opt/islamu/healthcheck.sh"]
 
 ENTRYPOINT ["dotnet", "Explore.Blazor.dll"]

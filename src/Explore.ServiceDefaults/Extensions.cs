@@ -8,9 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -21,6 +19,8 @@ namespace Microsoft.Extensions.Hosting;
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 public static class Extensions
 {
+    public const int ManagementPort = 9090;
+
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
 
@@ -186,7 +186,13 @@ public static class Extensions
             }
         });
 
-        app.MapPrometheusScrapingEndpoint("/metrics");
+        app.MapPrometheusScrapingEndpoint("/metrics")
+            .AddEndpointFilter(async (context, next) =>
+                context.HttpContext.Connection.LocalPort == ManagementPort
+                    ? await next(context)
+                    : Results.NotFound())
+            .AllowAnonymous()
+            .ExcludeFromDescription();
 
         return app;
     }

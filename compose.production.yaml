@@ -1,0 +1,211 @@
+# ABOUTME: Production Compose topology for ISLAMU NGO with external identity and cache providers.
+# ABOUTME: Keeps production startup validation, migrations, API, and BFF sequencing explicit.
+
+services:
+  production-environment-validation:
+    build:
+      context: docker/production-validation
+      dockerfile: Dockerfile
+    restart: "no"
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD:?POSTGRESQL_PASSWORD is required}
+      KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET: ${KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET:?KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET is required}
+      KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET: ${KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET:?KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET is required}
+      SETUP_SECRET: ${SETUP_SECRET:?SETUP_SECRET is required}
+      CACHE_CONNECTION_STRING: ${CACHE_CONNECTION_STRING:?CACHE_CONNECTION_STRING is required}
+      ISLAMU_API_PUBLIC_URL: ${ISLAMU_API_PUBLIC_URL:?ISLAMU_API_PUBLIC_URL is required}
+      ISLAMU_BFF_PUBLIC_URL: ${ISLAMU_BFF_PUBLIC_URL:?ISLAMU_BFF_PUBLIC_URL is required}
+      KEYCLOAK_AUTHORITY: ${KEYCLOAK_AUTHORITY:?KEYCLOAK_AUTHORITY is required}
+      KEYCLOAK_INTERNAL_URL: ${KEYCLOAK_INTERNAL_URL:?KEYCLOAK_INTERNAL_URL is required}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}
+      KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_ID: islamu-ngo-blazor
+      KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID: islamu-ngo-api
+      KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME: islamu-ngo-api-audience
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      production-environment-validation:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_USER: ${POSTGRESQL_USERNAME:?POSTGRESQL_USERNAME is required}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD:?POSTGRESQL_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRESQL_DATABASE:?POSTGRESQL_DATABASE is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak-ngo-provisioner:
+    build:
+      context: docker/keycloak
+      dockerfile: Dockerfile.provisioner
+    restart: "no"
+    depends_on:
+      production-environment-validation:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app-network
+    environment:
+      KEYCLOAK_INTERNAL_URL: ${KEYCLOAK_INTERNAL_URL:?KEYCLOAK_INTERNAL_URL is required}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:?KEYCLOAK_ADMIN_REALM is required}
+      KEYCLOAK_ADMIN_SERVICE_CLIENT_ID: ${KEYCLOAK_ADMIN_SERVICE_CLIENT_ID:?KEYCLOAK_ADMIN_SERVICE_CLIENT_ID is required}
+      KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET: ${KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET:?KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET is required}
+      KEYCLOAK_ISLAMU_NGO_PROVISIONING_REQUIRED: "true"
+      KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_ID: islamu-ngo-blazor
+      KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID: islamu-ngo-api
+      KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME: islamu-ngo-api-audience
+      KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET: ${KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET:?KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET is required}
+      KEYCLOAK_ISLAMU_NGO_REDIRECT_URIS: ${KEYCLOAK_ISLAMU_NGO_REDIRECT_URIS:?KEYCLOAK_ISLAMU_NGO_REDIRECT_URIS is required}
+      KEYCLOAK_ISLAMU_NGO_WEB_ORIGINS: ${KEYCLOAK_ISLAMU_NGO_WEB_ORIGINS:?KEYCLOAK_ISLAMU_NGO_WEB_ORIGINS is required}
+      KEYCLOAK_ISLAMU_NGO_LOGOUT_REDIRECT_URIS: ${KEYCLOAK_ISLAMU_NGO_LOGOUT_REDIRECT_URIS:?KEYCLOAK_ISLAMU_NGO_LOGOUT_REDIRECT_URIS is required}
+
+  islamu-ngo-migration:
+    build:
+      context: .
+      dockerfile: src/Event.MigrationService/Dockerfile
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-ngo-provisioner:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app-network
+    environment:
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE:?POSTGRESQL_DATABASE is required}
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME:?POSTGRESQL_USERNAME is required}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD:?POSTGRESQL_PASSWORD is required}
+      SecretProvider__Provider: None
+
+  islamu-ngo-api:
+    build:
+      context: .
+      dockerfile: src/Explore.API/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-ngo-provisioner:
+        condition: service_completed_successfully
+      islamu-ngo-migration:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    expose:
+      - "8080"
+      - "9090"
+    volumes:
+      - local_storage_data:/app/storage-data/local
+    networks:
+      - app-network
+      - monitoring-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080;9090"
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_DATABASE: ${POSTGRESQL_DATABASE:?POSTGRESQL_DATABASE is required}
+      POSTGRESQL_USERNAME: ${POSTGRESQL_USERNAME:?POSTGRESQL_USERNAME is required}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD:?POSTGRESQL_PASSWORD is required}
+      ConnectionStrings__cache: ${CACHE_CONNECTION_STRING:?CACHE_CONNECTION_STRING is required}
+      Keycloak__Authority: ${KEYCLOAK_AUTHORITY:?KEYCLOAK_AUTHORITY is required}
+      Keycloak__MetadataAddress: ${KEYCLOAK_INTERNAL_URL:?KEYCLOAK_INTERNAL_URL is required}/realms/${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}/.well-known/openid-configuration
+      Keycloak__Realm: ${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}
+      Keycloak__ClientId: islamu-ngo-api
+      Keycloak__Audience: islamu-ngo-api
+      Keycloak__ValidAudiences__0: islamu-ngo-api
+      Keycloak__ValidAudiences__1: islamu-ngo-blazor
+      SETUP_SECRET: ${SETUP_SECRET:?SETUP_SECRET is required}
+      PublicBaseUrl: ${ISLAMU_API_PUBLIC_URL:?ISLAMU_API_PUBLIC_URL is required}
+      Storage__Local__RootPath: /app/storage-data/local
+      Storage__Local__CreateRootIfMissing: "true"
+      SecretProvider__Provider: None
+
+  islamu-ngo-ui:
+    build:
+      context: .
+      dockerfile: src/Explore.Blazor/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      islamu-ngo-api:
+        condition: service_healthy
+      keycloak-ngo-provisioner:
+        condition: service_completed_successfully
+      islamu-ngo-migration:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${ISLAMU_BFF_PUBLIC_PORT:?ISLAMU_BFF_PUBLIC_PORT is required}:8080"
+    expose:
+      - "9090"
+    networks:
+      - app-network
+      - monitoring-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080;9090"
+      API_ENDPOINT: http://islamu-ngo-api:8080/
+      ConnectionStrings__cache: ${CACHE_CONNECTION_STRING:?CACHE_CONNECTION_STRING is required}
+      Keycloak__Authority: ${KEYCLOAK_AUTHORITY:?KEYCLOAK_AUTHORITY is required}
+      Keycloak__MetadataAddress: ${KEYCLOAK_INTERNAL_URL:?KEYCLOAK_INTERNAL_URL is required}/realms/${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}/.well-known/openid-configuration
+      Keycloak__Realm: ${KEYCLOAK_REALM:?KEYCLOAK_REALM is required}
+      Keycloak__ClientId: islamu-ngo-blazor
+      Keycloak__ClientSecret: ${KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET:?KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET is required}
+      SETUP_SECRET: ${SETUP_SECRET:?SETUP_SECRET is required}
+      PublicBaseUrl: ${ISLAMU_BFF_PUBLIC_URL:?ISLAMU_BFF_PUBLIC_URL is required}
+      SecretProvider__Provider: None
+
+networks:
+  app-network:
+  monitoring-network:
+    internal: true
+
+volumes:
+  postgres_data:
+  local_storage_data:

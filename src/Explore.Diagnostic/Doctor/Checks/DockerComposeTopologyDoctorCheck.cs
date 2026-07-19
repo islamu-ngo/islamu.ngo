@@ -1,5 +1,5 @@
 // ABOUTME: Validates the documented Docker Compose service topology without starting containers.
-// ABOUTME: Detects self-hosting drift such as service-name mismatches and missing dependencies.
+// ABOUTME: Detects local first-party Compose drift such as service-name mismatches and missing dependencies.
 
 using Explore.Diagnostic.Doctor.Infrastructure;
 
@@ -29,9 +29,9 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
             return Task.FromResult(DoctorCheckResult.Fail(
                 Code,
                 Category,
-                "docker-compose.yml is missing, so self-hosting service topology cannot be checked.",
+                "docker-compose.yml is missing, so the local Compose service topology cannot be checked.",
                 "Restore docker-compose.yml or run doctor from the repository root.",
-                "docs/SELF_HOSTING.md"));
+                "docs/OPERATIONS.md"));
         }
 
         var compose = fileSystem.ReadAllText(composePath);
@@ -43,7 +43,7 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
                 Category,
                 "Docker Compose is missing required platform services.",
                 $"Restore service definitions for: {string.Join(", ", missing.Select(service => service.TrimEnd(':')))}.",
-                "docs/SELF_HOSTING.md"));
+                "docs/OPERATIONS.md"));
         }
 
         if (compose.Contains("API_ENDPOINT: ${API_ENDPOINT:-http://eventapi:8080/}", StringComparison.Ordinal) ||
@@ -54,7 +54,7 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
                 Category,
                 "Compose default API_ENDPOINT points at a stale API service name.",
                 "Set API_ENDPOINT explicitly or change the default to http://islamu-ngo-api:8080/ before relying on Compose-only BFF routing.",
-                "docs/SELF_HOSTING.md",
+                "docs/OPERATIONS.md",
                 "API_ENDPOINT default uses a stale service name; service is islamu-ngo-api."));
         }
 
@@ -62,7 +62,7 @@ public sealed class DockerComposeTopologyDoctorCheck(IDoctorFileSystem fileSyste
             Code,
             Category,
             "Docker Compose contains the required core services and no known service-name drift was detected.",
-            "Run `docker compose config` manually before production rollout if Compose files are overridden.",
-            "docs/SELF_HOSTING.md"));
+            "Run `docker compose config` manually before relying on local Compose overrides.",
+            "docs/OPERATIONS.md"));
     }
 }

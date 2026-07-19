@@ -172,6 +172,15 @@ public sealed class CustomPropertyGovernanceReportQueryRequest : PaginationQuery
             yield return result;
         }
 
+        if (Scope is not null
+            && !string.Equals(Scope, nameof(EntityTypeName.Organization), StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(Scope, nameof(EntityTypeName.Group), StringComparison.OrdinalIgnoreCase))
+        {
+            yield return new ValidationResult(
+                $"{nameof(Scope)} must be Organization or Group.",
+                [nameof(Scope)]);
+        }
+
         if (Recommendation.HasValue && !Enum.IsDefined(Recommendation.Value))
         {
             yield return new ValidationResult(

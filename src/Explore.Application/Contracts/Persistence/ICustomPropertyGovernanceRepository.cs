@@ -1,37 +1,22 @@
-// ABOUTME: Repository contract for the Rule 12 governance report aggregation queries.
-// ABOUTME: Aggregates across event and event-session runtime definitions for promotion analysis.
+// ABOUTME: Repository contract for tenant-scoped custom-property governance report reads.
+// ABOUTME: Returns definition entities and scope totals so handlers own report DTO mapping.
 
+using Explore.Domain;
 using Explore.Domain.Enums;
 
 namespace Explore.Application.Contracts.Persistence;
 
-public record GovernanceDefinitionRow(
-    Guid TenantId,
-    string Namespace,
-    string Key,
-    string DisplayName,
-    string EntityScope,
-    PropertyType PropertyType,
-    ExposureLevel ExposureLevel,
-    bool IsSearchable,
-    bool IsFilterable,
-    bool IsExportable,
-    bool IsModerationRelevant,
-    bool IsAnalyticsRelevant,
-    bool IsSystemOwned,
-    int ActiveInstanceCount,
-    DateTime? LastUsedAt);
-
 public interface ICustomPropertyGovernanceRepository
 {
-    Task<(List<GovernanceDefinitionRow> Items, int TotalCount)> GetGovernanceRowsAsync(
+    Task<(List<CustomPropertyDefinition> Items, int TotalCount)> GetGovernanceDefinitionsAsync(
         Guid tenantId,
-        string? entityScopeFilter,
+        EntityTypeName? entityTypeName,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken);
 
-    Task<int> GetTotalEventCountForTenantAsync(
+    Task<int> GetTotalEntityCountForTenantAsync(
         Guid tenantId,
+        EntityTypeName entityTypeName,
         CancellationToken cancellationToken);
 }

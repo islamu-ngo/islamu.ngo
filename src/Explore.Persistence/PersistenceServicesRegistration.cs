@@ -172,6 +172,7 @@ public static class PersistenceServicesRegistration
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IGroupMemberRepository, GroupMemberRepository>();
         services.AddScoped<ICustomPropertyDefinitionRepository, CustomPropertyDefinitionRepository>();
+        services.AddScoped<ICustomPropertyGovernanceRepository, CustomPropertyGovernanceRepository>();
 
         services.AddScoped<ICustomPropertyQuotaResolver, Services.CustomPropertyQuotaResolver>();
 

@@ -1,4 +1,5 @@
 // ABOUTME: Service for managing actor-related operations.
+// ABOUTME: Wraps generated API lookup calls for actor collections and individual actor resources.
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Constants;

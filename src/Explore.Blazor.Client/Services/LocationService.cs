@@ -1,4 +1,5 @@
 // ABOUTME: Service for managing location-related operations.
+// ABOUTME: Wraps generated API calls for location listing, pagination, CRUD, and HAL responses.
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Constants;

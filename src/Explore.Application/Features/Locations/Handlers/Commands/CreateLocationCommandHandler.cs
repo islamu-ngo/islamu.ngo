@@ -1,4 +1,4 @@
-// ABOUTME: Handler for creating a new event location with validation.
+// ABOUTME: Handler for creating a new reusable location with validation.
 // ABOUTME: Validates input, maps DTO, sets TenantId, persists via repository.
 using System;
 using System.Linq;

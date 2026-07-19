@@ -1,5 +1,5 @@
 /* ABOUTME: Scoped styles for the shared control-plane page header primitive. */
-/* ABOUTME: Uses BEM classes, logical properties, and Event design tokens. */
+/* ABOUTME: Uses BEM classes, logical properties, and site design tokens. */
 
 .control-plane-page-header {
     display: grid;

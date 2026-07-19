@@ -1,4 +1,4 @@
-// ABOUTME: MediatR command for creating a new event location.
+// ABOUTME: MediatR command for creating a new reusable location.
 // ABOUTME: Carries the CreateLocationDto payload.
 using System;
 using Explore.Application.Authorization;

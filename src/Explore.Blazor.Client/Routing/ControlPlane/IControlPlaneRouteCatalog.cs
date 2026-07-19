@@ -1,4 +1,4 @@
-// ABOUTME: Defines the host-neutral route catalog contract for Event control-plane components.
+// ABOUTME: Defines the host-neutral route catalog contract for control-plane components.
 // ABOUTME: Allows Blazor hosts to consume shared route metadata without owning route-string duplication.
 
 namespace Explore.Blazor.Client.Routing.ControlPlane;

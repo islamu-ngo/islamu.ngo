@@ -1,4 +1,4 @@
-// ABOUTME: Registers shared route metadata required by the embedded Event control-plane UI.
+// ABOUTME: Registers shared route metadata required by the embedded control-plane UI.
 // ABOUTME: API-backed services are registered with the generated client in shared application services.
 
 using Explore.Blazor.Client.Routing.ControlPlane;

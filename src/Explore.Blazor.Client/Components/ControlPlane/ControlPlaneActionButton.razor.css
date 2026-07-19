@@ -1,4 +1,4 @@
-/* ABOUTME: Scoped styles for ControlPlaneActionButton using Event design tokens. */
+/* ABOUTME: Scoped styles for ControlPlaneActionButton using site design tokens. */
 /* ABOUTME: Uses BEM scoping and ::deep only for the direct MudButton child. */
 
 .control-plane-action-button {

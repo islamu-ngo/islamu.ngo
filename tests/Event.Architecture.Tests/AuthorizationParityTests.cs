@@ -508,9 +508,15 @@ public partial class AuthorizationParityTests
 
     private static string FindHateoasPoliciesPath()
     {
-        var eventLinkPolicyPath = FindSourceFile("EventLinkPolicy.cs", "Explore.API");
-        return Path.GetDirectoryName(eventLinkPolicyPath)
-            ?? throw new DirectoryNotFoundException("Could not resolve Explore.API/Hateoas/Policies.");
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory is not null
+            ? Path.Combine(directory.FullName, "src", "Explore.API", "Hateoas", "Policies")
+            : throw new DirectoryNotFoundException("Could not resolve Explore.API/Hateoas/Policies.");
     }
 
     [GeneratedRegex("""\"(\w+)\"\s*=>""")]
@@ -519,7 +525,7 @@ public partial class AuthorizationParityTests
     [GeneratedRegex("""resource:\s*["']?(\w+)["']?""")]
     private static partial Regex CerbosResourceKindRegex();
 
-    [GeneratedRegex(@"\.RequirePermission\s*\(\s*(?!AuthorizationActions\.)", RegexOptions.Singleline)]
+    [GeneratedRegex(@"\.RequirePermission\s*\((?!\s*AuthorizationActions\.)", RegexOptions.Singleline)]
     private static partial Regex MissingAuthorizationActionRegex();
 
     [GeneratedRegex(@"(?m)^\s*-?\s*name:\s*(explore_admin_roles|instance_admin|tenant_admin|org_admin)\b")]

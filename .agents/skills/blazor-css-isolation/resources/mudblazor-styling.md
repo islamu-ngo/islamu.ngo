@@ -84,7 +84,7 @@ Common MudBlazor utility class combinations:
 
 ## Wrapper Components And DialogOptionsFactory
 
-See [mudblazor-usage.md](../blazor-ui-conventions/resources/mudblazor-usage.md) for the wrapper component catalog and DialogOptionsFactory presets. Wrappers live in `Explore.Blazor.Client/Components/Common/` and use `display: contents` + `::deep` for CSS isolation.
+See [mudblazor-usage.md](../../blazor-ui-conventions/resources/mudblazor-usage.md) for the wrapper component catalog and DialogOptionsFactory presets. Wrappers live in `Explore.Blazor.Client/Components/Common/` and use `display: contents` + `::deep` for CSS isolation.
 
 Also see the `design-system` skill (`wrapper-components.md`) for detailed parameter tables and usage guidance.
 
@@ -124,4 +124,4 @@ Prefer `oklch()` and `color-mix(in oklch, ...)` over `rgba()` and `color-mix(in 
 - ❌ `transition: all` — specify exact properties (`background-color`, `box-shadow`, `border-color`, `opacity`).
 
 ## Related
-- [v9-migration.md](../blazor-ui-conventions/resources/v9-migration.md) — v9 breaking API changes
+- [v9-migration.md](../../blazor-ui-conventions/resources/v9-migration.md) — v9 breaking API changes

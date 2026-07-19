@@ -49,32 +49,17 @@ public class CreateEventCommandHandler(
 ## Query Pattern (List with Specification)
 
 ```csharp
-// 1. Query
-public record GetEventsQuery(
-    int Page = 1,
-    int PageSize = 20,
-    string? SearchTerm = null) : IRequest<PaginatedResult<EventListDto>>;
+var specification = BlogQuerySpecification.Empty
+    .ForTenant(request.TenantId)
+    .PublishedAt(DateTime.UtcNow)
+    .SortByPublishedAtDescending();
 
-// 2. Handler with HybridCache
-public class GetEventsQueryHandler(
-    IEventRepository eventRepository,
-    IMapper mapper,
-    HybridCache cache) : IRequestHandler<GetEventsQuery, PaginatedResult<EventListDto>>
-{
-    public async Task<PaginatedResult<EventListDto>> Handle(
-        GetEventsQuery request, CancellationToken ct)
-    {
-        var cacheKey = $"events:list:{request.Page}:{request.PageSize}:{request.SearchTerm}";
-        return await cache.GetOrCreateAsync(cacheKey, async token =>
-        {
-            var spec = EventQuerySpecification.Create()
-                .WithSearch(request.SearchTerm)
-                .WithPagination(request.Page, request.PageSize);
-            var result = await eventRepository.GetPagedAsync(spec, token);
-            return mapper.Map<PaginatedResult<EventListDto>>(result);
-        }, cancellationToken: ct);
-    }
-}
+int totalCount = await blogRepository.CountAsync(specification, cancellationToken);
+IReadOnlyList<Blog> blogs = await blogRepository.ListAsync(
+    specification,
+    (page - 1) * pageSize,
+    pageSize,
+    cancellationToken);
 ```
 
 ## Key Patterns

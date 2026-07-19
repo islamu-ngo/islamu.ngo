@@ -134,7 +134,7 @@ Use the request scope to decide which docs are mandatory. Common sources:
 - `docs/AUTHORIZATION.md`
 - `docs/BLAZOR.md`
 - `docs/CONFIGURATION.md`
-- `docs/DEPLOYMENT_MODES.md`
+- `docs/PRODUCTION_OPERATIONS.md`
 - `docs/MULTI_TENANCY.md`
 - `docs/FEDERATION.md`
 - `docs/OPERATIONS.md`

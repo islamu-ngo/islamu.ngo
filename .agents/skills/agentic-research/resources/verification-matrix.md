@@ -22,14 +22,14 @@ ABOUTME: Matches verification depth to the type of change rather than applying o
    - Runtime behavior (middleware, DI, background services)
    - Security-sensitive flows (auth, tenant isolation, secrets)
    - Cross-layer dependencies (Domain → Application → Infrastructure)
-3. Architecture test compliance is mandatory for any code change: `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj`
+3. Architecture test compliance is mandatory for any code change: `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj`
 
 ## Verification Commands Quick Reference
 
 | Check | Command |
 |-------|---------|
 | Build | `dotnet build --configuration Release --verbosity quiet` |
-| Architecture tests | `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet` |
+| Architecture tests | `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet` |
 | Unit tests | `dotnet test --project <TestProject>.csproj --configuration Release --verbosity quiet` |
 | JSON syntax | Open file in editor or use `jq . < file.json` |
 | Hook build | `dotnet build` in `.claude/hooks/` directory |

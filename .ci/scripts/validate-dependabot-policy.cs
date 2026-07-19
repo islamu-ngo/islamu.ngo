@@ -111,8 +111,8 @@ static IEnumerable<string> ValidateDockerBlocks(string[] lines)
     var failures = new List<string>();
     var requiredDirectories = new HashSet<string>(StringComparer.Ordinal)
     {
-        "/Explore.API",
-        "/Explore.Blazor",
+        "/src/Explore.API",
+        "/src/Explore.Blazor",
     };
 
     foreach (var block in blocks)

@@ -65,7 +65,7 @@ dotnet test --project <MinimumTestProject>/<MinimumTestProject>.csproj --configu
 For architectural PRs, also run:
 
 ```bash
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
 ```
 
 ## Step 5 — Critical Rules Checklist (applies to every PR)

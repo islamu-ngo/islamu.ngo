@@ -61,7 +61,7 @@ Optional but recommended. Use fenced code blocks. Keep to **≤40 lines per exam
 
 ### `## Verification Hooks`
 
-Bulleted list of exact commands or test-project names that catch violations. Example: `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj`. Commands must be copy-pasteable.
+Bulleted list of exact commands or test-project names that catch violations. Example: `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj`. Commands must be copy-pasteable.
 
 ### `## Related Skills`
 

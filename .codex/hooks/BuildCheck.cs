@@ -1,3 +1,6 @@
+// ABOUTME: Non-blocking hook that checks the first-party ISLAMU solution compiles after edits.
+// ABOUTME: Reports Release build failures to the agent without interrupting the editing session.
+
 using System;
 using System.Diagnostics;
 using System.IO;

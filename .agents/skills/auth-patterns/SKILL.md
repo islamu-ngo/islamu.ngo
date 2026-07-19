@@ -76,8 +76,8 @@ public sealed class UpdateEventHandler(IEventRepository repository)
 ```
 
 ## Verification Hooks
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.AuthorizationParityTests`
-- `dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet`
+- `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/AuthorizationParityTests/*" --minimum-expected-tests 1`
+- `dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet`
 - `dotnet build --configuration Release --verbosity quiet`
 
 ## Related Skills

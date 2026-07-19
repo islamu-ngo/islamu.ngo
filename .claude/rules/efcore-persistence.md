@@ -19,7 +19,7 @@ related_intents: [update-repository-query, add-ef-migration, add-cqrs-handler]
 - **Context Pooling**: Use property injection for scoped context data; do not add scoped dependencies to `ExploreDbContext` constructor.
 - **Mapping Logic**: Favor `IEntityTypeConfiguration<T>` classes over smearing mapping rules across the `DbContext` or repositories.
 - **Explicit Tracking**: Use `AsNoTracking()` for all read-only query flows.
-- **Specification Pattern**: Use the `EventQuerySpecification` builder for all complex queries; avoid ad-hoc LINQ in repositories.
+- **Specification Pattern**: Use the aggregate's existing immutable query specification, such as `BlogQuerySpecification`, for complex queries; avoid ad-hoc LINQ in repositories.
 
 ## Must Read
 - [docs/QUICK_REFERENCE.md#critical-rules](../../docs/QUICK_REFERENCE.md#critical-rules) (Rules #1, #12, #17)

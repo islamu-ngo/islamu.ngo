@@ -1,3 +1,6 @@
+// ABOUTME: Shared hook that tracks build output and repository context after agent tool calls.
+// ABOUTME: Bounds input and execution so context reporting never blocks or fails an agent session.
+
 using System;
 using System.IO;
 using System.Linq;

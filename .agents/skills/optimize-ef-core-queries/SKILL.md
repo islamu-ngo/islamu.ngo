@@ -211,7 +211,7 @@ var results = await db.Orders
 ## Verification Hooks
 
 - `dotnet build --configuration Release --verbosity quiet`
-- `dotnet test --project Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet`
+- `dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet`
 
 ## Related Skills
 

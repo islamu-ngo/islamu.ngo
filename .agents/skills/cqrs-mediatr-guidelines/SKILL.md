@@ -63,15 +63,15 @@ public sealed class GetEventByIdHandler(IEventRepository repository, HybridCache
 ```
 
 ```csharp
-IQuerySpecification<Event> spec = EventQuerySpecification.Create()
-    .WithPublishedOnly()
-    .And(EventQuerySpecification.Create().WithTenant(tenantId))
-    .And(EventQuerySpecification.Create().WithSearch(searchTerm));
+BlogQuerySpecification specification = BlogQuerySpecification.Empty
+    .ForTenant(tenantId)
+    .PublishedAt(DateTime.UtcNow)
+    .SearchTitle(searchTerm);
 ```
 
 ## Verification Hooks
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.CqrsPatternTests`
-- `dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet`
+- `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/CqrsPatternTests/*" --minimum-expected-tests 1`
+- `dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet`
 - `dotnet build --configuration Release --verbosity quiet`
 
 ## Related Skills

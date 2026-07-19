@@ -10,7 +10,8 @@ using Explore.API.Extensions;
 using Explore.API.Hateoas;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.DTOs.Management;
-using Explore.Application.Features.Management.Requests;
+using Explore.Application.Features.Management.Requests.Commands;
+using Explore.Application.Features.Management.Requests.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Timeouts;
@@ -58,11 +59,11 @@ public sealed class ManagementController(
     [EnableRateLimiting(RateLimitingExtensions.WritePolicy)]
     [EndpointSummary("Trigger managed registration")]
     [EndpointDescription("Retries the same durable instance-to-Control-Plane registration attempt for an instance administrator.")]
-    [ProducesResponseType(typeof(TriggerManagedRegistrationResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(TriggerManagedRegistrationResult), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(TriggerManagedRegistrationResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TriggerManagedRegistrationResultDto), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
-    public async Task<ActionResult<TriggerManagedRegistrationResult>> TriggerRegistration(
+    public async Task<ActionResult<TriggerManagedRegistrationResultDto>> TriggerRegistration(
         CancellationToken cancellationToken = default)
     {
         if (!await adminContext.IsInstanceAdminAsync(cancellationToken))
@@ -108,7 +109,7 @@ public sealed class ManagementController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ManagementUpgradePreflightDto>> EvaluateUpgradePreflight(
-        [FromBody] ManagementUpgradePreflightRequest request,
+        [FromBody] ManagementUpgradePreflightRequestDto request,
         CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(
@@ -128,7 +129,7 @@ public sealed class ManagementController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ManagementUpgradePostflightDto>> VerifyUpgradePostflight(
-        [FromBody] ManagementUpgradePostflightRequest request,
+        [FromBody] ManagementUpgradePostflightRequestDto request,
         CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(
@@ -152,7 +153,7 @@ public sealed class ManagementController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status504GatewayTimeout)]
     public async Task<ActionResult<ManagementTenantProvisioningPreflightDto>> EvaluateTenantProvisioningPreflight(
-        [FromBody] ManagementTenantProvisioningRequest request,
+        [FromBody] ManagementTenantProvisioningRequestDto request,
         CancellationToken cancellationToken = default)
     {
         if (!TryGetManagedInstanceId(out Guid managedInstanceId))
@@ -181,7 +182,7 @@ public sealed class ManagementController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<ManagementTenantProvisioningOperationDto>> ScheduleTenantProvisioning(
-        [FromBody] ManagementTenantProvisioningRequest request,
+        [FromBody] ManagementTenantProvisioningRequestDto request,
         CancellationToken cancellationToken = default)
     {
         if (!TryGetManagedInstanceId(out Guid managedInstanceId))
@@ -293,7 +294,7 @@ public sealed class ManagementController(
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> RotateCredential(
-        [FromBody] RotateManagedControlPlaneCredentialRequest request,
+        [FromBody] RotateManagedControlPlaneCredentialRequestDto request,
         CancellationToken cancellationToken = default)
     {
         var rotated = await mediator.Send(

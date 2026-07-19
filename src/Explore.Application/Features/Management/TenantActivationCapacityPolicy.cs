@@ -74,7 +74,7 @@ public sealed class TenantActivationCapacityPolicy(
                 reserved,
                 available,
                 "tenant_provisioning_capacity_exhausted",
-                "This Event instance has no available tenant capacity.");
+                "This ISLAMU instance has no available tenant capacity.");
     }
 
     private static DeploymentMode ResolvePersistedMode(InstanceBootstrapState? bootstrap) =>

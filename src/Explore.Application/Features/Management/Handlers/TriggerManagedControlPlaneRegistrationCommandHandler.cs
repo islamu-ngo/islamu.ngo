@@ -1,4 +1,4 @@
-// ABOUTME: Creates and retries one durable Event-to-Control-Plane registration attempt outside database transactions.
+// ABOUTME: Creates and retries one durable ISLAMU-to-Control-Plane registration attempt outside database transactions.
 // ABOUTME: Protects both directional secrets before transport so an ambiguous response can replay safely.
 
 using System.Security.Cryptography;
@@ -9,7 +9,8 @@ using Explore.Application.Contracts.Persistence;
 using Explore.Application.Contracts.Secrets;
 using Explore.Application.Contracts.Services;
 using Explore.Application.DTOs.Management;
-using Explore.Application.Features.Management.Requests;
+using Explore.Application.Features.Management;
+using Explore.Application.Features.Management.Requests.Commands;
 using Explore.Application.Management;
 using Explore.Application.Services;
 using Explore.Domain;
@@ -19,7 +20,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Explore.Application.Features.Management.Handlers;
+namespace Explore.Application.Features.Management.Handlers.Commands;
 
 public sealed class TriggerManagedControlPlaneRegistrationCommandHandler(
     IOptions<ManagedControlPlaneOptions> options,
@@ -32,9 +33,9 @@ public sealed class TriggerManagedControlPlaneRegistrationCommandHandler(
     IManagedControlPlaneRegistrationClient registrationClient,
     IUnitOfWork unitOfWork,
     ILogger<TriggerManagedControlPlaneRegistrationCommandHandler> logger)
-    : IRequestHandler<TriggerManagedControlPlaneRegistrationCommand, TriggerManagedRegistrationResult>
+    : IRequestHandler<TriggerManagedControlPlaneRegistrationCommand, TriggerManagedRegistrationResultDto>
 {
-    public async Task<TriggerManagedRegistrationResult> Handle(
+    public async Task<TriggerManagedRegistrationResultDto> Handle(
         TriggerManagedControlPlaneRegistrationCommand request,
         CancellationToken cancellationToken)
     {
@@ -62,7 +63,7 @@ public sealed class TriggerManagedControlPlaneRegistrationCommandHandler(
             return Failure("Pending", "registration_secret_unavailable", registration.Id);
         }
 
-        var callbackRequest = new CompleteManagedInstanceRegistrationRequest(
+        var callbackRequest = new CompleteManagedInstanceRegistrationRequestDto(
             registration.Id,
             registration.ManagedInstanceId,
             registration.EventInstanceId,
@@ -275,16 +276,13 @@ public sealed class TriggerManagedControlPlaneRegistrationCommandHandler(
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
     }
 
-    private static TriggerManagedRegistrationResult Success(ManagedControlPlaneRegistration registration) =>
+    private static TriggerManagedRegistrationResultDto Success(ManagedControlPlaneRegistration registration) =>
         new(true, registration.Status.ToString(), null, registration.Id);
 
-    private static TriggerManagedRegistrationResult Failure(
+    private static TriggerManagedRegistrationResultDto Failure(
         string state,
         string failureCode,
         Guid? registrationAttemptId = null) =>
         new(false, state, failureCode, registrationAttemptId);
 
-    private sealed record RegistrationSecrets(
-        string EventToControlPlaneSecret,
-        string? ControlPlaneToEventSecret);
 }

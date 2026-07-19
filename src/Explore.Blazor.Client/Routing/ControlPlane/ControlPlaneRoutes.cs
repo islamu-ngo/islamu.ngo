@@ -1,4 +1,4 @@
-// ABOUTME: Defines canonical Event control-plane route paths under the instance administration root.
+// ABOUTME: Defines canonical control-plane route paths under the instance administration root.
 // ABOUTME: Prevents embedded and separate control-plane hosts from drifting on shared route strings.
 
 namespace Explore.Blazor.Client.Routing.ControlPlane;
@@ -26,6 +26,5 @@ public static class ControlPlaneRoutes
     public const string TenantUsers = TenantRoot + "/users";
     public const string TenantFooterNavigation = TenantRoot + "/footer-navigation";
     public const string TenantReports = TenantRoot + "/reports";
-    public const string TenantEvents = TenantRoot + "/events";
     public const string TenantPolicies = TenantRoot + "/policies";
 }

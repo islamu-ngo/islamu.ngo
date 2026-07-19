@@ -1,4 +1,4 @@
-// ABOUTME: Verifies shared Event control-plane route metadata used by embedded and separate Blazor hosts.
+// ABOUTME: Verifies shared control-plane route metadata used by embedded and separate Blazor hosts.
 // ABOUTME: Keeps top-level navigation free from detail routes that require route parameters.
 
 using Explore.Blazor.Client.Routing.ControlPlane;
@@ -38,7 +38,6 @@ public class ControlPlaneRouteCatalogTests
         await Assert.That(tenantNavigationPaths).Contains(ControlPlaneRoutes.TenantUsers);
         await Assert.That(tenantNavigationPaths).Contains(ControlPlaneRoutes.TenantFooterNavigation);
         await Assert.That(tenantNavigationPaths).Contains(ControlPlaneRoutes.TenantReports);
-        await Assert.That(tenantNavigationPaths).Contains(ControlPlaneRoutes.TenantEvents);
         await Assert.That(tenantNavigationPaths).Contains(ControlPlaneRoutes.TenantPolicies);
         await Assert.That(tenantNavigationPaths).Contains("/tenant/{TenantSlug}/");
         await Assert.That(tenantNavigationPaths).DoesNotContain(ControlPlaneRoutes.Overview);

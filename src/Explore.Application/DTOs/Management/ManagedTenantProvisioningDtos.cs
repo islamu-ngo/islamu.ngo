@@ -1,4 +1,4 @@
-// ABOUTME: Versioned public Event contracts for managed tenant provisioning, capacity, and operation status.
+// ABOUTME: Versioned public ISLAMU contracts for managed tenant provisioning, capacity, and operation status.
 // ABOUTME: Accepts only bounded tenant bootstrap intent and returns safe operation/result references.
 
 using System.Text.Json.Serialization;
@@ -7,7 +7,7 @@ using Explore.Domain.Enums;
 namespace Explore.Application.DTOs.Management;
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed class ManagementTenantProvisioningRequest
+public sealed class ManagementTenantProvisioningRequestDto
 {
     public const int CurrentSchemaVersion = 1;
 

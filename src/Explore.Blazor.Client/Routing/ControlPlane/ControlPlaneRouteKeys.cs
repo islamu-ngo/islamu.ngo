@@ -1,4 +1,4 @@
-// ABOUTME: Defines stable keys for Event control-plane routes shared across Blazor hosts.
+// ABOUTME: Defines stable keys for control-plane routes shared across Blazor hosts.
 // ABOUTME: Lets navigation, tests, and future service contracts refer to routes without duplicating paths.
 
 namespace Explore.Blazor.Client.Routing.ControlPlane;
@@ -25,6 +25,5 @@ public static class ControlPlaneRouteKeys
     public const string TenantUsers = "tenant-users";
     public const string TenantFooterNavigation = "tenant-footer-navigation";
     public const string TenantReports = "tenant-reports";
-    public const string TenantEvents = "tenant-events";
     public const string TenantPolicies = "tenant-policies";
 }

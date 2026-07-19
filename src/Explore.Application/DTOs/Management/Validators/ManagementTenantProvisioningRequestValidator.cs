@@ -1,4 +1,4 @@
-// ABOUTME: Validates the versioned managed tenant provisioning request at Event's trust boundary.
+// ABOUTME: Validates the versioned managed tenant provisioning request at ISLAMU's trust boundary.
 // ABOUTME: Enforces bounded closed bootstrap inputs before mode, capacity, and catalog policy evaluation.
 
 using System.Text.Json;
@@ -7,12 +7,12 @@ using FluentValidation;
 namespace Explore.Application.DTOs.Management.Validators;
 
 public sealed class ManagementTenantProvisioningRequestValidator
-    : AbstractValidator<ManagementTenantProvisioningRequest>
+    : AbstractValidator<ManagementTenantProvisioningRequestDto>
 {
     public ManagementTenantProvisioningRequestValidator()
     {
         RuleFor(request => request.SchemaVersion)
-            .Equal(ManagementTenantProvisioningRequest.CurrentSchemaVersion);
+            .Equal(ManagementTenantProvisioningRequestDto.CurrentSchemaVersion);
         RuleFor(request => request.ExternalRequestId)
             .NotEmpty().MaximumLength(100).Matches("^[A-Za-z0-9._:-]+$");
         RuleFor(request => request.ExternalCustomerReference)

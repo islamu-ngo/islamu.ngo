@@ -73,7 +73,7 @@ public class EnsureManagedProviderClientProvisionedCommandHandler(
 
     public async Task<BaseCommandResponse<ManagedProviderClientProvisioningResultDto>> EnsureAsync(
         ManagedProviderClientProvisioningDto provisioningDto,
-        ManagementTenantProvisioningRequest? managementRequest,
+        ManagementTenantProvisioningRequestDto? managementRequest,
         Guid? operationId,
         Guid? expectedOutboxMessageId,
         CancellationToken cancellationToken)
@@ -876,7 +876,7 @@ public class EnsureManagedProviderClientProvisionedCommandHandler(
     }
 
     private async Task<Guid> ApplyManagedBootstrapAsync(
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         ManagedTenantProvisioningResolvedBootstrap bootstrap,
         Guid operationId,
         Guid managedInstanceId,
@@ -1022,7 +1022,7 @@ public class EnsureManagedProviderClientProvisionedCommandHandler(
         {
             return Failure(
                 "External provider customer binding is invalid.",
-                "The provider customer binding does not point to an Event tenant.");
+                "The provider customer binding does not point to an ISLAMU tenant.");
         }
 
         var tenant = await tenantRepository.GetById(existingCustomerBinding.InternalId);

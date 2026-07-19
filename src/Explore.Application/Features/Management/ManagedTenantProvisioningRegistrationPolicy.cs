@@ -30,13 +30,13 @@ public static class ManagedTenantProvisioningRegistrationPolicy
         {
             return new ManagementTenantProvisioningBlockerDto(
                 "managed_registration_api_incompatible",
-                "The registered management API version is incompatible with this Event instance.");
+                "The registered management API version is incompatible with this ISLAMU instance.");
         }
 
         return registration.DeploymentMode != deploymentMode
             ? new ManagementTenantProvisioningBlockerDto(
                 "managed_registration_mode_incompatible",
-                "The managed registration deployment mode does not match this Event instance.")
+                "The managed registration deployment mode does not match this ISLAMU instance.")
             : null;
     }
 }

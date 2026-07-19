@@ -1,12 +1,12 @@
-// ABOUTME: Rotates or revokes the dedicated inbound Control Plane machine credential for Event managed mode.
-// ABOUTME: Accepts only hashed replacements so the Event API never receives the Control Plane's new raw secret.
+// ABOUTME: Rotates or revokes the dedicated inbound Control Plane machine credential for ISLAMU managed mode.
+// ABOUTME: Accepts only hashed replacements so the ISLAMU API never receives the Control Plane's new raw secret.
 
 using Explore.Application.Contracts.Persistence;
-using Explore.Application.Features.Management.Requests;
+using Explore.Application.Features.Management.Requests.Commands;
 using Explore.Domain;
 using MediatR;
 
-namespace Explore.Application.Features.Management.Handlers;
+namespace Explore.Application.Features.Management.Handlers.Commands;
 
 public sealed class RotateManagedControlPlaneCredentialCommandHandler(
     IManagedControlPlaneRegistrationRepository registrationRepository)

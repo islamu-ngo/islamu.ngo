@@ -1,4 +1,4 @@
-// ABOUTME: Resolves Event-owned plan, module, domain, branding, and setting policy before tenant mutation.
+// ABOUTME: Resolves instance-owned plan, module, domain, branding, and setting policy before tenant mutation.
 // ABOUTME: Produces one closed bootstrap snapshot used by both operation scheduling and transactional execution.
 
 using System.Globalization;
@@ -41,7 +41,7 @@ public sealed class ManagedTenantProvisioningPreflight(
     ];
 
     public async Task<ManagedTenantProvisioningPreflightResult> EvaluateAsync(
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         bool requireProvisionablePlan,
         CancellationToken cancellationToken)
     {
@@ -87,7 +87,7 @@ public sealed class ManagedTenantProvisioningPreflight(
         {
             return ManagedTenantProvisioningPreflightResult.Fail(
                 quotaError,
-                "The requested plan storage quota exceeds the Event instance ceiling.");
+                "The requested plan storage quota exceeds the ISLAMU instance ceiling.");
         }
 
         IReadOnlyList<ModuleDefinition> modules = await moduleDefinitionRepository.GetActiveByKeysAsync(
@@ -97,7 +97,7 @@ public sealed class ManagedTenantProvisioningPreflight(
         {
             return ManagedTenantProvisioningPreflightResult.Fail(
                 "tenant_module_unavailable",
-                "One or more requested modules are unavailable on this Event instance.");
+                "One or more requested modules are unavailable on this ISLAMU instance.");
         }
 
         ManagedTenantProvisioningPreflightResult? domainFailure = await ValidateDomainIntentAsync(
@@ -113,7 +113,7 @@ public sealed class ManagedTenantProvisioningPreflight(
         {
             return ManagedTenantProvisioningPreflightResult.Fail(
                 "tenant_invitation_unavailable",
-                "Tenant administrator invitation delivery is not configured on this Event instance.");
+                "Tenant administrator invitation delivery is not configured on this ISLAMU instance.");
         }
 
         BrandingSettings branding = MapBranding(request);
@@ -148,7 +148,7 @@ public sealed class ManagedTenantProvisioningPreflight(
     }
 
     private async Task<ManagedTenantProvisioningPreflightResult?> ValidateDomainIntentAsync(
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         CancellationToken cancellationToken)
     {
         if (request.Domain is null)
@@ -199,7 +199,7 @@ public sealed class ManagedTenantProvisioningPreflight(
     }
 
     private async Task<ManagedTenantProvisioningSettingsResult> ResolveSettingsAsync(
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         TenantPlanVersion planVersion,
         CancellationToken cancellationToken)
     {
@@ -359,7 +359,7 @@ public sealed class ManagedTenantProvisioningPreflight(
                 .SequenceEqual(configuredValues);
     }
 
-    private static BrandingSettings MapBranding(ManagementTenantProvisioningRequest request) => new()
+    private static BrandingSettings MapBranding(ManagementTenantProvisioningRequestDto request) => new()
     {
         DisplayName = request.Branding?.DisplayName ?? request.TenantName,
         LogoUrl = request.Branding?.LogoUrl,

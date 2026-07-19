@@ -1,4 +1,4 @@
-// ABOUTME: Schedules, reads, cancels, and processes durable Event-owned tenant provisioning operations.
+// ABOUTME: Schedules, reads, cancels, and processes durable instance-owned tenant provisioning operations.
 // ABOUTME: Rejects mode, capacity, trust, and bootstrap policy before mutation and dispatches only an outbox pointer.
 
 using Explore.Application.Contracts.Persistence;
@@ -8,7 +8,8 @@ using Explore.Application.DTOs.Management;
 using Explore.Application.DTOs.Management.Validators;
 using Explore.Application.Exceptions;
 using Explore.Application.Features.ManagedProviderProvisioning;
-using Explore.Application.Features.Management.Requests;
+using Explore.Application.Features.Management;
+using Explore.Application.Features.Management.Requests.Commands;
 using Explore.Application.Management;
 using Explore.Application.Responses;
 using Explore.Domain;
@@ -17,12 +18,7 @@ using Explore.Domain.Enums;
 using FluentValidation;
 using MediatR;
 
-namespace Explore.Application.Features.Management.Handlers;
-
-public static class ManagedTenantProvisioningOutboxEvents
-{
-    public const string ProcessRequested = "ManagedTenantProvisioningProcessRequested";
-}
+namespace Explore.Application.Features.Management.Handlers.Commands;
 
 public sealed class ScheduleManagedTenantProvisioningCommandHandler(
     IDeploymentModeProvider deploymentModeProvider,
@@ -43,7 +39,7 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
     {
         var validator = new ManagementTenantProvisioningRequestValidator();
         await validator.ValidateAndThrowAsync(request.Request, cancellationToken);
-        ManagementTenantProvisioningRequest normalized =
+        ManagementTenantProvisioningRequestDto normalized =
             ManagedTenantProvisioningRequestCodec.Normalize(request.Request);
         string requestHash = ManagedTenantProvisioningRequestCodec.ComputeHash(normalized);
 
@@ -223,7 +219,7 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
 
     private async Task<BaseCommandResponse<ManagementTenantProvisioningOperationDto>?>
         EvaluateTenantCreationPolicyAsync(
-            ManagementTenantProvisioningRequest request,
+            ManagementTenantProvisioningRequestDto request,
             bool includeCapacity,
             CancellationToken cancellationToken)
     {
@@ -251,7 +247,7 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
 
     private async Task<CommittedRecoveryResolution> ResolveCommittedRecoveryAsync(
         ManagedTenantProvisioningOperation? retryCandidate,
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         CancellationToken cancellationToken)
     {
         if (retryCandidate is null)
@@ -297,7 +293,7 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
 
     private async Task<ReplayResolution> ResolveReplayAsync(
         Guid managedInstanceId,
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         string requestHash,
         bool allowTerminalRetry,
         CancellationToken cancellationToken)
@@ -371,17 +367,6 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
             MaxRetries = 10
         });
 
-    private sealed record ReplayResolution(
-        BaseCommandResponse<ManagementTenantProvisioningOperationDto>? ImmediateResponse,
-        ManagedTenantProvisioningOperation? RetryCandidate);
-
-    private enum CommittedRecoveryResolution
-    {
-        None,
-        Owned,
-        Conflict
-    }
-
     private static BaseCommandResponse<ManagementTenantProvisioningOperationDto> Success(
         ManagedTenantProvisioningOperation operation,
         string message) => new()
@@ -405,24 +390,6 @@ public sealed class ScheduleManagedTenantProvisioningCommandHandler(
         Failure(
             "tenant_provisioning_operation_provenance_conflict",
             "The customer reference is bound to a tenant that is not owned by this provisioning operation.");
-}
-
-public sealed class GetManagedTenantProvisioningOperationQueryHandler(
-    IManagedTenantProvisioningOperationRepository operationRepository)
-    : IRequestHandler<GetManagedTenantProvisioningOperationQuery,
-        ManagementTenantProvisioningOperationDto?>
-{
-    public async Task<ManagementTenantProvisioningOperationDto?> Handle(
-        GetManagedTenantProvisioningOperationQuery request,
-        CancellationToken cancellationToken)
-    {
-        ManagedTenantProvisioningOperation? operation =
-            await operationRepository.GetByManagedInstanceAndIdAsNoTrackingAsync(
-                request.ManagedInstanceId,
-                request.OperationId,
-                cancellationToken);
-        return operation is null ? null : ManagedTenantProvisioningRequestCodec.ToDto(operation);
-    }
 }
 
 public sealed class CancelManagedTenantProvisioningOperationCommandHandler(
@@ -539,7 +506,7 @@ public sealed class ProcessManagedTenantProvisioningOperationCommandHandler(
             return true;
         }
 
-        ManagementTenantProvisioningRequest managementRequest =
+        ManagementTenantProvisioningRequestDto managementRequest =
             ManagedTenantProvisioningRequestCodec.Deserialize(operation.RequestJson);
         ManagedProviderClientProvisioningDto provisioningDto = MapProvisioningRequest(
             managementRequest,
@@ -612,7 +579,7 @@ public sealed class ProcessManagedTenantProvisioningOperationCommandHandler(
         operationId.ToString("D"));
 
     private static ManagedProviderClientProvisioningDto MapProvisioningRequest(
-        ManagementTenantProvisioningRequest request,
+        ManagementTenantProvisioningRequestDto request,
         Guid operationId)
     {
         ManagementTenantExternalIdentityDto? identity = request.Administrator.ExternalIdentity;

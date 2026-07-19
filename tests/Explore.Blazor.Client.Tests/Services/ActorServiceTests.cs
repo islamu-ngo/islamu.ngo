@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for ActorService covering HAL-based actor reads and conversion behavior.
-// Verifies pagination-based list retrieval, HAL mapping, null handling, and exception propagation.
+// ABOUTME: Verifies pagination-based list retrieval, HAL mapping, null handling, and exception propagation.
 
 using Explore.Blazor.Client.Constants;
 using Explore.Blazor.Client.Helpers;

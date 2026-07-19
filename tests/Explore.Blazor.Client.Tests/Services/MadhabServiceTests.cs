@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for MadhabService covering madhab list and by-id retrieval behavior.
-// Verifies successful pass-through and exception propagation from the API client.
+// ABOUTME: Verifies successful pass-through and exception propagation from the API client.
 
 namespace Explore.Blazor.Client.Tests.Services;
 

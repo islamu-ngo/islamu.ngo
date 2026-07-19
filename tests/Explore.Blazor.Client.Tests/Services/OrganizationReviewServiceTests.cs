@@ -1,5 +1,5 @@
-// ABOUTME: Unit tests for OrganizationReviewService covering review retrieval by organization
-// and user, review creation, and proper error handling verification.
+// ABOUTME: Unit tests for OrganizationReviewService review retrieval and creation behavior.
+// ABOUTME: Verifies organization/user reads and the service's distinct read and write error handling.
 
 namespace Explore.Blazor.Client.Tests.Services;
 

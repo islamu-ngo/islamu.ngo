@@ -1,3 +1,6 @@
+// ABOUTME: bUnit coverage for login and logout redirect pages at the Blazor BFF boundary.
+// ABOUTME: Verifies provider selection, return-url forwarding, and safe challenge navigation behavior.
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;

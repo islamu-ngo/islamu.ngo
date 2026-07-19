@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for TagService covering tag CRUD, alias behavior, and neutralized relation methods.
-// Verifies HAL conversion, fallback contracts on API failures, and write-operation response behavior.
+// ABOUTME: Verifies HAL conversion, fallback contracts on API failures, and write-operation response behavior.
 
 using Explore.Blazor.Client.Constants;
 using Explore.Blazor.Client.Helpers;

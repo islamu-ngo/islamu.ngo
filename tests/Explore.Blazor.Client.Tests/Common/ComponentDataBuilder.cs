@@ -1,3 +1,6 @@
+// ABOUTME: Bogus-backed builders for reusable Blazor client DTO test data.
+// ABOUTME: Centralizes valid generated fixtures and project-specific identifier and value-type mappings.
+
 using Bogus;
 
 namespace Explore.Blazor.Client.Tests.Common;

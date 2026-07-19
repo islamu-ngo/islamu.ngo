@@ -1,3 +1,6 @@
+// ABOUTME: Integration-style bUnit coverage for anonymous, authenticated, authorized, and loading states.
+// ABOUTME: Verifies shell navigation and protected component behavior with reusable authentication scenarios.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

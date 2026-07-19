@@ -44,8 +44,8 @@ public sealed class AiToolReadinessDoctorCheckTests
 
         fileSystem.AddFile(Path.Combine(Root, "docs/AI_RAG_FOUNDATION.md"), "rag");
         fileSystem.AddFile(Path.Combine(Root, "docs/AI_AGENT_EXPERIENCE_HARDENING.md"), "agent");
-        fileSystem.AddFile(Path.Combine(Root, "Event.Application.UnitTests/Features/AiAssistant/Context/AiSafeDataContextSummaryPolicyTests.cs"), "tests");
-        fileSystem.AddFile(Path.Combine(Root, "Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Event.Application.UnitTests/Features/AiAssistant/Context/AiSafeDataContextSummaryPolicyTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs"), "tests");
         return fileSystem;
     }
 }

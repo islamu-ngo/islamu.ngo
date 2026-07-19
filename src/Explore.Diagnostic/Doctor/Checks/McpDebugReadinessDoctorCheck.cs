@@ -11,12 +11,15 @@ public sealed class McpDebugReadinessDoctorCheck(IDoctorFileSystem fileSystem, s
     [
         "docs/MCP_DEBUGGING.md",
         "docs/adr/ADR-011-local-mcp-stdio-diagnostic-host.md",
-        "Event.API.IntegrationTests/Features/McpProtocolContractTests.cs",
-        "Event.API.IntegrationTests/Features/McpProjectedToolTests.cs",
-        "Explore.Diagnostic/AiReplay/AiReplayScenarioCodes.cs",
-        "Explore.Diagnostic/AiEvaluation/AiEvaluationReportGenerator.cs",
-        "Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs",
-        "Explore.Diagnostic.UnitTests/AiEvaluation/AiEvaluationReportGeneratorTests.cs"
+        "tests/Event.API.IntegrationTests/Features/McpAuthorizationTests.cs",
+        "tests/Event.API.IntegrationTests/Features/McpRuntimeStateServiceTests.cs",
+        "tests/Event.API.IntegrationTests/Features/McpAdapterSettingsValidatorTests.cs",
+        "tests/Event.API.IntegrationTests/Features/McpAdapterHealthCheckTests.cs",
+        "tests/Event.Architecture.Tests/McpArchitectureTests.cs",
+        "src/Explore.Diagnostic/AiReplay/AiReplayScenarioCodes.cs",
+        "src/Explore.Diagnostic/AiEvaluation/AiEvaluationReportGenerator.cs",
+        "tests/Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs",
+        "tests/Explore.Diagnostic.UnitTests/AiEvaluation/AiEvaluationReportGeneratorTests.cs"
     ];
 
     public string Code => "mcp.debug-readiness";
@@ -63,8 +66,8 @@ public sealed class McpDebugReadinessDoctorCheck(IDoctorFileSystem fileSystem, s
         }
 
         var docs = fileSystem.ReadAllText(docsPath);
-        AddMissingText(findings, docs, "McpProtocolContractTests", "docs:missing-protocol-harness");
-        AddMissingText(findings, docs, "McpAuthenticatedReadTests", "docs:missing-authenticated-read-harness");
+        AddMissingText(findings, docs, "McpAuthorizationTests", "docs:missing-authorization-harness");
+        AddMissingText(findings, docs, "McpArchitectureTests", "docs:missing-architecture-harness");
         AddMissingText(findings, docs, "resources/templates/list", "docs:missing-resource-template-smoke");
         AddMissingText(findings, docs, "list_ai_tool_contracts", "docs:missing-tool-contract-smoke");
         AddMissingText(findings, docs, "ai_conversations", "docs:missing-conversation-resource-smoke");

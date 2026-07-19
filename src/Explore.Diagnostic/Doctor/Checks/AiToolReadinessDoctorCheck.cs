@@ -56,8 +56,8 @@ public sealed class AiToolReadinessDoctorCheck : IDoctorCheck
         AddMissingPath(findings, "docs/AI_AGENT_CONTRACT_INVENTORY.md");
         AddMissingPath(findings, "docs/AI_RAG_FOUNDATION.md");
         AddMissingPath(findings, "docs/AI_AGENT_EXPERIENCE_HARDENING.md");
-        AddMissingPath(findings, "Event.Application.UnitTests/Features/AiAssistant/Context/AiSafeDataContextSummaryPolicyTests.cs");
-        AddMissingPath(findings, "Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs");
+        AddMissingPath(findings, "tests/Event.Application.UnitTests/Features/AiAssistant/Context/AiSafeDataContextSummaryPolicyTests.cs");
+        AddMissingPath(findings, "tests/Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs");
 
         if (findings.Count > 0)
         {

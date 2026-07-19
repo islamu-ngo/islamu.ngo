@@ -23,15 +23,15 @@ public sealed class McpDebugReadinessDoctorCheckTests
     }
 
     [Test]
-    public async Task RunAsyncWhenProtocolHarnessIsMissingReturnsWarn()
+    public async Task RunAsyncWhenAuthorizationHarnessIsMissingReturnsWarn()
     {
-        var fileSystem = CreateFileSystemWithRequiredArtifacts(includeProtocolHarness: false);
+        var fileSystem = CreateFileSystemWithRequiredArtifacts(includeAuthorizationHarness: false);
         var check = new McpDebugReadinessDoctorCheck(fileSystem, Root);
 
         var result = await check.RunAsync(CancellationToken.None);
 
         result.Status.Should().Be(DoctorCheckStatus.Warn);
-        result.RedactedEvidence.Should().Contain("missing:Event.API.IntegrationTests/Features/McpProtocolContractTests.cs");
+        result.RedactedEvidence.Should().Contain("missing:tests/Event.API.IntegrationTests/Features/McpAuthorizationTests.cs");
     }
 
     [Test]
@@ -40,7 +40,7 @@ public sealed class McpDebugReadinessDoctorCheckTests
         var fileSystem = CreateFileSystemWithRequiredArtifacts();
         fileSystem.AddFile(
             Path.Combine(Root, "docs/MCP_DEBUGGING.md"),
-            "McpProtocolContractTests McpAuthenticatedReadTests resources/templates/list list_ai_tool_contracts ai_conversations redacted Bearer eyJsecret");
+            "McpAuthorizationTests McpArchitectureTests resources/templates/list list_ai_tool_contracts ai_conversations redacted Bearer eyJsecret");
         var check = new McpDebugReadinessDoctorCheck(fileSystem, Root);
 
         var result = await check.RunAsync(CancellationToken.None);
@@ -50,23 +50,26 @@ public sealed class McpDebugReadinessDoctorCheckTests
         result.RedactedEvidence.Should().NotContain("eyJsecret");
     }
 
-    private static FakeDoctorFileSystem CreateFileSystemWithRequiredArtifacts(bool includeProtocolHarness = true)
+    private static FakeDoctorFileSystem CreateFileSystemWithRequiredArtifacts(bool includeAuthorizationHarness = true)
     {
         var fileSystem = new FakeDoctorFileSystem();
         fileSystem.AddFile(
             Path.Combine(Root, "docs/MCP_DEBUGGING.md"),
-            "McpProtocolContractTests McpAuthenticatedReadTests resources/templates/list list_ai_tool_contracts ai_conversations redacted");
+            "McpAuthorizationTests McpArchitectureTests resources/templates/list list_ai_tool_contracts ai_conversations redacted");
         fileSystem.AddFile(Path.Combine(Root, "docs/adr/ADR-011-local-mcp-stdio-diagnostic-host.md"), "stdio decision");
         fileSystem.AddFile(Path.Combine(Root, ".gitignore"), ".mcp.json\n.vscode/*");
-        fileSystem.AddFile(Path.Combine(Root, "Event.API.IntegrationTests/Features/McpProjectedToolTests.cs"), "tests");
-        fileSystem.AddFile(Path.Combine(Root, "Explore.Diagnostic/AiReplay/AiReplayScenarioCodes.cs"), "codes");
-        fileSystem.AddFile(Path.Combine(Root, "Explore.Diagnostic/AiEvaluation/AiEvaluationReportGenerator.cs"), "eval");
-        fileSystem.AddFile(Path.Combine(Root, "Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs"), "tests");
-        fileSystem.AddFile(Path.Combine(Root, "Explore.Diagnostic.UnitTests/AiEvaluation/AiEvaluationReportGeneratorTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Event.API.IntegrationTests/Features/McpRuntimeStateServiceTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Event.API.IntegrationTests/Features/McpAdapterSettingsValidatorTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Event.API.IntegrationTests/Features/McpAdapterHealthCheckTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Event.Architecture.Tests/McpArchitectureTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "src/Explore.Diagnostic/AiReplay/AiReplayScenarioCodes.cs"), "codes");
+        fileSystem.AddFile(Path.Combine(Root, "src/Explore.Diagnostic/AiEvaluation/AiEvaluationReportGenerator.cs"), "eval");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Explore.Diagnostic.UnitTests/AiReplay/AiReplayReportGeneratorTests.cs"), "tests");
+        fileSystem.AddFile(Path.Combine(Root, "tests/Explore.Diagnostic.UnitTests/AiEvaluation/AiEvaluationReportGeneratorTests.cs"), "tests");
 
-        if (includeProtocolHarness)
+        if (includeAuthorizationHarness)
         {
-            fileSystem.AddFile(Path.Combine(Root, "Event.API.IntegrationTests/Features/McpProtocolContractTests.cs"), "tests");
+            fileSystem.AddFile(Path.Combine(Root, "tests/Event.API.IntegrationTests/Features/McpAuthorizationTests.cs"), "tests");
         }
 
         return fileSystem;

@@ -14,40 +14,36 @@ public partial class TenantPolicySettingService : ITenantPolicySettingService
     private const string DefaultCommunityGuidelinesContent =
         "# Community Guidelines\n\n" +
         "## Our Community\n\n" +
-        "This platform is a space for sharing events with our community. To ensure a positive experience for everyone, we ask all event organizers and participants to follow these guidelines.\n\n" +
-        "## Event Posting Standards\n\n" +
+        "ISLAMU is a space for learning, sharing, and participating respectfully. To support a positive experience for everyone, we ask all community members and contributors to follow these guidelines.\n\n" +
+        "## Content Standards\n\n" +
         "**Accuracy and Transparency**\n" +
-        "- Provide complete and accurate event information including date, time, location, and organizer details.\n" +
-        "- Clearly describe what attendees can expect from your event.\n" +
-        "- Notify attendees promptly of any changes, cancellations, or updates.\n\n" +
+        "- Share complete and accurate information.\n" +
+        "- Clearly identify the source and purpose of contributed content.\n" +
+        "- Correct misleading or outdated information promptly.\n\n" +
         "**Appropriate Content**\n" +
-        "- Events must be relevant to the community and align with the platform's purpose.\n" +
-        "- Event titles and descriptions must be truthful and not misleading.\n" +
-        "- Do not post duplicate or spam events.\n\n" +
+        "- Contributions must be relevant to the community and align with ISLAMU's purpose.\n" +
+        "- Titles, descriptions, and links must be truthful and not misleading.\n" +
+        "- Do not post duplicate, promotional, or spam content.\n\n" +
         "**Inclusive and Respectful Language**\n" +
-        "- Use welcoming, inclusive language in event descriptions and communications.\n" +
-        "- Events must not promote discrimination based on race, ethnicity, religion, gender, disability, or any other protected characteristic.\n" +
-        "- Maintain respectful communication with attendees and other organizers.\n\n" +
+        "- Use welcoming, inclusive language in content and communications.\n" +
+        "- Content must not promote discrimination based on race, ethnicity, religion, gender, disability, or any other protected characteristic.\n" +
+        "- Maintain respectful communication with other community members.\n\n" +
         "## Prohibited Content\n\n" +
-        "The following types of events and content are not permitted on this platform:\n\n" +
-        "- Events that promote illegal activities or violate applicable laws\n" +
+        "The following content and behavior are not permitted on this platform:\n\n" +
+        "- Content that promotes illegal activities or violates applicable laws\n" +
         "- Hateful, discriminatory, or violent content\n" +
         "- Harassment or targeted abuse of individuals or groups\n" +
-        "- Deceptive, fraudulent, or misleading events\n" +
+        "- Deceptive, fraudulent, or misleading content\n" +
         "- Spam or commercially exploitative content\n\n" +
         "## Participation Guidelines\n\n" +
-        "**As an Attendee**\n" +
-        "- Respect the organizer's event rules and code of conduct.\n" +
-        "- Be courteous to other attendees and event staff.\n" +
-        "- Cancel your registration if your plans change.\n\n" +
-        "**As an Organizer**\n" +
-        "- Respond to attendee inquiries in a timely manner.\n" +
-        "- Enforce a safe and welcoming environment at your events.\n" +
-        "- Honor the commitments made in your event listing.\n\n" +
+        "- Follow the applicable code of conduct and community rules.\n" +
+        "- Be courteous when discussing different views or experiences.\n" +
+        "- Respect privacy and do not share another person's information without permission.\n" +
+        "- Respond constructively when moderators request a correction or clarification.\n\n" +
         "## Reporting Violations\n\n" +
-        "If you encounter content or behavior that violates these guidelines, please report it to the platform administrators. All reports are taken seriously.\n\n" +
+        "If you encounter content or behavior that violates these guidelines, contact the site administrators. Reports are reviewed carefully and handled as confidentially as practical.\n\n" +
         "## Consequences\n\n" +
-        "Violations of these guidelines may result in removal of the event listing, a warning, temporary suspension, or permanent removal from the platform for serious or repeated violations.";
+        "Violations may result in content removal, a warning, temporary suspension, or permanent removal from the platform for serious or repeated misconduct.";
 
     private readonly ISystemSettingRepository _systemSettingRepository;
     private readonly ITenantSettingRepository _tenantSettingRepository;

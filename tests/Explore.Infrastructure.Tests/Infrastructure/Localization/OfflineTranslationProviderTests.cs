@@ -43,14 +43,36 @@ public class OfflineTranslationProviderTests
     }
 
     [Test]
-    public async Task ExportTranslations_ForExistingLanguage_ReturnsEmbeddedTranslations()
+    [Arguments("en")]
+    [Arguments("fr")]
+    [Arguments("ar")]
+    public async Task ExportTranslations_ForStarterLanguage_ReturnsFirstPartyAppName(string languageCode)
     {
-        var result = await _provider.ExportTranslationsAsync("en");
+        var result = await _provider.ExportTranslationsAsync(languageCode);
         var translations = result.ToDictionary(item => item.KeyName, item => item.Value);
 
         var hasAppName = translations.TryGetValue(EmbeddedAppNameKey, out var appName);
         await Assert.That(hasAppName).IsTrue();
         await Assert.That(appName).IsEqualTo("ISLAMU");
+    }
+
+    [Test]
+    public async Task StarterBundles_HaveTheSameFallbackKeys()
+    {
+        var englishKeys = (await _provider.ExportTranslationsAsync("en"))
+            .Select(item => item.KeyName)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        foreach (var languageCode in new[] { "fr", "ar" })
+        {
+            var localizedKeys = (await _provider.ExportTranslationsAsync(languageCode))
+                .Select(item => item.KeyName)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+
+            await Assert.That(localizedKeys).IsEquivalentTo(englishKeys);
+        }
     }
 
     [Test]
@@ -61,7 +83,7 @@ public class OfflineTranslationProviderTests
         {
             WriteWritableBundle(root, "en", """
                 {
-                  "ui.common.appName": "Writable Event",
+                  "ui.common.appName": "Writable ISLAMU",
                   "ui.test.localOnly": "Local Only"
                 }
                 """);
@@ -70,7 +92,7 @@ public class OfflineTranslationProviderTests
             var translations = (await provider.ExportTranslationsAsync("en"))
                 .ToDictionary(item => item.KeyName, item => item.Value);
 
-            await Assert.That(translations[EmbeddedAppNameKey]).IsEqualTo("Writable Event");
+            await Assert.That(translations[EmbeddedAppNameKey]).IsEqualTo("Writable ISLAMU");
             await Assert.That(translations[EmbeddedLoadingKey]).IsEqualTo("Loading…");
             await Assert.That(translations["ui.test.localOnly"]).IsEqualTo("Local Only");
         }

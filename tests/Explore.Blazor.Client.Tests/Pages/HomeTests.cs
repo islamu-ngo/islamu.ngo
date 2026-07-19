@@ -152,7 +152,6 @@ public class HomeTests : IDisposable
         await Assert.That(cut.Markup).Contains("Support Us");
         await Assert.That(cut.Markup).Contains("Connect with Northside Masjid");
         await Assert.That(cut.Markup).Contains("Volunteer");
-        await Assert.That(cut.Markup).DoesNotContain("Never Miss a Muslim Event Again");
     }
 
     [Test]
@@ -218,7 +217,6 @@ public class HomeTests : IDisposable
 
         // Assert
         await Assert.That(cut.Markup).Contains("Organization home is not available yet");
-        await Assert.That(cut.Markup).DoesNotContain("Never Miss a Muslim Event Again");
     }
 
     #endregion
@@ -236,9 +234,8 @@ public class HomeTests : IDisposable
         var cut = _ctx.RenderMudComponent<Home>();
         cut.WaitForState(() => !cut.Markup.Contains("mud-skeleton", StringComparison.OrdinalIgnoreCase), TimeSpan.FromSeconds(2));
 
-        // Assert - PageTitle component renders in head, check landing page content instead
-        // LandingPageForNonUsers has specific content like "Sign Up" and "Explore"
-        await Assert.That(cut.Markup).Contains("Sign Up");
+        await Assert.That(cut.Markup).Contains("Sign In");
+        await Assert.That(cut.Markup).DoesNotContain("Create Account");
     }
 
     #endregion

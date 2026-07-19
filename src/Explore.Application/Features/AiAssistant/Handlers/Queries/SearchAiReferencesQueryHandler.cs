@@ -73,7 +73,6 @@ public sealed class SearchAiReferencesQueryHandler(IActorRepository actorReposit
             null,
             null,
             null,
-            null,
             null);
     }
 

@@ -13,23 +13,23 @@ public sealed class AiReferencePromptPackerTests
     {
         var references = new[]
         {
-            new AiSelectedReferenceDto("Event", Guid.Parse("018f0000-0000-7000-8000-000000000001"), "Community <Iftar>", "Bring dates & water.")
+            new AiSelectedReferenceDto("Organization", Guid.Parse("018f0000-0000-7000-8000-000000000001"), "Community <Center>", "Programs & services.")
         };
 
         string packed = new AiReferencePromptPacker().Pack(references);
 
         await Assert.That(packed).Contains("<selected_references>");
-        await Assert.That(packed).Contains("<reference kind=\"Event\" id=\"018f0000-0000-7000-8000-000000000001\">");
-        await Assert.That(packed).Contains("Community &lt;Iftar&gt;");
-        await Assert.That(packed).Contains("Bring dates &amp; water.");
-        await Assert.That(packed).DoesNotContain("Community <Iftar>");
+        await Assert.That(packed).Contains("<reference kind=\"Organization\" id=\"018f0000-0000-7000-8000-000000000001\">");
+        await Assert.That(packed).Contains("Community &lt;Center&gt;");
+        await Assert.That(packed).Contains("Programs &amp; services.");
+        await Assert.That(packed).DoesNotContain("Community <Center>");
     }
 
     [Test]
     public async Task Pack_RespectsReferenceCountAndTotalBudgets()
     {
         var references = Enumerable.Range(1, 4)
-            .Select(index => new AiSelectedReferenceDto("Event", Guid.CreateVersion7(), $"Event {index}", new string('x', 60)))
+            .Select(index => new AiSelectedReferenceDto("Organization", Guid.CreateVersion7(), $"Organization {index}", new string('x', 60)))
             .ToList();
 
         string packed = new AiReferencePromptPacker().Pack(
@@ -38,17 +38,17 @@ public sealed class AiReferencePromptPackerTests
             maxCharactersPerReference: 160,
             maxTotalCharacters: 340);
 
-        await Assert.That(packed).Contains("Event 1");
-        await Assert.That(packed).Contains("Event 2");
-        await Assert.That(packed).DoesNotContain("Event 3");
-        await Assert.That(packed).DoesNotContain("Event 4");
+        await Assert.That(packed).Contains("Organization 1");
+        await Assert.That(packed).Contains("Organization 2");
+        await Assert.That(packed).DoesNotContain("Organization 3");
+        await Assert.That(packed).DoesNotContain("Organization 4");
     }
 
     [Test]
     public async Task Pack_RespectsTotalTokenBudgetWhenProvided()
     {
         var references = Enumerable.Range(1, 3)
-            .Select(index => new AiSelectedReferenceDto("Event", Guid.CreateVersion7(), $"Event {index}", "Summary"))
+            .Select(index => new AiSelectedReferenceDto("Organization", Guid.CreateVersion7(), $"Organization {index}", "Summary"))
             .ToList();
 
         string packed = new AiReferencePromptPacker(new FixedAiTokenEstimator(1)).Pack(
@@ -56,9 +56,9 @@ public sealed class AiReferencePromptPackerTests
             maxReferences: 3,
             maxTotalTokens: 2);
 
-        await Assert.That(packed).Contains("Event 1");
-        await Assert.That(packed).Contains("Event 2");
-        await Assert.That(packed).DoesNotContain("Event 3");
+        await Assert.That(packed).Contains("Organization 1");
+        await Assert.That(packed).Contains("Organization 2");
+        await Assert.That(packed).DoesNotContain("Organization 3");
     }
 
     [Test]
@@ -66,7 +66,7 @@ public sealed class AiReferencePromptPackerTests
     {
         var references = new[]
         {
-            new AiSelectedReferenceDto("Event", Guid.CreateVersion7(), "Event", "Summary")
+            new AiSelectedReferenceDto("Organization", Guid.CreateVersion7(), "Organization", "Summary")
         };
 
         string packed = new AiReferencePromptPacker(new FixedAiTokenEstimator(1)).Pack(
@@ -82,7 +82,7 @@ public sealed class AiReferencePromptPackerTests
         var packer = new AiReferencePromptPacker();
 
         await Assert.That(packer.Pack([])).IsEqualTo(string.Empty);
-        await Assert.That(packer.Pack([new AiSelectedReferenceDto("Event", Guid.CreateVersion7(), "Title", null)], maxReferences: 0)).IsEqualTo(string.Empty);
+        await Assert.That(packer.Pack([new AiSelectedReferenceDto("Organization", Guid.CreateVersion7(), "Title", null)], maxReferences: 0)).IsEqualTo(string.Empty);
         await Assert.That(packer.Pack([new AiSelectedReferenceDto("", Guid.CreateVersion7(), "Title", null)])).IsEqualTo(string.Empty);
     }
 

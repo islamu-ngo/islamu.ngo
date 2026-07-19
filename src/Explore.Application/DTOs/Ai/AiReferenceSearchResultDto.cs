@@ -1,5 +1,5 @@
-// ABOUTME: Lightweight AI reference search result used for bounded event reference discovery.
-// ABOUTME: Exposes safe event metadata only; full event body/content stays out of AI reference results.
+// ABOUTME: Lightweight AI reference search result used for bounded actor and organization discovery.
+// ABOUTME: Exposes safe display metadata only; full actor content stays out of AI reference results.
 
 namespace Explore.Application.DTOs.Ai;
 
@@ -10,6 +10,5 @@ public sealed record AiReferenceSearchResultDto(
     string? Summary,
     DateOnly? FirstSessionDate,
     DateOnly? LastSessionDate,
-    string? EventStatus,
     string? Visibility,
     string? Format);

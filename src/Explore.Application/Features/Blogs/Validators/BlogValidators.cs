@@ -3,6 +3,7 @@
 
 using Explore.Application.DTOs.Blog;
 using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Features.Blogs.Requests.Commands;
 using FluentValidation;
 
 namespace Explore.Application.Features.Blogs.Validators;

@@ -2,6 +2,7 @@
 // ABOUTME: Verifies HAL-only affordances, management states, service routing, and accessibility announcements.
 
 using Explore.Blazor.Client.Contracts.Services.Accessibility;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Pages.Blogs;
 using Explore.Blazor.Client.Services.Blogs;
 using MudBlazor;
@@ -20,7 +21,7 @@ public sealed class BlogManagementTests : IDisposable
         _ctx.SetAuthenticatedUser(Guid.NewGuid(), "Blog Editor");
         _ctx.Services.AddSingleton(_dialogService);
         _ctx.Services.AddSingleton(_announcer);
-        _ctx.Services.AddSingleton(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
+        _ctx.Services.AddSingleton<IBlogService>(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
     }
 
     public void Dispose()

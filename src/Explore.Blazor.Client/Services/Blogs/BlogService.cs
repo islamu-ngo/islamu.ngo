@@ -2,12 +2,13 @@
 // ABOUTME: Provides public and management blog queries and commands with safe fallbacks.
 
 using Explore.Blazor.Client.Clients;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace Explore.Blazor.Client.Services.Blogs;
 
-public sealed class BlogService
+public sealed class BlogService : IBlogService
 {
     private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<BlogService> _logger;

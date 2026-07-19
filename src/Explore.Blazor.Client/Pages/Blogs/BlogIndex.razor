@@ -2,8 +2,8 @@
 @* ABOUTME: Loads published Blog summaries through BlogService with accessible search, states, and pagination. *@
 
 @using Explore.Blazor.Client.Helpers
-@using Explore.Blazor.Client.Services.Blogs
-@inject BlogService BlogService
+@using Explore.Blazor.Client.Contracts.Services.Blogs
+@inject IBlogService BlogService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 

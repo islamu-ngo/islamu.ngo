@@ -2,6 +2,7 @@
 // ABOUTME: Verifies HAL-gated forms/actions, DTO mapping, sanitized preview, and accessibility states.
 
 using Explore.Blazor.Client.Contracts.Services.Accessibility;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Pages.Blogs;
 using Explore.Blazor.Client.Services.Blogs;
 using Explore.Blazor.Client.Shared;
@@ -32,8 +33,8 @@ public sealed class BlogEditorTests : IDisposable
         _ctx.Services.AddSingleton(_imageStorageService);
         _ctx.Services.AddSingleton(_dialogService);
         _ctx.Services.AddSingleton(_announcer);
-        _ctx.Services.AddSingleton(new BlogMarkdownRenderer());
-        _ctx.Services.AddSingleton(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
+        _ctx.Services.AddSingleton<IBlogMarkdownRenderer>(new BlogMarkdownRenderer());
+        _ctx.Services.AddSingleton<IBlogService>(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
     }
 
     public void Dispose()
@@ -62,7 +63,6 @@ public sealed class BlogEditorTests : IDisposable
 
         await Assert.That(source).Contains("[MaxLength(300)]");
         await Assert.That(source).Contains("[MaxLength(200)]");
-        await Assert.That(source).Contains("public Guid ConcurrencyStamp { get; set; }");
         await Assert.That(source).Contains("ExpectedConcurrencyStamp = _model.ConcurrencyStamp");
         await Assert.That(source).Contains("_model.ThumbnailStorageObjectId = upload.StorageObjectId;");
         await Assert.That(source).Contains("_pendingThumbnail = null;");
@@ -117,6 +117,21 @@ public sealed class BlogEditorTests : IDisposable
         cut.WaitForState(() => cut.Markup.Contains("not available for editing", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
 
         await Assert.That(cut.FindAll("form.blog-editor__form").Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task BlogEditor_EditRoute_MissingConcurrencyStampFailsClosed()
+    {
+        var id = Guid.NewGuid();
+        var resource = Detail(id, "Missing Stamp", links: Link("edit"));
+        resource.ConcurrencyStamp = null;
+        _apiClient.GetBlogByIdForManagementAsync(id, cancellationToken: Arg.Any<CancellationToken>()).Returns(resource);
+
+        var cut = _ctx.RenderMudComponent<BlogEditor>(parameters => parameters.Add(p => p.Id, id));
+        cut.WaitForState(() => cut.Markup.Contains("not available for editing", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
+
+        await Assert.That(cut.FindAll("form.blog-editor__form").Count).IsEqualTo(0);
+        await _apiClient.DidNotReceive().UpdateBlogAsync(id, Arg.Any<UpdateBlogDto>(), cancellationToken: Arg.Any<CancellationToken>());
     }
 
     [Test]
@@ -188,12 +203,12 @@ public sealed class BlogEditorTests : IDisposable
 
         var cut = _ctx.RenderMudComponent<BlogEditor>();
         cut.WaitForState(() => cut.Markup.Contains("Create article", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
-        cut.Find("#blog-editor-title").Input("  New Article  ");
-        cut.Find("#blog-editor-slug").Input(" new-article ");
+        cut.Find("#blog-editor-title").Change("  New Article  ");
+        cut.Find("#blog-editor-slug").Change(" new-article ");
         cut.Find("#blog-editor-content").Input("# Body");
         cut.Find($"#blog-editor-category-{categoryId}").Change(true);
         cut.Find($"#blog-editor-tag-{tagId}").Change(true);
-        await cut.FindComponent<ImageUpload>().Instance.FileDataSelected.InvokeAsync(selectedFile);
+        await cut.InvokeAsync(() => cut.FindComponent<ImageUpload>().Instance.FileDataSelected.InvokeAsync(selectedFile));
         cut.Find("form.blog-editor__form").Submit();
 
         cut.WaitForAssertion(() => _apiClient.Received(1).CreateBlogAsync(Arg.Any<CreateBlogDto>(), cancellationToken: Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(2));
@@ -228,7 +243,7 @@ public sealed class BlogEditorTests : IDisposable
 
         var cut = _ctx.RenderMudComponent<BlogEditor>(parameters => parameters.Add(p => p.Id, id));
         cut.WaitForState(() => cut.Markup.Contains("Before", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
-        cut.Find("#blog-editor-title").Input("After");
+        cut.Find("#blog-editor-title").Change("After");
         cut.Find("#blog-editor-content").Input("After body");
         cut.Find($"#blog-editor-category-{categoryId}").Change(true);
         cut.Find("form.blog-editor__form").Submit();
@@ -254,9 +269,9 @@ public sealed class BlogEditorTests : IDisposable
 
         var cut = _ctx.RenderMudComponent<BlogEditor>();
         cut.WaitForState(() => cut.Markup.Contains("Create article", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
-        cut.Find("#blog-editor-title").Input("New Article");
+        cut.Find("#blog-editor-title").Change("New Article");
         cut.Find("#blog-editor-content").Input("# Body");
-        await cut.FindComponent<ImageUpload>().Instance.FileDataSelected.InvokeAsync(selectedFile);
+        await cut.InvokeAsync(() => cut.FindComponent<ImageUpload>().Instance.FileDataSelected.InvokeAsync(selectedFile));
         cut.Find("form.blog-editor__form").Submit();
 
         cut.WaitForState(() => cut.Markup.Contains("Article creation is unavailable", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
@@ -277,9 +292,10 @@ public sealed class BlogEditorTests : IDisposable
         cut.WaitForState(() => cut.Markup.Contains("Create article", StringComparison.Ordinal), TimeSpan.FromSeconds(2));
         cut.Find("#blog-editor-content").Input("[bad](javascript:alert(1))\n\n<script>alert(1)</script>\n\n<img src=x>");
 
-        await Assert.That(cut.Markup).DoesNotContain("<script");
-        await Assert.That(cut.Markup).DoesNotContain("javascript:");
-        await Assert.That(cut.Markup).DoesNotContain("<img");
+        await Assert.That(cut.FindAll(".blog-editor__preview-body script").Count).IsEqualTo(0);
+        await Assert.That(cut.FindAll(".blog-editor__preview-body img").Count).IsEqualTo(0);
+        await Assert.That(cut.FindAll(".blog-editor__preview-body a[href]").Count).IsEqualTo(0);
+        await Assert.That(cut.Find(".blog-editor__preview-body").TextContent).Contains("<script>alert(1)</script>");
     }
 
     [Test]

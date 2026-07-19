@@ -3,7 +3,7 @@
 
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.Exceptions;
-using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Features.Blogs.Requests.Commands;
 using Explore.Application.Features.Blogs.Validators;
 using Explore.Application.Responses;
 using Explore.Domain;

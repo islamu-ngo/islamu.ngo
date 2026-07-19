@@ -5,6 +5,7 @@ using System.Reflection;
 using Explore.Application.Authorization;
 using Explore.Application.DTOs.Blog;
 using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Features.Blogs.Requests.Commands;
 
 namespace Event.Application.UnitTests.Features.Blogs;
 

@@ -47,69 +47,7 @@ public sealed record GetBlogByIdForManagementQuery(
     IDictionary<string, object>? ISecureRequest.ResourceAttributes => BlogRequestAuthorizationContext.Attributes(TenantId, BlogId);
 }
 
-[AuthorizeResource(ResourceKinds.Blog, AuthorizationActions.Blogs.Create)]
-public sealed record CreateBlogCommand(
-    Guid TenantId,
-    CreateBlogDto Blog) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => TenantId == Guid.Empty ? null : TenantId.ToString("D");
-
-    IDictionary<string, object>? ISecureRequest.ResourceAttributes => TenantId == Guid.Empty
-        ? null
-        : new Dictionary<string, object>
-        {
-            ["tenantId"] = TenantId.ToString("D")
-        };
-}
-
-[AuthorizeResource(ResourceKinds.Blog, AuthorizationActions.Blogs.Update)]
-public sealed record UpdateBlogCommand(
-    Guid TenantId,
-    Guid BlogId,
-    UpdateBlogDto Blog) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => BlogId == Guid.Empty ? null : BlogId.ToString("D");
-
-    IDictionary<string, object>? ISecureRequest.ResourceAttributes => BlogRequestAuthorizationContext.Attributes(TenantId, BlogId);
-}
-
-[AuthorizeResource(ResourceKinds.Blog, AuthorizationActions.Blogs.Publish)]
-public sealed record PublishBlogCommand(
-    Guid TenantId,
-    Guid BlogId) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => BlogId == Guid.Empty ? null : BlogId.ToString("D");
-
-    IDictionary<string, object>? ISecureRequest.ResourceAttributes => BlogRequestAuthorizationContext.Attributes(
-        TenantId,
-        BlogId,
-        AuthorizationActions.Blogs.Publish);
-}
-
-[AuthorizeResource(ResourceKinds.Blog, AuthorizationActions.Blogs.Unpublish)]
-public sealed record UnpublishBlogCommand(
-    Guid TenantId,
-    Guid BlogId) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => BlogId == Guid.Empty ? null : BlogId.ToString("D");
-
-    IDictionary<string, object>? ISecureRequest.ResourceAttributes => BlogRequestAuthorizationContext.Attributes(
-        TenantId,
-        BlogId,
-        AuthorizationActions.Blogs.Unpublish);
-}
-
-[AuthorizeResource(ResourceKinds.Blog, AuthorizationActions.Blogs.Delete)]
-public sealed record DeleteBlogCommand(
-    Guid TenantId,
-    Guid BlogId) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => BlogId == Guid.Empty ? null : BlogId.ToString("D");
-
-    IDictionary<string, object>? ISecureRequest.ResourceAttributes => BlogRequestAuthorizationContext.Attributes(TenantId, BlogId);
-}
-
-file static class BlogRequestAuthorizationContext
+internal static class BlogRequestAuthorizationContext
 {
     public static IDictionary<string, object>? Attributes(Guid tenantId, Guid blogId, string? publicationIntent = null)
     {

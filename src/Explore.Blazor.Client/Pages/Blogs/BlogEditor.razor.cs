@@ -4,9 +4,9 @@
 using System.ComponentModel.DataAnnotations;
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Contracts.Services.Accessibility;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Services;
-using Explore.Blazor.Client.Services.Blogs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
@@ -33,11 +33,11 @@ public sealed partial class BlogEditor : ComponentBase, IDisposable
     private bool _isMutating;
 
     [Parameter] public Guid Id { get; set; }
-    [Inject] public required BlogService BlogService { get; set; }
+    [Inject] public required IBlogService BlogService { get; set; }
     [Inject] public required ICategoryService CategoryService { get; set; }
     [Inject] public required ITagService TagService { get; set; }
     [Inject] public required IImageStorageService ImageStorageService { get; set; }
-    [Inject] public required BlogMarkdownRenderer MarkdownRenderer { get; set; }
+    [Inject] public required IBlogMarkdownRenderer MarkdownRenderer { get; set; }
     [Inject] public required NavigationManager Navigation { get; set; }
     [Inject] public required IDialogService DialogService { get; set; }
     [Inject] public required IAccessibilityAnnouncerService Announcer { get; set; }
@@ -45,11 +45,15 @@ public sealed partial class BlogEditor : ComponentBase, IDisposable
     private bool IsNew => Id == Guid.Empty;
     private bool IsBusy => _isSaving || _isMutating;
     private bool CanCreate => IsNew && _collection?.HasLink("create") == true;
-    private bool CanEdit => !IsNew && _resource?.HasLink("edit") == true;
+    private bool CanEdit => !IsNew
+        && _resource?.HasLink("edit") == true
+        && _model.ConcurrencyStamp is { } concurrencyStamp
+        && concurrencyStamp != Guid.Empty;
     private bool CanUseForm => CanCreate || CanEdit;
     private bool CanPublish => !IsNew && _resource?.HasLink("publish") == true;
     private bool CanUnpublish => !IsNew && _resource?.HasLink("unpublish") == true;
     private bool CanDelete => !IsNew && _resource?.HasLink("delete") == true;
+    private bool HasResourceActions => CanPublish || CanUnpublish || CanDelete;
     private bool CanRemoveThumbnail => CanUseForm
         && _model.ThumbnailStorageObjectId is { } thumbnailId
         && thumbnailId != Guid.Empty

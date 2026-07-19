@@ -37,7 +37,7 @@
             @_errorMessage
         </section>
     }
-    else if (!CanUseForm)
+    else if (!CanUseForm && !HasResourceActions)
     {
         <section class="blog-editor__state" role="status" aria-live="polite">
             @UnavailableMessage
@@ -50,6 +50,8 @@
             <div class="blog-editor__status" role="status" aria-live="polite">@_statusMessage</div>
         }
 
+        @if (CanUseForm)
+        {
         <EditForm EditContext="_editContext" OnValidSubmit="SaveAsync" class="blog-editor__form" aria-busy="@(_isSaving || _isMutating)">
             <DataAnnotationsValidator />
 
@@ -153,18 +155,6 @@
 
                 <div class="blog-editor__actions">
                     <AppButton ButtonType="ButtonType.Submit" Disabled="@IsBusy">@SaveButtonText</AppButton>
-                    @if (CanPublish)
-                    {
-                        <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="PublishAsync">Publish</AppButton>
-                    }
-                    @if (CanUnpublish)
-                    {
-                        <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="UnpublishAsync">Unpublish</AppButton>
-                    }
-                    @if (CanDelete)
-                    {
-                        <AppButton Variant="Variant.Text" Color="Color.Error" Disabled="@IsBusy" OnClick="DeleteAsync">Delete</AppButton>
-                    }
                 </div>
             </section>
 
@@ -175,5 +165,24 @@
                 </div>
             </section>
         </EditForm>
+        }
+
+        @if (HasResourceActions)
+        {
+            <div class="blog-editor__actions">
+                @if (CanPublish)
+                {
+                    <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="PublishAsync">Publish</AppButton>
+                }
+                @if (CanUnpublish)
+                {
+                    <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="UnpublishAsync">Unpublish</AppButton>
+                }
+                @if (CanDelete)
+                {
+                    <AppButton Variant="Variant.Text" Color="Color.Error" Disabled="@IsBusy" OnClick="DeleteAsync">Delete</AppButton>
+                }
+            </div>
+        }
     }
 </MudContainer>

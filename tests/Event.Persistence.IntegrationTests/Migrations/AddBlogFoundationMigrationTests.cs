@@ -3,6 +3,7 @@
 
 using System.Reflection;
 using Explore.Persistence.Migrations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
@@ -85,6 +86,37 @@ public class AddBlogFoundationMigrationTests
         await Assert.That(designer).DoesNotContain("ExploreDbContextModelSnapshot");
         await Assert.That(helper).Contains("RemoveEventProductSurfaceTargetModel.Apply(modelBuilder)");
         await Assert.That(snapshot).DoesNotContain("RemoveEventProductSurfaceTargetModel.Apply(modelBuilder)");
+    }
+
+    [Test]
+    public async Task FrozenTargetModels_RetainPostEventChassisEntitiesWithoutMissingNavigations()
+    {
+        var frozenModels = new[]
+        {
+            (Name: nameof(RemoveEventProductSurface), Model: new RemoveEventProductSurface().TargetModel),
+            (Name: nameof(AddBlogFoundation), Model: new AddBlogFoundation().TargetModel)
+        };
+        var retainedEntities = new[]
+        {
+            (Name: "Explore.Domain.EmailDispatchOutbox", Table: "email_dispatch_outbox"),
+            (Name: "Explore.Domain.IntegrationSyncOutbox", Table: "integration_sync_outbox"),
+            (Name: "Explore.Domain.NotificationIntent", Table: "notification_intents"),
+            (Name: "Explore.Domain.NotificationExternalDelegation", Table: "notification_external_delegations"),
+            (Name: "Explore.Domain.OrganizationReview", Table: "organization_reviews")
+        };
+
+        foreach (var frozenModel in frozenModels)
+        {
+            foreach (var retainedEntity in retainedEntities)
+            {
+                var entityType = frozenModel.Model.FindEntityType(retainedEntity.Name);
+
+                await Assert.That(entityType)
+                    .IsNotNull()
+                    .Because($"{frozenModel.Name} must retain {retainedEntity.Name} metadata");
+                await Assert.That(entityType!.GetTableName()).IsEqualTo(retainedEntity.Table);
+            }
+        }
     }
 
     private static IReadOnlyList<MigrationOperation> InvokeMigration(string methodName)

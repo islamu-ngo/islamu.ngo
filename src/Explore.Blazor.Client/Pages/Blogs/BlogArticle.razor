@@ -2,9 +2,9 @@
 @* ABOUTME: Loads one published Blog article by slug and renders sanitized Markdown only. *@
 
 @using Explore.Blazor.Client.Helpers
-@using Explore.Blazor.Client.Services.Blogs
-@inject BlogService BlogService
-@inject BlogMarkdownRenderer MarkdownRenderer
+@using Explore.Blazor.Client.Contracts.Services.Blogs
+@inject IBlogService BlogService
+@inject IBlogMarkdownRenderer MarkdownRenderer
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 

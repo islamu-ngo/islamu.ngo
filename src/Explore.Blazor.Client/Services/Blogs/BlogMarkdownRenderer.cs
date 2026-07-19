@@ -2,13 +2,14 @@
 // ABOUTME: Produces a minimal, safe subset of semantic HTML with strict href and tag allowlists.
 
 using AngleSharp.Dom;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Ganss.Xss;
 using Markdig;
 using Markdig.Extensions.EmphasisExtras;
 
 namespace Explore.Blazor.Client.Services.Blogs;
 
-public sealed class BlogMarkdownRenderer
+public sealed class BlogMarkdownRenderer : IBlogMarkdownRenderer
 {
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseEmphasisExtras()

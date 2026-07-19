@@ -1,6 +1,8 @@
 // ABOUTME: Unit tests for BlogService covering all generated-client routing,
 // ABOUTME: cancellation, safe fallbacks, typed HAL extraction, and mapping.
 
+using Explore.Blazor.Client.Contracts.Services.Blogs;
+using Explore.Blazor.Client.Extensions;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Services.Blogs;
 
@@ -17,6 +19,23 @@ public class BlogServiceTests
         _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<ILogger<BlogService>>();
         _service = new BlogService(_apiClient, _logger);
+    }
+
+    [Test]
+    public async Task AddSharedApplicationServices_RegistersBlogInterfaces()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(_apiClient);
+        services.AddSharedApplicationServices();
+        using var provider = services.BuildServiceProvider();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IBlogService>();
+        var renderer = scope.ServiceProvider.GetRequiredService<IBlogMarkdownRenderer>();
+
+        await Assert.That(service is BlogService).IsTrue();
+        await Assert.That(renderer is BlogMarkdownRenderer).IsTrue();
     }
 
     // ========== GetPublishedBlogsAsync ==========

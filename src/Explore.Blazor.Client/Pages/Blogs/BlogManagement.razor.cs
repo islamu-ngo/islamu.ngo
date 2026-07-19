@@ -5,8 +5,8 @@
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Contracts.Services.Accessibility;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Helpers;
-using Explore.Blazor.Client.Services.Blogs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -30,7 +30,7 @@ public partial class BlogManagement : ComponentBase, IDisposable
     private int _totalCount;
 
     [Inject]
-    private BlogService BlogService { get; set; } = default!;
+    private IBlogService BlogService { get; set; } = default!;
 
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;

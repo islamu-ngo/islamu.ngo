@@ -1,6 +1,7 @@
 // ABOUTME: bUnit coverage for the anonymous Blog index and article reader pages.
 // ABOUTME: Verifies public-state filtering, Markdown sanitation, thumbnails, metadata, and service calls.
 
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Helpers;
 using Explore.Blazor.Client.Pages.Blogs;
 using Explore.Blazor.Client.Services.Blogs;
@@ -17,8 +18,8 @@ public sealed class BlogPublicPagesTests : IDisposable
     {
         _ctx.SetAnonymousUser();
         _ctx.Services.AddSingleton(_imageStorageService);
-        _ctx.Services.AddSingleton(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
-        _ctx.Services.AddSingleton(new BlogMarkdownRenderer());
+        _ctx.Services.AddSingleton<IBlogService>(new BlogService(_apiClient, Substitute.For<ILogger<BlogService>>()));
+        _ctx.Services.AddSingleton<IBlogMarkdownRenderer>(new BlogMarkdownRenderer());
     }
 
     public void Dispose()

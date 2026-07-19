@@ -11,6 +11,7 @@ using Explore.API.Models;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.DTOs.Blog;
 using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Features.Blogs.Requests.Commands;
 using Explore.Application.Hateoas;
 using Explore.Application.Responses;
 using MediatR;

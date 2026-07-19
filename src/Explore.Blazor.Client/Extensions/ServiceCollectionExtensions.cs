@@ -6,6 +6,7 @@ using Explore.Blazor.Client.Contracts.Providers;
 using Explore.Blazor.Client.Contracts.Services;
 using Explore.Blazor.Client.Contracts.Services.Accessibility;
 using Explore.Blazor.Client.Contracts.Services.Ai;
+using Explore.Blazor.Client.Contracts.Services.Blogs;
 using Explore.Blazor.Client.Contracts.Services.ControlPlane;
 using Explore.Blazor.Client.Contracts.Services.CustomProperties;
 using Explore.Blazor.Client.Contracts.Services.Footer;
@@ -76,8 +77,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageStorageService, ImageStorageService>();
 
         // Blog rendering
-        services.AddScoped<BlogMarkdownRenderer>();
-        services.AddScoped<BlogService>();
+        services.AddScoped<IBlogMarkdownRenderer, BlogMarkdownRenderer>();
+        services.AddScoped<IBlogService, BlogService>();
 
         // Lookup / reference data services
         services.AddScoped<ICategoryService, CategoryService>();

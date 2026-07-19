@@ -5,7 +5,7 @@ using Explore.Application.Contracts.Persistence;
 using Explore.Application.DTOs.Blog;
 using Explore.Application.Exceptions;
 using Explore.Application.Features.Blogs.Handlers.Commands;
-using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Features.Blogs.Requests.Commands;
 using Explore.Domain;
 using NSubstitute;
 

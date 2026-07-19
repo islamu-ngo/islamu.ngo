@@ -52,36 +52,36 @@ var x = 1;
     }
 
     [Test]
-    public async Task Render_ScriptTag_Removed()
+    public async Task Render_ScriptTag_EncodedAsText()
     {
         var markdown = "<script>alert('x')</script>";
 
         var result = _renderer.Render(markdown);
 
-        await Assert.That(result).DoesNotContain("<script>");
-        await Assert.That(result).DoesNotContain("alert");
+        await Assert.That(result).DoesNotContain("<script");
+        await Assert.That(result).Contains("&lt;script&gt;alert('x')&lt;/script&gt;");
     }
 
     [Test]
-    public async Task Render_Onerror_Attribute_Removed()
+    public async Task Render_Onerror_Attribute_EncodedAsText()
     {
         var markdown = "<img src=x onerror=alert(1)>";
 
         var result = _renderer.Render(markdown);
 
-        await Assert.That(result).DoesNotContain("onerror");
         await Assert.That(result).DoesNotContain("<img");
+        await Assert.That(result).Contains("&lt;img src=x onerror=alert(1)&gt;");
     }
 
     [Test]
-    public async Task Render_Style_Attribute_Removed()
+    public async Task Render_Style_Attribute_EncodedAsText()
     {
         var markdown = "<p style='color:red'>text</p>";
 
         var result = _renderer.Render(markdown);
 
-        await Assert.That(result).DoesNotContain("style");
-        await Assert.That(result).DoesNotContain("color");
+        await Assert.That(result).DoesNotContain("<p style");
+        await Assert.That(result).Contains("&lt;p style='color:red'&gt;text&lt;/p&gt;");
     }
 
     [Test]

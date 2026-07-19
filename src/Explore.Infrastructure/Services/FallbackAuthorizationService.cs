@@ -5,7 +5,6 @@ using System.Diagnostics;
 using Explore.Application.Authorization;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.Contracts.Services;
 using Explore.Application.Settings;
 using Microsoft.Extensions.Logging;
 
@@ -114,9 +113,9 @@ public partial class FallbackAuthorizationService : IAuthorizationProvider
             "islamuevent_custom_property_definition" => await EvaluateViewableTenantResourceAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_custom_property_template" => await EvaluateViewableTenantResourceAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_custom_property_value" => await EvaluateViewableOrgResourceAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
-            "islamuevent_custom_property_projection" => await EvaluateCustomPropertyProjectionAccessAsync(resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_custom_property_governance" => await EvaluateTenantScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_email_dispatch" => await EvaluateTenantScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
+            "islamuevent_blog" => await EvaluateTenantScopedAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_webhook" => await EvaluateWebhookAccessAsync(resourceKind, resourceId, action, resourceAttributes, cancellationToken),
             "islamuevent_support_access_session" => await EvaluateSupportAccessSessionResourceAsync(action, resourceAttributes, cancellationToken),
             "islamuevent_platform_namespace" => action is "view",

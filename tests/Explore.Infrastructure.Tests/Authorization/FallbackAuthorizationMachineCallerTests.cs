@@ -5,8 +5,6 @@ using Explore.Application.Authentication;
 using Explore.Application.Authorization;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.Contracts.Services;
-using Explore.Application.Settings;
 using Explore.Domain.Constants;
 using Explore.Domain.Enums;
 using Explore.Infrastructure.Services;
@@ -19,7 +17,6 @@ public class FallbackAuthorizationMachineCallerTests
 {
     private readonly IAdminContext _adminContext;
     private readonly IMachinePrincipalAccessor _machinePrincipalAccessor;
-    private readonly IEventAuthoritySnapshotService _eventAuthoritySnapshotService;
     private readonly IHierarchicalSettingsResolver _settingsResolver;
     private readonly ITenantContext _tenantContext;
     private readonly ILogger<FallbackAuthorizationService> _logger;
@@ -29,13 +26,12 @@ public class FallbackAuthorizationMachineCallerTests
     {
         _adminContext = Substitute.For<IAdminContext>();
         _machinePrincipalAccessor = Substitute.For<IMachinePrincipalAccessor>();
-        _eventAuthoritySnapshotService = Substitute.For<IEventAuthoritySnapshotService>();
         _settingsResolver = Substitute.For<IHierarchicalSettingsResolver>();
         _tenantContext = Substitute.For<ITenantContext>();
         _logger = Substitute.For<ILogger<FallbackAuthorizationService>>();
 
         _sut = new FallbackAuthorizationService(
-            _adminContext, _machinePrincipalAccessor, _eventAuthoritySnapshotService, _settingsResolver, _tenantContext, _logger);
+            _adminContext, _machinePrincipalAccessor, _settingsResolver, _tenantContext, _logger);
     }
 
     private void SetMachineContext(ExternalApiKeyOwnerType ownerType, Guid? tenantId, Guid ownerId, params string[] scopes)
@@ -60,7 +56,7 @@ public class FallbackAuthorizationMachineCallerTests
 
         var attrs = new Dictionary<string, object> { ["tenantId"] = arbitraryTenantId };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Delete, attrs, CancellationToken.None);
 
         await Assert.That(result).IsTrue();
@@ -70,7 +66,7 @@ public class FallbackAuthorizationMachineCallerTests
     public async Task InstanceAdminOwner_WithMissingAdminInstanceScope_DeniesEvenOnBaseResources()
     {
         SetMachineContext(ExternalApiKeyOwnerType.InstanceAdmin, tenantId: null, Guid.NewGuid(),
-            ExternalApiKeyScopes.EventsRead);
+            ExternalApiKeyScopes.OrganizationsRead);
 
         bool result = await _sut.IsAllowedAsync(ResourceKinds.InstanceSetting, "features.enabled",
             AuthorizationActions.Update, null, CancellationToken.None);
@@ -96,11 +92,11 @@ public class FallbackAuthorizationMachineCallerTests
     {
         var tenantId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.Tenant, tenantId, tenantId,
-            ExternalApiKeyScopes.EventsWrite, ExternalApiKeyScopes.AdminTenant);
+            ExternalApiKeyScopes.OrganizationsWrite, ExternalApiKeyScopes.AdminTenant);
 
         var attrs = new Dictionary<string, object> { ["tenantId"] = tenantId };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsTrue();
@@ -112,11 +108,11 @@ public class FallbackAuthorizationMachineCallerTests
         var ownTenantId = Guid.NewGuid();
         var otherTenantId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.Tenant, ownTenantId, ownTenantId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
 
         var attrs = new Dictionary<string, object> { ["tenantId"] = otherTenantId };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
@@ -128,7 +124,7 @@ public class FallbackAuthorizationMachineCallerTests
         var tenantId = Guid.NewGuid();
         var orgId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.Organization, tenantId, orgId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
 
         var attrs = new Dictionary<string, object>
         {
@@ -136,7 +132,7 @@ public class FallbackAuthorizationMachineCallerTests
             ["organizationId"] = orgId
         };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsTrue();
@@ -149,7 +145,7 @@ public class FallbackAuthorizationMachineCallerTests
         var ownOrgId = Guid.NewGuid();
         var otherOrgId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.Organization, tenantId, ownOrgId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
 
         var attrs = new Dictionary<string, object>
         {
@@ -157,7 +153,7 @@ public class FallbackAuthorizationMachineCallerTests
             ["organizationId"] = otherOrgId
         };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
@@ -175,6 +171,21 @@ public class FallbackAuthorizationMachineCallerTests
 
         bool result = await _sut.IsAllowedAsync(ResourceKinds.Tenant, tenantId.ToString(),
             AuthorizationActions.Update, attrs, CancellationToken.None);
+
+        await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task TenantOwner_AccessingBlogResource_DeniesWithoutBlogScopeContract()
+    {
+        var tenantId = Guid.NewGuid();
+        SetMachineContext(ExternalApiKeyOwnerType.Tenant, tenantId, tenantId,
+            ExternalApiKeyScopes.AdminTenant);
+
+        var attrs = new Dictionary<string, object> { ["tenantId"] = tenantId };
+
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Blog, Guid.NewGuid().ToString(),
+            AuthorizationActions.Blogs.Publish, attrs, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
     }
@@ -237,6 +248,28 @@ public class FallbackAuthorizationMachineCallerTests
     }
 
     [Test]
+    public async Task OrganizationAndGroupOwners_AccessingBlogTenantWideResource_Deny()
+    {
+        var tenantId = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
+        var groupId = Guid.NewGuid();
+        var attrs = new Dictionary<string, object> { ["tenantId"] = tenantId };
+
+        SetMachineContext(ExternalApiKeyOwnerType.Organization, tenantId, orgId,
+            ExternalApiKeyScopes.AdminTenant);
+        bool organizationResult = await _sut.IsAllowedAsync(ResourceKinds.Blog, Guid.NewGuid().ToString(),
+            AuthorizationActions.Blogs.Publish, attrs, CancellationToken.None);
+
+        SetMachineContext(ExternalApiKeyOwnerType.Group, tenantId, groupId,
+            ExternalApiKeyScopes.AdminTenant);
+        bool groupResult = await _sut.IsAllowedAsync(ResourceKinds.Blog, Guid.NewGuid().ToString(),
+            AuthorizationActions.Blogs.Publish, attrs, CancellationToken.None);
+
+        await Assert.That(organizationResult).IsFalse();
+        await Assert.That(groupResult).IsFalse();
+    }
+
+    [Test]
     public async Task GroupOwner_AccessingOrgScopedResource_Denies()
     {
         var tenantId = Guid.NewGuid();
@@ -261,10 +294,10 @@ public class FallbackAuthorizationMachineCallerTests
     {
         var userId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.User, Guid.NewGuid(), userId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
         _adminContext.IsInstanceAdminAsync(userId, Arg.Any<CancellationToken>()).Returns(true);
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Delete, null, CancellationToken.None);
 
         await Assert.That(result).IsTrue();
@@ -332,7 +365,7 @@ public class FallbackAuthorizationMachineCallerTests
         var userId = Guid.NewGuid();
         var orgId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.User, tenantId, userId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
         _adminContext.IsInstanceAdminAsync(userId, Arg.Any<CancellationToken>()).Returns(false);
         _adminContext.GetAdminTenantIdsAsync(userId, Arg.Any<CancellationToken>()).Returns(new List<Guid>());
         _adminContext.IsOrganizationAdminAsync(orgId, Arg.Any<CancellationToken>()).Returns(true);
@@ -343,7 +376,7 @@ public class FallbackAuthorizationMachineCallerTests
             ["organizationId"] = orgId
         };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsTrue();
@@ -379,7 +412,7 @@ public class FallbackAuthorizationMachineCallerTests
         var tenantId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.User, tenantId, userId,
-            ExternalApiKeyScopes.EventsWrite);
+            ExternalApiKeyScopes.OrganizationsWrite);
         _adminContext.IsInstanceAdminAsync(userId, Arg.Any<CancellationToken>()).Returns(false);
         _adminContext.GetAdminTenantIdsAsync(userId, Arg.Any<CancellationToken>()).Returns(new List<Guid>());
         _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
@@ -390,7 +423,7 @@ public class FallbackAuthorizationMachineCallerTests
             ["organizationId"] = Guid.NewGuid()
         };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.Create, attrs, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
@@ -401,12 +434,12 @@ public class FallbackAuthorizationMachineCallerTests
     {
         var userId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.User, tenantId: null, userId,
-            ExternalApiKeyScopes.EventsRead);
+            ExternalApiKeyScopes.OrganizationsRead);
         _adminContext.IsInstanceAdminAsync(userId, Arg.Any<CancellationToken>()).Returns(false);
 
         var attrs = new Dictionary<string, object> { ["tenantId"] = Guid.NewGuid() };
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.View, attrs, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
@@ -418,7 +451,7 @@ public class FallbackAuthorizationMachineCallerTests
         _machinePrincipalAccessor.IsMachineCaller.Returns(true);
         _machinePrincipalAccessor.Current.Returns((ApiKeyPrincipalContext?)null);
 
-        bool result = await _sut.IsAllowedAsync(ResourceKinds.Event, Guid.NewGuid().ToString(),
+        bool result = await _sut.IsAllowedAsync(ResourceKinds.Organization, Guid.NewGuid().ToString(),
             AuthorizationActions.View, null, CancellationToken.None);
 
         await Assert.That(result).IsFalse();
@@ -430,7 +463,7 @@ public class FallbackAuthorizationMachineCallerTests
         var tenantId = Guid.NewGuid();
         var orgId = Guid.NewGuid();
         SetMachineContext(ExternalApiKeyOwnerType.Organization, tenantId, orgId,
-            ExternalApiKeyScopes.EventsRead);
+            ExternalApiKeyScopes.OrganizationsRead);
 
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(true);
 

@@ -220,8 +220,8 @@ public partial class FallbackAuthorizationService
         || resourceKind == ResourceKinds.LocationRoom
         || resourceKind == ResourceKinds.CustomPropertyDefinition
         || resourceKind == ResourceKinds.CustomPropertyTemplate
-        || resourceKind == ResourceKinds.CustomPropertyProjection
         || resourceKind == ResourceKinds.CustomPropertyGovernance
+        || resourceKind == ResourceKinds.Blog
         || resourceKind == ResourceKinds.Webhook
         || resourceKind == ResourceKinds.Actor;
 

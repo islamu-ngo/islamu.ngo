@@ -65,7 +65,7 @@ public sealed class StorageObjectCommandHandlerTests
             storageObjectId,
             tenantId: Guid.CreateVersion7(),
             actorId: actorId,
-            owningResourceKind: "islamuevent_event",
+            owningResourceKind: ResourceKinds.Blog,
             owningResourceId: owningResourceId,
             safeDisplayName: null);
 

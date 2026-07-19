@@ -66,7 +66,7 @@ public class StorageUploadSessionConfiguration : IEntityTypeConfiguration<Storag
             t.HasCheckConstraint("ck_storage_upload_sessions_provider", "provider IN ('local', 's3_compatible', 'legacy_external')");
             t.HasCheckConstraint("ck_storage_upload_sessions_route_key", "route_key IN ('images', 'documents', 'general')");
             t.HasCheckConstraint("ck_storage_upload_sessions_visibility", "visibility IN ('public_image', 'authenticated_tenant', 'private_owner')");
-            t.HasCheckConstraint("ck_storage_upload_sessions_purpose", "purpose IN ('legacy_image', 'profile_image', 'event_image', 'attachment', 'document', 'system_asset')");
+            t.HasCheckConstraint("ck_storage_upload_sessions_purpose", "purpose IN ('legacy_image', 'profile_image', 'blog_image', 'attachment', 'document', 'system_asset')");
             t.HasCheckConstraint("ck_storage_upload_sessions_status", "status IN ('reserved', 'uploading', 'finalized', 'canceled', 'failed', 'expired')");
         });
     }

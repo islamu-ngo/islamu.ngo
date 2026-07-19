@@ -128,21 +128,20 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
 
         if (!rp.LockTenantPublicSeoRenderPolicy)
         {
-            rp.PublicSeoRenderMode = NormalizeRenderMode(tenantRp.PublicSeoRenderMode);
             rp.PublicSeoPrerenderEnabled = tenantRp.PublicSeoPrerenderEnabled;
         }
 
         if (!rp.LockTenantOperationalRenderPolicy)
         {
-            rp.OperationalRenderMode = NormalizeRenderMode(tenantRp.OperationalRenderMode);
             rp.OperationalPrerenderEnabled = tenantRp.OperationalPrerenderEnabled;
         }
 
         if (!rp.LockTenantAdminRenderPolicy)
         {
-            rp.AdminRenderMode = NormalizeRenderMode(tenantRp.AdminRenderMode);
             rp.AdminPrerenderEnabled = tenantRp.AdminPrerenderEnabled;
         }
+
+        ForceInteractiveServerModes(rp);
 
         return settings;
     }
@@ -504,7 +503,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
             AdminPrerenderEnabled = rp.AdminPrerenderEnabled,
             OnboardingRenderMode = NormalizeRenderMode(rp.OnboardingRenderMode),
             OnboardingPrerenderEnabled = rp.OnboardingPrerenderEnabled,
-            DisallowInteractiveServerOnOnboarding = rp.DisallowInteractiveServerOnOnboarding,
             AllowTenantRenderPolicyOverride = rp.AllowTenantOverride,
             LockTenantPublicSeoRenderPolicy = rp.LockTenantPublicSeo,
             LockTenantOperationalRenderPolicy = rp.LockTenantOperational,
@@ -617,11 +615,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
             SettingValueSerializer.Serialize(rp.OnboardingPrerenderEnabled), actorUserId);
 
         await _upsertService.UpsertValueAsync(
-            GovernanceSettingKeys.Routing.RenderPolicy.DisallowInteractiveServerOnOnboarding,
-            SettingValueSerializer.Serialize(rp.DisallowInteractiveServerOnOnboarding),
-            isLocked: true, actorUserId);
-
-        await _upsertService.UpsertValueAsync(
             GovernanceSettingKeys.Routing.RenderPolicy.AllowTenantOverride,
             SettingValueSerializer.Serialize(rp.AllowTenantRenderPolicyOverride),
             isLocked: true, actorUserId);
@@ -693,23 +686,30 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
                 rp.PublicSeoPrerenderEnabled = true;
         }
 
-        if (IsInteractiveServerRenderMode(rp.OnboardingRenderMode))
-            rp.OnboardingRenderMode = RenderModeOptionEnum.InteractiveAuto.ToString();
+        rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.PublicSeoRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.OperationalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.AdminRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.OnboardingRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+    }
 
-        rp.DisallowInteractiveServerOnOnboarding = true;
+    private static void ForceInteractiveServerModes(RenderPolicySettingsDto rp)
+    {
+        rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.PublicSeoRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.OperationalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.AdminRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
+        rp.OnboardingRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
     }
 
     private static string NormalizeRenderPolicyPreset(string? raw)
-        => Enum.TryParse(raw, ignoreCase: true, out RenderPolicyPresetEnum preset)
+        => string.Equals(raw, "balanced", StringComparison.OrdinalIgnoreCase)
+            ? RenderPolicyPresetEnum.SeoBalanced.ToString()
+            : Enum.TryParse(raw, ignoreCase: true, out RenderPolicyPresetEnum preset)
             ? preset.ToString() : RenderPolicyPresetEnum.AllInteractiveServer.ToString();
 
     private static string NormalizeRenderMode(string? raw)
-        => Enum.TryParse(raw, ignoreCase: true, out RenderModeOptionEnum mode)
-            ? mode.ToString() : RenderModeOptionEnum.InteractiveServer.ToString();
-
-    private static bool IsInteractiveServerRenderMode(string? renderMode)
-        => Enum.TryParse(renderMode, ignoreCase: true, out RenderModeOptionEnum mode)
-            && mode == RenderModeOptionEnum.InteractiveServer;
+        => RenderModeOptionEnum.InteractiveServer.ToString();
 
     private static void ApplyPresetDefaults(RenderPolicySettingsDto rp)
     {
@@ -722,11 +722,6 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
                 rp.EnableAdvancedRenderPolicyOverrides = false;
                 rp.GlobalPrerenderEnabled = true;
                 break;
-            case RenderPolicyPresetEnum.AllInteractiveAutoNoPrerender:
-                rp.EnableAdvancedRenderPolicyOverrides = false;
-                rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveAuto.ToString();
-                rp.GlobalPrerenderEnabled = false;
-                break;
             case RenderPolicyPresetEnum.AllInteractiveServer:
                 rp.EnableAdvancedRenderPolicyOverrides = false;
                 rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
@@ -734,7 +729,7 @@ public class InstanceGovernanceSettingService : IInstanceGovernanceSettingServic
                 break;
             case RenderPolicyPresetEnum.SeoBalanced:
                 rp.EnableAdvancedRenderPolicyOverrides = false;
-                rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveAuto.ToString();
+                rp.GlobalRenderMode = RenderModeOptionEnum.InteractiveServer.ToString();
                 rp.GlobalPrerenderEnabled = false;
                 rp.PublicSeoPrerenderEnabled = true;
                 break;

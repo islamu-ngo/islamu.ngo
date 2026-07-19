@@ -54,7 +54,7 @@ public class NoKeycloakAuthenticationTests : IAsyncDisposable
     [Test]
     public async Task NoAuthority_Anonymous_RejectedOnProtectedEndpoint()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
 
         var response = await _client.SendAsync(request);
 
@@ -65,7 +65,7 @@ public class NoKeycloakAuthenticationTests : IAsyncDisposable
     [Test]
     public async Task NoAuthority_ArbitraryJwt_Rejected()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0In0.fake");
 
@@ -82,7 +82,7 @@ public class NoKeycloakAuthenticationTests : IAsyncDisposable
                          "eyJzdWIiOiJ0ZXN0LWFkbWluIiwiZXhwIjoxMDAwMDAwMDAwfQ." +
                          "fake-signature";
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", expiredJwt);
 
         var response = await _client.SendAsync(request);
@@ -98,7 +98,7 @@ public class NoKeycloakAuthenticationTests : IAsyncDisposable
     [Test]
     public async Task NoAuthority_AnonymousEndpoints_StillWork()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/eventformat");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
 
         var response = await _client.SendAsync(request);
 
@@ -149,7 +149,7 @@ public class NoKeycloakAuthenticationTests : IAsyncDisposable
         _factory.Should().NotBeNull("the factory must build successfully without Keycloak config");
         _client.Should().NotBeNull("the HTTP client must be created without errors");
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/eventtypes");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         var response = await _client.SendAsync(request);
 
         response.Should().NotBeNull("the server must respond to requests even without OIDC config");

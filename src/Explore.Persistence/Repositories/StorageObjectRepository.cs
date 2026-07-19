@@ -17,6 +17,13 @@ public class StorageObjectRepository : GenericRepository<StorageObject, Guid>, I
         _dbContext = dbContext;
     }
 
+    public async Task<StorageObject?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _dbContext.StorageObjects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(storageObject => storageObject.Id == id, cancellationToken);
+    }
+
     public async Task<List<StorageObject>> GetFilesWithDetails()
     {
         return await _dbContext.StorageObjects

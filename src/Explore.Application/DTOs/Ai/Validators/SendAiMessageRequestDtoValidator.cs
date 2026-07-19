@@ -66,7 +66,7 @@ public sealed class SendAiMessageRequestDtoValidator : AbstractValidator<SendAiM
                     .NotEmpty()
                     .MaximumLength(MaxReferenceKindLength)
                     .Must(IsSupportedReferenceKind)
-                    .WithMessage("AI selected reference kind must be Event, EventSession, Actor, or Organization.");
+                    .WithMessage("AI selected reference kind must be Actor or Organization.");
 
                 reference.RuleFor(value => value.ReferenceId)
                     .NotEqual(Guid.Empty)

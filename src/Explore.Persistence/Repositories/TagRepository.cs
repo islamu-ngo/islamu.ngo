@@ -1,6 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+// ABOUTME: EF Core repository for tag lookup and detail-loading queries.
+// ABOUTME: Keeps read queries no-tracking and returns domain entities only.
+
 using Explore.Application.Contracts.Persistence;
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +14,13 @@ public class TagRepository : GenericRepository<Tag, Guid>, ITagRepository
     public TagRepository(ExploreDbContext dbContext) : base(dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public async Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Tags
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
     public async Task<Tag> GetTagWithDetails(Guid id)

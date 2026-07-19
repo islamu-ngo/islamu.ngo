@@ -41,19 +41,15 @@ public partial class TenantPolicySettingService
         GovernanceSettingKeys.PublicExperience.AnnouncementBarRevision,
         GovernanceSettingKeys.Routing.DefaultPublicHomePage,
         GovernanceSettingKeys.Routing.RenderPolicy.Admin.PrerenderEnabled,
-        GovernanceSettingKeys.Routing.RenderPolicy.Admin.RenderMode,
         GovernanceSettingKeys.Routing.RenderPolicy.AdvancedEnabled,
         GovernanceSettingKeys.Routing.RenderPolicy.AllowTenantOverride,
         GovernanceSettingKeys.Routing.RenderPolicy.Fallback.PrerenderEnabled,
-        GovernanceSettingKeys.Routing.RenderPolicy.Fallback.RenderMode,
         GovernanceSettingKeys.Routing.RenderPolicy.LockTenantAdmin,
         GovernanceSettingKeys.Routing.RenderPolicy.LockTenantOperational,
         GovernanceSettingKeys.Routing.RenderPolicy.LockTenantPublicSeo,
         GovernanceSettingKeys.Routing.RenderPolicy.Operational.PrerenderEnabled,
-        GovernanceSettingKeys.Routing.RenderPolicy.Operational.RenderMode,
         GovernanceSettingKeys.Routing.RenderPolicy.Preset,
         GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.PrerenderEnabled,
-        GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.RenderMode,
         GovernanceSettingKeys.TenantDelegation.LockAiAssistant,
         GovernanceSettingKeys.TenantDelegation.LockMcp,
         GovernanceSettingKeys.TenantDelegation.LockMcpLegacySse
@@ -246,25 +242,11 @@ public partial class TenantPolicySettingService
             allowTenantRenderOverride,
             actorUserId);
 
-        await SetStringTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Routing.RenderPolicy.Fallback.RenderMode,
-            settings.GlobalRenderMode,
-            allowTenantRenderOverride,
-            actorUserId);
-
         await SetBooleanTenantOverrideAsync(
             tenantId,
             GovernanceSettingKeys.Routing.RenderPolicy.Fallback.PrerenderEnabled,
             settings.GlobalPrerenderEnabled,
             allowTenantRenderOverride,
-            actorUserId);
-
-        await SetStringTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.RenderMode,
-            settings.PublicSeoRenderMode,
-            canOverridePublicSeo,
             actorUserId);
 
         await SetBooleanTenantOverrideAsync(
@@ -274,25 +256,11 @@ public partial class TenantPolicySettingService
             canOverridePublicSeo,
             actorUserId);
 
-        await SetStringTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Routing.RenderPolicy.Operational.RenderMode,
-            settings.OperationalRenderMode,
-            canOverrideOperational,
-            actorUserId);
-
         await SetBooleanTenantOverrideAsync(
             tenantId,
             GovernanceSettingKeys.Routing.RenderPolicy.Operational.PrerenderEnabled,
             settings.OperationalPrerenderEnabled,
             canOverrideOperational,
-            actorUserId);
-
-        await SetStringTenantOverrideAsync(
-            tenantId,
-            GovernanceSettingKeys.Routing.RenderPolicy.Admin.RenderMode,
-            settings.AdminRenderMode,
-            canOverrideAdmin,
             actorUserId);
 
         await SetBooleanTenantOverrideAsync(

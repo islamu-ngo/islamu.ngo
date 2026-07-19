@@ -6,7 +6,6 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using Event.Api.IntegrationTests.Fixtures;
 using FluentAssertions;
-using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -45,8 +44,8 @@ public class TokenClaimsVerificationTests
         var token = await _infra.TokenClient.GetUserTokenAsync();
         var jwt = DecodeToken(token);
 
-        jwt.Audiences.Should().Contain("islamu-event-api",
-            "the token must contain the islamu-event-api audience mapped in the realm export");
+        jwt.Audiences.Should().Contain("islamu-ngo-api",
+            "the token must contain the islamu-ngo-api audience mapped in the NGO provisioner");
     }
 
     [Test]
@@ -177,7 +176,7 @@ public class TokenClaimsVerificationTests
         using var client = factory.CreateClient();
         var token = await _infra.TokenClient.GetUserTokenAsync();
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.SendAsync(request);

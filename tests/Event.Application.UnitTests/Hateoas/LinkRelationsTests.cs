@@ -1,3 +1,6 @@
+// ABOUTME: Unit tests for the surviving standard and platform HAL link-relation constants.
+// ABOUTME: Locks current IANA and generic resource relation spellings after Event product deletion.
+
 using Explore.Application.Hateoas;
 using TUnit.Assertions;
 using TUnit.Core;
@@ -77,33 +80,9 @@ public class LinkRelationsTests
     #region Custom Domain Link Relations
 
     [Test]
-    public async Task Events_ShouldBeCorrect()
-    {
-        await Assert.That(LinkRelations.Events).IsEqualTo("events");
-    }
-
-    [Test]
     public async Task Sessions_ShouldBeCorrect()
     {
         await Assert.That(LinkRelations.Sessions).IsEqualTo("sessions");
-    }
-
-    [Test]
-    public async Task Program_ShouldBeCorrect()
-    {
-        await Assert.That(LinkRelations.Program).IsEqualTo("program");
-    }
-
-    [Test]
-    public async Task AddSession_ShouldBeCorrect()
-    {
-        await Assert.That(LinkRelations.AddSession).IsEqualTo("add-session");
-    }
-
-    [Test]
-    public async Task AddSessionGroup_ShouldBeCorrect()
-    {
-        await Assert.That(LinkRelations.AddSessionGroup).IsEqualTo("add-session-group");
     }
 
     [Test]
@@ -128,12 +107,6 @@ public class LinkRelationsTests
     public async Task Actor_ShouldBeCorrect()
     {
         await Assert.That(LinkRelations.Actor).IsEqualTo("actor");
-    }
-
-    [Test]
-    public async Task Event_ShouldBeCorrect()
-    {
-        await Assert.That(LinkRelations.Event).IsEqualTo("event");
     }
 
     [Test]

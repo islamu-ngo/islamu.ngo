@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for the application-layer Layer 3 governance policy.
-// ABOUTME: Verifies reserved namespace enforcement, normalization, and Layer 2 semantic collision rejection.
+// ABOUTME: Verifies reserved namespace enforcement and normalization of tenant-owned identifiers.
 
 using Explore.Application.Services;
 
@@ -35,33 +35,6 @@ public class CustomPropertyGovernancePolicyTests
 
         await Assert.That(result.IsValid).IsTrue();
         await Assert.That(result.NormalizedNamespace).IsEqualTo("pack.islamic");
-    }
-
-    [Test]
-    public async Task EvaluateDefinition_WithReservedLayer2Semantic_ReturnsError()
-    {
-        var result = _policy.EvaluateDefinition("sector.islamic", "Madhab Id", canManageReservedNamespaces: true);
-
-        await Assert.That(result.IsValid).IsFalse();
-        await Assert.That(result.Errors.Any(e => e.Contains("Layer 2 semantics", StringComparison.Ordinal))).IsTrue();
-    }
-
-    [Test]
-    public async Task EvaluateDefinition_WithTenantNamespaceAndLayer2SemanticKey_ReturnsError()
-    {
-        var result = _policy.EvaluateDefinition("tenant.community", "Madhab Id");
-
-        await Assert.That(result.IsValid).IsFalse();
-        await Assert.That(result.Errors.Any(e => e.Contains("Layer 2 semantics", StringComparison.Ordinal))).IsTrue();
-    }
-
-    [Test]
-    public async Task EvaluateDefinition_WithTenantNamespaceAndSessionLayer2SemanticKey_ReturnsError()
-    {
-        var result = _policy.EvaluateDefinition("tenant.sessions", "Offset Minutes");
-
-        await Assert.That(result.IsValid).IsFalse();
-        await Assert.That(result.Errors.Any(e => e.Contains("Layer 2 semantics", StringComparison.Ordinal))).IsTrue();
     }
 
     [Test]

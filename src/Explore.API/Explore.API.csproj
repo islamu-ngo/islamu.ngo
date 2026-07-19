@@ -10,7 +10,7 @@
     <OpenApiGenerateDocumentsOnBuild Condition="'$(Configuration)' == 'Release'">true</OpenApiGenerateDocumentsOnBuild>
     <OpenApiGenerateDocumentsOnBuild Condition="'$(Configuration)' != 'Release'">false</OpenApiGenerateDocumentsOnBuild>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../schemas</OpenApiDocumentsDirectory>
-    <OpenApiGenerateDocumentsOptions>--document-name islamu-event --file-name openapi</OpenApiGenerateDocumentsOptions>
+    <OpenApiGenerateDocumentsOptions>--document-name islamu --file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
   <ItemGroup>
@@ -80,10 +80,10 @@
 
   <!-- Include openapi.json as content (committed to source control) -->
   <ItemGroup>
-    <None Include="../../schemas/openapi_islamu-event.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../schemas/openapi_islamu-event.json')" />
+    <None Include="../../schemas/openapi_islamu.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../schemas/openapi_islamu.json')" />
   </ItemGroup>
 
-  <Target Name="InvalidateOpenApiDocumentCacheWhenCanonicalDocumentIsMissing" BeforeTargets="GenerateOpenApiDocuments" Condition="!Exists('$(MSBuildProjectDirectory)/../../schemas/openapi_islamu-event.json') And Exists('$(BaseIntermediateOutputPath)$(MSBuildProjectName).OpenApiFiles.cache')">
+  <Target Name="InvalidateOpenApiDocumentCacheWhenCanonicalDocumentIsMissing" BeforeTargets="GenerateOpenApiDocuments" Condition="!Exists('$(MSBuildProjectDirectory)/../../schemas/openapi_islamu.json') And Exists('$(BaseIntermediateOutputPath)$(MSBuildProjectName).OpenApiFiles.cache')">
     <Delete Files="$(BaseIntermediateOutputPath)$(MSBuildProjectName).OpenApiFiles.cache" />
   </Target>
 

@@ -72,11 +72,9 @@ public sealed class RabbitMqEmailDispatchDeadLetterReplayLiveTests(RabbitMqConta
         var pointer = new EmailDispatchPointer(
             TenantId: Guid.CreateVersion7(),
             PublishEventId: Guid.CreateVersion7(),
-            Kind: EmailDispatchKind.RegistrationConfirmation,
-            SourceType: "event-registration",
+            Kind: EmailDispatchKind.TenantAdministratorInvitation,
+            SourceType: "tenant-administrator-invitation",
             SourceId: Guid.CreateVersion7(),
-            EventId: Guid.CreateVersion7(),
-            RegistrationIntentId: Guid.CreateVersion7(),
             UserId: Guid.CreateVersion7());
         var settingsMonitor = CreateOptionsMonitor(settings);
         await using var transport = CreateTransport(settingsMonitor);
@@ -201,11 +199,9 @@ public sealed class RabbitMqEmailDispatchDeadLetterReplayLiveTests(RabbitMqConta
         Id = Guid.CreateVersion7(),
         TenantId = Guid.CreateVersion7(),
         PublishEventId = Guid.CreateVersion7(),
-        Kind = EmailDispatchKind.RegistrationConfirmation,
-        SourceType = "event-registration",
+        Kind = EmailDispatchKind.TenantAdministratorInvitation,
+        SourceType = "tenant-administrator-invitation",
         SourceId = Guid.CreateVersion7(),
-        EventId = Guid.CreateVersion7(),
-        RegistrationIntentId = Guid.CreateVersion7(),
         UserId = Guid.CreateVersion7(),
         RecipientEmail = "attendee@example.test",
         Subject = "Registration confirmation",

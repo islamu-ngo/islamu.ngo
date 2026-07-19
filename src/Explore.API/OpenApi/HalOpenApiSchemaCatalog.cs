@@ -7,6 +7,10 @@ internal static class HalOpenApiSchemaCatalog
 {
     public static IReadOnlyList<Type> RegisteredDtoTypes { get; } =
     [
+        // Blog DTOs
+        typeof(Explore.Application.DTOs.Blog.BlogSummaryDto),
+        typeof(Explore.Application.DTOs.Blog.BlogDetailDto),
+
         // Category DTOs
         typeof(Explore.Application.DTOs.Category.CategoryDto),
         typeof(Explore.Application.DTOs.Category.CategoryListDto),
@@ -108,6 +112,8 @@ internal static class HalOpenApiSchemaCatalog
         ["HalResourceOfActorListDto"] = typeof(Explore.Application.DTOs.Actor.ActorListDto),
         ["HalResourceOfActorSubscriptionDto"] = typeof(Explore.Application.DTOs.ActorSubscription.ActorSubscriptionDto),
         ["HalResourceOfActorSubscriptionListDto"] = typeof(Explore.Application.DTOs.ActorSubscription.ActorSubscriptionListDto),
+        ["HalResourceOfBlogDetailDto"] = typeof(Explore.Application.DTOs.Blog.BlogDetailDto),
+        ["HalResourceOfBlogSummaryDto"] = typeof(Explore.Application.DTOs.Blog.BlogSummaryDto),
         ["HalResourceOfCustomPropertyDefinitionDto"] = typeof(Explore.Application.DTOs.CustomPropertyDefinition.CustomPropertyDefinitionDto),
         ["HalResourceOfCustomPropertyDefinitionListDto"] = typeof(Explore.Application.DTOs.CustomPropertyDefinition.CustomPropertyDefinitionListDto),
         ["HalResourceOfGroupDto"] = typeof(Explore.Application.DTOs.Group.GroupDto),
@@ -157,6 +163,7 @@ internal static class HalOpenApiSchemaCatalog
     {
         ["HalCollectionEmbeddedOfActorListDto"] = "HalResourceOfActorListDto",
         ["HalCollectionEmbeddedOfActorSubscriptionListDto"] = "HalResourceOfActorSubscriptionListDto",
+        ["HalCollectionEmbeddedOfBlogSummaryDto"] = "HalResourceOfBlogSummaryDto",
         ["HalCollectionEmbeddedOfCategoryListDto"] = "HalResourceOfCategoryListDto",
         ["HalCollectionEmbeddedOfCustomPropertyDefinitionListDto"] = "HalResourceOfCustomPropertyDefinitionListDto",
         ["HalCollectionEmbeddedOfGroupListDto"] = "HalResourceOfGroupListDto",

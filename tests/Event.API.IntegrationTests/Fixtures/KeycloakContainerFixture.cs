@@ -20,7 +20,7 @@ public sealed class KeycloakContainerFixture : IAsyncInitializer, IAsyncDisposab
     public const string RealmName = "ISLAMU";
 
     /// <summary>Client ID with directAccessGrantsEnabled for ROPC token acquisition.</summary>
-    public const string TestClientId = "islamu-event-blazor";
+    public const string TestClientId = "islamu-ngo-blazor";
 
     /// <summary>Client secret from the test realm export.</summary>
     public const string TestClientSecret = "test-blazor-secret";

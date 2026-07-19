@@ -3,7 +3,6 @@
 
 using Event.Api.IntegrationTests.Fixtures;
 using FluentAssertions;
-using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -48,11 +47,7 @@ public class CerbosPolicyContractTests : IDisposable
         yield return ("islamuevent_storage_object", (string[])["view", "create", "update", "delete", "download", "presigned_download"]);
         yield return ("islamuevent_instance_setting", (string[])["view", "update", "delete", "lock", "unlock"]);
         yield return ("islamuevent_tenant_setting", (string[])["view", "update", "delete"]);
-        yield return ("islamuevent_event_session", (string[])["view", "create", "update", "delete"]);
-        yield return ("islamuevent_event_day", (string[])["view", "create", "update", "delete"]);
-        yield return ("islamuevent_event_agenda_item", (string[])["view", "create", "update", "delete"]);
-        yield return ("islamuevent_event_session_agenda_item", (string[])["view", "create", "update", "delete"]);
-        yield return ("islamuevent_event_registration", (string[])["view", "create", "update", "delete"]);
+        yield return ("islamuevent_blog", (string[])["view", "create", "update", "delete", "publish", "unpublish"]);
         yield return ("islamuevent_organization_review", (string[])["view", "create", "update", "delete"]);
         yield return ("islamuevent_notification", (string[])["view", "create", "update", "delete"]);
         yield return ("islamuevent_custom_property_definition", (string[])["view", "create", "update", "delete"]);
@@ -82,35 +77,15 @@ public class CerbosPolicyContractTests : IDisposable
         }
     }
 
-    [Test]
-    public async Task InstanceAdmin_ShouldBeAllowed_ViewAndModerateEventsWithoutEditAuthority()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-instance-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = true, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1", userId = "user-1" },
-            actions: ["view", "view-management", "create", "update", "delete", "moderate-light", "moderate-heavy", "unmoderate"]);
-
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("moderate-light").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("moderate-heavy").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("unmoderate").WhoseValue.Should().Be("EFFECT_ALLOW");
-    }
-
     #endregion
 
     #region Tenant Admin — Scoped Access
 
     [Test]
-    public async Task TenantAdmin_ShouldBeAllowed_ViewAndModerateEventsInOwnTenantWithoutEditAuthority()
+    public async Task TenantAdmin_ShouldBeAllowed_ManageBlogsInOwnTenant()
     {
+        string[] actions = ["view", "create", "update", "delete", "publish", "unpublish"];
+
         var result = await _cerbos.CheckResourceAsync(
             principalId: "user-tenant-admin",
             principalRoles: ["islamuevent_authenticated_user"],
@@ -120,24 +95,23 @@ public class CerbosPolicyContractTests : IDisposable
                 tenantMemberships = new Dictionary<string, string> { ["tenant-1"] = "admin" },
                 orgMemberships = new { }
             },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "view-management", "create", "update", "delete", "moderate-light", "moderate-heavy", "unmoderate"]);
+            resourceKind: "islamuevent_blog",
+            resourceId: "blog-1",
+            resourceAttrs: new { tenantId = "tenant-1", blogId = "blog-1", isPublished = false },
+            actions: actions);
 
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("moderate-light").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("moderate-heavy").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("unmoderate").WhoseValue.Should().Be("EFFECT_ALLOW");
+        foreach (var action in actions)
+        {
+            result.Should().ContainKey(action).WhoseValue.Should().Be("EFFECT_ALLOW",
+                $"tenant admin should be allowed '{action}' on blogs in their tenant");
+        }
     }
 
     [Test]
-    public async Task TenantAdmin_ShouldBeDenied_ManageEventsInOtherTenant()
+    public async Task TenantAdmin_ShouldBeDenied_ManageBlogsInOtherTenant()
     {
+        string[] actions = ["view", "create", "update", "delete", "publish", "unpublish"];
+
         var result = await _cerbos.CheckResourceAsync(
             principalId: "user-other-tenant-admin",
             principalRoles: ["islamuevent_authenticated_user"],
@@ -147,64 +121,16 @@ public class CerbosPolicyContractTests : IDisposable
                 tenantMemberships = new Dictionary<string, string> { ["tenant-other"] = "admin" },
                 orgMemberships = new { }
             },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view-management", "create", "update", "delete", "moderate-light", "moderate-heavy", "unmoderate"]);
+            resourceKind: "islamuevent_blog",
+            resourceId: "blog-1",
+            resourceAttrs: new { tenantId = "tenant-1", blogId = "blog-1", isPublished = true },
+            actions: actions);
 
-        result.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("moderate-light").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("moderate-heavy").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("unmoderate").WhoseValue.Should().Be("EFFECT_DENY");
-    }
-
-    [Test]
-    public async Task UserOwnedEvent_ShouldExposeOwnerLifecycleAuthorityOnlyToOwningUser()
-    {
-        var ownerResult = await _cerbos.CheckResourceAsync(
-            principalId: "user-owner",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                userId = "user-owner",
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new { }
-            },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-user-owned",
-            resourceAttrs: new { tenantId = "tenant-1", eventId = "event-user-owned", userId = "user-owner" },
-            actions: ["view", "view-management", "update", "delete", "publish"]);
-
-        ownerResult.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        ownerResult.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_ALLOW");
-        ownerResult.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_ALLOW");
-        ownerResult.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_ALLOW");
-        ownerResult.Should().ContainKey("publish").WhoseValue.Should().Be("EFFECT_ALLOW");
-
-        var otherResult = await _cerbos.CheckResourceAsync(
-            principalId: "user-other",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                userId = "user-other",
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new { }
-            },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-user-owned",
-            resourceAttrs: new { tenantId = "tenant-1", eventId = "event-user-owned", userId = "user-owner" },
-            actions: ["view", "view-management", "update", "delete", "publish"]);
-
-        otherResult.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        otherResult.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_DENY");
-        otherResult.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        otherResult.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
-        otherResult.Should().ContainKey("publish").WhoseValue.Should().Be("EFFECT_DENY");
+        foreach (var action in actions)
+        {
+            result.Should().ContainKey(action).WhoseValue.Should().Be("EFFECT_DENY",
+                $"tenant admin from another tenant should be denied '{action}' on blog resources");
+        }
     }
 
     [Test]
@@ -487,51 +413,6 @@ public class CerbosPolicyContractTests : IDisposable
     #region Org Admin — Scoped Access
 
     [Test]
-    public async Task OrgAdmin_ShouldBeAllowed_ManageEventsInOwnOrg()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-org-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new Dictionary<string, string> { ["org-1"] = "admin" }
-            },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "create", "update", "delete"]);
-
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_ALLOW");
-    }
-
-    [Test]
-    public async Task OrgAdmin_ShouldBeDenied_ManageEventsInOtherOrg()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-other-org-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new Dictionary<string, string> { ["org-other"] = "admin" }
-            },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["create", "update", "delete"]);
-
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
-    }
-
-    [Test]
     public async Task OrgAdmin_ShouldBeAllowed_ManageOwnOrg()
     {
         var result = await _cerbos.CheckResourceAsync(
@@ -622,28 +503,6 @@ public class CerbosPolicyContractTests : IDisposable
     }
 
     [Test]
-    public async Task OrgAdmin_ShouldBeAllowed_ManageEventRegistrations()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-org-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new Dictionary<string, string> { ["org-1"] = "admin" }
-            },
-            resourceKind: "islamuevent_event_registration",
-            resourceId: "reg-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "update", "delete"]);
-
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_ALLOW");
-    }
-
-    [Test]
     public async Task OrgAdmin_ShouldBeAllowed_ViewActors()
     {
         var result = await _cerbos.CheckResourceAsync(
@@ -670,36 +529,24 @@ public class CerbosPolicyContractTests : IDisposable
     #region Regular User — View Only
 
     [Test]
-    public async Task RegularUser_ShouldBeAllowed_ViewEvents()
+    public async Task RegularUser_ShouldBeDenied_ManageBlogs()
     {
+        string[] actions = ["view", "create", "update", "delete", "publish", "unpublish"];
+
         var result = await _cerbos.CheckResourceAsync(
             principalId: "user-regular",
             principalRoles: ["islamuevent_authenticated_user"],
             principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "view-management"]);
+            resourceKind: "islamuevent_blog",
+            resourceId: "blog-1",
+            resourceAttrs: new { tenantId = "tenant-1", blogId = "blog-1", isPublished = true },
+            actions: actions);
 
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("view-management").WhoseValue.Should().Be("EFFECT_DENY");
-    }
-
-    [Test]
-    public async Task RegularUser_ShouldBeDenied_MutateEvents()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-regular",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event",
-            resourceId: "event-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["create", "update", "delete"]);
-
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("update").WhoseValue.Should().Be("EFFECT_DENY");
-        result.Should().ContainKey("delete").WhoseValue.Should().Be("EFFECT_DENY");
+        foreach (var action in actions)
+        {
+            result.Should().ContainKey(action).WhoseValue.Should().Be("EFFECT_DENY",
+                $"regular users must not use Cerbos editorial blog action '{action}'");
+        }
     }
 
     [Test]
@@ -732,38 +579,6 @@ public class CerbosPolicyContractTests : IDisposable
 
         result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY",
             "machine/API-key organization creation cannot use the human self-registration pre-create gate");
-    }
-
-    [Test]
-    public async Task RegularUser_ShouldBeAllowed_EventPreCreateGate()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-regular",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event",
-            resourceId: "create",
-            resourceAttrs: new { tenantId = "tenant-1", authorizationPhase = "pre_create" },
-            actions: ["create"]);
-
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_ALLOW",
-            "pre-create event checks only decide whether the authenticated human request can reach CreateEventCommandHandler; EventActorResolver enforces publishing policy");
-    }
-
-    [Test]
-    public async Task MachineCaller_ShouldBeDenied_EventPreCreateGate()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "api-key-machine",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { }, is_machine = true },
-            resourceKind: "islamuevent_event",
-            resourceId: "create",
-            resourceAttrs: new { tenantId = "tenant-1", authorizationPhase = "pre_create" },
-            actions: ["create"]);
-
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY",
-            "machine/API-key event create is governed by scope and owner checks, not the human pre-create rule");
     }
 
     [Test]
@@ -808,22 +623,6 @@ public class CerbosPolicyContractTests : IDisposable
         tenantAdminMachine.Should().ContainKey("webhook:process-incoming").WhoseValue.Should().Be("EFFECT_DENY");
         tenantAdminMachine.Should().ContainKey("webhook:redrive-incoming").WhoseValue.Should().Be("EFFECT_ALLOW");
         tenantAdminMachine.Should().ContainKey("webhook:manage-provider").WhoseValue.Should().Be("EFFECT_ALLOW");
-    }
-
-    [Test]
-    public async Task RegularUser_ShouldBeAllowed_RegisterForEvents()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-regular",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event_registration",
-            resourceId: "reg-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["create", "view"]);
-
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
     }
 
     [Test]
@@ -903,7 +702,6 @@ public class CerbosPolicyContractTests : IDisposable
 
     public static IEnumerable<string> GetAllViewableResources()
     {
-        yield return "islamuevent_event";
         yield return "islamuevent_organization";
         yield return "islamuevent_tenant";
         yield return "islamuevent_user";
@@ -914,11 +712,6 @@ public class CerbosPolicyContractTests : IDisposable
         yield return "islamuevent_group";
         yield return "islamuevent_group_member";
         yield return "islamuevent_instance_setting";
-        yield return "islamuevent_event_session";
-        yield return "islamuevent_event_day";
-        yield return "islamuevent_event_agenda_item";
-        yield return "islamuevent_event_session_agenda_item";
-        yield return "islamuevent_event_registration";
         yield return "islamuevent_organization_review";
         yield return "islamuevent_notification";
         yield return "islamuevent_custom_property_definition";
@@ -1073,61 +866,6 @@ public class CerbosPolicyContractTests : IDisposable
             result.Should().ContainKey(action).WhoseValue.Should().Be("EFFECT_DENY",
                 $"regular user should be denied '{action}' on '{resourceKind}'");
         }
-    }
-
-    #endregion
-
-    #region Org-Scoped Event Sub-Resources
-
-    public static IEnumerable<string> GetOrgScopedEventSubResources()
-    {
-        yield return "islamuevent_event_session";
-        yield return "islamuevent_event_day";
-        yield return "islamuevent_event_agenda_item";
-        yield return "islamuevent_event_session_agenda_item";
-    }
-
-    [Test]
-    [MethodDataSource(nameof(GetOrgScopedEventSubResources))]
-    public async Task OrgAdmin_ShouldBeAllowed_ManageEventSubResourcesInOwnOrg(string resourceKind)
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-org-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                isInstanceAdmin = false,
-                tenantMemberships = new { },
-                orgMemberships = new Dictionary<string, string> { ["org-1"] = "admin" }
-            },
-            resourceKind: resourceKind,
-            resourceId: "sub-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "create", "update", "delete"]);
-
-        foreach (var action in new[] { "view", "create", "update", "delete" })
-        {
-            result.Should().ContainKey(action).WhoseValue.Should().Be("EFFECT_ALLOW",
-                $"org admin should be allowed '{action}' on '{resourceKind}' in own org");
-        }
-    }
-
-    [Test]
-    [MethodDataSource(nameof(GetOrgScopedEventSubResources))]
-    public async Task RegularUser_ShouldBeAllowed_ViewEventSubResources(string resourceKind)
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-regular",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new { isInstanceAdmin = false, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: resourceKind,
-            resourceId: "sub-1",
-            resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "create"]);
-
-        result.Should().ContainKey("view").WhoseValue.Should().Be("EFFECT_ALLOW");
-        result.Should().ContainKey("create").WhoseValue.Should().Be("EFFECT_DENY",
-            $"regular users should be denied create on '{resourceKind}'");
     }
 
     #endregion

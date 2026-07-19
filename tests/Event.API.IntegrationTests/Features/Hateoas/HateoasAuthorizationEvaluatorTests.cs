@@ -49,8 +49,8 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Self("GetEvent"),
-            LinkDefinition.Collection("GetEvents"),
+            LinkDefinition.Self("GetPublishedBlogBySlug"),
+            LinkDefinition.Collection("GetPublishedBlogs"),
         };
 
         var result = await _sut.AreLinksAllowedAsync(links, AuthenticatedUser(), _httpContext);
@@ -66,8 +66,8 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent")
-                .WithPermission("islamuevent_event", "update", "id-1"),
+            LinkDefinition.Edit("UpdateBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         _authProvider.IsAllowedBatchAsync(
@@ -90,10 +90,10 @@ public class HateoasAuthorizationEvaluatorTests
         // Two links with identical resource kind + id + action should collapse to 1 check
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent")
-                .WithPermission("islamuevent_event", "update", "id-1"),
-            LinkDefinition.Action("add-categories", "UpdateEventCategories", "PUT")
-                .WithPermission("islamuevent_event", "update", "id-1"),
+            LinkDefinition.Edit("UpdateBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
+            LinkDefinition.Action("add-categories", "UpdateBlogCategories", "PUT")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         _authProvider.IsAllowedBatchAsync(
@@ -118,10 +118,10 @@ public class HateoasAuthorizationEvaluatorTests
         var orgScope = new AuthorizationScope(TenantId: "tenant-1", OrganizationId: "org-1");
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateTenantEvent")
-                .WithPermission("islamuevent_event", "update", "event-1", scope: tenantScope),
-            LinkDefinition.Edit("UpdateOrganizationEvent")
-                .WithPermission("islamuevent_event", "update", "event-1", scope: orgScope),
+            LinkDefinition.Edit("UpdateTenantBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1", scope: tenantScope),
+            LinkDefinition.Edit("UpdateOrganizationBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1", scope: orgScope),
         };
 
         _authProvider.IsAllowedBatchAsync(
@@ -144,17 +144,17 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateTenantEvent")
+            LinkDefinition.Edit("UpdateTenantBlog")
                 .WithPermission(
-                    "islamuevent_event",
+                    ResourceKinds.Blog,
                     "update",
-                    "event-1",
+                    "blog-1",
                     new Dictionary<string, object> { ["tenantId"] = "tenant-1", ["ownerId"] = "owner-1" }),
-            LinkDefinition.Edit("UpdateOtherTenantEvent")
+            LinkDefinition.Edit("UpdateOtherTenantBlog")
                 .WithPermission(
-                    "islamuevent_event",
+                    ResourceKinds.Blog,
                     "update",
-                    "event-1",
+                    "blog-1",
                     new Dictionary<string, object> { ["tenantId"] = "tenant-2", ["ownerId"] = "owner-1" }),
         };
 
@@ -177,14 +177,14 @@ public class HateoasAuthorizationEvaluatorTests
     public async Task DedupKey_CanonicalizesAttributesIndependentOfInsertionOrder()
     {
         var first = new AuthorizationCheck(
-            "islamuevent_event",
-            "event-1",
+            ResourceKinds.Blog,
+            "blog-1",
             "update",
             new Dictionary<string, object> { ["tenantId"] = "tenant-1", ["ownerId"] = "owner-1" },
             AuthorizationScope.Empty);
         var second = new AuthorizationCheck(
-            "islamuevent_event",
-            "event-1",
+            ResourceKinds.Blog,
+            "blog-1",
             "update",
             new Dictionary<string, object> { ["ownerId"] = "owner-1", ["tenantId"] = "tenant-1" });
 
@@ -196,13 +196,13 @@ public class HateoasAuthorizationEvaluatorTests
     public async Task DedupKey_ChangesWhenAttributesDiffer()
     {
         var first = new AuthorizationCheck(
-            "islamuevent_event",
-            "event-1",
+            ResourceKinds.Blog,
+            "blog-1",
             "update",
             new Dictionary<string, object> { ["tenantId"] = "tenant-1" });
         var second = new AuthorizationCheck(
-            "islamuevent_event",
-            "event-1",
+            ResourceKinds.Blog,
+            "blog-1",
             "update",
             new Dictionary<string, object> { ["tenantId"] = "tenant-2" });
 
@@ -215,7 +215,7 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var resource = new TestResource("resource-1", "tenant-1", "org-1");
         var descriptor = new ResourceDescriptor<TestResource>(
-            "islamuevent_event",
+            ResourceKinds.Blog,
             static candidate => candidate.Id,
             static candidate => new Dictionary<string, object> { ["tenantId"] = candidate.TenantId },
             static candidate => new AuthorizationScope(candidate.TenantId, candidate.OrganizationId));
@@ -242,15 +242,15 @@ public class HateoasAuthorizationEvaluatorTests
     [DisplayName("Dedup maps batch decisions correctly back to all original links")]
     public async Task DedupMapsDecisions_Correctly()
     {
-        // 3 links: 2 share same dedup key (event|id-1|update), 1 is different (event|id-1|delete)
+        // 3 links: 2 share same dedup key (blog|blog-1|update), 1 is different (blog|blog-1|delete)
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent")
-                .WithPermission("islamuevent_event", "update", "id-1"),
-            LinkDefinition.Action("add-tags", "UpdateEventTags", "PUT")
-                .WithPermission("islamuevent_event", "update", "id-1"),
-            LinkDefinition.Delete("DeleteEvent")
-                .WithPermission("islamuevent_event", "delete", "id-1"),
+            LinkDefinition.Edit("UpdateBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
+            LinkDefinition.Action("add-tags", "UpdateBlogTags", "PUT")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
+            LinkDefinition.Delete("DeleteBlog")
+                .WithPermission(ResourceKinds.Blog, "delete", "blog-1"),
         };
 
         // Provider returns 2 decisions for 2 unique checks: update=allowed, delete=denied
@@ -272,11 +272,11 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Self("GetEvent"),
-            LinkDefinition.Edit("UpdateEvent")
-                .WithPermission("islamuevent_event", "update", "id-1"),
-            LinkDefinition.Delete("DeleteEvent")
-                .WithPermission("islamuevent_event", "delete", "id-1"),
+            LinkDefinition.Self("GetPublishedBlogBySlug"),
+            LinkDefinition.Edit("UpdateBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
+            LinkDefinition.Delete("DeleteBlog")
+                .WithPermission(ResourceKinds.Blog, "delete", "blog-1"),
         };
 
         _authProvider.IsAllowedBatchAsync(
@@ -297,9 +297,9 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent")
+            LinkDefinition.Edit("UpdateBlog")
                 .When(() => false)
-                .WithPermission("islamuevent_event", "update", "id-1"),
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         var result = await _sut.AreLinksAllowedAsync(links, AuthenticatedUser(), _httpContext);
@@ -316,10 +316,10 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Action("archive", "ArchiveEvent", "POST").Authenticated() with
+            LinkDefinition.Action("archive", "ArchiveBlog", "POST").Authenticated() with
             {
-                PermissionResourceKind = "islamuevent_event",
-                PermissionResourceId = "id-1",
+                PermissionResourceKind = ResourceKinds.Blog,
+                PermissionResourceId = "blog-1",
             },
         };
 
@@ -338,8 +338,8 @@ public class HateoasAuthorizationEvaluatorTests
         // Edit sets RequiresAuth=true by default
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent")
-                .WithPermission("islamuevent_event", "update", "id-1"),
+            LinkDefinition.Edit("UpdateBlog")
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         var result = await _sut.AreLinksAllowedAsync(links, null, _httpContext);
@@ -353,7 +353,7 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Action("report-event", "SubmitEventReport", "POST")
+            LinkDefinition.Action("report-blog", "SubmitBlogReport", "POST")
                 .AdvertisedWhenAnonymous(),
         };
 
@@ -371,8 +371,8 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent", roles: ["Admin"])
-                .WithPermission("islamuevent_event", "update", "id-1"),
+            LinkDefinition.Edit("UpdateBlog", roles: ["Admin"])
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         var result = await _sut.AreLinksAllowedAsync(links, AuthenticatedUser("User"), _httpContext);
@@ -386,8 +386,8 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Edit("UpdateEvent", roles: ["Admin"])
-                .WithPermission("islamuevent_event", "update", "id-1"),
+            LinkDefinition.Edit("UpdateBlog", roles: ["Admin"])
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),
         };
 
         _authProvider.IsAllowedBatchAsync(
@@ -406,14 +406,14 @@ public class HateoasAuthorizationEvaluatorTests
     {
         var links = new List<LinkDefinition>
         {
-            LinkDefinition.Self("GetEvent"),                                   // No auth, no permission → true
-            LinkDefinition.Edit("UpdateEvent")
+            LinkDefinition.Self("GetPublishedBlogBySlug"),                     // No auth, no permission → true
+            LinkDefinition.Edit("UpdateBlog")
                 .When(() => false)
-                .WithPermission("islamuevent_event", "update", "id-1"),                    // Condition false → false
-            LinkDefinition.Delete("DeleteEvent")
-                .WithPermission("islamuevent_event", "delete", "id-1"),                    // Permission check → depends on provider
-            LinkDefinition.Create("CreateEvent")
-                .WithPermission("islamuevent_event", "create", "islamuevent_event"),                   // Permission check → depends on provider
+                .WithPermission(ResourceKinds.Blog, "update", "blog-1"),       // Condition false → false
+            LinkDefinition.Delete("DeleteBlog")
+                .WithPermission(ResourceKinds.Blog, "delete", "blog-1"),       // Permission check → depends on provider
+            LinkDefinition.Create("CreateBlog")
+                .WithPermission(ResourceKinds.Blog, "create", ResourceKinds.Blog), // Permission check → depends on provider
         };
 
         _authProvider.IsAllowedBatchAsync(

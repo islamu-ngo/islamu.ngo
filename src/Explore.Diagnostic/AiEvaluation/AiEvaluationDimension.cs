@@ -10,5 +10,4 @@ public enum AiEvaluationDimension
     PromptInjectionResistance,
     Groundedness,
     McpProposalFlow,
-    EventDraftRegression,
 }

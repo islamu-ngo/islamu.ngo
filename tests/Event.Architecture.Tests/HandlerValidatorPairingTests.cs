@@ -18,7 +18,6 @@ public class HandlerValidatorPairingTests
     private static readonly IReadOnlyDictionary<string, string> ValidationExemptions = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Explore.Application.Features.InstanceOnboarding.Handlers.Commands.UpdateModuleSettingsCommandHandler"] = "Settings validation is delegated to IInstanceGovernanceSettingService; handler performs admin authorization only.",
-        ["Explore.Application.Features.InstanceOnboarding.Handlers.Commands.UpdateEventPolicyCommandHandler"] = "Settings validation is delegated to IInstanceGovernanceSettingService; handler performs admin authorization only.",
         ["Explore.Application.Features.InstanceOnboarding.Handlers.Commands.UpdateOrganizationPolicyCommandHandler"] = "Settings validation is delegated to IInstanceGovernanceSettingService; handler performs admin authorization only.",
         ["Explore.Application.Features.InstanceOnboarding.Handlers.Commands.UpdateBrandingSettingsCommandHandler"] = "Settings validation is delegated to IInstanceGovernanceSettingService; handler performs admin authorization only.",
         ["Explore.Application.Features.InstanceOnboarding.Handlers.Commands.UpdateDomainSettingsCommandHandler"] = "Settings validation is delegated to IInstanceGovernanceSettingService; handler performs admin authorization only.",

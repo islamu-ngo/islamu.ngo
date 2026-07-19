@@ -2,6 +2,7 @@
 // ABOUTME: Rebuilds the retired schema explicitly in Down without replaying migrations or restoring product data.
 
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -11,6 +12,8 @@ public partial class RemoveEventProductSurface : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        RemoveEventImageStoragePurpose(migrationBuilder);
+
         migrationBuilder.Sql("DROP VIEW IF EXISTS vw_event_with_sessions;");
 
         migrationBuilder.DropForeignKey("fk_email_dispatch_outbox_events_event_id", "email_dispatch_outbox");
@@ -77,6 +80,9 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.DropColumn("events_event_card_click_opens_detail_page_local_value", "organization_policy_sets");
         migrationBuilder.DropColumn("events_event_card_click_opens_detail_page_override_mode", "organization_policy_sets");
 
+        migrationBuilder.DropTable("custom_property_projection_dirty_scope");
+        migrationBuilder.DropTable("custom_property_projection_status");
+
         migrationBuilder.DropTable("event_contact_share_export_items");
         migrationBuilder.DropTable("event_contact_share_exports");
         migrationBuilder.DropTable("event_contact_share_consents");
@@ -137,12 +143,115 @@ public partial class RemoveEventProductSurface : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        CreateCustomPropertyProjectionTrackingTables(migrationBuilder);
         CreateLookupTables(migrationBuilder);
         CreateRootTables(migrationBuilder);
         CreateDependentTables(migrationBuilder);
         CreateIndexesAndForeignKeys(migrationBuilder);
         RestoreRetainedColumnsIndexesAndForeignKeys(migrationBuilder);
         RecreateEventWithSessionsView(migrationBuilder);
+        RestoreEventImageStoragePurpose(migrationBuilder);
+    }
+
+    private static void RemoveEventImageStoragePurpose(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql(
+            """
+            ALTER TABLE storage_objects DROP CONSTRAINT IF EXISTS ck_storage_objects_purpose;
+            ALTER TABLE storage_objects ADD CONSTRAINT ck_storage_objects_purpose CHECK (purpose IN ('legacy_image', 'profile_image', 'attachment', 'document', 'system_asset'));
+            ALTER TABLE storage_upload_sessions DROP CONSTRAINT IF EXISTS ck_storage_upload_sessions_purpose;
+            ALTER TABLE storage_upload_sessions ADD CONSTRAINT ck_storage_upload_sessions_purpose CHECK (purpose IN ('legacy_image', 'profile_image', 'attachment', 'document', 'system_asset'));
+            """);
+    }
+
+    private static void RestoreEventImageStoragePurpose(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.Sql(
+            """
+            ALTER TABLE storage_objects DROP CONSTRAINT IF EXISTS ck_storage_objects_purpose;
+            ALTER TABLE storage_objects ADD CONSTRAINT ck_storage_objects_purpose CHECK (purpose IN ('legacy_image', 'profile_image', 'event_image', 'attachment', 'document', 'system_asset'));
+            ALTER TABLE storage_upload_sessions DROP CONSTRAINT IF EXISTS ck_storage_upload_sessions_purpose;
+            ALTER TABLE storage_upload_sessions ADD CONSTRAINT ck_storage_upload_sessions_purpose CHECK (purpose IN ('legacy_image', 'profile_image', 'event_image', 'attachment', 'document', 'system_asset'));
+            """);
+    }
+
+    private static void CreateCustomPropertyProjectionTrackingTables(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.CreateTable(
+            name: "custom_property_projection_dirty_scope",
+            columns: table => new
+            {
+                id = table.Column<long>(type: "bigint", nullable: false)
+                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                definition_id = table.Column<Guid>(type: "uuid", nullable: true),
+                drained_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                projection_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                projection_version = table.Column<int>(type: "integer", nullable: false),
+                reason = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                scope_id = table.Column<Guid>(type: "uuid", nullable: false),
+                scope_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                tenant_id = table.Column<Guid>(type: "uuid", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_custom_property_projection_dirty_scope", x => x.id);
+                table.ForeignKey(
+                    name: "fk_custom_property_projection_dirty_scope_tenants_tenant_id",
+                    column: x => x.tenant_id,
+                    principalTable: "tenants",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Restrict);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "custom_property_projection_status",
+            columns: table => new
+            {
+                projection_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                projection_version = table.Column<int>(type: "integer", nullable: false),
+                tenant_id = table.Column<Guid>(type: "uuid", nullable: false),
+                concurrency_stamp = table.Column<Guid>(type: "uuid", nullable: false),
+                last_checkpoint = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                last_error_message = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                last_rebuild_completed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                last_rebuild_started_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                rows_failed = table.Column<long>(type: "bigint", nullable: false),
+                rows_processed = table.Column<long>(type: "bigint", nullable: false),
+                state = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_custom_property_projection_status", x => new { x.projection_name, x.projection_version, x.tenant_id });
+                table.ForeignKey(
+                    name: "fk_custom_property_projection_status_tenants_tenant_id",
+                    column: x => x.tenant_id,
+                    principalTable: "tenants",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Restrict);
+            });
+
+        migrationBuilder.CreateIndex(
+            name: "ix_custom_property_projection_dirty_scope_tenant_id",
+            table: "custom_property_projection_dirty_scope",
+            column: "tenant_id");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_dirty_scope_pending",
+            table: "custom_property_projection_dirty_scope",
+            columns: new[] { "projection_name", "projection_version", "tenant_id" },
+            filter: "drained_at IS NULL");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_dirty_scope_unique",
+            table: "custom_property_projection_dirty_scope",
+            columns: new[] { "projection_name", "projection_version", "tenant_id", "scope_type", "scope_id", "definition_id" },
+            unique: true);
+
+        migrationBuilder.CreateIndex(
+            name: "ix_custom_property_projection_status_tenant_id",
+            table: "custom_property_projection_status",
+            column: "tenant_id");
     }
 
     private static void CreateLookupTables(MigrationBuilder migrationBuilder)
@@ -229,16 +338,16 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.CreateIndex("ix_event_moderation_records_tenant_source_report", "event_moderation_records", new[] { "tenant_id", "source_report_id" }, filter: "source_report_id IS NOT NULL");
         migrationBuilder.CreateIndex("ix_event_moderation_records_tenant_source_report_decision", "event_moderation_records", new[] { "tenant_id", "source_report_decision_id" }, filter: "source_report_decision_id IS NOT NULL");
 
-        migrationBuilder.AddForeignKey("fk_event_sessions_events_tenant_id_event_id", "event_sessions", new[] { "tenant_id", "event_id" }, "events", new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
+        migrationBuilder.AddForeignKey("fk_event_sessions_events_tenant_id_event_id", "event_sessions", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
         migrationBuilder.AddForeignKey("fk_event_sessions_event_session_statuses_event_session_status_", "event_sessions", "event_session_status_id", "event_session_statuses", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_event_registration_intents_events_tenant_id_event_id", "event_registration_intents", new[] { "tenant_id", "event_id" }, "events", new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
+        migrationBuilder.AddForeignKey("fk_event_registration_intents_events_tenant_id_event_id", "event_registration_intents", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
         migrationBuilder.AddForeignKey("fk_event_registrations_event_registration_intents_event_registr", "event_registrations", "event_registration_intent_id", "event_registration_intents", "id", onDelete: ReferentialAction.Cascade);
-        migrationBuilder.AddForeignKey("fk_event_reports_events_tenant_id_event_id", "event_reports", new[] { "tenant_id", "event_id" }, "events", new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_event_report_cases_event_reports_tenant_id_report_id", "event_report_cases", new[] { "tenant_id", "report_id" }, "event_reports", new[] { "tenant_id", "id" });
-        migrationBuilder.AddForeignKey("fk_event_report_decisions_event_report_cases_tenant_id_report_", "event_report_decisions", new[] { "tenant_id", "report_id", "case_id" }, "event_report_cases", new[] { "tenant_id", "report_id", "id" });
-        migrationBuilder.AddForeignKey("fk_event_report_decisions_event_reports_tenant_id_report_id", "event_report_decisions", new[] { "tenant_id", "report_id" }, "event_reports", new[] { "tenant_id", "id" });
-        migrationBuilder.AddForeignKey("fk_event_moderation_records_event_reports_tenant_id_source_rep", "event_moderation_records", new[] { "tenant_id", "source_report_id" }, "event_reports", new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_event_moderation_records_event_report_decisions_tenant_id_s", "event_moderation_records", new[] { "tenant_id", "source_report_id", "source_report_decision_id" }, "event_report_decisions", new[] { "tenant_id", "report_id", "id" }, onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_reports_events_tenant_id_event_id", "event_reports", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_report_cases_event_reports_tenant_id_report_id", "event_report_cases", new[] { "tenant_id", "report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" });
+        migrationBuilder.AddForeignKey("fk_event_report_decisions_event_report_cases_tenant_id_report_", "event_report_decisions", new[] { "tenant_id", "report_id", "case_id" }, "event_report_cases", principalColumns: new[] { "tenant_id", "report_id", "id" });
+        migrationBuilder.AddForeignKey("fk_event_report_decisions_event_reports_tenant_id_report_id", "event_report_decisions", new[] { "tenant_id", "report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" });
+        migrationBuilder.AddForeignKey("fk_event_moderation_records_event_reports_tenant_id_source_rep", "event_moderation_records", new[] { "tenant_id", "source_report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_moderation_records_event_report_decisions_tenant_id_s", "event_moderation_records", new[] { "tenant_id", "source_report_id", "source_report_decision_id" }, "event_report_decisions", principalColumns: new[] { "tenant_id", "report_id", "id" }, onDelete: ReferentialAction.Restrict);
     }
 
     private static void RestoreRetainedColumnsIndexesAndForeignKeys(MigrationBuilder migrationBuilder)

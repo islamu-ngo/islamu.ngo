@@ -24,14 +24,6 @@ public partial class AuthorizationParityTests
     private static readonly string CerbosSchemasPath = Path.Combine(FindCerbosPoliciesPath(), "_schemas");
     private static readonly IReadOnlySet<string> LegacyBareResourceKinds = new HashSet<string>
     {
-        "event",
-        "event_session",
-        "event_session_group",
-        "event_session_agenda_item",
-        "event_day",
-        "event_agenda_item",
-        "event_registration",
-        "event_contact_share_consent",
         "organization",
         "organization_member",
         "organization_review",
@@ -50,7 +42,6 @@ public partial class AuthorizationParityTests
         "custom_property_definition",
         "custom_property_template",
         "custom_property_value",
-        "custom_property_projection",
         "custom_property_governance",
         "platform_namespace",
         "notification",

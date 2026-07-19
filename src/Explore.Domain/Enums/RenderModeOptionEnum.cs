@@ -1,11 +1,9 @@
-// ABOUTME: Enumerates supported interactive render-mode options for runtime governance policies.
-// ABOUTME: Provides type-safe validation and normalization for routing render policy values.
+// ABOUTME: Enumerates the supported interactive render-mode option for runtime governance policies.
+// ABOUTME: Keeps routing render policy values server-only while prerender remains configurable.
 
 namespace Explore.Domain.Enums;
 
 public enum RenderModeOptionEnum
 {
-    InteractiveAuto = 1,
-    InteractiveWebAssembly = 2,
-    InteractiveServer = 3
+    InteractiveServer = 1
 }

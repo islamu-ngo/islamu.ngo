@@ -102,6 +102,9 @@ public partial class ExploreDbContext
     public DbSet<AnalyticsProvider> AnalyticsProviders { get; set; }
 
     // ===== Categories & Tags =====
+    public DbSet<Blog> Blogs { get; set; }
+    public DbSet<BlogCategory> BlogCategories { get; set; }
+    public DbSet<BlogTag> BlogTags { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<CategoryType> CategoryTypes { get; set; }
     public DbSet<CategoryTypeCategories> CategoryTypeCategories { get; set; }
@@ -113,8 +116,6 @@ public partial class ExploreDbContext
     public DbSet<Location> Locations { get; set; }
     public DbSet<LocationPii> LocationPii { get; set; }
     public DbSet<LocationRoom> LocationRooms { get; set; }
-    public DbSet<CustomPropertyProjectionDirtyScope> CustomPropertyProjectionDirtyScopes { get; set; }
-    public DbSet<CustomPropertyProjectionStatus> CustomPropertyProjectionStatuses { get; set; }
 
     // ===== Storage =====
     public DbSet<StorageObject> StorageObjects { get; set; }

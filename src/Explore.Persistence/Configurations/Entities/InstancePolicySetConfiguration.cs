@@ -96,7 +96,6 @@ public class InstancePolicySetConfiguration : IEntityTypeConfiguration<InstanceP
             ConfigurePolicySlot(rp, r => r.AdminPrerenderEnabled);
             ConfigurePolicySlot(rp, r => r.OnboardingRenderMode);
             ConfigurePolicySlot(rp, r => r.OnboardingPrerenderEnabled);
-            ConfigurePolicySlot(rp, r => r.DisallowInteractiveServerOnOnboarding);
             ConfigurePolicySlot(rp, r => r.AllowTenantOverride);
             ConfigurePolicySlot(rp, r => r.LockTenantPublicSeo);
             ConfigurePolicySlot(rp, r => r.LockTenantOperational);

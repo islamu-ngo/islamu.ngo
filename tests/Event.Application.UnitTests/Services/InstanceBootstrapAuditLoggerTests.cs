@@ -28,7 +28,7 @@ public class InstanceBootstrapAuditLoggerTests
             Provider: "keycloak",
             Mode: "PatchExistingRealm",
             Realm: "ISLAMU",
-            ClientId: "islamu-event-blazor"));
+            ClientId: "islamu-ngo-blazor"));
 
         _logger.Received(1).Log(
             LogLevel.Information,

@@ -3,7 +3,6 @@
 
 using Event.Api.IntegrationTests.Fixtures;
 using FluentAssertions;
-using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -59,7 +58,7 @@ public class CerbosPolicyCompilationTests : IDisposable
             principalId: "test-derived-roles",
             principalRoles: ["islamuevent_authenticated_user"],
             principalAttrs: new { isInstanceAdmin = true, tenantMemberships = new { }, orgMemberships = new { } },
-            resourceKind: "islamuevent_event",
+            resourceKind: "islamuevent_organization",
             resourceId: "test",
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
             actions: ["view"]);
@@ -74,7 +73,6 @@ public class CerbosPolicyCompilationTests : IDisposable
 
     public static IEnumerable<string> GetAllExpectedResourcePolicies()
     {
-        yield return "islamuevent_event";
         yield return "islamuevent_organization";
         yield return "islamuevent_tenant";
         yield return "islamuevent_user";
@@ -91,18 +89,12 @@ public class CerbosPolicyCompilationTests : IDisposable
         yield return "islamuevent_storage_object";
         yield return "islamuevent_instance_setting";
         yield return "islamuevent_tenant_setting";
-        yield return "islamuevent_event_session";
-        yield return "islamuevent_event_day";
-        yield return "islamuevent_event_agenda_item";
-        yield return "islamuevent_event_session_agenda_item";
-        yield return "islamuevent_event_registration";
-        yield return "islamuevent_event_contact_share_consent";
+        yield return "islamuevent_blog";
         yield return "islamuevent_support_access_session";
         yield return "islamuevent_notification";
         yield return "islamuevent_custom_property_definition";
         yield return "islamuevent_custom_property_value";
         yield return "islamuevent_custom_property_governance";
-        yield return "islamuevent_custom_property_projection";
         yield return "islamuevent_custom_property_template";
         yield return "islamuevent_indexed_did";
         yield return "islamuevent_atproto_record";
@@ -130,28 +122,6 @@ public class CerbosPolicyCompilationTests : IDisposable
     #endregion
 
     #region Policy Accepts Correct Attributes
-
-    [Test]
-    public async Task EventPolicy_ShouldAcceptTenantIdAttribute()
-    {
-        var result = await _cerbos.CheckResourceAsync(
-            principalId: "user-tenant-admin",
-            principalRoles: ["islamuevent_authenticated_user"],
-            principalAttrs: new
-            {
-                isInstanceAdmin = false,
-                tenantMemberships = new Dictionary<string, string> { ["tenant-42"] = "admin" },
-                orgMemberships = new Dictionary<string, string>()
-            },
-            resourceKind: "islamuevent_event",
-            resourceId: "evt-1",
-            resourceAttrs: new { tenantId = "tenant-42", organizationId = "org-1" },
-            actions: ["view", "moderate-light"]);
-
-        result["view"].Should().Be("EFFECT_ALLOW");
-        result["moderate-light"].Should().Be("EFFECT_ALLOW",
-            "tenant admin matching tenantId must be allowed to moderate events");
-    }
 
     [Test]
     public async Task OrgPolicy_ShouldAcceptOrganizationIdAttribute()

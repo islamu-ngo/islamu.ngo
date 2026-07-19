@@ -93,6 +93,20 @@ public static class RouteNames
 
     #endregion
 
+    #region Blog Routes
+
+    public const string GetPublishedBlogs = "GetPublishedBlogs";
+    public const string GetPublishedBlogBySlug = "GetPublishedBlogBySlug";
+    public const string GetBlogsForManagement = "GetBlogsForManagement";
+    public const string GetBlogByIdForManagement = "GetBlogByIdForManagement";
+    public const string CreateBlog = "CreateBlog";
+    public const string UpdateBlog = "UpdateBlog";
+    public const string PublishBlog = "PublishBlog";
+    public const string UnpublishBlog = "UnpublishBlog";
+    public const string DeleteBlog = "DeleteBlog";
+
+    #endregion
+
     #region Category Routes
 
     public const string GetCategories = "GetCategories";

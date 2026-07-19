@@ -56,13 +56,9 @@ public partial class TenantPolicySettingService
         var systemCommunityGuidelines = GetSystem(GovernanceSettingKeys.Policies.CommunityGuidelinesContent);
         var systemRenderPreset = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Preset);
         var systemRenderAdvanced = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.AdvancedEnabled);
-        var systemGlobalRenderMode = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Fallback.RenderMode);
         var systemGlobalPrerender = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Fallback.PrerenderEnabled);
-        var systemPublicSeoRenderMode = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.RenderMode);
         var systemPublicSeoPrerender = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.PrerenderEnabled);
-        var systemOperationalRenderMode = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Operational.RenderMode);
         var systemOperationalPrerender = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Operational.PrerenderEnabled);
-        var systemAdminRenderMode = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Admin.RenderMode);
         var systemAdminPrerender = GetSystem(GovernanceSettingKeys.Routing.RenderPolicy.Admin.PrerenderEnabled);
 
         var tenantRequireVerification = GetTenant(GovernanceSettingKeys.Organizations.VerificationRequired);
@@ -203,11 +199,7 @@ public partial class TenantPolicySettingService
                     false,
                     true)
                 : DeserializeBoolean(systemRenderAdvanced?.Value, false),
-            GlobalRenderMode = ResolveString(
-                allowTenantRenderOverride ? GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Fallback.RenderMode)?.Value : null,
-                systemGlobalRenderMode?.Value,
-                "InteractiveServer",
-                allowTenantRenderOverride),
+            GlobalRenderMode = "InteractiveServer",
             GlobalPrerenderEnabled = allowTenantRenderOverride
                 ? ResolveBoolean(
                     GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Fallback.PrerenderEnabled)?.Value,
@@ -215,11 +207,7 @@ public partial class TenantPolicySettingService
                     false,
                     true)
                 : DeserializeBoolean(systemGlobalPrerender?.Value, false),
-            PublicSeoRenderMode = ResolveString(
-                canOverridePublicSeo ? GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.RenderMode)?.Value : null,
-                systemPublicSeoRenderMode?.Value,
-                string.Empty,
-                canOverridePublicSeo),
+            PublicSeoRenderMode = "InteractiveServer",
             PublicSeoPrerenderEnabled = canOverridePublicSeo
                 ? ResolveBoolean(
                     GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.PrerenderEnabled)?.Value,
@@ -227,11 +215,7 @@ public partial class TenantPolicySettingService
                     false,
                     true)
                 : DeserializeBoolean(systemPublicSeoPrerender?.Value, false),
-            OperationalRenderMode = ResolveString(
-                canOverrideOperational ? GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Operational.RenderMode)?.Value : null,
-                systemOperationalRenderMode?.Value,
-                string.Empty,
-                canOverrideOperational),
+            OperationalRenderMode = "InteractiveServer",
             OperationalPrerenderEnabled = canOverrideOperational
                 ? ResolveBoolean(
                     GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Operational.PrerenderEnabled)?.Value,
@@ -239,11 +223,7 @@ public partial class TenantPolicySettingService
                     false,
                     true)
                 : DeserializeBoolean(systemOperationalPrerender?.Value, false),
-            AdminRenderMode = ResolveString(
-                canOverrideAdmin ? GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Admin.RenderMode)?.Value : null,
-                systemAdminRenderMode?.Value,
-                string.Empty,
-                canOverrideAdmin),
+            AdminRenderMode = "InteractiveServer",
             AdminPrerenderEnabled = canOverrideAdmin
                 ? ResolveBoolean(
                     GetTenant(GovernanceSettingKeys.Routing.RenderPolicy.Admin.PrerenderEnabled)?.Value,

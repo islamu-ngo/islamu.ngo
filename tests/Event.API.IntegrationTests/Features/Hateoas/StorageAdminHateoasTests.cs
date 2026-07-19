@@ -228,7 +228,7 @@ public sealed class StorageAdminHateoasTests
             Extension = ".png",
             Size = 1024,
             Visibility = StorageObjectVisibilities.PublicImage,
-            Purpose = StorageObjectPurposes.EventImage,
+            Purpose = StorageObjectPurposes.LegacyImage,
             LifecycleState = StorageObjectLifecycleStates.Active,
             TenantId = tenantId
         };

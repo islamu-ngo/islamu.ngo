@@ -50,11 +50,9 @@ public sealed class EmailDispatchRabbitMqConsumerDecisionTests
         var pointer = new EmailDispatchPointer(
             Guid.Empty,
             Guid.Empty,
-            EmailDispatchKind.RegistrationConfirmation,
-            "event-registration",
+            EmailDispatchKind.TenantAdministratorInvitation,
+            "tenant-administrator-invitation",
             SourceId: null,
-            EventId: null,
-            RegistrationIntentId: null,
             UserId: null);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(pointer, JsonOptions);
 
@@ -111,10 +109,8 @@ public sealed class EmailDispatchRabbitMqConsumerDecisionTests
         new(
             Guid.CreateVersion7(),
             Guid.CreateVersion7(),
-            EmailDispatchKind.RegistrationConfirmation,
-            "event-registration",
+            EmailDispatchKind.TenantAdministratorInvitation,
+            "tenant-administrator-invitation",
             Guid.CreateVersion7(),
-            EventId: Guid.CreateVersion7(),
-            RegistrationIntentId: Guid.CreateVersion7(),
             UserId: Guid.CreateVersion7());
 }

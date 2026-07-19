@@ -1,3 +1,6 @@
+// ABOUTME: Defines composable query specifications for application-layer filtering and sorting.
+// ABOUTME: Keeps repository query composition generic instead of coupling examples to one product entity.
+
 namespace Explore.Application.Specifications;
 
 /// <summary>
@@ -8,10 +11,10 @@ namespace Explore.Application.Specifications;
 /// <typeparam name="T">The entity type to query.</typeparam>
 /// <example>
 /// <code>
-/// var query = new EventQuerySpecification()
-///     .And(EventFilter.Category(categoryId))
-///     .And(EventFilter.SearchTerm("workshop"))
-///     .SortByDescending(EventSort.Date);
+/// var query = new ContentQuerySpecification()
+///     .And(ContentFilter.Category(categoryId))
+///     .And(ContentFilter.SearchTerm("workshop"))
+///     .SortByDescending(ContentSort.PublishedAt);
 /// </code>
 /// </example>
 public interface IQuerySpecification<T>

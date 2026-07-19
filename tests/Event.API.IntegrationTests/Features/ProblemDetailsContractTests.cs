@@ -255,11 +255,11 @@ public class ProblemDetailsContractTests
         using var client = CreateClientThatThrows(
             new QuotaExceededException(
                 "Custom-property definition quota exceeded.",
-                CustomPropertyQuotaSettingDefinitions.MaxDefinitionsPerEvent.Key,
+                CustomPropertyQuotaSettingDefinitions.MaxDefinitionsPerTenantPerEntityScope.Key,
                 limit: 3,
                 actual: 3,
                 attempted: 4,
-                scope: "event_custom_property_definitions",
+                scope: "custom_property_definition_scope",
                 tenantId: tenantId));
 
         var response = await client.GetAsync($"/api/actor/{Guid.NewGuid()}");
@@ -272,11 +272,11 @@ public class ProblemDetailsContractTests
         await Assert.That(root.GetProperty("type").GetString()).IsEqualTo("/problems/quota_exceeded");
         await Assert.That(root.GetProperty("detail").GetString()).IsEqualTo("Custom-property definition quota exceeded.");
         await Assert.That(root.GetProperty("code").GetString()).IsEqualTo("quota_exceeded");
-        await Assert.That(root.GetProperty("quotaKey").GetString()).IsEqualTo(CustomPropertyQuotaSettingDefinitions.MaxDefinitionsPerEvent.Key);
+        await Assert.That(root.GetProperty("quotaKey").GetString()).IsEqualTo(CustomPropertyQuotaSettingDefinitions.MaxDefinitionsPerTenantPerEntityScope.Key);
         await Assert.That(root.GetProperty("limit").GetInt32()).IsEqualTo(3);
         await Assert.That(root.GetProperty("actual").GetInt32()).IsEqualTo(3);
         await Assert.That(root.GetProperty("attempted").GetInt32()).IsEqualTo(4);
-        await Assert.That(root.GetProperty("scope").GetString()).IsEqualTo("event_custom_property_definitions");
+        await Assert.That(root.GetProperty("scope").GetString()).IsEqualTo("custom_property_definition_scope");
         await Assert.That(root.TryGetProperty("tenantId", out _)).IsFalse();
     }
 
@@ -319,7 +319,7 @@ public class ProblemDetailsContractTests
                 Limit: 2,
                 Actual: null,
                 Attempted: 3,
-                Scope: "event_custom_property_options",
+                Scope: "custom_property_definition_options",
                 TenantId: tenantId));
 
         var controller = new TestController
@@ -329,7 +329,7 @@ public class ProblemDetailsContractTests
                 HttpContext = new DefaultHttpContext()
             }
         };
-        controller.HttpContext.Request.Path = "/api/events/test/custom-properties";
+        controller.HttpContext.Request.Path = "/api/blog/test/custom-properties";
 
         var mapperType = Type.GetType("Explore.API.ExceptionHandling.QuotaProblemDetailsFactory, Explore.API", throwOnError: true)!;
         var method = mapperType.GetMethods()
@@ -348,13 +348,13 @@ public class ProblemDetailsContractTests
         await Assert.That(problemDetails.Title).IsEqualTo("Quota exceeded");
         await Assert.That(problemDetails.Type).IsEqualTo("/problems/quota_exceeded");
         await Assert.That(problemDetails.Detail).IsEqualTo("Custom-property option quota exceeded.");
-        await Assert.That(problemDetails.Instance).IsEqualTo("/api/events/test/custom-properties");
+        await Assert.That(problemDetails.Instance).IsEqualTo("/api/blog/test/custom-properties");
         await Assert.That(problemDetails.Extensions["code"]).IsEqualTo(FailureCodes.QuotaExceeded);
         await Assert.That(problemDetails.Extensions["quotaKey"]).IsEqualTo(CustomPropertyQuotaSettingDefinitions.MaxOptionsPerDefinition.Key);
         await Assert.That(problemDetails.Extensions["limit"]).IsEqualTo(2);
         await Assert.That(problemDetails.Extensions.ContainsKey("actual")).IsFalse();
         await Assert.That(problemDetails.Extensions["attempted"]).IsEqualTo(3);
-        await Assert.That(problemDetails.Extensions["scope"]).IsEqualTo("event_custom_property_options");
+        await Assert.That(problemDetails.Extensions["scope"]).IsEqualTo("custom_property_definition_options");
         await Assert.That(problemDetails.Extensions.ContainsKey("tenantId")).IsFalse();
     }
 
@@ -382,33 +382,6 @@ public class ProblemDetailsContractTests
         await Assert.That(root.GetProperty("code").GetString()).IsEqualTo(ConcurrencyConflictException.ConcurrentUpdate);
         await Assert.That(root.GetProperty("entityType").GetString()).IsEqualTo("custom_property_definition");
         await Assert.That(root.GetProperty("entityId").GetString()).IsEqualTo(entityId.ToString());
-    }
-
-    [Test]
-    public async Task GlobalExceptionHandler_OnStaleSyncBase_Returns409ProblemDetailsWithStableExtensions()
-    {
-        var eventId = Guid.NewGuid();
-        const string detail = "The template sync base is stale. Recompute the diff and try again.";
-
-        using var client = CreateClientThatThrows(
-            new ConcurrencyConflictException(
-                ConcurrencyConflictException.StaleSyncBase,
-                detail,
-                nameof(Explore.Domain.Event),
-                eventId.ToString()));
-
-        var response = await client.GetAsync($"/api/actor/{Guid.NewGuid()}");
-
-        await ProblemDetailsAssertions.AssertProblemDetailsAsync(response, HttpStatusCode.Conflict, "Concurrency conflict");
-
-        using var document = await ProblemDetailsAssertions.ReadAsJsonAsync(response);
-        var root = document.RootElement;
-
-        await Assert.That(root.GetProperty("type").GetString()).IsEqualTo("/problems/stale_sync_base");
-        await Assert.That(root.GetProperty("detail").GetString()).IsEqualTo(detail);
-        await Assert.That(root.GetProperty("code").GetString()).IsEqualTo(ConcurrencyConflictException.StaleSyncBase);
-        await Assert.That(root.GetProperty("entityType").GetString()).IsEqualTo(nameof(Explore.Domain.Event));
-        await Assert.That(root.GetProperty("entityId").GetString()).IsEqualTo(eventId.ToString());
     }
 
     [Test]

@@ -4,6 +4,7 @@
 using Explore.Application.DTOs.ActorSubscription;
 using Explore.Application.DTOs.Ai;
 using Explore.Application.DTOs.AtprotoRecord;
+using Explore.Application.DTOs.Blog;
 using Explore.Application.DTOs.Category;
 using Explore.Application.DTOs.CustomPropertyDefinition;
 using Explore.Application.DTOs.EmailDispatch;
@@ -345,6 +346,18 @@ public static class ResourceDescriptors
         },
         dto => new AuthorizationScope(TenantId: dto.TenantId.ToString()));
 
+    public static readonly ResourceDescriptor<BlogSummaryDto> BlogSummary = new(
+        ResourceKinds.Blog,
+        dto => dto.Id.ToString(),
+        BlogResourceAttributes,
+        dto => new AuthorizationScope(TenantId: dto.TenantId.ToString()));
+
+    public static readonly ResourceDescriptor<BlogDetailDto> BlogDetail = new(
+        ResourceKinds.Blog,
+        dto => dto.Id.ToString(),
+        BlogResourceAttributes,
+        dto => new AuthorizationScope(TenantId: dto.TenantId.ToString()));
+
     public static readonly ResourceDescriptor<IndexedDidDto> IndexedDid = new(
         ResourceKinds.IndexedDid,
         dto => dto.Did);
@@ -354,5 +367,23 @@ public static class ResourceDescriptors
         dto => dto.Id.ToString());
 
     #endregion
+
+    private static Dictionary<string, object> BlogResourceAttributes(BlogSummaryDto dto)
+    {
+        var attributes = new Dictionary<string, object>
+        {
+            ["blogId"] = dto.Id.ToString(),
+            ["tenantId"] = dto.TenantId.ToString(),
+            ["isPublished"] = dto.PublishedAtUtc.HasValue,
+            ["hasPublishedAt"] = dto.PublishedAtUtc.HasValue
+        };
+
+        if (dto.PublishedAtUtc is DateTime publishedAtUtc)
+        {
+            attributes["publishedAtUtc"] = publishedAtUtc;
+        }
+
+        return attributes;
+    }
 
 }

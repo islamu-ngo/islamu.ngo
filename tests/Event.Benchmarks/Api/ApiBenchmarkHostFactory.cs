@@ -34,7 +34,7 @@ internal sealed class ApiBenchmarkHostFactory : WebApplicationFactory<global::Pr
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=explore_benchmark_placeholder;Username=benchmark;Password=benchmark",
                 ["Keycloak:Authority"] = "https://auth.benchmark.invalid",
                 ["Keycloak:Realm"] = "ISLAMU",
-                ["Keycloak:Audience"] = "islamu-event-api",
+                ["Keycloak:Audience"] = "islamu-ngo-api",
                 ["Keycloak:RequireHttpsMetadata"] = "false",
                 ["Keycloak:MetadataAddress"] = "https://auth.benchmark.invalid/.well-known/openid-configuration",
                 ["Testing:SkipJwtAuthorityWarmup"] = "true",
@@ -111,8 +111,6 @@ internal sealed class ApiBenchmarkHostFactory : WebApplicationFactory<global::Pr
             var dbContext = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
 
             await DatabaseSeeder.SeedAsync(dbContext, environment, cancellationToken: cancellationToken);
-            await BenchmarkApiSeedData.SeedAsync(dbContext, cancellationToken);
-
             var lookupCache = scope.ServiceProvider.GetService<ILookupDataCache>();
             if (lookupCache is not null)
             {

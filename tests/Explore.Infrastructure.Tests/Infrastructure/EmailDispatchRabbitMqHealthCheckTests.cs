@@ -115,11 +115,9 @@ public sealed class EmailDispatchRabbitMqHealthCheckTests
         var pointer = new EmailDispatchPointer(
             Guid.CreateVersion7(),
             Guid.CreateVersion7(),
-            Domain.EmailDispatchKind.RegistrationConfirmation,
-            "event-registration",
+            Domain.EmailDispatchKind.TenantAdministratorInvitation,
+            "tenant-administrator-invitation",
             Guid.CreateVersion7(),
-            EventId: Guid.CreateVersion7(),
-            RegistrationIntentId: Guid.CreateVersion7(),
             UserId: Guid.CreateVersion7());
 
         EmailDispatchPublishResult result = await transport.PublishDispatchPointerAsync(pointer);

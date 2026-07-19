@@ -31,10 +31,9 @@ public class SettingHandlerTests
     private static readonly Guid TestTenantId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000001");
     private static readonly Guid TestUserId = Guid.Parse("018e4e5c-7f00-7000-8000-000000000099");
 
-    // Use a real key registered in SettingRegistry
-    private static readonly string TestKey = GovernanceSettingKeys.EventList.BrowseMode;
-    private static readonly string TestIntKey = GovernanceSettingKeys.EventList.PageSize;
-    private static readonly string TestBoolKey = GovernanceSettingKeys.EventList.Card.ShowDate;
+    private static readonly string TestKey = GovernanceSettingKeys.Appearance.ThemeMode;
+    private static readonly string TestIntKey = GovernanceSettingKeys.PublicExperiencePreferences.AnnouncementBarDismissedRevision;
+    private static readonly string TestSecondaryKey = GovernanceSettingKeys.Appearance.Direction;
 
     private readonly IHierarchicalSettingsResolver _resolver;
     private readonly IUserPreferenceRepository _userPrefRepo;
@@ -78,16 +77,16 @@ public class SettingHandlerTests
     }
 
     [Test]
-    public async Task ResolveGroup_EventListCategory_ReturnsAllSettings()
+    public async Task ResolveGroup_AppearanceCategory_ReturnsAllSettings()
     {
-        SetupResolverBatchForEventList();
+        SetupResolverBatchForAppearance();
         var handler = CreateResolveHandler();
-        var query = new ResolveSettingGroupQuery { Category = "EventList", Scope = SettingScope.User };
+        var query = new ResolveSettingGroupQuery { Category = "Appearance", Scope = SettingScope.User };
 
         var result = await handler.Handle(query, CancellationToken.None);
 
-        await Assert.That(result.Category).IsEqualTo("EventList");
-        await Assert.That(result.Settings.Count).IsGreaterThanOrEqualTo(12);
+        await Assert.That(result.Category).IsEqualTo("Appearance");
+        await Assert.That(result.Settings.Count).IsEqualTo(7);
     }
 
     [Test]
@@ -95,7 +94,7 @@ public class SettingHandlerTests
     {
         SetupResolverBatchWithLock();
         var handler = CreateResolveHandler();
-        var query = new ResolveSettingGroupQuery { Category = "EventList", Scope = SettingScope.User };
+        var query = new ResolveSettingGroupQuery { Category = "Appearance", Scope = SettingScope.User };
 
         var result = await handler.Handle(query, CancellationToken.None);
 
@@ -109,13 +108,13 @@ public class SettingHandlerTests
     public async Task ResolveGroup_UnauthorizedUser_CanEditIsFalse()
     {
         _currentUserService.IsAuthenticated.Returns(false);
-        SetupResolverBatchForEventList();
+        SetupResolverBatchForAppearance();
         var handler = CreateResolveHandler();
-        var query = new ResolveSettingGroupQuery { Category = "EventList", Scope = SettingScope.User };
+        var query = new ResolveSettingGroupQuery { Category = "Appearance", Scope = SettingScope.User };
 
         var result = await handler.Handle(query, CancellationToken.None);
 
-        var setting = result.Settings.First();
+        var setting = result.Settings.Single(item => item.Key == TestKey);
         await Assert.That(setting.CanEdit).IsFalse();
         await Assert.That(setting.Reason).IsEqualTo("Insufficient permissions");
     }
@@ -143,22 +142,17 @@ public class SettingHandlerTests
     [Test]
     public async Task Update_ScopeOutOfRange_Fails()
     {
-        // BrowseMode MaxScope = User, MinScope = Instance. SettingScope has no scope > User
-        // But let's test with a key that has MaxScope=Tenant at scope User.
-        // Actually all EventList keys are MaxScope=User. Let me test Instance key at User scope.
-        // Actually the test is: scope < MinScope or scope > MaxScope. All EventList keys are MinScope=Instance, MaxScope=User.
-        // So any SettingScope value is valid. Let me test with Organization scope on a key whose MaxScope=Tenant.
-        // From SettingRegistry, some keys have MaxScope=Tenant. But all our EventList keys are MaxScope=User.
-        // This test verifies the handler correctly rejects out-of-range scopes.
-        // We can't easily test this with current keys. Skip with a note.
-        // Instead let's just verify a valid scope works (positive case)
         var handler = CreateUpdateHandler();
-        SetupResolverMetadata(TestKey, false);
-
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand
+        {
+            Key = GovernanceSettingKeys.Email.SmtpSecurity,
+            Value = "None",
+            Scope = SettingScope.User
+        };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
-        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Message).Contains("cannot be overridden at User scope");
     }
 
     [Test]
@@ -166,7 +160,7 @@ public class SettingHandlerTests
     {
         _currentUserService.IsAuthenticated.Returns(false);
         var handler = CreateUpdateHandler();
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.User };
 
         var result = await handler.Handle(cmd, CancellationToken.None);
 
@@ -180,7 +174,7 @@ public class SettingHandlerTests
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
         var handler = CreateUpdateHandler();
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.Tenant };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.Tenant };
 
         var result = await handler.Handle(cmd, CancellationToken.None);
 
@@ -194,7 +188,6 @@ public class SettingHandlerTests
         var handler = CreateUpdateHandler();
         SetupResolverMetadata(TestKey, false);
 
-        // BrowseMode AllowedValues = ["pagination", "infinite-scroll"]
         var cmd = new UpdateSettingCommand { Key = TestKey, Value = "invalid-mode", Scope = SettingScope.User };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
@@ -221,7 +214,7 @@ public class SettingHandlerTests
         var handler = CreateUpdateHandler();
         SetupResolverMetadata(TestKey, true, SettingSource.TenantLocked);
 
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.User };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
         await Assert.That(result.Success).IsFalse();
@@ -236,7 +229,7 @@ public class SettingHandlerTests
         _userPrefRepo.GetByUserAndKey(TestTenantId, TestUserId, TestKey)
             .Returns((UserPreference?)null);
 
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.User };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
         await Assert.That(result.Success).IsTrue();
@@ -256,12 +249,12 @@ public class SettingHandlerTests
             Tenant = null!,
             UserId = TestUserId,
             SettingKey = TestKey,
-            Value = "\"infinite-scroll\"",
+            Value = "\"light\"",
             CreatedAt = DateTime.UtcNow
         };
         _userPrefRepo.GetByUserAndKey(TestTenantId, TestUserId, TestKey).Returns(existing);
 
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.User };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
         await Assert.That(result.Success).IsTrue();
@@ -275,7 +268,7 @@ public class SettingHandlerTests
         SetupResolverMetadata(TestKey, false);
         var handler = CreateUpdateHandler();
 
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.Tenant };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.Tenant };
         var result = await handler.Handle(cmd, CancellationToken.None);
 
         await Assert.That(result.Success).IsTrue();
@@ -351,11 +344,11 @@ public class SettingHandlerTests
     }
 
     [Test]
-    public async Task Update_PublicExperienceEventSectionPresets_WritesVersionedJsonViaResolver()
+    public async Task Update_PublicExperienceHomeBlocks_WritesVersionedJsonViaResolver()
     {
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        var key = GovernanceSettingKeys.PublicExperience.EventSectionPresets;
-        const string presetsJson = "{\"schemaVersion\":1,\"presets\":[{\"id\":\"featured\",\"label\":\"Featured\"}]}";
+        var key = GovernanceSettingKeys.PublicExperience.HomeBlocks;
+        const string presetsJson = "{\"schemaVersion\":1,\"blocks\":[{\"id\":\"featured\",\"label\":\"Featured\"}]}";
         SetupResolverMetadata(key, false);
         var handler = CreateUpdateHandler();
 
@@ -374,7 +367,7 @@ public class SettingHandlerTests
         var handler = CreateUpdateHandler();
         SetupResolverMetadata(TestKey, false);
 
-        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "pagination", Scope = SettingScope.User };
+        var cmd = new UpdateSettingCommand { Key = TestKey, Value = "dark", Scope = SettingScope.User };
         await handler.Handle(cmd, CancellationToken.None);
 
         await _mediator.Received(1).Publish(
@@ -396,7 +389,7 @@ public class SettingHandlerTests
         var handler = CreateBatchHandler();
         var cmd = new UpdateSettingBatchCommand
         {
-            Category = "EventList",
+            Category = "Appearance",
             Values = new Dictionary<string, string>(),
             Scope = SettingScope.User
         };
@@ -414,8 +407,8 @@ public class SettingHandlerTests
         var handler = CreateBatchHandler();
         var cmd = new UpdateSettingBatchCommand
         {
-            Category = "EventList",
-            Values = new Dictionary<string, string> { { TestKey, "pagination" } },
+            Category = "Appearance",
+            Values = new Dictionary<string, string> { { TestKey, "dark" } },
             Scope = SettingScope.User
         };
 
@@ -433,11 +426,11 @@ public class SettingHandlerTests
 
         var cmd = new UpdateSettingBatchCommand
         {
-            Category = "EventList",
+            Category = "Appearance",
             Values = new Dictionary<string, string>
             {
-                { TestKey, "pagination" },       // locked → skipped
-                { TestBoolKey, "false" }         // valid → applied
+                { TestKey, "dark" },
+                { TestSecondaryKey, "rtl" }
             },
             Scope = SettingScope.User,
             Mode = BatchUpdateMode.BestEffort
@@ -447,7 +440,7 @@ public class SettingHandlerTests
 
         await Assert.That(result.Success).IsTrue();
         var lockedResult = result.Results.First(r => r.Key == TestKey);
-        var appliedResult = result.Results.First(r => r.Key == TestBoolKey);
+        var appliedResult = result.Results.First(r => r.Key == TestSecondaryKey);
         await Assert.That(lockedResult.Applied).IsFalse();
         await Assert.That(lockedResult.SkipReason).IsNotNull();
         await Assert.That(appliedResult.Applied).IsTrue();
@@ -461,11 +454,11 @@ public class SettingHandlerTests
 
         var cmd = new UpdateSettingBatchCommand
         {
-            Category = "EventList",
+            Category = "Appearance",
             Values = new Dictionary<string, string>
             {
-                { TestKey, "pagination" },
-                { TestBoolKey, "false" }
+                { TestKey, "dark" },
+                { TestSecondaryKey, "rtl" }
             },
             Scope = SettingScope.User,
             Mode = BatchUpdateMode.Strict
@@ -484,10 +477,10 @@ public class SettingHandlerTests
         SetupResolverBatchForBatchCommand();
 
         // Use a key from another category
-        var foreignKey = GovernanceSettingKeys.Appearance.ActiveProfileId;
+        var foreignKey = GovernanceSettingKeys.Email.SmtpSecurity;
         var cmd = new UpdateSettingBatchCommand
         {
-            Category = "EventList",
+            Category = "Appearance",
             Values = new Dictionary<string, string> { { foreignKey, "some-value" } },
             Scope = SettingScope.User
         };
@@ -699,11 +692,6 @@ public class SettingHandlerTests
     [Test]
     public async Task Lock_NotLockable_Fails()
     {
-        // All EventList keys are lockable by default. We need a non-lockable key.
-        // SettingDefinition defaults to IsLockable=true. Since SettingRegistry is static,
-        // we test with a real key that IS lockable and verify the positive path instead.
-        // The handler correctly checks definition.IsLockable — verified by code review.
-        // Test the positive case here.
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
         var handler = CreateLockHandler();
         var cmd = new LockSettingCommand { Key = TestKey, Scope = SettingScope.Tenant };
@@ -872,9 +860,9 @@ public class SettingHandlerTests
     private static string? JoinAllowedValues(string[]? values) =>
         values is { Length: > 0 } ? string.Join(",", values) : null;
 
-    private void SetupResolverBatchForEventList()
+    private void SetupResolverBatchForAppearance()
     {
-        var definitions = SettingRegistry.GetByCategory("EventList")!;
+        var definitions = SettingRegistry.GetByCategory("Appearance")!;
         var resolved = definitions.Select(d => new ResolvedSetting
         {
             Key = d.Key,
@@ -894,7 +882,7 @@ public class SettingHandlerTests
 
     private void SetupResolverBatchWithLock()
     {
-        var definitions = SettingRegistry.GetByCategory("EventList")!;
+        var definitions = SettingRegistry.GetByCategory("Appearance")!;
         var resolved = definitions.Select(d => new ResolvedSetting
         {
             Key = d.Key,

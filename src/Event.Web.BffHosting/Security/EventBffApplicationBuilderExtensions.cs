@@ -17,7 +17,7 @@ public static class EventBffApplicationBuilderExtensions
         "default-src 'self'; " +
         "img-src 'self' data: https: blob:; " +
         "style-src 'self' 'unsafe-inline'; " +
-        "script-src 'self' 'wasm-unsafe-eval'; " +
+        "script-src 'self'; " +
         "connect-src 'self' https: http: ws: wss:; " +
         "frame-ancestors 'none'; " +
         "base-uri 'self'; " +

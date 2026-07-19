@@ -20,35 +20,35 @@ public class TenantQueryFilterFailClosedTests(PostgreSqlContainerFixture fixture
     {
         await fixture.ResetAsync();
         using var seedContext = fixture.CreateDbContext();
-        var tenantA = await SeedEventWithDependencies(seedContext, "fail-closed-a");
-        var tenantB = await SeedEventWithDependencies(seedContext, "fail-closed-b");
-        var eventIds = new[] { tenantA.EventId, tenantB.EventId };
+        var tenantA = await SeedOrganizationAsync(seedContext, "fail-closed-a");
+        var tenantB = await SeedOrganizationAsync(seedContext, "fail-closed-b");
+        var organizationIds = new[] { tenantA.OrganizationId, tenantB.OrganizationId };
 
         using var missingTenantContext = fixture.CreateTenantFilteredDbContext();
-        var missingTenantResults = await missingTenantContext.Events
+        var missingTenantResults = await missingTenantContext.Organizations
             .AsNoTracking()
-            .Where(@event => eventIds.Contains(@event.Id))
-            .Select(@event => @event.Id)
+            .Where(organization => organizationIds.Contains(organization.Id))
+            .Select(organization => organization.Id)
             .ToListAsync();
 
         using var tenantAContext = fixture.CreateTenantFilteredDbContext(new TestTenantContext(tenantA.TenantId));
-        var tenantAResults = await tenantAContext.Events
+        var tenantAResults = await tenantAContext.Organizations
             .AsNoTracking()
-            .Where(@event => eventIds.Contains(@event.Id))
-            .Select(@event => @event.Id)
+            .Where(organization => organizationIds.Contains(organization.Id))
+            .Select(organization => organization.Id)
             .ToListAsync();
 
         using var bypassContext = fixture.CreateTenantFilteredDbContext();
         bypassContext.EnableTenantFilterBypass("Test verifies explicit system tenant-filter bypass behavior.");
-        var bypassResults = await bypassContext.Events
+        var bypassResults = await bypassContext.Organizations
             .AsNoTracking()
-            .Where(@event => eventIds.Contains(@event.Id))
-            .Select(@event => @event.Id)
+            .Where(organization => organizationIds.Contains(organization.Id))
+            .Select(organization => organization.Id)
             .ToListAsync();
 
         await Assert.That(missingTenantResults).IsEmpty();
-        await Assert.That(tenantAResults).IsEquivalentTo([tenantA.EventId]);
-        await Assert.That(bypassResults).IsEquivalentTo(eventIds);
+        await Assert.That(tenantAResults).IsEquivalentTo([tenantA.OrganizationId]);
+        await Assert.That(bypassResults).IsEquivalentTo(organizationIds);
     }
 
     [Test]
@@ -57,12 +57,12 @@ public class TenantQueryFilterFailClosedTests(PostgreSqlContainerFixture fixture
         using var context = fixture.CreateDbContext();
 
         var exception = Assert.Throws<ArgumentException>(() =>
-            context.Events.IgnoreTenantFilter(string.Empty));
+            context.Organizations.IgnoreTenantFilter(string.Empty));
 
         await Assert.That(exception.ParamName).IsEqualTo("reason");
     }
 
-    private static async Task<TenantEventScope> SeedEventWithDependencies(
+    private static async Task<TenantOrganizationScope> SeedOrganizationAsync(
         ExploreDbContext context,
         string slugPrefix)
     {
@@ -75,55 +75,23 @@ public class TenantQueryFilterFailClosedTests(PostgreSqlContainerFixture fixture
         };
         context.Tenants.Add(tenant);
 
-        var user = new User
-        {
-            Pii = new UserPii
-            {
-                Email = $"{slugPrefix}-{Guid.NewGuid().ToString("N")[..8]}@example.com",
-                FirstName = "Tenant",
-                LastName = "Filter",
-            },
-        };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        var actor = new Actor
-        {
-            Pii = new ActorPii { DisplayName = $"Tenant Filter Actor {slugPrefix}" },
-            ActorTypeId = 1,
-            ActorType = null!,
-            TenantId = tenant.Id,
-            Tenant = null!,
-            UserId = user.Id,
-        };
-        context.Actors.Add(actor);
-        await context.SaveChangesAsync();
-
-        var @event = new Explore.Domain.Event
+        var organization = new Organization
         {
             Id = Guid.CreateVersion7(),
-            Title = $"Tenant Filter Event {slugPrefix}",
-            ActorId = actor.Id,
-            Actor = null!,
+            Pii = new OrganizationPii { FullName = $"Tenant Filter Organization {slugPrefix}" },
+            ApprovalStatusId = 1,
+            ApprovalStatus = null!,
             TenantId = tenant.Id,
             Tenant = null!,
-            EventStatusId = 1,
-            EventStatus = null!,
-            VisibilityTypeId = 1,
-            VisibilityType = null!,
-            EventFormatId = 1,
-            EventFormat = null!,
-            TotalViews = 0,
-            IsRegistrationRequired = false,
             ConcurrencyStamp = Guid.CreateVersion7(),
         };
-        context.Events.Add(@event);
+        context.Organizations.Add(organization);
         await context.SaveChangesAsync();
 
-        return new TenantEventScope(tenant.Id, @event.Id);
+        return new TenantOrganizationScope(tenant.Id, organization.Id);
     }
 
     private sealed record TestTenantContext(Guid TenantId) : ITenantContext;
 
-    private sealed record TenantEventScope(Guid TenantId, Guid EventId);
+    private sealed record TenantOrganizationScope(Guid TenantId, Guid OrganizationId);
 }

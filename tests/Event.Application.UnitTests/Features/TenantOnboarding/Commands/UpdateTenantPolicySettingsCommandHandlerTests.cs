@@ -66,7 +66,7 @@ public class UpdateTenantPolicySettingsCommandHandlerTests
         _policySettingService.ReadEffectiveTenantSettingsAsync(TestTenantId).Returns(new TenantPolicySettingsDto
         {
             RequireOrganizationVerification = true,
-            PreferredHomePage = "EventList",
+            PreferredHomePage = "LandingPage",
             Subdomain = "tenant",
             CustomDomain = string.Empty,
             CanTenantOmitVerification = true,
@@ -218,7 +218,7 @@ public class UpdateTenantPolicySettingsCommandHandlerTests
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
         _policySettingService.ReadEffectiveTenantSettingsAsync(TestTenantId).Returns(new TenantPolicySettingsDto
         {
-            PreferredHomePage = "EventList",
+            PreferredHomePage = "LandingPage",
             CanOverrideHomePagePreference = false,
             CanTenantOmitVerification = true,
             CanOverrideSubdomain = true,
@@ -226,7 +226,7 @@ public class UpdateTenantPolicySettingsCommandHandlerTests
         });
 
         var command = CreateCommand();
-        command.Settings.PreferredHomePage = "LandingPage";
+        command.Settings.PreferredHomePage = "LegacyHome";
 
         // Act + Assert
         await Assert.ThrowsAsync<ValidationException>(

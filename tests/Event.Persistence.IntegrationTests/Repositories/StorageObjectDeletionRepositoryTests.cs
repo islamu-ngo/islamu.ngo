@@ -29,29 +29,29 @@ public sealed class StorageObjectDeletionRepositoryTests(PostgreSqlContainerFixt
         context.Tenants.Add(tenant);
         await context.SaveChangesAsync();
 
-        var eventId = Guid.CreateVersion7();
-        var matching = CreateStorageObject(tenant.Id, eventId, StorageObjectLifecycleStates.DeleteRequested);
-        var missingKey = CreateStorageObject(tenant.Id, eventId, StorageObjectLifecycleStates.DeleteRequested);
+        var resourceId = Guid.CreateVersion7();
+        var matching = CreateStorageObject(tenant.Id, resourceId, StorageObjectLifecycleStates.DeleteRequested);
+        var missingKey = CreateStorageObject(tenant.Id, resourceId, StorageObjectLifecycleStates.DeleteRequested);
         missingKey.ObjectKey = null;
-        var active = CreateStorageObject(tenant.Id, eventId, StorageObjectLifecycleStates.Active);
-        var otherEvent = CreateStorageObject(tenant.Id, Guid.CreateVersion7(), StorageObjectLifecycleStates.DeleteRequested);
-        var alreadyDeleted = CreateStorageObject(tenant.Id, eventId, StorageObjectLifecycleStates.DeleteRequested);
+        var active = CreateStorageObject(tenant.Id, resourceId, StorageObjectLifecycleStates.Active);
+        var otherResource = CreateStorageObject(tenant.Id, Guid.CreateVersion7(), StorageObjectLifecycleStates.DeleteRequested);
+        var alreadyDeleted = CreateStorageObject(tenant.Id, resourceId, StorageObjectLifecycleStates.DeleteRequested);
         alreadyDeleted.MarkDeleted(null, new DateTime(2026, 6, 23, 10, 0, 0, DateTimeKind.Utc));
-        context.StorageObjects.AddRange(matching, missingKey, active, otherEvent, alreadyDeleted);
+        context.StorageObjects.AddRange(matching, missingKey, active, otherResource, alreadyDeleted);
         await context.SaveChangesAsync();
         var repository = new StorageObjectRepository(context);
 
         var results = await repository.ListDeleteRequestedForResourceAsync(
             tenant.Id,
-            ResourceKinds.Event,
-            eventId,
+            ResourceKinds.StorageObject,
+            resourceId,
             limit: 10,
             CancellationToken.None);
 
         await Assert.That(results.Select(storageObject => storageObject.Id)).IsEquivalentTo([matching.Id, missingKey.Id]);
     }
 
-    private static StorageObject CreateStorageObject(Guid tenantId, Guid eventId, string lifecycleState) => new()
+    private static StorageObject CreateStorageObject(Guid tenantId, Guid resourceId, string lifecycleState) => new()
     {
         Id = Guid.CreateVersion7(),
         TenantId = tenantId,
@@ -66,10 +66,10 @@ public sealed class StorageObjectDeletionRepositoryTests(PostgreSqlContainerFixt
         Extension = ".png",
         Size = 100,
         Visibility = StorageObjectVisibilities.PublicImage,
-        Purpose = StorageObjectPurposes.EventImage,
+        Purpose = StorageObjectPurposes.LegacyImage,
         LifecycleState = lifecycleState,
-        OwningResourceKind = ResourceKinds.Event,
-        OwningResourceId = eventId,
+        OwningResourceKind = ResourceKinds.StorageObject,
+        OwningResourceId = resourceId,
         CreatedAt = new DateTime(2026, 6, 23, 9, 0, 0, DateTimeKind.Utc)
     };
 }

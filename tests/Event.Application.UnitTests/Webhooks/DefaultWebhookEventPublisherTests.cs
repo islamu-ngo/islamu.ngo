@@ -22,7 +22,7 @@ public sealed class DefaultWebhookEventPublisherTests
     private static readonly Guid ConsumerId = Guid.Parse("018f0000-0000-7000-8000-000000000050");
     private static readonly DateTimeOffset OccurredAt = new(2026, 7, 3, 10, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset MaterializedAt = OccurredAt.AddMinutes(1);
-    private static readonly byte[] PayloadBytes = Encoding.UTF8.GetBytes("{\"type\":\"event.published\"}");
+    private static readonly byte[] PayloadBytes = Encoding.UTF8.GetBytes("{\"type\":\"webhook.test\"}");
 
     [Test]
     public async Task PublishAsync_WhenResolutionUnavailable_SkipsBeforeBuildingOrMaterializing()
@@ -69,7 +69,7 @@ public sealed class DefaultWebhookEventPublisherTests
         await Assert.That(captured!.Message.Id).IsEqualTo(MessageId);
         await Assert.That(captured.Message.TenantId).IsEqualTo(TenantId);
         await Assert.That(captured.Message.ConsumerId).IsEqualTo(ConsumerId);
-        await Assert.That(captured.Message.EventType).IsEqualTo(WebhookEventNames.EventPublished);
+        await Assert.That(captured.Message.EventType).IsEqualTo(WebhookEventNames.WebhookTest);
         await Assert.That(captured.Message.MaterializedAt).IsEqualTo(MaterializedAt.UtcDateTime);
         await Assert.That(captured.Message.GetPayloadBytes()!).IsEquivalentTo(PayloadBytes);
         await Assert.That(captured.Message.PayloadHash).IsEqualTo(ComputePayloadHash(PayloadBytes));
@@ -190,20 +190,19 @@ public sealed class DefaultWebhookEventPublisherTests
     }
 
     private static WebhookEventBuildContext CreateContext(
-        string eventType = WebhookEventNames.EventPublished) =>
+        string eventType = WebhookEventNames.WebhookTest) =>
         new(
             MessageId,
             TenantId,
             eventType,
             "domain-event-1",
-            "Event",
+            "Webhook",
             AggregateId,
             OccurredAt,
             new Dictionary<string, object?>
             {
-                ["eventId"] = AggregateId.ToString(),
-                ["status"] = "Published",
-                ["publicUrl"] = "https://example.org/events/community-iftar"
+                ["testId"] = AggregateId.ToString(),
+                ["status"] = "Requested"
             },
             ConsumerId);
 
@@ -258,7 +257,7 @@ public sealed class DefaultWebhookEventPublisherTests
             WebhookPayloadBuildResult.Success(
                 new WebhookEventEnvelope(
                     MessageId,
-                    WebhookEventNames.EventPublished,
+                    WebhookEventNames.WebhookTest,
                     schemaVersion,
                     OccurredAt,
                     TenantId,

@@ -4,11 +4,9 @@
 using Explore.Application.Authorization;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.Contracts.Services;
 using Explore.Application.Features.Organizations.Requests.Commands;
 using Explore.Application.Settings;
 using Explore.Domain;
-using Explore.Domain.Constants;
 using Explore.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -19,7 +17,6 @@ public class FallbackAuthorizationServiceTests
 {
     private readonly IAdminContext _adminContext;
     private readonly IMachinePrincipalAccessor _machinePrincipalAccessor;
-    private readonly IEventAuthoritySnapshotService _eventAuthoritySnapshotService;
     private readonly IHierarchicalSettingsResolver _settingsResolver;
     private readonly ITenantContext _tenantContext;
     private readonly ILogger<FallbackAuthorizationService> _logger;
@@ -41,7 +38,6 @@ public class FallbackAuthorizationServiceTests
     {
         _adminContext = Substitute.For<IAdminContext>();
         _machinePrincipalAccessor = Substitute.For<IMachinePrincipalAccessor>();
-        _eventAuthoritySnapshotService = Substitute.For<IEventAuthoritySnapshotService>();
         _settingsResolver = Substitute.For<IHierarchicalSettingsResolver>();
         _tenantContext = Substitute.For<ITenantContext>();
         _logger = Substitute.For<ILogger<FallbackAuthorizationService>>();
@@ -53,7 +49,6 @@ public class FallbackAuthorizationServiceTests
         _service = new FallbackAuthorizationService(
             _adminContext,
             _machinePrincipalAccessor,
-            _eventAuthoritySnapshotService,
             _settingsResolver,
             _tenantContext,
             _logger);
@@ -246,6 +241,51 @@ public class FallbackAuthorizationServiceTests
             AuthorizationActions.EmailDispatches.View);
 
         await Assert.That(result).IsTrue();
+    }
+
+    [Test]
+    public async Task IsAllowed_BlogTenantAdmin_AllowsMatchingTenantActions()
+    {
+        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
+        var attrs = new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") };
+
+        var update = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Update,
+            attrs);
+        var publish = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Publish,
+            attrs);
+
+        await Assert.That(update).IsTrue();
+        await Assert.That(publish).IsTrue();
+    }
+
+    [Test]
+    public async Task IsAllowed_BlogTenantScopedResource_DeniesNonAdminAndCrossTenant()
+    {
+        var otherTenantId = Guid.NewGuid();
+        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(otherTenantId, Arg.Any<CancellationToken>()).Returns(true);
+
+        var nonAdmin = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Publish,
+            new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") });
+        var crossTenant = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Publish,
+            new Dictionary<string, object> { ["tenantId"] = otherTenantId.ToString("D") });
+
+        await Assert.That(nonAdmin).IsFalse();
+        await Assert.That(crossTenant).IsFalse();
     }
 
     [Test]
@@ -481,74 +521,6 @@ public class FallbackAuthorizationServiceTests
     }
 
     [Test]
-    public async Task IsAllowedBatch_CustomPropertyProjection_RequiresExplicitMatchingTenant()
-    {
-        var otherTenantId = Guid.NewGuid();
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var checks = new[]
-        {
-            new AuthorizationCheck(
-                ResourceKinds.CustomPropertyProjection,
-                "projection-status",
-                AuthorizationActions.CustomPropertyProjections.View),
-            new AuthorizationCheck(
-                ResourceKinds.CustomPropertyProjection,
-                "projection-status",
-                AuthorizationActions.CustomPropertyProjections.Update,
-                new Dictionary<string, object> { ["tenantId"] = otherTenantId.ToString("D") }),
-            new AuthorizationCheck(
-                ResourceKinds.CustomPropertyProjection,
-                "projection-status",
-                AuthorizationActions.CustomPropertyProjections.View,
-                new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") })
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results[0]).IsFalse();
-        await Assert.That(results[1]).IsFalse();
-        await Assert.That(results[2]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_CustomPropertyProjection_ForTenantAdmin_RequiresExplicitTenantContext()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var missingTenant = await _service.IsAllowedAsync(
-            ResourceKinds.CustomPropertyProjection,
-            "projection-status",
-            AuthorizationActions.CustomPropertyProjections.View);
-        var withTenant = await _service.IsAllowedAsync(
-            ResourceKinds.CustomPropertyProjection,
-            "projection-status",
-            AuthorizationActions.CustomPropertyProjections.View,
-            new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") });
-
-        await Assert.That(missingTenant).IsFalse();
-        await Assert.That(withTenant).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_CustomPropertyProjection_ForTenantAdmin_DeniesDifferentTenant()
-    {
-        var otherTenantId = Guid.NewGuid();
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(otherTenantId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var result = await _service.IsAllowedAsync(
-            ResourceKinds.CustomPropertyProjection,
-            "projection-status",
-            AuthorizationActions.CustomPropertyProjections.Update,
-            new Dictionary<string, object> { ["tenantId"] = otherTenantId.ToString("D") });
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
     public async Task IsAllowed_StorageObjectView_ForRegularUser_DeniesMetadata()
     {
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
@@ -595,6 +567,36 @@ public class FallbackAuthorizationServiceTests
         await Assert.That(results[0]).IsFalse();
         await Assert.That(results[1]).IsTrue();
         await Assert.That(results[2]).IsTrue();
+    }
+
+    [Test]
+    public async Task IsAllowedBatch_BlogTenantScopedResource_MatchesSingleTenantRules()
+    {
+        var otherTenantId = Guid.NewGuid();
+        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
+
+        var checks = new[]
+        {
+            new AuthorizationCheck(
+                ResourceKinds.Blog,
+                Guid.NewGuid().ToString("D"),
+                AuthorizationActions.Blogs.Publish,
+                new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") }),
+            new AuthorizationCheck(
+                ResourceKinds.Blog,
+                Guid.NewGuid().ToString("D"),
+                AuthorizationActions.Blogs.Unpublish,
+                new Dictionary<string, object> { ["tenantId"] = otherTenantId.ToString("D") }),
+            new AuthorizationCheck(
+                ResourceKinds.Blog,
+                Guid.NewGuid().ToString("D"),
+                AuthorizationActions.Blogs.View)
+        };
+
+        var results = await _service.IsAllowedBatchAsync(checks);
+
+        await Assert.That(results).IsEquivalentTo([true, false, true]);
     }
 
     [Test]
@@ -960,10 +962,30 @@ public class FallbackAuthorizationServiceTests
         await Assert.That(result).IsFalse();
     }
 
-    // === Event-Scoped Resource Context ===
+    [Test]
+    public async Task IsAllowed_OrganizationWebhookMissingOrganizationId_DeniesEvenForOrganizationAdmin()
+    {
+        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsOrganizationAdminAsync(TestOrgId, Arg.Any<CancellationToken>()).Returns(true);
+
+        var attrs = new Dictionary<string, object>
+        {
+            ["tenantId"] = TestTenantId,
+            ["allowOrganizationWebhooks"] = true
+        };
+
+        var result = await _service.IsAllowedAsync(
+            ResourceKinds.Webhook,
+            "webhook-without-organization",
+            AuthorizationActions.Webhooks.Update,
+            attrs);
+
+        await Assert.That(result).IsFalse();
+    }
 
     [Test]
-    public async Task IsAllowed_EventChildMissingEventId_DeniesEvenForTenantAdmin()
+    public async Task IsAllowed_BlogCreateForTenantAdmin_AllowsHandlerPolicyEvaluation()
     {
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
@@ -973,61 +995,51 @@ public class FallbackAuthorizationServiceTests
             ["tenantId"] = TestTenantId
         };
 
-        var result = await _service.IsAllowedAsync("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs);
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventCreateForAuthenticatedUser_AllowsHandlerPolicyEvaluation()
-    {
-        var userId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-
-        var attrs = new Dictionary<string, object>
-        {
-            ["tenantId"] = TestTenantId,
-            ["authorizationPhase"] = "pre_create"
-        };
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", "create", "create", attrs);
+        var result = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            "create",
+            AuthorizationActions.Blogs.Create,
+            attrs);
 
         await Assert.That(result).IsTrue();
     }
 
     [Test]
-    public async Task IsAllowed_EventCreateWithoutAuthenticatedUser_Denies()
+    public async Task IsAllowed_BlogCreateForNonAdmin_Denies()
     {
-        _adminContext.UserId.Returns((Guid?)null);
-        _adminContext.ResolveUserIdAsync(Arg.Any<CancellationToken>()).Returns((Guid?)null);
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
 
         var attrs = new Dictionary<string, object>
         {
-            ["tenantId"] = TestTenantId,
-            ["authorizationPhase"] = "pre_create"
+            ["tenantId"] = TestTenantId
         };
 
-        var result = await _service.IsAllowedAsync("islamuevent_event", "create", "create", attrs);
+        var result = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            "create",
+            AuthorizationActions.Blogs.Create,
+            attrs);
 
         await Assert.That(result).IsFalse();
     }
 
     [Test]
-    public async Task IsAllowed_EventCreateWithDifferentTenant_Denies()
+    public async Task IsAllowed_BlogCreateWithDifferentTenant_Denies()
     {
-        _adminContext.UserId.Returns(Guid.NewGuid());
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
+        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
 
         var attrs = new Dictionary<string, object>
         {
-            ["tenantId"] = Guid.NewGuid(),
-            ["authorizationPhase"] = "pre_create"
+            ["tenantId"] = Guid.NewGuid()
         };
 
-        var result = await _service.IsAllowedAsync("islamuevent_event", "create", "create", attrs);
+        var result = await _service.IsAllowedAsync(
+            ResourceKinds.Blog,
+            "create",
+            AuthorizationActions.Blogs.Create,
+            attrs);
 
         await Assert.That(result).IsFalse();
     }
@@ -1076,286 +1088,6 @@ public class FallbackAuthorizationServiceTests
         await Assert.That(result).IsFalse();
     }
 
-    [Test]
-    public async Task IsAllowed_EventChildWithEventContext_AllowsTenantAdmin()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var attrs = CreateEventContextAttributes();
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_UserOwnedEvent_AllowsOwningUserUpdate()
-    {
-        var userId = Guid.NewGuid();
-        var attrs = CreateEventContextAttributes();
-        attrs["userId"] = userId;
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_InstanceAdmin_CanModerateEventButCannotEditWithoutEventAuthority()
-    {
-        var attrs = CreateEventContextAttributes();
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(true);
-
-        var updateResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-        var managementViewResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ViewManagement, attrs);
-        var lightModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateLight, attrs);
-        var heavyModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateHeavy, attrs);
-        var unmoderationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.Unmoderate, attrs);
-
-        await Assert.That(updateResult).IsFalse();
-        await Assert.That(managementViewResult).IsTrue();
-        await Assert.That(lightModerationResult).IsTrue();
-        await Assert.That(heavyModerationResult).IsTrue();
-        await Assert.That(unmoderationResult).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_TenantAdmin_CanModerateEventButCannotEditWithoutEventAuthority()
-    {
-        var attrs = CreateEventContextAttributes();
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-
-        var updateResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-        var managementViewResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ViewManagement, attrs);
-        var lightModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateLight, attrs);
-        var heavyModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateHeavy, attrs);
-        var unmoderationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.Unmoderate, attrs);
-
-        await Assert.That(updateResult).IsFalse();
-        await Assert.That(managementViewResult).IsTrue();
-        await Assert.That(lightModerationResult).IsTrue();
-        await Assert.That(heavyModerationResult).IsTrue();
-        await Assert.That(unmoderationResult).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_TenantAdminWithOrganizationAdminMembership_CanEditOrganizationEvent()
-    {
-        var attrs = CreateEventContextAttributes();
-        attrs["organizationId"] = TestOrgId;
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.IsOrganizationAdminAsync(TestOrgId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_OrganizationAdmin_CanEditButCannotModerateEvent()
-    {
-        var attrs = CreateEventContextAttributes();
-        attrs["organizationId"] = TestOrgId;
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(TestOrgId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var updateResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-        var managementViewResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ViewManagement, attrs);
-        var lightModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateLight, attrs);
-        var heavyModerationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.ModerateHeavy, attrs);
-        var unmoderationResult = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, AuthorizationActions.Events.Unmoderate, attrs);
-
-        await Assert.That(updateResult).IsTrue();
-        await Assert.That(managementViewResult).IsTrue();
-        await Assert.That(lightModerationResult).IsFalse();
-        await Assert.That(heavyModerationResult).IsFalse();
-        await Assert.That(unmoderationResult).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventRoleViewPermission_AllowsManagementView()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        var attrs = CreateEventContextAttributes(eventId);
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventView);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", eventId.ToString(), AuthorizationActions.Events.ViewManagement, attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_RegularUserWithoutEventAuthority_DeniesManagementView()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        var attrs = CreateEventContextAttributes(eventId);
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", eventId.ToString(), AuthorizationActions.Events.ViewManagement, attrs);
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_UserOwnedEvent_DeniesDifferentUserUpdate()
-    {
-        var currentUserId = Guid.NewGuid();
-        var attrs = CreateEventContextAttributes();
-        attrs["userId"] = Guid.NewGuid();
-        _adminContext.UserId.Returns(currentUserId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(currentUserId, (Guid)attrs["eventId"], PermissionCodes.EventSessionUpdate);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event", attrs["eventId"]!.ToString()!, "update", attrs);
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventChildWithRolePermission_AllowsNonAdmin()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventSessionUpdate);
-
-        var attrs = CreateEventContextAttributes(eventId);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventChildWithoutRolePermission_DeniesNonAdmin()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventSessionUpdate);
-
-        var attrs = CreateEventContextAttributes(eventId);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_session", Guid.NewGuid().ToString(), "delete", attrs);
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventRegistrationCreateMissingEventId_Denies()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-
-        var attrs = new Dictionary<string, object>
-        {
-            ["tenantId"] = TestTenantId,
-            ["eventSessionId"] = Guid.NewGuid()
-        };
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_registration", Guid.NewGuid().ToString(), "create", attrs);
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventRegistrationCreateWithEventContext_AllowsAuthenticatedUser()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-
-        var attrs = CreateEventContextAttributes();
-        attrs["eventSessionId"] = Guid.NewGuid();
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_registration", Guid.NewGuid().ToString(), "create", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventRegistrationUpdateWithRolePermission_AllowsNonAdmin()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, "event_registration:update");
-
-        var attrs = CreateEventContextAttributes(eventId);
-        attrs["eventSessionId"] = Guid.NewGuid();
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_registration", Guid.NewGuid().ToString(), "update", attrs);
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventDayWithRolePermission_AllowsNonAdmin()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventDayUpdate);
-
-        var result = await _service.IsAllowedAsync(
-            "islamuevent_event_day",
-            Guid.NewGuid().ToString(),
-            "update",
-            CreateEventContextAttributes(eventId));
-
-        await Assert.That(result).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_EventAgendaItemWithRolePermission_AllowsNonAdmin()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventAgendaItemUpdate);
-
-        var result = await _service.IsAllowedAsync(
-            "islamuevent_event_agenda_item",
-            Guid.NewGuid().ToString(),
-            "update",
-            CreateEventContextAttributes(eventId));
-
-        await Assert.That(result).IsTrue();
-    }
-
     // === Custom Property Definition Access ===
 
     [Test]
@@ -1387,46 +1119,6 @@ public class FallbackAuthorizationServiceTests
         _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
 
         var result = await _service.IsAllowedAsync("islamuevent_custom_property_definition", Guid.NewGuid().ToString(), "create");
-
-        await Assert.That(result).IsFalse();
-    }
-
-    // === Event Contact Share Consent Access ===
-
-    [Test]
-    public async Task IsAllowed_OrgAdmin_AllowsContactShareConsentViewAndExport()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(TestOrgId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var attrs = new Dictionary<string, object> { ["organizationId"] = TestOrgId };
-        var viewResult = await _service.IsAllowedAsync("islamuevent_event_contact_share_consent", Guid.NewGuid().ToString(), "viewsharedcontacts", attrs);
-        var exportResult = await _service.IsAllowedAsync("islamuevent_event_contact_share_consent", Guid.NewGuid().ToString(), "exportsharedcontacts", attrs);
-
-        await Assert.That(viewResult).IsTrue();
-        await Assert.That(exportResult).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowed_NonAdmin_DeniesContactShareConsent()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsOrganizationAdminAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_contact_share_consent", Guid.NewGuid().ToString(), "viewsharedcontacts");
-
-        await Assert.That(result).IsFalse();
-    }
-
-    [Test]
-    public async Task IsAllowed_ContactShareConsent_DeniesUnknownAction()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-
-        var result = await _service.IsAllowedAsync("islamuevent_event_contact_share_consent", Guid.NewGuid().ToString(), "delete");
 
         await Assert.That(result).IsFalse();
     }
@@ -1477,7 +1169,7 @@ public class FallbackAuthorizationServiceTests
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
         _service.ActivateSafeMode();
 
-        var result = await _service.IsAllowedAsync("islamuevent_event", Guid.NewGuid().ToString(), "view");
+        var result = await _service.IsAllowedAsync(ResourceKinds.Blog, Guid.NewGuid().ToString(), AuthorizationActions.Blogs.View);
 
         await Assert.That(result).IsFalse();
     }
@@ -1488,7 +1180,7 @@ public class FallbackAuthorizationServiceTests
         _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(true);
         _service.ActivateSafeMode();
 
-        var result = await _service.IsAllowedAsync("islamuevent_event", Guid.NewGuid().ToString(), "view");
+        var result = await _service.IsAllowedAsync(ResourceKinds.Blog, Guid.NewGuid().ToString(), AuthorizationActions.Blogs.View);
 
         await Assert.That(result).IsTrue();
     }
@@ -1547,261 +1239,6 @@ public class FallbackAuthorizationServiceTests
         await Assert.That(results[3]).IsTrue();  // group view: all authenticated
     }
 
-    [Test]
-    public async Task IsAllowedBatch_EventChildMissingEventContext_Denies()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new(
-                "islamuevent_event_session",
-                Guid.NewGuid().ToString(),
-                "update",
-                new Dictionary<string, object> { ["tenantId"] = TestTenantId }),
-            new(
-                "islamuevent_event_session",
-                Guid.NewGuid().ToString(),
-                "update",
-                CreateEventContextAttributes())
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(2);
-        await Assert.That(results[0]).IsFalse();
-        await Assert.That(results[1]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_EventChildDifferentTenant_DeniesTenantAdmin()
-    {
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-
-        var attrs = new Dictionary<string, object>
-        {
-            ["tenantId"] = Guid.NewGuid(),
-            ["eventId"] = Guid.NewGuid()
-        };
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs),
-            new("islamuevent_event_registration", Guid.NewGuid().ToString(), "create", attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(3);
-        await Assert.That(results[0]).IsFalse();
-        await Assert.That(results[1]).IsFalse();
-        await Assert.That(results[2]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_UserOwnedEvent_AllowsOwningUserLifecycleActions()
-    {
-        var userId = Guid.NewGuid();
-        var attrs = CreateEventContextAttributes();
-        attrs["userId"] = userId;
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-
-        var resourceId = attrs["eventId"]!.ToString()!;
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event", resourceId, "update", attrs),
-            new("islamuevent_event", resourceId, "delete", attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(3);
-        await Assert.That(results[0]).IsTrue();
-        await Assert.That(results[1]).IsTrue();
-        await Assert.That(results[2]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_InstanceAdmin_CanModerateEventButCannotEditWithoutEventAuthority()
-    {
-        var attrs = CreateEventContextAttributes();
-        var resourceId = attrs["eventId"]!.ToString()!;
-        _adminContext.UserId.Returns((Guid?)null);
-        _adminContext.ResolveUserIdAsync(Arg.Any<CancellationToken>()).Returns((Guid?)null);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event", resourceId, "update", attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateLight, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateHeavy, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.Unmoderate, attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(5);
-        await Assert.That(results[0]).IsFalse();
-        await Assert.That(results[1]).IsTrue();
-        await Assert.That(results[2]).IsTrue();
-        await Assert.That(results[3]).IsTrue();
-        await Assert.That(results[4]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_TenantAdmin_CanModerateEventButCannotEditWithoutEventAuthority()
-    {
-        var attrs = CreateEventContextAttributes();
-        var resourceId = attrs["eventId"]!.ToString()!;
-        _adminContext.UserId.Returns((Guid?)null);
-        _adminContext.ResolveUserIdAsync(Arg.Any<CancellationToken>()).Returns((Guid?)null);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event", resourceId, "update", attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateLight, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateHeavy, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.Unmoderate, attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(5);
-        await Assert.That(results[0]).IsFalse();
-        await Assert.That(results[1]).IsTrue();
-        await Assert.That(results[2]).IsTrue();
-        await Assert.That(results[3]).IsTrue();
-        await Assert.That(results[4]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_OrganizationAdmin_CanEditButCannotModerateEvent()
-    {
-        var attrs = CreateEventContextAttributes();
-        attrs["organizationId"] = TestOrgId;
-        var resourceId = attrs["eventId"]!.ToString()!;
-        _adminContext.UserId.Returns((Guid?)null);
-        _adminContext.ResolveUserIdAsync(Arg.Any<CancellationToken>()).Returns((Guid?)null);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns([TestOrgId]);
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event", resourceId, "update", attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateLight, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.ModerateHeavy, attrs),
-            new("islamuevent_event", resourceId, AuthorizationActions.Events.Unmoderate, attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(5);
-        await Assert.That(results[0]).IsTrue();
-        await Assert.That(results[1]).IsFalse();
-        await Assert.That(results[2]).IsFalse();
-        await Assert.That(results[3]).IsFalse();
-        await Assert.That(results[4]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_EventChildWithRolePermission_AllowsMatchingPermissionOnly()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventSessionUpdate);
-
-        var attrs = CreateEventContextAttributes(eventId);
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs),
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "delete", attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(3);
-        await Assert.That(results[0]).IsTrue();
-        await Assert.That(results[1]).IsFalse();
-        await Assert.That(results[2]).IsTrue();
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_EventRoleSnapshot_IsResolvedOnceForOptimizedBatch()
-    {
-        var userId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-        ConfigureEventAuthority(userId, eventId, PermissionCodes.EventSessionUpdate);
-
-        var attrs = CreateEventContextAttributes(eventId);
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "update", attrs),
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "delete", attrs),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        await _service.IsAllowedBatchAsync(checks);
-
-        await _eventAuthoritySnapshotService.Received(1).GetForUserAndEventsAsync(
-            TestTenantId,
-            userId,
-            Arg.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 1 && ids.Contains(eventId)),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task IsAllowedBatch_EventRolePermissionForDifferentEvent_DoesNotAuthorizeOtherEvent()
-    {
-        var userId = Guid.NewGuid();
-        var authorizedEventId = Guid.NewGuid();
-        var otherEventId = Guid.NewGuid();
-        _adminContext.UserId.Returns(userId);
-        _adminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(false);
-        _adminContext.GetAdminOrganizationIdsAsync(Arg.Any<CancellationToken>()).Returns(new List<Guid>());
-        ConfigureEventAuthority(userId, authorizedEventId, PermissionCodes.EventSessionUpdate);
-
-        var checks = new List<AuthorizationCheck>
-        {
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "update", CreateEventContextAttributes(authorizedEventId)),
-            new("islamuevent_event_session", Guid.NewGuid().ToString(), "update", CreateEventContextAttributes(otherEventId)),
-            new("islamuevent_notification", Guid.NewGuid().ToString(), "view")
-        };
-
-        var results = await _service.IsAllowedBatchAsync(checks);
-
-        await Assert.That(results).Count().IsEqualTo(3);
-        await Assert.That(results[0]).IsTrue();
-        await Assert.That(results[1]).IsFalse();
-        await Assert.That(results[2]).IsTrue();
-    }
-
     // === Unknown Resource Kind ===
 
     [Test]
@@ -1852,40 +1289,4 @@ public class FallbackAuthorizationServiceTests
         await Assert.That(result).IsFalse();
     }
 
-    private static Dictionary<string, object> CreateEventContextAttributes() =>
-        CreateEventContextAttributes(Guid.NewGuid());
-
-    private static Dictionary<string, object> CreateEventContextAttributes(Guid eventId) => new()
-    {
-        ["tenantId"] = TestTenantId,
-        ["eventId"] = eventId
-    };
-
-    private void ConfigureEventAuthority(Guid userId, Guid eventId, params string[] permissionCodes)
-    {
-        _eventAuthoritySnapshotService.GetForUserAndEventsAsync(
-                TestTenantId,
-                userId,
-                Arg.Any<IReadOnlyCollection<Guid>>(),
-                Arg.Any<CancellationToken>())
-            .Returns(callInfo =>
-            {
-                var requestedEventIds = callInfo.ArgAt<IReadOnlyCollection<Guid>>(2);
-                var events = requestedEventIds.ToDictionary(
-                    requestedEventId => requestedEventId,
-                    requestedEventId => requestedEventId == eventId
-                        ? new EventAuthorityForUser(
-                            new HashSet<string>(),
-                            permissionCodes.ToHashSet(StringComparer.Ordinal),
-                            IsOwner: false,
-                            IsManager: permissionCodes.Contains(PermissionCodes.EventManageTeam, StringComparer.Ordinal))
-                        : new EventAuthorityForUser(
-                            new HashSet<string>(),
-                            new HashSet<string>(),
-                            IsOwner: false,
-                            IsManager: false));
-
-                return Task.FromResult(new EventAuthoritySnapshot(TestTenantId, userId, events));
-            });
-    }
 }

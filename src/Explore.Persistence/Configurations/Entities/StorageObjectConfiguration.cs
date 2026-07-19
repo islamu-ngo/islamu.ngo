@@ -65,7 +65,7 @@ public class StorageObjectConfiguration : IEntityTypeConfiguration<StorageObject
             t.HasCheckConstraint("ck_storage_objects_size_nonnegative", "size >= 0");
             t.HasCheckConstraint("ck_storage_objects_provider", "provider IN ('local', 's3_compatible', 'legacy_external')");
             t.HasCheckConstraint("ck_storage_objects_visibility", "visibility IN ('public_image', 'authenticated_tenant', 'private_owner')");
-            t.HasCheckConstraint("ck_storage_objects_purpose", "purpose IN ('legacy_image', 'profile_image', 'event_image', 'attachment', 'document', 'system_asset')");
+            t.HasCheckConstraint("ck_storage_objects_purpose", "purpose IN ('legacy_image', 'profile_image', 'blog_image', 'attachment', 'document', 'system_asset')");
             t.HasCheckConstraint("ck_storage_objects_lifecycle_state", "lifecycle_state IN ('pending', 'active', 'quarantined', 'delete_requested', 'deleted')");
         });
 

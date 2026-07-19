@@ -2,7 +2,6 @@
 // ABOUTME: Guards against exposing event, actor, user, or deduplication identifiers in metric dimensions.
 
 using System.Diagnostics.Metrics;
-using Explore.Application.Services;
 using Explore.Application.Telemetry;
 using NSubstitute;
 
@@ -11,6 +10,11 @@ namespace ApplicationUnitTests.Telemetry;
 [NotInParallel("BusinessMetricsMeter")]
 public sealed class BusinessMetricsNotificationFanoutTests
 {
+    private const string FanoutKind = "organization_update";
+    private const string OutcomeCompleted = "completed";
+    private const string OutcomeNotificationCreated = "notification_created";
+    private const string OutcomeFailed = "failed";
+
     [Test]
     public async Task RecordNotificationFanoutRunRecordsExpectedSafeTags()
     {
@@ -18,14 +22,14 @@ public sealed class BusinessMetricsNotificationFanoutTests
         var metrics = CreateMetrics();
         var tenantId = Guid.NewGuid().ToString();
 
-        metrics.RecordNotificationFanoutRun(tenantId, EventPublishedNotificationFanoutService.FanoutKind, EventPublishedNotificationFanoutService.OutcomeCompleted);
+        metrics.RecordNotificationFanoutRun(tenantId, FanoutKind, OutcomeCompleted);
 
         var measurement = await metricsCapture.SingleByTenantAsync("explore.notifications.fanout_runs", tenantId);
 
         await Assert.That(measurement.Value).IsEqualTo(1);
         await Assert.That(measurement.Tags["tenant_id"]?.ToString()).IsEqualTo(tenantId);
-        await Assert.That(measurement.Tags["fanout_kind"]?.ToString()).IsEqualTo(EventPublishedNotificationFanoutService.FanoutKind);
-        await Assert.That(measurement.Tags["outcome"]?.ToString()).IsEqualTo(EventPublishedNotificationFanoutService.OutcomeCompleted);
+        await Assert.That(measurement.Tags["fanout_kind"]?.ToString()).IsEqualTo(FanoutKind);
+        await Assert.That(measurement.Tags["outcome"]?.ToString()).IsEqualTo(OutcomeCompleted);
     }
 
     [Test]
@@ -35,14 +39,14 @@ public sealed class BusinessMetricsNotificationFanoutTests
         var metrics = CreateMetrics();
         var tenantId = Guid.NewGuid().ToString();
 
-        metrics.RecordNotificationFanoutSubscribers(7, tenantId, EventPublishedNotificationFanoutService.FanoutKind, EventPublishedNotificationFanoutService.OutcomeNotificationCreated);
+        metrics.RecordNotificationFanoutSubscribers(7, tenantId, FanoutKind, OutcomeNotificationCreated);
 
         var measurement = await metricsCapture.SingleByTenantAsync("explore.notifications.fanout_subscribers", tenantId);
 
         await Assert.That(measurement.Value).IsEqualTo(7);
         await Assert.That(measurement.Tags["tenant_id"]?.ToString()).IsEqualTo(tenantId);
-        await Assert.That(measurement.Tags["fanout_kind"]?.ToString()).IsEqualTo(EventPublishedNotificationFanoutService.FanoutKind);
-        await Assert.That(measurement.Tags["outcome"]?.ToString()).IsEqualTo(EventPublishedNotificationFanoutService.OutcomeNotificationCreated);
+        await Assert.That(measurement.Tags["fanout_kind"]?.ToString()).IsEqualTo(FanoutKind);
+        await Assert.That(measurement.Tags["outcome"]?.ToString()).IsEqualTo(OutcomeNotificationCreated);
     }
 
     [Test]
@@ -52,7 +56,7 @@ public sealed class BusinessMetricsNotificationFanoutTests
         var metrics = CreateMetrics();
         var tenantId = Guid.NewGuid().ToString();
 
-        metrics.RecordNotificationFanoutRun(tenantId, EventPublishedNotificationFanoutService.FanoutKind, EventPublishedNotificationFanoutService.OutcomeFailed);
+        metrics.RecordNotificationFanoutRun(tenantId, FanoutKind, OutcomeFailed);
 
         var measurement = await metricsCapture.SingleByTenantAsync("explore.notifications.fanout_runs", tenantId);
 

@@ -14,7 +14,7 @@ using MediatR;
 public class ResetSettingCommand : IRequest<BaseCommandResponse<Guid>>
 {
     /// <summary>
-    /// Fully qualified setting key (e.g., "event_list.page_size"). Must exist in SettingRegistry.
+    /// Fully qualified setting key (e.g., "appearance.theme"). Must exist in SettingRegistry.
     /// </summary>
     public required string Key { get; init; }
 

@@ -416,9 +416,9 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
             ResourceKinds.CustomPropertyDefinition or
             ResourceKinds.CustomPropertyTemplate or
             ResourceKinds.CustomPropertyValue or
-            ResourceKinds.CustomPropertyProjection or
             ResourceKinds.CustomPropertyGovernance or
             ResourceKinds.EmailDispatch or
+            ResourceKinds.Blog or
             ResourceKinds.Webhook or
             ResourceKinds.Organization or
             ResourceKinds.OrganizationMember or
@@ -436,9 +436,7 @@ public sealed class RuntimeAuthorizationProvider : IAuthorizationProvider, IAuth
                 AuthorizationActions.SupportAccessSessions.List or
                 AuthorizationActions.SupportAccessSessions.ViewAudit or
                 AuthorizationActions.StorageObjects.Download or
-                AuthorizationActions.StorageObjects.PresignedDownload or
-                AuthorizationActions.ViewSharedContacts or
-                AuthorizationActions.ExportSharedContacts
+                AuthorizationActions.StorageObjects.PresignedDownload
             || action.EndsWith(":view", StringComparison.Ordinal)
             || action.EndsWith(":view-delivery", StringComparison.Ordinal);
     }

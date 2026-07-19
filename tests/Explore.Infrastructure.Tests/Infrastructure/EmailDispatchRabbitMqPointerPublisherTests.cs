@@ -33,8 +33,7 @@ public sealed class EmailDispatchRabbitMqPointerPublisherTests
                 Arg.Is<EmailDispatchPointer>(pointer =>
                     pointer.TenantId == dispatch.TenantId
                     && pointer.PublishEventId == dispatch.PublishEventId
-                    && pointer.EventId == dispatch.EventId
-                    && pointer.RegistrationIntentId == dispatch.RegistrationIntentId),
+                    && pointer.SourceId == dispatch.SourceId),
                 Arg.Any<CancellationToken>())
             .Returns(EmailDispatchPublishResult.Confirmed(123));
         var publisher = CreatePublisher(repository, transport, new EmailDispatchRabbitMqSettings { Enabled = true });
@@ -193,11 +192,9 @@ public sealed class EmailDispatchRabbitMqPointerPublisherTests
         Id = Guid.CreateVersion7(),
         TenantId = Guid.CreateVersion7(),
         PublishEventId = Guid.CreateVersion7(),
-        Kind = EmailDispatchKind.RegistrationConfirmation,
-        SourceType = "event_registration_intent",
+        Kind = EmailDispatchKind.TenantAdministratorInvitation,
+        SourceType = "tenant-administrator-invitation",
         SourceId = Guid.CreateVersion7(),
-        EventId = Guid.CreateVersion7(),
-        RegistrationIntentId = Guid.CreateVersion7(),
         UserId = Guid.CreateVersion7(),
         RecipientEmail = "recipient@example.test",
         Subject = "Registration confirmed",

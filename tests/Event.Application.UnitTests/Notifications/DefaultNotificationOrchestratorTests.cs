@@ -16,24 +16,6 @@ namespace Event.Application.UnitTests.Notifications;
 public sealed class DefaultNotificationOrchestratorTests
 {
     [Test]
-    public async Task EnqueueAsync_CreatesPendingLocalDeliveryForIslamuOwnedNotification()
-    {
-        var repository = new CapturingNotificationIntentRepository();
-        var orchestrator = CreateOrchestrator(
-            repository,
-            new NotificationOwnershipDecision(AppNotificationCategory.RegistrationLifecycle, AppNotificationOwnership.IslamuEvent));
-
-        var result = await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.RegistrationLifecycle));
-
-        await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Pending);
-        await Assert.That(result.Intent.OwnershipTypeId).IsEqualTo((int)NotificationOwnershipTypeEnum.IslamuEvent);
-        await Assert.That(result.Delivery).IsNotNull();
-        await Assert.That(result.Delivery!.StatusId).IsEqualTo((int)NotificationDeliveryStatusEnum.Pending);
-        await Assert.That(result.ExternalDelegation).IsNull();
-        await Assert.That(repository.CreatedIntent).IsSameReferenceAs(result.Intent);
-    }
-
-    [Test]
     public async Task EnqueueAsync_CreatesAccountAuthorityDelegationWhenIslamuInitiated()
     {
         var repository = new CapturingNotificationIntentRepository();
@@ -74,27 +56,6 @@ public sealed class DefaultNotificationOrchestratorTests
         await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Resolved);
         await Assert.That(result.Delivery).IsNull();
         await Assert.That(result.ExternalDelegation).IsNull();
-    }
-
-    [Test]
-    public async Task EnqueueAsync_CreatesExternalWorkflowDelegationForAuditedProviderNotification()
-    {
-        var repository = new CapturingNotificationIntentRepository();
-        var orchestrator = CreateOrchestrator(
-            repository,
-            new NotificationOwnershipDecision(
-                AppNotificationCategory.TrustSafetyModeration,
-                AppNotificationOwnership.ExternalWorkflowProvider,
-                ExternalWorkflowProviderKind: AppExternalWorkflowProviderKind.Coop,
-                RequiresLocalAudit: true));
-
-        var result = await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.TrustSafetyModeration));
-
-        await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Delegated);
-        await Assert.That(result.ExternalDelegation).IsNotNull();
-        await Assert.That(result.ExternalDelegation!.ProviderKindId).IsEqualTo((int)ExternalWorkflowProviderKindEnum.Coop);
-        await Assert.That(result.ExternalDelegation.AccountAuthorityKindId).IsNull();
-        await Assert.That(result.ExternalDelegation.SafePayloadHash).IsEqualTo("sha256:test-safe-payload");
     }
 
     [Test]

@@ -28,11 +28,9 @@ public class TenantCapabilityRepositoryBypassTests(PostgreSqlContainerFixture fi
         seedContext.Tenants.AddRange(tenantA, tenantB);
         await seedContext.SaveChangesAsync();
 
-        var tenantAIslamic = CreateCapability(tenantA.Id, SeedIds.ModuleIslamicId, isEnabled: true);
-        var tenantATech = CreateCapability(tenantA.Id, SeedIds.ModuleTechId, isEnabled: false);
-        var tenantBIslamic = CreateCapability(tenantB.Id, SeedIds.ModuleIslamicId, isEnabled: false);
-        var tenantBTech = CreateCapability(tenantB.Id, SeedIds.ModuleTechId, isEnabled: true);
-        seedContext.TenantCapabilities.AddRange(tenantAIslamic, tenantATech, tenantBIslamic, tenantBTech);
+        var tenantACore = CreateCapability(tenantA.Id, SeedIds.ModuleCoreId, isEnabled: true);
+        var tenantBCore = CreateCapability(tenantB.Id, SeedIds.ModuleCoreId, isEnabled: false);
+        seedContext.TenantCapabilities.AddRange(tenantACore, tenantBCore);
         await seedContext.SaveChangesAsync();
 
         await using var tenantBContext = fixture.CreateTenantFilteredDbContext(new TestTenantContext(tenantB.Id));
@@ -45,23 +43,21 @@ public class TenantCapabilityRepositoryBypassTests(PostgreSqlContainerFixture fi
         var repository = new TenantCapabilityRepository(tenantBContext);
         var tenantACapabilities = await repository.GetByTenantId(tenantA.Id);
         var tenantAEnabledCapabilities = await repository.GetEnabledByTenantId(tenantA.Id);
-        var tenantAIslamicEnabled = await repository.IsModuleEnabled(tenantA.Id, "Mod_Islamic");
-        var tenantATechEnabled = await repository.IsModuleEnabled(tenantA.Id, "Mod_Tech");
-        var tenantAIslamicCapability = await repository.GetByTenantAndModuleKey(tenantA.Id, "Mod_Islamic");
+        var tenantACoreEnabled = await repository.IsModuleEnabled(tenantA.Id, "Mod_Core");
+        var tenantACoreCapability = await repository.GetByTenantAndModuleKey(tenantA.Id, "Mod_Core");
 
         await Assert.That(visibleWithoutBypass).IsEquivalentTo([tenantB.Id]);
-        await Assert.That(tenantACapabilities.Select(capability => capability.TenantId)).IsEquivalentTo([tenantA.Id, tenantA.Id]);
+        await Assert.That(tenantACapabilities.Select(capability => capability.TenantId)).IsEquivalentTo([tenantA.Id]);
         await Assert.That(tenantACapabilities.Select(capability => capability.Module.ModuleKey))
-            .IsEquivalentTo(["Mod_Islamic", "Mod_Tech"]);
+            .IsEquivalentTo(["Mod_Core"]);
 
         await Assert.That(tenantAEnabledCapabilities.Select(capability => capability.TenantId)).IsEquivalentTo([tenantA.Id]);
-        await Assert.That(tenantAEnabledCapabilities.Single().Module.ModuleKey).IsEqualTo("Mod_Islamic");
+        await Assert.That(tenantAEnabledCapabilities.Single().Module.ModuleKey).IsEqualTo("Mod_Core");
 
-        await Assert.That(tenantAIslamicEnabled).IsTrue();
-        await Assert.That(tenantATechEnabled).IsFalse();
-        await Assert.That(tenantAIslamicCapability).IsNotNull();
-        await Assert.That(tenantAIslamicCapability!.TenantId).IsEqualTo(tenantA.Id);
-        await Assert.That(tenantAIslamicCapability.Module.ModuleKey).IsEqualTo("Mod_Islamic");
+        await Assert.That(tenantACoreEnabled).IsTrue();
+        await Assert.That(tenantACoreCapability).IsNotNull();
+        await Assert.That(tenantACoreCapability!.TenantId).IsEqualTo(tenantA.Id);
+        await Assert.That(tenantACoreCapability.Module.ModuleKey).IsEqualTo("Mod_Core");
     }
 
     private static Tenant CreateTenant(string slugPrefix)

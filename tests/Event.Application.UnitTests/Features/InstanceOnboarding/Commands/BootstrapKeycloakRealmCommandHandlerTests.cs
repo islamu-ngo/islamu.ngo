@@ -171,9 +171,9 @@ public class BootstrapKeycloakRealmCommandHandlerTests
         {
             KeycloakBaseUrl = keycloakBaseUrl,
             Realm = realm,
-            BlazorClientId = "islamu-event-blazor",
+            BlazorClientId = "islamu-ngo-blazor",
             BlazorClientSecret = blazorClientSecret,
-            ApiClientId = "islamu-event-api",
+            ApiClientId = "islamu-ngo-api",
             ApiClientSecret = "optional-api-secret",
             Mode = KeycloakBootstrapMode.PatchExistingRealm,
             BootstrapAdminUsername = "bootstrap-admin",

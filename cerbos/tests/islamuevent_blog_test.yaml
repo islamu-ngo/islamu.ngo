@@ -1,0 +1,126 @@
+# ABOUTME: Cerbos policy test suite for Blog editorial management resources.
+# ABOUTME: Covers tenant-scoped admin access and denies public-read/editorial leakage.
+
+name: BlogPolicyTests
+description: "Validates Blog editorial management policy boundaries"
+
+principals:
+  islamuevent_instance_admin:
+    id: "user-instance-admin"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: true
+      tenantMemberships: {}
+      orgMemberships: {}
+
+  islamuevent_tenant_admin:
+    id: "user-tenant-admin"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: false
+      tenantMemberships:
+        "tenant-1": "admin"
+      orgMemberships: {}
+
+  cross_tenant_admin:
+    id: "user-other-tenant-admin"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: false
+      tenantMemberships:
+        "tenant-other": "admin"
+      orgMemberships: {}
+
+  regular_user:
+    id: "user-regular"
+    roles: ["islamuevent_authenticated_user"]
+    attr:
+      isInstanceAdmin: false
+      tenantMemberships: {}
+      orgMemberships: {}
+
+resources:
+  draft_blog:
+    kind: "islamuevent_blog"
+    id: "blog-draft-1"
+    attr:
+      tenantId: "tenant-1"
+      blogId: "blog-draft-1"
+      isPublished: false
+      hasPublishedAt: false
+
+  published_blog:
+    kind: "islamuevent_blog"
+    id: "blog-published-1"
+    attr:
+      tenantId: "tenant-1"
+      blogId: "blog-published-1"
+      isPublished: true
+      hasPublishedAt: true
+      publishedAtUtc: "2026-07-16T12:00:00Z"
+      publicationIntent: "editorial-management"
+
+tests:
+  - name: "Instance admin can manage all Blog editorial actions"
+    input:
+      principals: ["islamuevent_instance_admin"]
+      resources: ["draft_blog"]
+      actions: ["view", "create", "update", "delete", "publish", "unpublish"]
+    expected:
+      - principal: "islamuevent_instance_admin"
+        resource: "draft_blog"
+        actions:
+          view: EFFECT_ALLOW
+          create: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+          publish: EFFECT_ALLOW
+          unpublish: EFFECT_ALLOW
+
+  - name: "Tenant admin can manage Blog editorial actions in own tenant"
+    input:
+      principals: ["islamuevent_tenant_admin"]
+      resources: ["draft_blog"]
+      actions: ["view", "create", "update", "delete", "publish", "unpublish"]
+    expected:
+      - principal: "islamuevent_tenant_admin"
+        resource: "draft_blog"
+        actions:
+          view: EFFECT_ALLOW
+          create: EFFECT_ALLOW
+          update: EFFECT_ALLOW
+          delete: EFFECT_ALLOW
+          publish: EFFECT_ALLOW
+          unpublish: EFFECT_ALLOW
+
+  - name: "Cross-tenant tenant admin cannot manage Blog editorial actions"
+    input:
+      principals: ["cross_tenant_admin"]
+      resources: ["draft_blog"]
+      actions: ["view", "create", "update", "delete", "publish", "unpublish"]
+    expected:
+      - principal: "cross_tenant_admin"
+        resource: "draft_blog"
+        actions:
+          view: EFFECT_DENY
+          create: EFFECT_DENY
+          update: EFFECT_DENY
+          delete: EFFECT_DENY
+          publish: EFFECT_DENY
+          unpublish: EFFECT_DENY
+
+  - name: "Regular user cannot use Cerbos Blog editorial view even for published posts"
+    input:
+      principals: ["regular_user"]
+      resources: ["published_blog"]
+      actions: ["view", "create", "update", "delete", "publish", "unpublish"]
+    expected:
+      - principal: "regular_user"
+        resource: "published_blog"
+        actions:
+          view: EFFECT_DENY
+          create: EFFECT_DENY
+          update: EFFECT_DENY
+          delete: EFFECT_DENY
+          publish: EFFECT_DENY
+          unpublish: EFFECT_DENY

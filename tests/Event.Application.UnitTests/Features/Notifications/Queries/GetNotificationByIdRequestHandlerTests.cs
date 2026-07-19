@@ -46,9 +46,9 @@ public class GetNotificationByIdRequestHandlerTests
         {
             Id = notificationId,
             UserId = userId,
-            NotificationTypeId = (int)NotificationTypeEnum.EventCreated,
+            NotificationTypeId = (int)NotificationTypeEnum.General,
             NotificationScopeId = (int)ActorTypeEnum.User,
-            Title = "New Event Created",
+            Title = "General Notification",
             DeduplicationKey = "get-notification-by-id-test",
             User = null!,
             Tenant = null!,
@@ -59,8 +59,8 @@ public class GetNotificationByIdRequestHandlerTests
         {
             Id = notificationId,
             UserId = userId,
-            NotificationTypeId = (int)NotificationTypeEnum.EventCreated,
-            Title = "New Event Created"
+            NotificationTypeId = (int)NotificationTypeEnum.General,
+            Title = "General Notification"
         };
 
         _notificationRepository.GetByIdForUser(notificationId, userId).Returns(notification);
@@ -74,7 +74,7 @@ public class GetNotificationByIdRequestHandlerTests
         // Assert
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Id).IsEqualTo(notificationId);
-        await Assert.That(result.Title).IsEqualTo("New Event Created");
+        await Assert.That(result.Title).IsEqualTo("General Notification");
     }
 
     [Test]

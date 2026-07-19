@@ -1,3 +1,6 @@
+// ABOUTME: Integration tests covering HAL response shape and Prefer header behavior across live endpoints.
+// ABOUTME: Verifies pagination, link structure, and error response contracts without Event-product routes.
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -37,8 +40,7 @@ public class HateoasIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]
@@ -96,8 +98,7 @@ public class HateoasIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]
@@ -132,7 +133,7 @@ public class HateoasIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     public async Task GetAll_WithPreferMinimal_ShouldReturnPreferenceAppliedHeader(string endpoint)
     {
         // Arrange
@@ -253,7 +254,7 @@ public class HateoasIntegrationTests
     public async Task GetAll_PaginationLinks_ShouldContainCorrectParameters()
     {
         // Act
-        var response = await _fixture.Client.GetAsync("/api/event?pageNumber=1&pageSize=5");
+        var response = await _fixture.Client.GetAsync("/api/blog?pageNumber=1&pageSize=5");
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);

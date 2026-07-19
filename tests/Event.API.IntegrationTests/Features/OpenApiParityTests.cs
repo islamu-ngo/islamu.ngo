@@ -17,19 +17,11 @@ namespace Event.Api.IntegrationTests.Features;
 [ClassDataSource<ContractApiFixture>(Shared = SharedType.PerAssembly)]
 public sealed class OpenApiParityTests
 {
-    private const string NativeOpenApiEndpoint = "/openapi/islamu-event.json";
+    private const string NativeOpenApiEndpoint = "/openapi/islamu.json";
     private const string SwashbuckleOpenApiEndpoint = "/swagger/v0.1/swagger.json";
     private const string KeycloakAuthorizationUrl = "https://auth.example.com/realms/ISLAMU/protocol/openid-connect/auth";
     private const string ManagedControlPlaneScheme = "ManagedControlPlane";
     private const string ManagedControlPlaneHeader = "X-Control-Plane-Key";
-
-    private static readonly OperationSelector[] CanaryOperations =
-    [
-        new("/api/event", "get"),
-        new("/api/event/{id}", "get")
-    ];
-
-    private static readonly OperationSelector RequestBodyAliasCanaryOperation = new("/api/event", "post");
 
     private static readonly OperationSecurityExpectation[] ManagementOperationSecurityExpectations =
     [
@@ -38,25 +30,10 @@ public sealed class OpenApiParityTests
         new(new("/api/management/tenants/provision", "post"), [ManagedControlPlaneScheme]),
         new(new("/api/management/tenant-provisioning/{operationId}", "get"), [ManagedControlPlaneScheme]),
         new(new("/api/management/tenant-provisioning/{operationId}/cancel", "post"), [ManagedControlPlaneScheme]),
-        new(new("/api/management/registration", "post"), ["Keycloak"]),
-        new(new("/api/event", "post"), ["Keycloak"])
+        new(new("/api/management/registration", "post"), ["Keycloak"])
     ];
 
-    private static readonly OperationSelector UnrelatedAnonymousOperation = new("/api/event", "get");
-
-    private static readonly string[] RepresentativeHalComponentSchemas =
-    [
-        "HalCollectionResourceOfEventListDto",
-        "HalResourceOfEventDto",
-        "HalResourceOfEventAgendaItemDto"
-    ];
-
-    private static readonly string[] RepresentativeHalEmbeddedSchemas =
-    [
-        "HalCollectionEmbeddedOfEventListDto",
-        "HalCollectionEmbeddedOfEventSessionListDto",
-        "HalCollectionEmbeddedOfOrganizationReviewDto"
-    ];
+    private static readonly OperationSelector UnrelatedAnonymousOperation = new("/api/management/capabilities", "get");
 
     private readonly ContractApiFixture _fixture;
 
@@ -75,28 +52,6 @@ public sealed class OpenApiParityTests
             .Because("The native OpenAPI document is the canonical build-time/runtime contract source.");
         await Assert.That(swashbuckleResponse.StatusCode).IsEqualTo(HttpStatusCode.OK)
             .Because("The Swashbuckle document must remain available until native parity is proven and cleanup lands.");
-    }
-
-    [Test]
-    public async Task NativeAndSwashbuckleDocs_MatchCanaryOperationSurface()
-    {
-        using var nativeDocument = await GetOpenApiDocumentAsync(NativeOpenApiEndpoint);
-        using var swashbuckleDocument = await GetOpenApiDocumentAsync(SwashbuckleOpenApiEndpoint);
-
-        var differences = new List<string>();
-
-        foreach (var selector in CanaryOperations)
-        {
-            var nativeOperation = GetOperation(nativeDocument, selector);
-            var swashbuckleOperation = GetOperation(swashbuckleDocument, selector);
-
-            CompareOperation(selector, nativeOperation, swashbuckleOperation, differences);
-        }
-
-        await Assert.That(differences)
-            .IsEmpty()
-            .Because("Native OpenAPI and Swashbuckle must describe the same canary endpoint contract before Swashbuckle/runtime export cleanup. "
-                + string.Join("; ", differences.Take(10)));
     }
 
     [Test]
@@ -191,60 +146,6 @@ public sealed class OpenApiParityTests
             .IsEmpty()
             .Because("Only managed-policy operations may require the Control Plane key; capabilities, registration, and unrelated endpoints retain their existing security. "
                 + string.Join("; ", differences));
-    }
-
-    [Test]
-    public async Task NativeAndSwashbuckleDocs_MatchRequestBodyVersionedContentAliases()
-    {
-        using var nativeDocument = await GetOpenApiDocumentAsync(NativeOpenApiEndpoint);
-        using var swashbuckleDocument = await GetOpenApiDocumentAsync(SwashbuckleOpenApiEndpoint);
-
-        var nativeOperation = GetOperation(nativeDocument, RequestBodyAliasCanaryOperation);
-        var swashbuckleOperation = GetOperation(swashbuckleDocument, RequestBodyAliasCanaryOperation);
-        var differences = new List<string>();
-
-        CompareRequestBodyVersionedContent(RequestBodyAliasCanaryOperation, nativeOperation, swashbuckleOperation, differences);
-
-        await Assert.That(differences)
-            .IsEmpty()
-            .Because("Native OpenAPI and Swashbuckle must expose the same versioned request-body media-type aliases for write clients. "
-                + string.Join("; ", differences));
-    }
-
-    [Test]
-    public async Task NativeAndSwashbuckleDocs_MatchRepresentativeHalComponentSchemaShapes()
-    {
-        using var nativeDocument = await GetOpenApiDocumentAsync(NativeOpenApiEndpoint);
-        using var swashbuckleDocument = await GetOpenApiDocumentAsync(SwashbuckleOpenApiEndpoint);
-
-        var differences = new List<string>();
-        foreach (var schemaName in RepresentativeHalComponentSchemas)
-        {
-            CompareComponentSchemaShape(schemaName, nativeDocument, swashbuckleDocument, differences);
-        }
-
-        await Assert.That(differences)
-            .IsEmpty()
-            .Because("Representative HAL wrapper component schemas must stay semantically aligned while Swashbuckle remains the baseline. "
-                + string.Join("; ", differences.Take(10)));
-    }
-
-    [Test]
-    public async Task NativeAndSwashbuckleDocs_MatchRepresentativeHalEmbeddedItemReferences()
-    {
-        using var nativeDocument = await GetOpenApiDocumentAsync(NativeOpenApiEndpoint);
-        using var swashbuckleDocument = await GetOpenApiDocumentAsync(SwashbuckleOpenApiEndpoint);
-
-        var differences = new List<string>();
-        foreach (var schemaName in RepresentativeHalEmbeddedSchemas)
-        {
-            CompareEmbeddedItemsReference(schemaName, nativeDocument, swashbuckleDocument, differences);
-        }
-
-        await Assert.That(differences)
-            .IsEmpty()
-            .Because("Representative HAL embedded collection schemas must type items equivalently while Swashbuckle remains the baseline. "
-                + string.Join("; ", differences.Take(10)));
     }
 
     [Test]

@@ -29,10 +29,10 @@ public class ProblemDetailsRealRuntimeTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var response = await _fixture.Client.GetAsync($"/api/event/{Guid.NewGuid()}");
+        var response = await _fixture.Client.GetAsync($"/api/blog/missing-{Guid.NewGuid():N}");
 
         await ProblemDetailsAssertions.AssertProblemDetailsAsync(
-            response, HttpStatusCode.NotFound, "Event not found");
+            response, HttpStatusCode.NotFound, "Blog not found");
     }
 
     [Test]
@@ -40,7 +40,7 @@ public class ProblemDetailsRealRuntimeTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var response = await _fixture.Client.GetAsync($"/api/event/{Guid.NewGuid()}");
+        var response = await _fixture.Client.GetAsync($"/api/blog/missing-{Guid.NewGuid():N}");
         var content = await response.Content.ReadAsStringAsync();
 
         await Assert.That(content).DoesNotContain("StackTrace");
@@ -53,7 +53,7 @@ public class ProblemDetailsRealRuntimeTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var response = await _fixture.Client.GetAsync($"/api/event/{Guid.NewGuid()}");
+        var response = await _fixture.Client.GetAsync($"/api/blog/missing-{Guid.NewGuid():N}");
 
         using var document = await ProblemDetailsAssertions.ReadAsJsonAsync(response);
         var root = document.RootElement;
@@ -72,8 +72,8 @@ public class ProblemDetailsRealRuntimeTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var content = new StringContent("""{"title":"Unauth Event"}""", Encoding.UTF8, "application/json");
-        var response = await _fixture.Client.PostAsync("/api/event", content);
+        var content = new StringContent("""{"title":"Unauth Blog","contentMarkdown":"# Draft"}""", Encoding.UTF8, "application/json");
+        var response = await _fixture.Client.PostAsync("/api/blog", content);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -83,7 +83,7 @@ public class ProblemDetailsRealRuntimeTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var response = await _fixture.Client.GetAsync($"/api/event/{Guid.NewGuid()}");
+        var response = await _fixture.Client.GetAsync($"/api/blog/missing-{Guid.NewGuid():N}");
         var contentType = response.Content.Headers.ContentType?.MediaType;
 
         var isValidContentType = contentType is "application/problem+json" or "application/json";

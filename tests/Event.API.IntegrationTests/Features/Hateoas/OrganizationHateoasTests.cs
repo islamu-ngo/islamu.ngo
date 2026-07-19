@@ -1,3 +1,6 @@
+// ABOUTME: HATEOAS-specific tests for OrganizationController retained resource links.
+// ABOUTME: Verifies organization collection, authorization-aware, item, and method links without Event links.
+
 using System.Net;
 using System.Text.Json;
 using Event.Api.IntegrationTests.Fixtures;
@@ -124,60 +127,6 @@ public class OrganizationHateoasTests
 
                 var href = collectionLink.GetProperty("href").GetString();
                 await Assert.That(href).IsEqualTo("/api/organization");
-            }
-        }
-    }
-
-    [Test]
-    public async Task GetById_Links_ShouldIncludeEventsLink()
-    {
-        // Arrange - First get list to find an organization
-        var listResponse = await _fixture.Client.GetAsync(BaseUrl);
-        var listContent = await listResponse.Content.ReadAsStringAsync();
-        var listJson = JsonDocument.Parse(listContent);
-
-        if (!listJson.RootElement.TryGetProperty("_embedded", out var embedded) ||
-            !embedded.TryGetProperty("items", out var items) ||
-            items.GetArrayLength() == 0)
-        {
-            // No data to test with, skip
-            return;
-        }
-
-        // Get first organization's ID
-        var firstItem = items[0];
-        Guid organizationId;
-
-        if (firstItem.TryGetProperty("data", out var data) && data.TryGetProperty("id", out var idProp))
-        {
-            organizationId = idProp.GetGuid();
-        }
-        else if (firstItem.TryGetProperty("id", out idProp))
-        {
-            organizationId = idProp.GetGuid();
-        }
-        else
-        {
-            return;
-        }
-
-        // Act - Get organization by ID
-        var response = await _fixture.Client.GetAsync($"{BaseUrl}/{organizationId}");
-
-        // Assert
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var json = JsonDocument.Parse(content);
-
-            if (json.RootElement.TryGetProperty("_links", out var links))
-            {
-                // Detail view should have events link
-                if (links.TryGetProperty("events", out var eventsLink))
-                {
-                    var href = eventsLink.GetProperty("href").GetString();
-                    await Assert.That(href).Contains("/api/event");
-                }
             }
         }
     }

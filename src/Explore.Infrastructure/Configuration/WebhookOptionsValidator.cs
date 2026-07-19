@@ -188,12 +188,8 @@ public sealed class WebhookOptionsValidator : IValidateOptions<WebhookOptions>
                 "Webhooks:Svix:AppPortalEnabled requires the AppPortal capability in the verified provider profile.");
         }
 
-        if (options.SyncEventTypesOnStartup &&
-            !Supports(profile.Capabilities, WebhookProviderCapability.EventCatalog))
-        {
-            failures.Add(
-                "Webhooks:Svix:SyncEventTypesOnStartup requires the EventCatalog capability in the verified provider profile.");
-        }
+        // Webhook event-type synchronization is part of the verified Svix profile itself;
+        // it is no longer exposed as an Event product capability.
     }
 
     private static bool Supports(

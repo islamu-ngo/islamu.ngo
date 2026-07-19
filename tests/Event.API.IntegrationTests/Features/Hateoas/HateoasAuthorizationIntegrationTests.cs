@@ -1,6 +1,5 @@
 // ABOUTME: Integration tests verifying HATEOAS link filtering based on authorization.
-// Tests that anonymous users see only public links, while authenticated users see auth-required links.
-// Auth state is per-request via X-Test-Auth header — no shared static state, safe for parallel execution.
+// ABOUTME: Verifies anonymous/public and authenticated link visibility using per-request X-Test-Auth headers.
 
 using System.Net;
 using System.Net.Http.Json;
@@ -32,7 +31,7 @@ public class HateoasAuthorizationIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     public async Task GetAll_Anonymous_ShouldNotIncludeCreateLink(string endpoint)
     {
         // Arrange — no X-Test-Auth header = anonymous
@@ -57,7 +56,7 @@ public class HateoasAuthorizationIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     public async Task GetAll_Anonymous_ShouldIncludePublicLinks(string endpoint)
     {
         // Arrange — no X-Test-Auth header = anonymous
@@ -86,7 +85,7 @@ public class HateoasAuthorizationIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     public async Task GetAll_Authenticated_ShouldIncludeCreateLink(string endpoint)
     {
         // Arrange — authenticated user via X-Test-Auth header

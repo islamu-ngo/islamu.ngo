@@ -29,9 +29,11 @@ internal static class EmailDispatchRabbitMqDeadLetterReplayDecision
             return EmailDispatchRabbitMqDeadLetterReplaySettlement.Park("publish_event_mismatch");
         }
 
-        if (dispatch.EventId != pointer.EventId)
+        if (dispatch.Kind != pointer.Kind ||
+            !string.Equals(dispatch.SourceType, pointer.SourceType, StringComparison.Ordinal) ||
+            dispatch.SourceId != pointer.SourceId)
         {
-            return EmailDispatchRabbitMqDeadLetterReplaySettlement.Park("event_mismatch");
+            return EmailDispatchRabbitMqDeadLetterReplaySettlement.Park("source_mismatch");
         }
 
         if (dispatch.Status == EmailDispatchStatus.Sent)

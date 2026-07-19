@@ -6,6 +6,7 @@ using Explore.Application.Features.EmailUnsubscribe.Handlers.Commands;
 using Explore.Application.Features.EmailUnsubscribe.Requests.Commands;
 using Explore.Domain;
 using Explore.Domain.Constants;
+using Explore.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
@@ -48,21 +49,21 @@ public sealed class UnsubscribeFromEmailCategoryCommandHandlerTests
         _repository.GetByUserAndCategory(
                 tenantId,
                 userId,
-                NotificationPreferenceCategories.RegistrationConfirmations)
+                NotificationPreferenceCategoryCodes.OrganizationUpdates)
             .Returns((UserNotificationPreference?)null);
 
         var result = await _handler.Handle(new UnsubscribeFromEmailCategoryCommand
         {
             TenantId = tenantId,
             UserId = userId,
-            Category = NotificationPreferenceCategories.RegistrationConfirmations.ToUpperInvariant()
+            Category = NotificationPreferenceCategoryCodes.OrganizationUpdates.ToUpperInvariant()
         }, CancellationToken.None);
 
         await Assert.That(result.Success).IsTrue();
         await _repository.Received(1).Create(Arg.Is<UserNotificationPreference>(preference =>
             preference.TenantId == tenantId
             && preference.UserId == userId
-            && preference.Category == NotificationPreferenceCategories.RegistrationConfirmations
+            && preference.Category == NotificationPreferenceCategoryCodes.OrganizationUpdates
             && !preference.IsEnabled));
         await _repository.DidNotReceive().Update(Arg.Any<UserNotificationPreference>());
     }
@@ -78,7 +79,7 @@ public sealed class UnsubscribeFromEmailCategoryCommandHandlerTests
             TenantId = tenantId,
             Tenant = null!,
             UserId = userId,
-            Category = NotificationPreferenceCategories.RegistrationConfirmations,
+            Category = NotificationPreferenceCategoryCodes.OrganizationUpdates,
             IsEnabled = true,
             CreatedAt = DateTime.UtcNow.AddDays(-1)
         };
@@ -86,14 +87,14 @@ public sealed class UnsubscribeFromEmailCategoryCommandHandlerTests
         _repository.GetByUserAndCategory(
                 tenantId,
                 userId,
-                NotificationPreferenceCategories.RegistrationConfirmations)
+                NotificationPreferenceCategoryCodes.OrganizationUpdates)
             .Returns(preference);
 
         var result = await _handler.Handle(new UnsubscribeFromEmailCategoryCommand
         {
             TenantId = tenantId,
             UserId = userId,
-            Category = NotificationPreferenceCategories.RegistrationConfirmations
+            Category = NotificationPreferenceCategoryCodes.OrganizationUpdates
         }, CancellationToken.None);
 
         await Assert.That(result.Success).IsTrue();

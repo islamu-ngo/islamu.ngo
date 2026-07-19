@@ -80,7 +80,7 @@ public class TenantSettingsDocumentPersistenceTests(PostgreSqlContainerFixture f
         await fixture.ResetAsync();
         using var context = fixture.CreateDbContext();
         var tenant = await SeedTenantAsync(context, "concurrency");
-        var document = NewDocument(tenant.Id, SettingsDocumentKeys.Tenant.EventDefaults, "{\"requireApproval\":true}");
+        var document = NewDocument(tenant.Id, SettingsDocumentKeys.Tenant.PublicExperience, "{\"mode\":\"tenant\"}");
 
         context.TenantSettingsDocuments.Add(document);
         await context.SaveChangesAsync();
@@ -88,8 +88,8 @@ public class TenantSettingsDocumentPersistenceTests(PostgreSqlContainerFixture f
 
         document.UpdatePayload(
             schemaVersion: 2,
-            defaultsVersion: "2026-06-event-defaults",
-            payloadJson: "{\"requireApproval\":false}");
+            defaultsVersion: "2026-07-public-experience",
+            payloadJson: "{\"mode\":\"instance\"}");
         await context.SaveChangesAsync();
 
         await Assert.That(insertedStamp).IsNotEqualTo(Guid.Empty);

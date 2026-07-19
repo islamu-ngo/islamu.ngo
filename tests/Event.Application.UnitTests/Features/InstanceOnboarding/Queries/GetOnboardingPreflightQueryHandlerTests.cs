@@ -28,7 +28,7 @@ public sealed class GetOnboardingPreflightQueryHandlerTests
         var handler = CreateHandler(new Dictionary<string, string?>
         {
             ["Keycloak:Authority"] = "https://auth.example.org/realms/islamu",
-            ["Keycloak:ClientId"] = "islamu-event-blazor",
+            ["Keycloak:ClientId"] = "islamu-ngo-blazor",
             ["PublicBaseUrl"] = "https://events.example.org"
         });
 
@@ -61,7 +61,7 @@ public sealed class GetOnboardingPreflightQueryHandlerTests
         var handler = CreateHandler(new Dictionary<string, string?>
         {
             ["Keycloak:Authority"] = "https://auth.example.org/realms/islamu",
-            ["Keycloak:ClientId"] = "islamu-event-blazor",
+            ["Keycloak:ClientId"] = "islamu-ngo-blazor",
             ["PublicBaseUrl"] = "https://events.example.org",
             ["ControlPlane:PublicOrigin"] = "https://admin.example.org"
         });

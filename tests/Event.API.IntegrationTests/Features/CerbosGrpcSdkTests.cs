@@ -9,7 +9,6 @@ using Cerbos.Sdk.Utility;
 using Event.Api.IntegrationTests.Fixtures;
 using FluentAssertions;
 using Grpc.Net.Client;
-using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -50,10 +49,10 @@ public class CerbosGrpcSdkTests : IDisposable
         (_client as IDisposable)?.Dispose();
     }
 
-    #region Instance Admin via gRPC SDK
+    #region Blog via gRPC SDK
 
     [Test]
-    public async Task GrpcSdk_InstanceAdmin_ShouldBeAllowedAllEventActions()
+    public async Task GrpcSdk_InstanceAdmin_ShouldBeAllowedAllBlogActions()
     {
         var principal = Principal
             .NewInstance("user-instance-admin", "islamuevent_authenticated_user")
@@ -62,189 +61,87 @@ public class CerbosGrpcSdkTests : IDisposable
             .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()));
 
         var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-1")
-            .WithActions("view", "create", "update", "delete", "moderate-light");
+            .NewInstance("islamuevent_blog", "blog-grpc-1")
+            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
+            .WithAttribute("blogId", AttributeValue.StringValue("blog-grpc-1"))
+            .WithAttribute("isPublished", AttributeValue.BoolValue(false))
+            .WithActions("view", "create", "update", "delete", "publish", "unpublish");
 
         var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-1");
+        var result = response.Find("blog-grpc-1");
 
         result.Should().NotBeNull();
         AssertEffect(result!, "view", Effect.Allow);
-        AssertEffect(result!, "create", Effect.Deny);
-        AssertEffect(result!, "update", Effect.Deny);
-        AssertEffect(result!, "delete", Effect.Deny);
-        AssertEffect(result!, "moderate-light", Effect.Allow);
-    }
-
-    #endregion
-
-    #region Regular User via gRPC SDK
-
-    [Test]
-    public async Task GrpcSdk_RegularUser_ShouldOnlyViewEvents()
-    {
-        var principal = BuildRegularUserPrincipal();
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-2")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-1"))
-            .WithActions("view", "create", "update", "delete");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-2")!;
-
-        AssertEffect(result, "view", Effect.Allow);
-        AssertEffect(result, "create", Effect.Deny);
-        AssertEffect(result, "update", Effect.Deny);
-        AssertEffect(result, "delete", Effect.Deny);
-    }
-
-    [Test]
-    public async Task GrpcSdk_RegularUser_ShouldPassEventPreCreateGate()
-    {
-        var principal = BuildRegularUserPrincipal();
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "create")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("authorizationPhase", AttributeValue.StringValue("pre_create"))
-            .WithActions("create");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("create")!;
-
-        AssertEffect(result, "create", Effect.Allow,
-            "human event pre-create checks are allowed through to CreateEventCommandHandler, where EventActorResolver enforces publishing policy");
-    }
-
-    [Test]
-    public async Task GrpcSdk_ScopedUserOwnedEvent_ShouldFallbackToBundledRootPolicy()
-    {
-        const string tenantId = "tenant-1";
-        const string userId = "user-owned-event-owner";
-        const string eventId = "event-grpc-user-owned-scoped";
-
-        var principal = Principal
-            .NewInstance(userId, "islamuevent_authenticated_user")
-            .WithAttribute("userId", AttributeValue.StringValue(userId))
-            .WithAttribute("isInstanceAdmin", AttributeValue.BoolValue(false))
-            .WithAttribute("tenantMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()))
-            .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()));
-
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", eventId)
-            .WithScope(tenantId)
-            .WithAttribute("tenantId", AttributeValue.StringValue(tenantId))
-            .WithAttribute("eventId", AttributeValue.StringValue(eventId))
-            .WithAttribute("actorId", AttributeValue.StringValue("actor-user-owned-event"))
-            .WithAttribute("userId", AttributeValue.StringValue(userId))
-            .WithActions("update", "delete", "publish");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find(eventId);
-
-        result.Should().NotBeNull("tenant-scoped HATEOAS event checks must still use the bundled root policy when no tenant override exists");
+        AssertEffect(result!, "create", Effect.Allow);
         AssertEffect(result!, "update", Effect.Allow);
         AssertEffect(result!, "delete", Effect.Allow);
         AssertEffect(result!, "publish", Effect.Allow);
+        AssertEffect(result!, "unpublish", Effect.Allow);
     }
 
     [Test]
-    public async Task GrpcSdk_MachineCaller_ShouldNotPassHumanEventPreCreateGate()
-    {
-        var principal = BuildMachinePrincipal();
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "create")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("authorizationPhase", AttributeValue.StringValue("pre_create"))
-            .WithActions("create");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("create")!;
-
-        AssertEffect(result, "create", Effect.Deny,
-            "machine/API-key event create is governed by scope and owner checks, not the human pre-create rule");
-    }
-
-    #endregion
-
-    #region Tenant Admin via gRPC SDK
-
-    [Test]
-    public async Task GrpcSdk_TenantAdmin_ShouldManageEventsInOwnTenant()
+    public async Task GrpcSdk_TenantAdmin_ShouldManageBlogsInOwnTenant()
     {
         var principal = BuildTenantAdminPrincipal("tenant-1");
         var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-3")
+            .NewInstance("islamuevent_blog", "blog-grpc-2")
             .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-1"))
-            .WithActions("view", "create", "update", "moderate-light");
+            .WithAttribute("blogId", AttributeValue.StringValue("blog-grpc-2"))
+            .WithActions("view", "create", "update", "delete", "publish", "unpublish");
 
         var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-3")!;
-
-        AssertEffect(result, "view", Effect.Allow);
-        AssertEffect(result, "create", Effect.Deny);
-        AssertEffect(result, "update", Effect.Deny);
-        AssertEffect(result, "moderate-light", Effect.Allow);
-    }
-
-    [Test]
-    public async Task GrpcSdk_TenantAdmin_ShouldBeDeniedInOtherTenant()
-    {
-        var principal = BuildTenantAdminPrincipal("tenant-1");
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-4")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-other"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-1"))
-            .WithActions("create", "update", "delete");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-4")!;
-
-        AssertEffect(result, "create", Effect.Deny);
-        AssertEffect(result, "update", Effect.Deny);
-        AssertEffect(result, "delete", Effect.Deny);
-    }
-
-    #endregion
-
-    #region Org Admin via gRPC SDK
-
-    [Test]
-    public async Task GrpcSdk_OrgAdmin_ShouldManageEventsInOwnOrg()
-    {
-        var principal = BuildOrgAdminPrincipal("org-1");
-        var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-5")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-1"))
-            .WithActions("view", "create", "update", "delete");
-
-        var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-5")!;
+        var result = response.Find("blog-grpc-2")!;
 
         AssertEffect(result, "view", Effect.Allow);
         AssertEffect(result, "create", Effect.Allow);
         AssertEffect(result, "update", Effect.Allow);
         AssertEffect(result, "delete", Effect.Allow);
+        AssertEffect(result, "publish", Effect.Allow);
+        AssertEffect(result, "unpublish", Effect.Allow);
     }
 
     [Test]
-    public async Task GrpcSdk_OrgAdmin_ShouldBeDeniedInOtherOrg()
+    public async Task GrpcSdk_TenantAdmin_ShouldBeDeniedBlogsInOtherTenant()
     {
-        var principal = BuildOrgAdminPrincipal("org-1");
+        var principal = BuildTenantAdminPrincipal("tenant-1");
         var resource = ResourceEntry
-            .NewInstance("islamuevent_event", "event-grpc-6")
-            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-other"))
-            .WithActions("create", "update", "delete");
+            .NewInstance("islamuevent_blog", "blog-grpc-3")
+            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-other"))
+            .WithAttribute("blogId", AttributeValue.StringValue("blog-grpc-3"))
+            .WithActions("view", "create", "update", "delete", "publish", "unpublish");
 
         var response = await SendCheckResourcesAsync(principal, resource);
-        var result = response.Find("event-grpc-6")!;
+        var result = response.Find("blog-grpc-3")!;
 
+        AssertEffect(result, "view", Effect.Deny);
         AssertEffect(result, "create", Effect.Deny);
         AssertEffect(result, "update", Effect.Deny);
         AssertEffect(result, "delete", Effect.Deny);
+        AssertEffect(result, "publish", Effect.Deny);
+        AssertEffect(result, "unpublish", Effect.Deny);
+    }
+
+    [Test]
+    public async Task GrpcSdk_RegularUser_ShouldBeDeniedBlogEditorialActions()
+    {
+        var principal = BuildRegularUserPrincipal();
+        var resource = ResourceEntry
+            .NewInstance("islamuevent_blog", "blog-grpc-4")
+            .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
+            .WithAttribute("blogId", AttributeValue.StringValue("blog-grpc-4"))
+            .WithAttribute("isPublished", AttributeValue.BoolValue(true))
+            .WithActions("view", "create", "update", "delete", "publish", "unpublish");
+
+        var response = await SendCheckResourcesAsync(principal, resource);
+        var result = response.Find("blog-grpc-4")!;
+
+        AssertEffect(result, "view", Effect.Deny,
+            "published public reads bypass Cerbos; Cerbos blog view is editorial management access");
+        AssertEffect(result, "create", Effect.Deny);
+        AssertEffect(result, "update", Effect.Deny);
+        AssertEffect(result, "delete", Effect.Deny);
+        AssertEffect(result, "publish", Effect.Deny);
+        AssertEffect(result, "unpublish", Effect.Deny);
     }
 
     #endregion
@@ -254,12 +151,12 @@ public class CerbosGrpcSdkTests : IDisposable
     [Test]
     public async Task GrpcSdk_BatchCheck_ShouldReturnResultsForMultipleResources()
     {
-        var principal = BuildRegularUserPrincipal();
+        var principal = BuildTenantAdminPrincipal("tenant-1");
 
-        var eventResource = ResourceEntry
-            .NewInstance("islamuevent_event", "batch-event-1")
+        var blogResource = ResourceEntry
+            .NewInstance("islamuevent_blog", "batch-blog-1")
             .WithAttribute("tenantId", AttributeValue.StringValue("tenant-1"))
-            .WithAttribute("organizationId", AttributeValue.StringValue("org-1"))
+            .WithAttribute("blogId", AttributeValue.StringValue("batch-blog-1"))
             .WithActions("view");
 
         var orgResource = ResourceEntry
@@ -272,14 +169,14 @@ public class CerbosGrpcSdkTests : IDisposable
             .NewInstance()
             .WithRequestId(RequestId.Generate())
             .WithPrincipal(principal)
-            .WithResourceEntries(eventResource, orgResource);
+            .WithResourceEntries(blogResource, orgResource);
 
         var response = await _client.CheckResourcesAsync(request);
 
-        var eventResult = response.Find("batch-event-1")!;
+        var blogResult = response.Find("batch-blog-1")!;
         var orgResult = response.Find("batch-org-1")!;
 
-        AssertEffect(eventResult, "view", Effect.Allow);
+        AssertEffect(blogResult, "view", Effect.Allow);
         AssertEffect(orgResult, "view", Effect.Allow);
     }
 
@@ -357,14 +254,6 @@ public class CerbosGrpcSdkTests : IDisposable
             .WithAttribute("tenantMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()))
             .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()));
 
-    private static Principal BuildMachinePrincipal() =>
-        Principal
-            .NewInstance("api-key-machine-grpc", "islamuevent_authenticated_user")
-            .WithAttribute("isInstanceAdmin", AttributeValue.BoolValue(false))
-            .WithAttribute("tenantMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()))
-            .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()))
-            .WithAttribute("is_machine", AttributeValue.BoolValue(true));
-
     private static Principal BuildTenantAdminPrincipal(string tenantId) =>
         Principal
             .NewInstance("user-tenant-admin-grpc", "islamuevent_authenticated_user")
@@ -374,16 +263,6 @@ public class CerbosGrpcSdkTests : IDisposable
                 [tenantId] = AttributeValue.StringValue("admin")
             }))
             .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()));
-
-    private static Principal BuildOrgAdminPrincipal(string orgId) =>
-        Principal
-            .NewInstance("user-org-admin-grpc", "islamuevent_authenticated_user")
-            .WithAttribute("isInstanceAdmin", AttributeValue.BoolValue(false))
-            .WithAttribute("tenantMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>()))
-            .WithAttribute("orgMemberships", AttributeValue.MapValue(new Dictionary<string, AttributeValue>
-            {
-                [orgId] = AttributeValue.StringValue("admin")
-            }));
 
     #endregion
 }

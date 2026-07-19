@@ -6,6 +6,10 @@ using Asp.Versioning;
 using Explore.API.Attributes;
 using Explore.API.Hateoas;
 using Explore.Application.Contracts.Infrastructure;
+using Explore.Application.DTOs.Blog;
+using Explore.Application.Features.Blogs.Requests;
+using Explore.Application.Responses;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
@@ -16,16 +20,20 @@ namespace Explore.API.Controllers;
 [Route("sitemap.xml")]
 [ApiController]
 [EndpointClassification(EndpointClass.Public)]
-public sealed class SitemapController(IPublicUrlBuilder publicUrlBuilder) : ControllerBase
+public sealed class SitemapController(
+    IMediator mediator,
+    ITenantContext tenantContext,
+    IPublicUrlBuilder publicUrlBuilder) : ControllerBase
 {
+    private const int BlogSitemapPageSize = 100;
+
     private static readonly IReadOnlyList<StaticSitemapEntry> StaticRoutes =
     [
         new("/", "daily", "1.0"),
         new("/welcome", "weekly", "0.8"),
+        new("/blog", "weekly", "0.8"),
         new("/about", "monthly", "0.5"),
         new("/contact", "monthly", "0.5"),
-        new("/privacy", "yearly", "0.3"),
-        new("/terms", "yearly", "0.3"),
         new("/community-guidelines", "yearly", "0.3")
     ];
 
@@ -36,17 +44,64 @@ public sealed class SitemapController(IPublicUrlBuilder publicUrlBuilder) : Cont
     [EndpointDescription("Returns tenant-aware sitemap.xml with static public routes.")]
     [Produces("application/xml")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ContentResult Get()
+    public async Task<ContentResult> Get(CancellationToken cancellationToken = default)
     {
         var baseUrl = publicUrlBuilder.GetBaseUrl().TrimEnd('/');
+        var blogPaths = await GetPublishedBlogPaths(cancellationToken);
 
         XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
         var document = new XDocument(
             new XDeclaration("1.0", "utf-8", null),
             new XElement(ns + "urlset",
-                StaticRoutes.Select(entry => CreateUrlElement(ns, BuildAbsoluteUrl(baseUrl, entry.Path), entry.ChangeFrequency, entry.Priority))));
+                StaticRoutes
+                    .Select(entry => CreateUrlElement(ns, BuildAbsoluteUrl(baseUrl, entry.Path), entry.ChangeFrequency, entry.Priority))
+                    .Concat(blogPaths.Select(path => CreateUrlElement(ns, BuildAbsoluteUrl(baseUrl, path), "weekly", "0.7")))));
 
         return Content(document.ToString(SaveOptions.DisableFormatting), "application/xml; charset=utf-8");
+    }
+
+    private async Task<IReadOnlyList<string>> GetPublishedBlogPaths(CancellationToken cancellationToken)
+    {
+        var firstPage = await GetPublishedBlogsPage(1, cancellationToken);
+        var paths = new HashSet<string>(StringComparer.Ordinal);
+        AddCurrentPublishedBlogPaths(firstPage.Items, paths);
+
+        for (var page = 2; page <= firstPage.TotalPages; page++)
+        {
+            var result = await GetPublishedBlogsPage(page, cancellationToken);
+            AddCurrentPublishedBlogPaths(result.Items, paths);
+        }
+
+        return paths.ToList();
+    }
+
+    private Task<PaginatedResult<BlogSummaryDto>> GetPublishedBlogsPage(int page, CancellationToken cancellationToken)
+    {
+        return mediator.Send(new GetPublishedBlogsQuery(tenantContext.TenantId, page, BlogSitemapPageSize), cancellationToken);
+    }
+
+    private static void AddCurrentPublishedBlogPaths(IEnumerable<BlogSummaryDto> blogs, HashSet<string> paths)
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var blog in blogs)
+        {
+            if (string.IsNullOrWhiteSpace(blog.Slug) || blog.PublishedAtUtc is null || blog.PublishedAtUtc > now)
+            {
+                continue;
+            }
+
+            paths.Add(BuildBlogPath(blog.Slug));
+        }
+    }
+
+    private static string BuildBlogPath(string slug)
+    {
+        var escapedSegments = slug
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .Select(Uri.EscapeDataString);
+
+        return "/blog/" + string.Join('/', escapedSegments);
     }
 
     private static XElement CreateUrlElement(

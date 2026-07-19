@@ -2,7 +2,7 @@
 // ABOUTME: Verifies valid, tampered, and expired DataProtection payload handling.
 
 using Explore.Application.Contracts.Services;
-using Explore.Domain.Constants;
+using Explore.Domain.Enums;
 using Explore.Infrastructure.Mail.Unsubscribe;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -20,7 +20,7 @@ public sealed class EmailUnsubscribeTokenServiceTests
             var payload = new EmailUnsubscribeTokenPayload(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
-                NotificationPreferenceCategories.RegistrationConfirmations,
+                NotificationPreferenceCategoryCodes.ProductAnnouncements,
                 DateTime.UtcNow);
 
             var token = service.GenerateToken(payload);
@@ -30,7 +30,7 @@ public sealed class EmailUnsubscribeTokenServiceTests
             await Assert.That(result.Payload).IsNotNull();
             await Assert.That(result.Payload!.TenantId).IsEqualTo(payload.TenantId);
             await Assert.That(result.Payload.UserId).IsEqualTo(payload.UserId);
-            await Assert.That(result.Payload.Category).IsEqualTo(NotificationPreferenceCategories.RegistrationConfirmations);
+            await Assert.That(result.Payload.Category).IsEqualTo(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         }
         finally
         {
@@ -48,7 +48,7 @@ public sealed class EmailUnsubscribeTokenServiceTests
             var payload = new EmailUnsubscribeTokenPayload(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
-                NotificationPreferenceCategories.RegistrationConfirmations,
+                NotificationPreferenceCategoryCodes.ProductAnnouncements,
                 DateTime.UtcNow);
 
             var token = service.GenerateToken(payload);
@@ -75,7 +75,7 @@ public sealed class EmailUnsubscribeTokenServiceTests
             var payload = new EmailUnsubscribeTokenPayload(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
-                NotificationPreferenceCategories.RegistrationConfirmations,
+                NotificationPreferenceCategoryCodes.ProductAnnouncements,
                 DateTime.UtcNow);
 
             var token = service.GenerateToken(payload, TimeSpan.FromMilliseconds(1));

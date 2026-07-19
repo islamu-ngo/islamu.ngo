@@ -273,21 +273,14 @@ public sealed class McpAuthorizationTests
         using var client = factory.CreateClient();
         using var listRequest = CreateMcpRequest();
         listRequest.Headers.Add("X-API-Key", rawApiKey);
-        using var resourceTemplatesRequest = CreateMcpListRequest("resources/templates/list");
-        resourceTemplatesRequest.Headers.Add("X-API-Key", rawApiKey);
 
         var listResponse = await client.SendAsync(listRequest);
-        var resourceTemplatesResponse = await client.SendAsync(resourceTemplatesRequest);
 
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(listResponse);
         toolNames.Should().Contain("list_ai_tool_contracts");
         AssertEventManagementReadsHidden(toolNames);
         AssertProposalToolsHidden(toolNames);
-
-        resourceTemplatesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var resourceTemplateNames = await ReadResourceTemplateNamesAsync(resourceTemplatesResponse);
-        resourceTemplateNames.Should().NotContain("event_management_context");
 
         using var eventReadCallRequest = CreateMcpToolCallRequest("list_my_events", new { });
         eventReadCallRequest.Headers.Add("X-API-Key", rawApiKey);
@@ -298,20 +291,6 @@ public sealed class McpAuthorizationTests
         using var eventReadErrorDocument = await ReadJsonRpcDocumentAsync(eventReadCallResponse);
         eventReadErrorDocument.RootElement.TryGetProperty("error", out _).Should().BeTrue(eventReadErrorDocument.RootElement.GetRawText());
         eventReadErrorDocument.RootElement.GetRawText().Should().NotContain(rawApiKey);
-
-        using var callRequest = CreateMcpToolCallRequest("propose_create_event_draft", new
-        {
-            conversationId = Guid.CreateVersion7(),
-            title = "Read-only key should not propose"
-        });
-        callRequest.Headers.Add("X-API-Key", rawApiKey);
-
-        var callResponse = await client.SendAsync(callRequest);
-
-        callResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        using var errorDocument = await ReadJsonRpcDocumentAsync(callResponse);
-        errorDocument.RootElement.TryGetProperty("error", out _).Should().BeTrue(errorDocument.RootElement.GetRawText());
-        errorDocument.RootElement.GetRawText().Should().NotContain(rawApiKey);
     }
 
     [Test]
@@ -334,28 +313,21 @@ public sealed class McpAuthorizationTests
                     Secret = secret,
                     TenantId = PlatformDefaults.DefaultTenantId,
                     OwnerId = Guid.CreateVersion7(),
-                    Scopes = [ExternalApiKeyScopes.McpRead, ExternalApiKeyScopes.EventsRead]
+                    Scopes = [ExternalApiKeyScopes.McpRead, ExternalApiKeyScopes.OrganizationsRead]
                 }
             ]
         };
         using var client = factory.CreateClient();
         using var listRequest = CreateMcpRequest();
         listRequest.Headers.Add("X-API-Key", rawApiKey);
-        using var resourceTemplatesRequest = CreateMcpListRequest("resources/templates/list");
-        resourceTemplatesRequest.Headers.Add("X-API-Key", rawApiKey);
 
         var listResponse = await client.SendAsync(listRequest);
-        var resourceTemplatesResponse = await client.SendAsync(resourceTemplatesRequest);
 
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(listResponse);
         toolNames.Should().Contain("list_ai_tool_contracts");
         AssertEventManagementReadsDiscoverable(toolNames);
         AssertProposalToolsHidden(toolNames);
-
-        resourceTemplatesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var resourceTemplateNames = await ReadResourceTemplateNamesAsync(resourceTemplatesResponse);
-        resourceTemplateNames.Should().Contain("event_management_context");
     }
 
     [Test]
@@ -378,7 +350,7 @@ public sealed class McpAuthorizationTests
                     Secret = secret,
                     TenantId = PlatformDefaults.DefaultTenantId,
                     OwnerId = Guid.CreateVersion7(),
-                    Scopes = [ExternalApiKeyScopes.EventsRead]
+                    Scopes = [ExternalApiKeyScopes.OrganizationsRead]
                 }
             ]
         };
@@ -649,7 +621,7 @@ public sealed class McpAuthorizationTests
                     TenantId = PlatformDefaults.DefaultTenantId,
                     OwnerId = ownerUserId,
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = [ExternalApiKeyScopes.McpRead, ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.McpPropose]
+                    Scopes = [ExternalApiKeyScopes.McpRead, ExternalApiKeyScopes.OrganizationsRead, ExternalApiKeyScopes.McpPropose]
                 }
             ]
         };
@@ -796,19 +768,6 @@ public sealed class McpAuthorizationTests
         return result.GetProperty("tools")
             .EnumerateArray()
             .Select(tool => tool.GetProperty("name").GetString())
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Select(name => name!)
-            .ToArray();
-    }
-
-    private static async Task<IReadOnlyList<string>> ReadResourceTemplateNamesAsync(HttpResponseMessage response)
-    {
-        using var document = await ReadJsonRpcDocumentAsync(response);
-        var result = document.RootElement.GetProperty("result");
-
-        return result.GetProperty("resourceTemplates")
-            .EnumerateArray()
-            .Select(template => template.GetProperty("name").GetString())
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name!)
             .ToArray();

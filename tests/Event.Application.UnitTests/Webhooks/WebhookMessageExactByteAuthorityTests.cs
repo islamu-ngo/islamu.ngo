@@ -48,7 +48,7 @@ public sealed class WebhookMessageExactByteAuthorityTests
     [Test]
     public async Task Create_CopiesExactBytesAndComputesSha256Authority()
     {
-        var source = Encoding.UTF8.GetBytes("{\"type\":\"event.published\",\"value\":\"سلام\"}\n");
+        var source = Encoding.UTF8.GetBytes("{\"type\":\"organization.verified\",\"value\":\"سلام\"}\n");
         var expected = source.ToArray();
         var message = CreateMessage(source);
 
@@ -71,7 +71,7 @@ public sealed class WebhookMessageExactByteAuthorityTests
     [Test]
     public async Task ClearPayload_RequiresRetentionExpiryAndPreservesHashEvidence()
     {
-        var message = CreateMessage(Encoding.UTF8.GetBytes("{\"type\":\"event.published\"}"));
+        var message = CreateMessage(Encoding.UTF8.GetBytes("{\"type\":\"organization.verified\"}"));
         var payloadHash = message.PayloadHash;
 
         await Assert.That(() => message.ClearPayload(CreatedAt.AddHours(1)))
@@ -93,16 +93,15 @@ public sealed class WebhookMessageExactByteAuthorityTests
             new WebhookEventBuildContext(
                 MessageId,
                 TenantId,
-                WebhookEventNames.EventPublished,
+                WebhookEventNames.OrganizationVerified,
                 "domain-event-1",
-                "Event",
+                "Organization",
                 AggregateId,
                 new DateTimeOffset(CreatedAt),
                 new Dictionary<string, object?>
                 {
-                    ["eventId"] = AggregateId.ToString(),
-                    ["status"] = "Published",
-                    ["publicUrl"] = "https://example.org/events/community-iftar"
+                    ["organizationId"] = AggregateId.ToString(),
+                    ["status"] = "Verified"
                 }),
             CancellationToken.None);
 
@@ -116,9 +115,9 @@ public sealed class WebhookMessageExactByteAuthorityTests
         WebhookMessage.Create(
             MessageId,
             TenantId,
-            WebhookEventNames.EventPublished,
+            WebhookEventNames.OrganizationVerified,
             "domain-event-1",
-            "Event",
+            "Organization",
             AggregateId,
             consumerId: null,
             payloadBytes,

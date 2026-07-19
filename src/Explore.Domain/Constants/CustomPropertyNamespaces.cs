@@ -34,6 +34,16 @@ public static class CustomPropertyNamespaces
         return IsRootOrChild(namespaceValue, Tenant);
     }
 
+    public static bool IsSector(string? namespaceValue)
+    {
+        if (string.IsNullOrWhiteSpace(namespaceValue))
+        {
+            return false;
+        }
+
+        return IsRootOrChild(namespaceValue, Sector);
+    }
+
     private static bool IsRootOrChild(string namespaceValue, string root)
     {
         return namespaceValue.Equals(root, StringComparison.OrdinalIgnoreCase)

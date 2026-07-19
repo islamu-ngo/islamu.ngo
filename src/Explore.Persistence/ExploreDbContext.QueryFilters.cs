@@ -185,6 +185,13 @@ public partial class ExploreDbContext
                     || (e.Organization != null && e.Organization.TenantId == TenantFilterTenantId));
 
         // ===== Category and Tag Entities =====
+        modelBuilder.Entity<Blog>()
+            .HasQueryFilter(QueryFilterNames.Tenant, e => IsTenantFilterBypassed || e.TenantId == TenantFilterTenantId)
+            .HasQueryFilter(QueryFilterNames.SoftDelete, e => !e.IsDeleted);
+        modelBuilder.Entity<BlogCategory>()
+            .HasQueryFilter(QueryFilterNames.Tenant, e => IsTenantFilterBypassed || e.TenantId == TenantFilterTenantId);
+        modelBuilder.Entity<BlogTag>()
+            .HasQueryFilter(QueryFilterNames.Tenant, e => IsTenantFilterBypassed || e.TenantId == TenantFilterTenantId);
         modelBuilder.Entity<Category>()
             .HasQueryFilter(QueryFilterNames.Tenant, e => IsTenantFilterBypassed || e.TenantId == TenantFilterTenantId);
         modelBuilder.Entity<Tag>()

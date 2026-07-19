@@ -58,7 +58,7 @@ public class AuthorizationProductionGuardrailTests
 
         var provider = scope.ServiceProvider.GetRequiredService<IAuthorizationProvider>();
 
-        var result = await provider.IsAllowedAsync(ResourceKinds.Event, "test-resource", AuthorizationActions.Create);
+        var result = await provider.IsAllowedAsync(ResourceKinds.Organization, "test-resource", AuthorizationActions.Create);
 
         result.Should().BeFalse(
             "with no Cerbos endpoint and authorization.provider unset, " +
@@ -71,7 +71,7 @@ public class AuthorizationProductionGuardrailTests
         using var factory = new NoAuthConfigWebApplicationFactory();
         var client = factory.CreateClient();
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/organizations/my");
 
         var response = await client.SendAsync(request);
 

@@ -89,9 +89,6 @@ public sealed class DefaultNotificationOrchestrator(
             SafePayloadHash = BlankToNull(draft.SafePayloadHash),
             CorrelationId = BlankToNull(draft.CorrelationId),
             UserId = draft.UserId,
-            EventId = draft.EventId,
-            ReportId = draft.ReportId,
-            ReportDecisionId = draft.ReportDecisionId,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -170,8 +167,6 @@ public sealed class DefaultNotificationOrchestrator(
             SafePayloadHash = BlankToNull(draft.SafePayloadHash),
             ExternalProviderId = BlankToNull(draft.ExternalProviderId),
             ExternalCorrelationId = BlankToNull(draft.ExternalCorrelationId),
-            ReportId = draft.ReportId,
-            ReportDecisionId = draft.ReportDecisionId,
             RequestedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };

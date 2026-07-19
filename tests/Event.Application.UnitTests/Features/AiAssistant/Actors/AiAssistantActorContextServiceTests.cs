@@ -4,7 +4,6 @@
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.Features.AiAssistant.Actors;
 using Explore.Domain;
-using Explore.Domain.Constants;
 using Explore.Domain.Enums;
 using NSubstitute;
 
@@ -18,34 +17,24 @@ public sealed class AiAssistantActorContextServiceTests
     private readonly IGroupMemberRepository _groupMemberRepository = Substitute.For<IGroupMemberRepository>();
 
     [Test]
-    public async Task ListAuthorizedActorContextsAsync_ReturnsUserAndAllowedMembershipActorsOnly()
+    public async Task ListAuthorizedActorContextsAsync_ReturnsUserAndTenantMembershipActorsOnly()
     {
         var tenantId = Guid.CreateVersion7();
         var userId = Guid.CreateVersion7();
         var userActorId = Guid.CreateVersion7();
         var allowedOrganizationId = Guid.CreateVersion7();
         var allowedOrganizationActorId = Guid.CreateVersion7();
-        var blockedOrganizationId = Guid.CreateVersion7();
-        var blockedOrganizationActorId = Guid.CreateVersion7();
         var allowedGroupId = Guid.CreateVersion7();
         var allowedGroupActorId = Guid.CreateVersion7();
-        var blockedGroupId = Guid.CreateVersion7();
-        var blockedGroupActorId = Guid.CreateVersion7();
         _actorRepository.GetActorByUserIdAndTenantId(userId, tenantId)
             .Returns(CreateUserActor(userActorId, tenantId, userId));
-        _organizationMemberRepository.GetOrganizationIdsWhereUserHasPermission(userId, PermissionCodes.EventCreate)
-            .Returns([allowedOrganizationId]);
         _organizationMemberRepository.GetMembershipsByUser(userId).Returns(
         [
-            CreateOrganizationMembership(tenantId, allowedOrganizationId, allowedOrganizationActorId, "Allowed Org"),
-            CreateOrganizationMembership(tenantId, blockedOrganizationId, blockedOrganizationActorId, "Blocked Org")
+            CreateOrganizationMembership(tenantId, allowedOrganizationId, allowedOrganizationActorId, "Allowed Org")
         ]);
-        _groupMemberRepository.GetGroupIdsWhereUserHasPermission(userId, PermissionCodes.EventCreate)
-            .Returns([allowedGroupId]);
         _groupMemberRepository.GetMembershipsByUser(userId).Returns(
         [
-            CreateGroupMembership(tenantId, allowedGroupId, allowedGroupActorId, "Allowed Group"),
-            CreateGroupMembership(tenantId, blockedGroupId, blockedGroupActorId, "Blocked Group")
+            CreateGroupMembership(tenantId, allowedGroupId, allowedGroupActorId, "Allowed Group")
         ]);
 
         var contexts = await CreateService().ListAuthorizedActorContextsAsync(tenantId, userId, CancellationToken.None);
@@ -56,8 +45,6 @@ public sealed class AiAssistantActorContextServiceTests
             allowedOrganizationActorId,
             allowedGroupActorId
         ]);
-        await Assert.That(contexts.Select(context => context.ActorId)).DoesNotContain(blockedOrganizationActorId);
-        await Assert.That(contexts.Select(context => context.ActorId)).DoesNotContain(blockedGroupActorId);
     }
 
     [Test]
@@ -105,11 +92,7 @@ public sealed class AiAssistantActorContextServiceTests
 
     private void ConfigureEmptyMemberships(Guid userId)
     {
-        _organizationMemberRepository.GetOrganizationIdsWhereUserHasPermission(userId, PermissionCodes.EventCreate)
-            .Returns([]);
         _organizationMemberRepository.GetMembershipsByUser(userId).Returns([]);
-        _groupMemberRepository.GetGroupIdsWhereUserHasPermission(userId, PermissionCodes.EventCreate)
-            .Returns([]);
         _groupMemberRepository.GetMembershipsByUser(userId).Returns([]);
     }
 

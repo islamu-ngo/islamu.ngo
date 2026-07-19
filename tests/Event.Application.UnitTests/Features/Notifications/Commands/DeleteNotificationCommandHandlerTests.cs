@@ -41,7 +41,7 @@ public class DeleteNotificationCommandHandlerTests
         {
             Id = notificationId,
             UserId = userId,
-            NotificationTypeId = (int)NotificationTypeEnum.EventCreated,
+            NotificationTypeId = (int)NotificationTypeEnum.General,
             NotificationScopeId = (int)ActorTypeEnum.User,
             Title = "Test",
             DeduplicationKey = "delete-notification-test",

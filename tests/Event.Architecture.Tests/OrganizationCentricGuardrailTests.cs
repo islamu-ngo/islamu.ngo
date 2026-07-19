@@ -68,7 +68,7 @@ public class OrganizationCentricGuardrailTests
             "ScopeId"
         };
 
-        var eventPropertyNames = typeof(Explore.Domain.AiProposedAction)
+        var eventPropertyNames = typeof(Explore.Domain.Ai.AiProposedAction)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(property => property.Name)
             .ToHashSet(StringComparer.Ordinal);

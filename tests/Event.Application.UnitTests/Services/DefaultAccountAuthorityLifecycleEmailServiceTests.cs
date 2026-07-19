@@ -140,7 +140,7 @@ public sealed class DefaultAccountAuthorityLifecycleEmailServiceTests
             "keycloak-user-123",
             CurrentEmail: "old@example.test",
             ProposedEmail: "new@example.test",
-            ClientId: "islamu-event-blazor",
+            ClientId: "islamu-ngo-blazor",
             RedirectUri: "https://event.example.test/account",
             LifespanSeconds: 900,
             CorrelationId: correlationId ?? Guid.CreateVersion7().ToString("N"));

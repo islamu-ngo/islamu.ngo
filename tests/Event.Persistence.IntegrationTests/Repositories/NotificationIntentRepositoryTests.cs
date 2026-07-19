@@ -52,17 +52,17 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
         await context.SaveChangesAsync();
 
         var repository = new NotificationIntentRepository(context);
-        var intent = CreateIntent(tenantA.Id, "registration-approved:shared");
+        var intent = CreateIntent(tenantA.Id, "product-lifecycle:shared");
 
         var created = await repository.CreateIntentAsync(intent, CancellationToken.None);
 
         var matchingTenantExists = await repository.ExistsByDeduplicationKeyAsync(
             tenantA.Id,
-            "registration-approved:shared",
+            "product-lifecycle:shared",
             CancellationToken.None);
         var otherTenantDoesNotMatch = await repository.ExistsByDeduplicationKeyAsync(
             tenantB.Id,
-            "registration-approved:shared",
+            "product-lifecycle:shared",
             CancellationToken.None);
         var loaded = await repository.GetByTenantAndIdAsync(tenantA.Id, created.Id, CancellationToken.None);
 
@@ -70,9 +70,9 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
         await Assert.That(matchingTenantExists).IsTrue();
         await Assert.That(otherTenantDoesNotMatch).IsFalse();
         await Assert.That(loaded).IsNotNull();
-        await Assert.That(loaded!.CategoryId).IsEqualTo((int)NotificationCategoryEnum.RegistrationLifecycle);
-        await Assert.That(loaded.OwnershipTypeId).IsEqualTo((int)NotificationOwnershipTypeEnum.IslamuEvent);
-        await Assert.That(loaded.SafePayloadReference).IsEqualTo("notification-intents/registration-approved");
+        await Assert.That(loaded!.CategoryId).IsEqualTo((int)NotificationCategoryEnum.ProductLifecycle);
+        await Assert.That(loaded.OwnershipTypeId).IsEqualTo((int)NotificationOwnershipTypeEnum.ExternalWorkflowProvider);
+        await Assert.That(loaded.SafePayloadReference).IsEqualTo("notification-intents/product-lifecycle");
     }
 
     [Test]
@@ -112,7 +112,7 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
 
         var repository = new NotificationIntentRepository(context);
         var intent = await repository.CreateIntentAsync(
-            CreateIntent(tenant.Id, "moderation-decision:audit"),
+            CreateIntent(tenant.Id, "webhook-provider:audit"),
             CancellationToken.None);
 
         var delivery = new NotificationDelivery
@@ -129,12 +129,12 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
         {
             TenantId = tenant.Id,
             NotificationIntentId = intent.Id,
-            ProviderKindId = (int)ExternalWorkflowProviderKindEnum.Coop,
+            ProviderKindId = (int)ExternalWorkflowProviderKindEnum.WebhookProvider,
             StatusId = (int)NotificationExternalDelegationStatusEnum.Requested,
-            RecipientKindId = (int)NotificationRecipientKindEnum.Moderator,
-            TemplateKey = "moderation.decision.delegate",
-            SafePayloadHash = "sha256:moderation-safe-payload",
-            ExternalProviderId = "coop-case-123",
+            RecipientKindId = (int)NotificationRecipientKindEnum.ProviderOperator,
+            TemplateKey = "provider.workflow.delegate",
+            SafePayloadHash = "sha256:provider-safe-payload",
+            ExternalProviderId = "provider-operation-123",
             RequestedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
         };
@@ -150,8 +150,8 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
             .SingleAsync(row => row.NotificationIntentId == intent.Id);
 
         await Assert.That(persistedDelivery.StatusId).IsEqualTo((int)NotificationDeliveryStatusEnum.LinkedToEmailDispatch);
-        await Assert.That(persistedDelegation.ProviderKindId).IsEqualTo((int)ExternalWorkflowProviderKindEnum.Coop);
-        await Assert.That(persistedDelegation.SafePayloadHash).IsEqualTo("sha256:moderation-safe-payload");
+        await Assert.That(persistedDelegation.ProviderKindId).IsEqualTo((int)ExternalWorkflowProviderKindEnum.WebhookProvider);
+        await Assert.That(persistedDelegation.SafePayloadHash).IsEqualTo("sha256:provider-safe-payload");
     }
 
     [Test]
@@ -212,14 +212,14 @@ public class NotificationIntentRepositoryTests(PostgreSqlContainerFixture fixtur
         return new NotificationIntent
         {
             TenantId = tenantId,
-            CategoryId = (int)NotificationCategoryEnum.RegistrationLifecycle,
-            OwnershipTypeId = (int)NotificationOwnershipTypeEnum.IslamuEvent,
+            CategoryId = (int)NotificationCategoryEnum.ProductLifecycle,
+            OwnershipTypeId = (int)NotificationOwnershipTypeEnum.ExternalWorkflowProvider,
             RecipientKindId = (int)NotificationRecipientKindEnum.User,
             StatusId = (int)NotificationIntentStatusEnum.Pending,
-            TemplateKey = "registration.approved",
+            TemplateKey = "product.lifecycle",
             DeduplicationKey = deduplicationKey,
-            SafePayloadReference = "notification-intents/registration-approved",
-            SafePayloadHash = "sha256:registration-safe-payload",
+            SafePayloadReference = "notification-intents/product-lifecycle",
+            SafePayloadHash = "sha256:product-lifecycle-safe-payload",
             CorrelationId = Guid.NewGuid().ToString("N"),
             CreatedAt = DateTime.UtcNow,
         };

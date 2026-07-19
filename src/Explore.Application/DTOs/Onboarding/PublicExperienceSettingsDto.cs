@@ -50,7 +50,6 @@ public class PublicExperienceSettingsDto
     public bool AdminPrerenderEnabled { get; set; }
     public string OnboardingRenderMode { get; set; } = "InteractiveServer";
     public bool OnboardingPrerenderEnabled { get; set; }
-    public bool DisallowInteractiveServerOnOnboarding { get; set; } = true;
     public bool IsAiAssistantEnabled { get; set; }
     public bool IsAiAssistantAvailable { get; set; }
     public bool AiAssistantAllowAnonymousAccess { get; set; }

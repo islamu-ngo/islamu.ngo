@@ -6,7 +6,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Event.Api.IntegrationTests.Fixtures;
 using FluentAssertions;
-using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -57,7 +56,7 @@ public class SecurityIntegrationTests : IAsyncDisposable
     {
         // Arrange
         var token = await _infra.TokenClient.GetUserTokenAsync();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act
@@ -269,7 +268,7 @@ public class SecurityIntegrationTests : IAsyncDisposable
     #region Negative — Wrong Audience
 
     [Test]
-    public async Task PostProtectedEndpoint_WithTokenMissingApiAudience_ShouldBeHandled()
+    public async Task PostProtectedEndpoint_WithFixtureTokenAudience_ShouldBeHandled()
     {
         var token = await _infra.TokenClient.GetUserTokenAsync();
 
@@ -290,8 +289,7 @@ public class SecurityIntegrationTests : IAsyncDisposable
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized,
-            "the test realm includes the islamu-event-api audience mapper, " +
-            "so a valid token should pass audience validation");
+            "a valid fixture token should pass the configured audience validation");
     }
 
     #endregion
@@ -299,7 +297,7 @@ public class SecurityIntegrationTests : IAsyncDisposable
     #region Public Endpoints — Should Work Without Token
 
     [Test]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     [Arguments("/api/organization")]
     [Arguments("/api/category")]
     [Arguments("/api/tag")]

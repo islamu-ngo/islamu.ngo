@@ -57,7 +57,7 @@ public class StorageObjectRepositoryBypassTests(PostgreSqlContainerFixture fixtu
         var repository = new StorageObjectRepository(tenantBContext);
         var deleteRequestedForTenantA = await repository.ListDeleteRequestedForResourceAsync(
             tenantA.Id,
-            ResourceKinds.Event,
+            ResourceKinds.StorageObject,
             resourceId,
             limit: 10,
             CancellationToken.None);
@@ -142,9 +142,9 @@ public class StorageObjectRepositoryBypassTests(PostgreSqlContainerFixture fixtu
             Extension = ".png",
             Size = 100,
             Visibility = StorageObjectVisibilities.PublicImage,
-            Purpose = StorageObjectPurposes.EventImage,
+            Purpose = StorageObjectPurposes.LegacyImage,
             LifecycleState = lifecycleState,
-            OwningResourceKind = ResourceKinds.Event,
+            OwningResourceKind = ResourceKinds.StorageObject,
             OwningResourceId = resourceId,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             ConcurrencyStamp = Guid.CreateVersion7(),

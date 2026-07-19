@@ -8,7 +8,7 @@ public class KeycloakRealmSyncPreviewRequestDto
     public bool UseTemporaryAdminCredentials { get; set; }
     public string? BootstrapAdminUsername { get; set; }
     public string? BootstrapAdminPassword { get; set; }
-    public string? ApiClientId { get; set; } = "islamu-event-api";
+    public string? ApiClientId { get; set; } = "islamu-ngo-api";
     public IReadOnlyList<string> BlazorRedirectUris { get; set; } = [];
     public IReadOnlyList<string> BlazorWebOrigins { get; set; } = [];
 }

@@ -11,7 +11,7 @@ public class MachineScopeMappingTests
     [Test]
     public async Task ScopesPermit_WithEmptyScopes_ReturnsFalse()
     {
-        bool result = MachineScopeMapping.ScopesPermit([], ResourceKinds.Event, AuthorizationActions.View);
+        bool result = MachineScopeMapping.ScopesPermit([], ResourceKinds.Organization, AuthorizationActions.View);
         await Assert.That(result).IsFalse();
     }
 
@@ -20,55 +20,10 @@ public class MachineScopeMappingTests
     {
         var scopes = new[] { ExternalApiKeyScopes.AdminInstance };
 
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Delete)).IsTrue();
+        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Organization, AuthorizationActions.Delete)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.InstanceSetting, AuthorizationActions.Update)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.PlatformNamespace, AuthorizationActions.Create)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Tenant, AuthorizationActions.Update)).IsTrue();
-    }
-
-    [Test]
-    public async Task ScopesPermit_WithEventsReadOnly_AllowsEventReadButDeniesWrite()
-    {
-        var scopes = new[] { ExternalApiKeyScopes.EventsRead };
-
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.View)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Create)).IsFalse();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Update)).IsFalse();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Delete)).IsFalse();
-    }
-
-    [Test]
-    public async Task ScopesPermit_WithEventsWrite_AllowsReadAndWriteForAllEventResources()
-    {
-        var scopes = new[] { ExternalApiKeyScopes.EventsWrite };
-
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.View)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Update)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventSession, AuthorizationActions.Create)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventSessionAgendaItem, AuthorizationActions.Delete)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventDay, AuthorizationActions.Update)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventAgendaItem, AuthorizationActions.Delete)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventContactShareConsent, AuthorizationActions.ViewSharedContacts)).IsTrue();
-    }
-
-    [Test]
-    public async Task ScopesPermit_WithEventsWrite_AllowsStorageObjectWrites()
-    {
-        var scopes = new[] { ExternalApiKeyScopes.EventsWrite };
-
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.StorageObject, AuthorizationActions.Create)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.StorageObject, AuthorizationActions.Delete)).IsTrue();
-    }
-
-    [Test]
-    public async Task ScopesPermit_WithRegistrationsWrite_AllowsRegistrationWrites()
-    {
-        var scopes = new[] { ExternalApiKeyScopes.RegistrationsWrite };
-
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventRegistration, AuthorizationActions.Create)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventRegistration, AuthorizationActions.View)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EventRegistration, AuthorizationActions.Update)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Create)).IsFalse();
     }
 
     [Test]
@@ -153,12 +108,12 @@ public class MachineScopeMappingTests
         await Assert.That(MachineScopeMapping.ScopesPermit(readScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.View)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(readScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.ProposeAction)).IsFalse();
         await Assert.That(MachineScopeMapping.ScopesPermit(readScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.SendMessage)).IsFalse();
-        await Assert.That(MachineScopeMapping.ScopesPermit(readScopes, ResourceKinds.Event, AuthorizationActions.View)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit(readScopes, ResourceKinds.Organization, AuthorizationActions.View)).IsFalse();
 
         await Assert.That(MachineScopeMapping.ScopesPermit(proposeScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.View)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(proposeScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.ProposeAction)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(proposeScopes, ResourceKinds.AiConversation, AuthorizationActions.AiConversations.ConfirmAction)).IsFalse();
-        await Assert.That(MachineScopeMapping.ScopesPermit(proposeScopes, ResourceKinds.Event, AuthorizationActions.Create)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit(proposeScopes, ResourceKinds.Organization, AuthorizationActions.Create)).IsFalse();
     }
 
     [Test]
@@ -191,9 +146,18 @@ public class MachineScopeMappingTests
     }
 
     [Test]
+    public async Task ScopesPermit_BlogResource_DeniesWithoutExplicitScopeContract()
+    {
+        await Assert.That(MachineScopeMapping.ScopesPermit([ExternalApiKeyScopes.AdminTenant], ResourceKinds.Blog, AuthorizationActions.Blogs.View)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit([ExternalApiKeyScopes.LookupsRead], ResourceKinds.Blog, AuthorizationActions.Blogs.View)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit([ExternalApiKeyScopes.OrganizationsWrite], ResourceKinds.Blog, AuthorizationActions.Blogs.Publish)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit([ExternalApiKeyScopes.GroupsWrite], ResourceKinds.Blog, AuthorizationActions.Blogs.Unpublish)).IsFalse();
+    }
+
+    [Test]
     public async Task ScopesPermit_WithNonAdminTenantScope_DeniesEmailDispatchOperations()
     {
-        var scopes = new[] { ExternalApiKeyScopes.EventsWrite };
+        var scopes = new[] { ExternalApiKeyScopes.OrganizationsWrite };
 
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EmailDispatch, AuthorizationActions.EmailDispatches.View)).IsFalse();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.EmailDispatch, AuthorizationActions.EmailDispatches.ManageTenant)).IsFalse();
@@ -217,7 +181,6 @@ public class MachineScopeMappingTests
     {
         var scopes = new[] { ExternalApiKeyScopes.ApiKeysManage };
 
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.View)).IsFalse();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Organization, AuthorizationActions.Create)).IsFalse();
     }
 
@@ -226,15 +189,13 @@ public class MachineScopeMappingTests
     {
         var scopes = new[]
         {
-            ExternalApiKeyScopes.EventsRead,
             ExternalApiKeyScopes.OrganizationsRead,
             ExternalApiKeyScopes.GroupsRead
         };
 
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.View)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Organization, AuthorizationActions.View)).IsTrue();
         await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Group, AuthorizationActions.View)).IsTrue();
-        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.Create)).IsFalse();
+        await Assert.That(MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Organization, AuthorizationActions.Create)).IsFalse();
     }
 
     [Test]
@@ -250,9 +211,9 @@ public class MachineScopeMappingTests
     [Test]
     public async Task ScopesPermit_ScopeNameIsCaseInsensitive()
     {
-        var scopes = new[] { "EVENTS:READ" };
+        var scopes = new[] { "ORGANIZATIONS:READ" };
 
-        bool result = MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Event, AuthorizationActions.View);
+        bool result = MachineScopeMapping.ScopesPermit(scopes, ResourceKinds.Organization, AuthorizationActions.View);
 
         await Assert.That(result).IsTrue();
     }

@@ -47,10 +47,10 @@ public class TenantSettingsDocumentTests
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => Task.FromResult(
             TenantSettingsDocument.Create(
                 Guid.NewGuid(),
-                SettingsDocumentKeys.Tenant.EventDefaults,
+                SettingsDocumentKeys.Tenant.Branding,
                 schemaVersion: 0,
-                defaultsVersion: "2026-05-event-defaults",
-                payloadJson: "{\"requireApproval\":true}")));
+                defaultsVersion: "2026-05-branding-defaults",
+                payloadJson: "{\"displayName\":\"Open Islamu\"}")));
     }
 
     [Test]

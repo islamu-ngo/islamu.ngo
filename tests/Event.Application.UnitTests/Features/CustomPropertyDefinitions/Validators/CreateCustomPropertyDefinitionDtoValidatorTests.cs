@@ -37,7 +37,7 @@ public class CreateCustomPropertyDefinitionDtoValidatorTests
     {
         var dto = new CreateCustomPropertyDefinitionDto
         {
-            EntityTypeName = EntityTypeName.Event,
+            EntityTypeName = (EntityTypeName)999,
             Namespace = "tenant.community",
             Key = "notes",
             DisplayName = "Notes",

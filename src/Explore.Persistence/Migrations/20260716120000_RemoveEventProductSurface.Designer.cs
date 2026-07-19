@@ -1,5 +1,5 @@
 // ABOUTME: Supplies retained metadata for the Event product persistence teardown target model.
-// ABOUTME: Reuses the static retained-model definition without constructing a DbContext.
+// ABOUTME: Delegates to immutable frozen metadata rather than the mutable DbContext snapshot.
 
 using Explore.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +15,6 @@ namespace Explore.Persistence.Migrations
     partial class RemoveEventProductSurface
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
-            => ExploreDbContextModelSnapshot.BuildRetainedModel(modelBuilder);
+            => RemoveEventProductSurfaceTargetModel.Apply(modelBuilder);
     }
 }

@@ -34,7 +34,7 @@ public sealed class StorageObjectDeletionServiceTests
 
         var result = await service.DeleteRequestedForResourceAsync(
             tenantId,
-            ResourceKinds.Event,
+            ResourceKinds.StorageObject,
             resourceId,
             deletedBy,
             limit: 10,
@@ -68,7 +68,7 @@ public sealed class StorageObjectDeletionServiceTests
 
         var result = await service.DeleteRequestedForResourceAsync(
             tenantId,
-            ResourceKinds.Event,
+            ResourceKinds.StorageObject,
             resourceId,
             deletedBy: null,
             limit: 10,
@@ -95,7 +95,7 @@ public sealed class StorageObjectDeletionServiceTests
 
         var result = await service.DeleteRequestedForResourceAsync(
             tenantId,
-            ResourceKinds.Event,
+            ResourceKinds.StorageObject,
             resourceId,
             deletedBy: null,
             limit: 10,
@@ -132,7 +132,7 @@ public sealed class StorageObjectDeletionServiceTests
         repository
             .ListDeleteRequestedForResourceAsync(
                 tenantId,
-                ResourceKinds.Event,
+                ResourceKinds.StorageObject,
                 resourceId,
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
@@ -156,9 +156,9 @@ public sealed class StorageObjectDeletionServiceTests
         Extension = ".png",
         Size = 100,
         Visibility = StorageObjectVisibilities.PublicImage,
-        Purpose = StorageObjectPurposes.EventImage,
+        Purpose = StorageObjectPurposes.LegacyImage,
         LifecycleState = StorageObjectLifecycleStates.DeleteRequested,
-        OwningResourceKind = ResourceKinds.Event,
+        OwningResourceKind = ResourceKinds.StorageObject,
         OwningResourceId = resourceId,
         CreatedAt = new DateTime(2026, 6, 23, 9, 0, 0, DateTimeKind.Utc)
     };

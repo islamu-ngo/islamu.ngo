@@ -4,7 +4,6 @@
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.Contracts.Services;
-using Explore.Application.DTOs.Instance;
 using Explore.Application.DTOs.Instance.Validators;
 using Explore.Application.Features.InstanceOnboarding.Requests.Commands;
 using Explore.Application.Responses;
@@ -92,8 +91,6 @@ public class UpdateInstanceGovernanceSettingsCommandHandler : IRequestHandler<Up
         request.Settings.DeploymentMode.Mode = currentMode;
         var isSingleTenant = currentMode == DeploymentMode.SingleTenant;
 
-        LogOnboardingGuardrailRejectionIfNeeded(request.UserId, request.Settings.RenderPolicy);
-
         // Atomic: persist settings + update bootstrap in one transaction.
         var bootstrapId = await _unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
@@ -145,20 +142,5 @@ public class UpdateInstanceGovernanceSettingsCommandHandler : IRequestHandler<Up
         return Enum.TryParse<DeploymentMode>(selectedDeploymentMode, ignoreCase: true, out var mode)
             ? mode
             : DeploymentMode.SingleTenant;
-    }
-
-    private void LogOnboardingGuardrailRejectionIfNeeded(Guid userId, RenderPolicySettingsDto rp)
-    {
-        var usesInteractiveServerOnOnboarding = string.Equals(
-            rp.OnboardingRenderMode,
-            RenderModeOptionEnum.InteractiveServer.ToString(),
-            StringComparison.OrdinalIgnoreCase);
-
-        if (!usesInteractiveServerOnOnboarding && rp.DisallowInteractiveServerOnOnboarding)
-            return;
-
-        _logger.LogWarning(
-            "Rejected instance governance update due to onboarding render-policy guardrail violation. UserId: {UserId}, OnboardingRenderMode: {OnboardingRenderMode}, DisallowInteractiveServerOnOnboarding: {DisallowInteractiveServerOnOnboarding}",
-            userId, rp.OnboardingRenderMode, rp.DisallowInteractiveServerOnOnboarding);
     }
 }

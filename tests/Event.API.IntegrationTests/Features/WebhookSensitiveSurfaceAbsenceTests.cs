@@ -4,6 +4,7 @@
 using System.Diagnostics.Metrics;
 using Explore.Application.DTOs.Webhooks;
 using Explore.Application.Telemetry;
+using Explore.Application.Contracts.Webhooks;
 using Explore.Domain;
 using NSubstitute;
 
@@ -45,18 +46,12 @@ public sealed class WebhookSensitiveSurfaceAbsenceTests
         using var meter = new Meter(BusinessMetrics.MeterName);
         meterFactory.Create(Arg.Any<MeterOptions>()).Returns(meter);
         using var metrics = new BusinessMetrics(meterFactory);
-        metrics.RecordWebhookDeliveryFailure("event.published", "abandoned", "http_non_success");
-        metrics.RecordEventReportProviderCallback("svix", "failed", "webhook_signature_invalid");
+        metrics.RecordWebhookDeliveryFailure(WebhookEventNames.WebhookTest, "abandoned", "http_non_success");
 
         var webhookMeasurement = measurements.Single(item =>
             item.InstrumentName == "explore.webhooks.delivery_failure");
-        var callbackMeasurement = measurements.Single(item =>
-            item.InstrumentName == "explore.event_reports.provider_callbacks");
-
         await Assert.That(webhookMeasurement.Tags.Select(tag => tag.Key)).DoesNotContain("tenant_id");
-        await Assert.That(callbackMeasurement.Tags.Select(tag => tag.Key)).DoesNotContain("tenant_id");
         await Assert.That(webhookMeasurement.Value).IsEqualTo(1);
-        await Assert.That(callbackMeasurement.Value).IsEqualTo(1);
     }
 
     private static string[] PropertyNames<T>() =>

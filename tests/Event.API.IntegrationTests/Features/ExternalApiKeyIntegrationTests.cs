@@ -137,7 +137,7 @@ public class ExternalApiKeyIntegrationTests
         var payload = new CreateExternalApiKeyDto
         {
             Name = "Invalid\nKey",
-            Scopes = [ExternalApiKeyScopes.EventsRead],
+            Scopes = [ExternalApiKeyScopes.UsersRead],
             ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User
         };
 
@@ -160,7 +160,7 @@ public class ExternalApiKeyIntegrationTests
         {
             Name = "Description Validation",
             Description = new string('a', 1001),
-            Scopes = [ExternalApiKeyScopes.EventsRead],
+            Scopes = [ExternalApiKeyScopes.UsersRead],
             ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User
         };
 
@@ -179,11 +179,11 @@ public class ExternalApiKeyIntegrationTests
     public async Task CreateExternalApiKey_WithPaddedDuplicateName_ShouldReturnValidationProblemDetails()
     {
         var userId = Guid.NewGuid();
-        await CreateExternalApiKeyAsync(userId, "Normalized Bot", [ExternalApiKeyScopes.EventsRead]);
+        await CreateExternalApiKeyAsync(userId, "Normalized Bot", [ExternalApiKeyScopes.UsersRead]);
         var payload = new CreateExternalApiKeyDto
         {
             Name = " Normalized Bot ",
-            Scopes = [ExternalApiKeyScopes.EventsRead],
+            Scopes = [ExternalApiKeyScopes.UsersRead],
             ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User
         };
 
@@ -227,13 +227,13 @@ public class ExternalApiKeyIntegrationTests
     public async Task UpdateExternalApiKeyPolicy_WithMismatchedRouteId_ShouldReturnValidationProblemDetails()
     {
         var userId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Mismatch Source", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Mismatch Source", ["users:read"]);
         var routeId = Guid.NewGuid();
         var payload = new UpdateExternalApiKeyPolicyDto
         {
             Id = apiKeyId,
             Name = "Mismatch Target",
-            Scopes = ["events:read"],
+            Scopes = ["users:read"],
             ExpiresAt = DateTime.UtcNow.AddDays(14)
         };
 
@@ -252,7 +252,7 @@ public class ExternalApiKeyIntegrationTests
     public async Task UpdateExternalApiKeyPolicy_WithValidationFailure_ShouldReturnValidationProblemDetails()
     {
         var userId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Validation Source", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Validation Source", ["users:read"]);
         var payload = new UpdateExternalApiKeyPolicyDto
         {
             Id = apiKeyId,
@@ -276,12 +276,12 @@ public class ExternalApiKeyIntegrationTests
     public async Task UpdateExternalApiKeyPolicy_WithNameControlCharacter_ShouldReturnValidationProblemDetailsAndLeaveKeyUnchanged()
     {
         var userId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Control Source", [ExternalApiKeyScopes.EventsRead]);
+        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Control Source", [ExternalApiKeyScopes.UsersRead]);
         var payload = new UpdateExternalApiKeyPolicyDto
         {
             Id = apiKeyId,
             Name = "Control\nTarget",
-            Scopes = [ExternalApiKeyScopes.EventsWrite],
+            Scopes = [ExternalApiKeyScopes.UsersWrite],
             ExpiresAt = DateTime.UtcNow.AddDays(14)
         };
 
@@ -300,7 +300,7 @@ public class ExternalApiKeyIntegrationTests
         var stored = await dbContext.ExternalApiKeys.SingleAsync(x => x.Id == apiKeyId);
 
         await Assert.That(stored.Name).IsEqualTo("Control Source");
-        await Assert.That(stored.Scopes).IsEqualTo(ExternalApiKeyScopes.EventsRead);
+        await Assert.That(stored.Scopes).IsEqualTo(ExternalApiKeyScopes.UsersRead);
         await Assert.That(stored.ExpiresAt).IsNull();
     }
 

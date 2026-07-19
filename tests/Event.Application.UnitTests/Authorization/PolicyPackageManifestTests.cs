@@ -32,7 +32,7 @@ public class PolicyPackageManifestTests
     public async Task Manifest_ShouldCarryStableArtifactMetadata()
     {
         var artifact = new PolicyPackageArtifact(
-            LogicalId: "policies/islamuevent_event.yaml",
+            LogicalId: "policies/islamuevent_blog.yaml",
             Kind: PolicyArtifactKind.Policy,
             Sha256: new string('a', 64),
             SizeInBytes: 128,
@@ -47,7 +47,7 @@ public class PolicyPackageManifestTests
 
         await Assert.That(manifest.PackageId).IsEqualTo("islamuevent-authorization-policies");
         await Assert.That(manifest.Artifacts.Count).IsEqualTo(1);
-        await Assert.That(manifest.Artifacts[0].LogicalId).IsEqualTo("policies/islamuevent_event.yaml");
+        await Assert.That(manifest.Artifacts[0].LogicalId).IsEqualTo("policies/islamuevent_blog.yaml");
         await Assert.That(manifest.Artifacts[0].Kind).IsEqualTo(PolicyArtifactKind.Policy);
         await Assert.That(manifest.Artifacts[0].Metadata["extension"]).IsEqualTo("yaml");
     }

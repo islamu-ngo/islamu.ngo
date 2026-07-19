@@ -200,7 +200,7 @@ public class RotateKeycloakClientSecretCommandHandlerTests
     {
         return new KeycloakClientSecretRotationRequestDto
         {
-            ClientId = "islamu-event-blazor",
+            ClientId = "islamu-ngo-blazor",
             SecretOwnershipMode = "application-managed",
             ConfirmApplicationManagedSecret = true,
             NewClientSecret = "replacement-client-secret",
@@ -215,7 +215,7 @@ public class RotateKeycloakClientSecretCommandHandlerTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://keycloak.example.com/realms/ISLAMU",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecret = "old-client-secret",
             KeycloakClientSecretOwnership = new()
             {

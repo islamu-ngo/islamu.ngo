@@ -7,13 +7,9 @@ using Explore.Application.Authorization;
 using Explore.Application.Behaviors;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Persistence;
-using Explore.Application.DTOs.Event;
 using Explore.Application.DTOs.OrganizationMember;
 using Explore.Application.DTOs.StorageObject;
 using Explore.Application.Exceptions;
-using Explore.Application.Features.EventCustomPropertyProjections.Requests.Queries;
-using Explore.Application.Features.Events.Requests.Commands;
-using Explore.Application.Features.EventSessionCustomPropertyProjections.Requests.Queries;
 using Explore.Application.Features.OrganizationMembers.Requests.Queries;
 using Explore.Application.Features.Organizations.Requests.Commands;
 using Explore.Application.Features.StorageObjects.Requests.Commands;
@@ -219,52 +215,6 @@ public class AuthorizationBehaviorTests
     }
 
     [Test]
-    public async Task Handle_WithCreateEventCommand_UsesPreCreateResourceContext()
-    {
-        var secureBehavior = new AuthorizationBehavior<CreateEventCommand, BaseCommandResponse<Guid>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<CreateEventCommand, BaseCommandResponse<Guid>>>>());
-        var organizationId = Guid.NewGuid();
-        var groupId = Guid.NewGuid();
-        var command = new CreateEventCommand
-        {
-            Request = new CreateEventRequest
-            {
-                Title = "Community Dinner",
-                OrganizationId = organizationId,
-                GroupId = groupId
-            }
-        };
-        var expectedResponse = new BaseCommandResponse<Guid> { Success = true };
-
-        _authService.IsAllowedAsync(
-                ResourceKinds.Event,
-                CreateEventCommand.PreCreateResourceId,
-                AuthorizationActions.Create,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null
-                    && attributes["authorizationPhase"].Equals(CreateEventCommand.PreCreateAuthorizationPhase)
-                    && attributes["organizationId"].Equals(organizationId.ToString())
-                    && attributes["groupId"].Equals(groupId.ToString())),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(command, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await _authService.Received(1).IsAllowedAsync(
-            ResourceKinds.Event,
-            CreateEventCommand.PreCreateResourceId,
-            AuthorizationActions.Create,
-            Arg.Is<IDictionary<string, object>?>(attributes =>
-                attributes != null
-                && attributes["authorizationPhase"].Equals(CreateEventCommand.PreCreateAuthorizationPhase)
-                && attributes["organizationId"].Equals(organizationId.ToString())
-                && attributes["groupId"].Equals(groupId.ToString())),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Test]
     public async Task Handle_WithCreateOrganizationCommand_UsesPreCreateResourceContext()
     {
         var secureBehavior = new AuthorizationBehavior<CreateOrganizationCommand, BaseCommandResponse<Guid>>(
@@ -305,144 +255,6 @@ public class AuthorizationBehaviorTests
                 attributes != null
                 && attributes["authorizationPhase"].Equals(CreateOrganizationCommand.PreCreateAuthorizationPhase)),
             Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task Handle_WithPublishEventCommand_PassesEventIdResourceAttribute()
-    {
-        var secureBehavior = new AuthorizationBehavior<PublishEventCommand, BaseCommandResponse<Guid>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<PublishEventCommand, BaseCommandResponse<Guid>>>>());
-        var eventId = Guid.NewGuid();
-        var command = new PublishEventCommand
-        {
-            Id = eventId,
-            Request = new PublishEventRequestDto { ExpectedConcurrencyStamp = Guid.NewGuid() }
-        };
-        var expectedResponse = new BaseCommandResponse<Guid> { Success = true };
-
-        _authService.IsAllowedAsync(
-                ResourceKinds.Event,
-                eventId.ToString(),
-                AuthorizationActions.Update,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null && attributes["eventId"].Equals(eventId.ToString())),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(command, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await _authService.Received(1).IsAllowedAsync(
-            ResourceKinds.Event,
-            eventId.ToString(),
-            AuthorizationActions.Update,
-            Arg.Is<IDictionary<string, object>?>(attributes =>
-                attributes != null && attributes["eventId"].Equals(eventId.ToString())),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task Handle_WithEventResource_EnrichesMissingEventAuthorizationContext()
-    {
-        var eventRepository = Substitute.For<IEventRepository>();
-        var secureBehavior = new AuthorizationBehavior<UpdateEventCommand, BaseCommandResponse<Guid>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<UpdateEventCommand, BaseCommandResponse<Guid>>>>(),
-            eventRepository);
-        var eventId = Guid.NewGuid();
-        var tenantId = Guid.NewGuid();
-        var actorId = Guid.NewGuid();
-        var organizationId = Guid.NewGuid();
-        var command = new UpdateEventCommand
-        {
-            EventId = eventId,
-            ExpectedConcurrencyStamp = Guid.NewGuid(),
-            UpdateEventDto = new UpdateEventDto
-            {
-                Title = new UpdateEventTitleDto { Value = "Test" }
-            }
-        };
-        var expectedResponse = new BaseCommandResponse<Guid> { Success = true };
-
-        eventRepository.GetEventWithDetails(eventId).Returns(new Explore.Domain.Event
-        {
-            Id = eventId,
-            TenantId = tenantId,
-            Title = "Community Program",
-            ActorId = actorId,
-            Actor = new Actor
-            {
-                Id = actorId,
-                TenantId = tenantId,
-                OrganizationId = organizationId,
-                ActorTypeId = 2,
-                ActorType = null!,
-                Tenant = null!,
-                Pii = new ActorPii { DisplayName = "ISLAMU" }
-            },
-            Tenant = null!,
-            EventStatus = null!,
-            EventFormat = null!,
-            VisibilityType = null!
-        });
-        _authService.IsAllowedAsync(
-                ResourceKinds.Event,
-                eventId.ToString(),
-                AuthorizationActions.Update,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null
-                    && attributes["eventId"].Equals(eventId.ToString())
-                    && attributes["tenantId"].Equals(tenantId.ToString())
-                    && attributes["actorId"].Equals(actorId.ToString())
-                    && attributes["organizationId"].Equals(organizationId.ToString())),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(command, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await eventRepository.Received(1).GetEventWithDetails(eventId);
-    }
-
-    [Test]
-    public async Task Handle_WithEventSessionResource_EnrichesMissingEventAuthorizationContext()
-    {
-        var eventSessionRepository = Substitute.For<IEventSessionRepository>();
-        var secureBehavior = new AuthorizationBehavior<TestEventSessionSecureCommand, BaseCommandResponse<Guid>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<TestEventSessionSecureCommand, BaseCommandResponse<Guid>>>>(),
-            eventSessionRepository: eventSessionRepository);
-        var eventSessionId = Guid.NewGuid();
-        var eventId = Guid.NewGuid();
-        var tenantId = Guid.NewGuid();
-        var command = new TestEventSessionSecureCommand(eventSessionId);
-        var expectedResponse = new BaseCommandResponse<Guid> { Success = true };
-
-        eventSessionRepository.GetSessionWithDetails(eventSessionId).Returns(new EventSession
-        {
-            Id = eventSessionId,
-            EventId = eventId,
-            TenantId = tenantId,
-            Event = null!,
-            Tenant = null!
-        });
-        _authService.IsAllowedAsync(
-                ResourceKinds.EventSession,
-                eventSessionId.ToString(),
-                AuthorizationActions.Update,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null
-                    && attributes["eventSessionId"].Equals(eventSessionId.ToString())
-                    && attributes["eventId"].Equals(eventId.ToString())
-                    && attributes["tenantId"].Equals(tenantId.ToString())),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(command, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await eventSessionRepository.Received(1).GetSessionWithDetails(eventSessionId);
     }
 
     [Test]
@@ -565,96 +377,6 @@ public class AuthorizationBehaviorTests
     }
 
     [Test]
-    public async Task Handle_WithCustomPropertyProjectionEventResource_EnrichesTenantAuthorizationContext()
-    {
-        var eventRepository = Substitute.For<IEventRepository>();
-        var secureBehavior = new AuthorizationBehavior<GetEventCustomPropertyProjectionsForEventQuery, BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventCustomPropertyProjectionDto>>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<GetEventCustomPropertyProjectionsForEventQuery, BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventCustomPropertyProjectionDto>>>>>(),
-            eventRepository);
-        var eventId = Guid.NewGuid();
-        var tenantId = Guid.NewGuid();
-        var request = new GetEventCustomPropertyProjectionsForEventQuery { EventId = eventId };
-        var expectedResponse = new BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventCustomPropertyProjectionDto>>
-        {
-            Success = true,
-            Id = []
-        };
-
-        eventRepository.GetEventWithDetails(eventId).Returns(new Explore.Domain.Event
-        {
-            Id = eventId,
-            TenantId = tenantId,
-            Title = "Community Program",
-            ActorId = Guid.NewGuid(),
-            Actor = null!,
-            Tenant = null!,
-            EventStatus = null!,
-            EventFormat = null!,
-            VisibilityType = null!
-        });
-        _authService.IsAllowedAsync(
-                ResourceKinds.CustomPropertyProjection,
-                eventId.ToString("D"),
-                AuthorizationActions.CustomPropertyProjections.View,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null
-                    && attributes["eventId"].Equals(eventId.ToString("D"))
-                    && attributes["tenantId"].Equals(tenantId.ToString("D"))),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(request, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await eventRepository.Received(1).GetEventWithDetails(eventId);
-    }
-
-    [Test]
-    public async Task Handle_WithCustomPropertyProjectionSessionResource_EnrichesTenantAuthorizationContext()
-    {
-        var sessionRepository = Substitute.For<IEventSessionRepository>();
-        var secureBehavior = new AuthorizationBehavior<GetEventSessionCustomPropertyProjectionsForSessionQuery, BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventSessionCustomPropertyProjectionDto>>>(
-            _authService,
-            Substitute.For<ILogger<AuthorizationBehavior<GetEventSessionCustomPropertyProjectionsForSessionQuery, BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventSessionCustomPropertyProjectionDto>>>>>(),
-            eventSessionRepository: sessionRepository);
-        var eventId = Guid.NewGuid();
-        var eventSessionId = Guid.NewGuid();
-        var tenantId = Guid.NewGuid();
-        var request = new GetEventSessionCustomPropertyProjectionsForSessionQuery { EventSessionId = eventSessionId };
-        var expectedResponse = new BaseCommandResponse<IReadOnlyList<Explore.Application.DTOs.CustomPropertyProjection.EventSessionCustomPropertyProjectionDto>>
-        {
-            Success = true,
-            Id = []
-        };
-
-        sessionRepository.GetSessionWithDetails(eventSessionId).Returns(new EventSession
-        {
-            Id = eventSessionId,
-            EventId = eventId,
-            TenantId = tenantId,
-            Event = null!,
-            Tenant = null!
-        });
-        _authService.IsAllowedAsync(
-                ResourceKinds.CustomPropertyProjection,
-                eventSessionId.ToString("D"),
-                AuthorizationActions.CustomPropertyProjections.View,
-                Arg.Is<IDictionary<string, object>?>(attributes =>
-                    attributes != null
-                    && attributes["eventSessionId"].Equals(eventSessionId.ToString("D"))
-                    && attributes["eventId"].Equals(eventId.ToString("D"))
-                    && attributes["tenantId"].Equals(tenantId.ToString("D"))),
-                Arg.Any<CancellationToken>())
-            .Returns(true);
-
-        var result = await secureBehavior.Handle(request, _ => Task.FromResult(expectedResponse), CancellationToken.None);
-
-        await Assert.That(result.Success).IsTrue();
-        await sessionRepository.Received(1).GetSessionWithDetails(eventSessionId);
-    }
-
-    [Test]
     public async Task Handle_WithAuthorizeResourceAndISecureRequest_NullResourceId_FallsBackToTypeName()
     {
         // Arrange
@@ -741,10 +463,4 @@ public class TestSecureCommandWithAttributes : IRequest<BaseCommandResponse<Guid
 public class TestSecureCommandWithNullId : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
 {
     // Uses default null ResourceId — should fall back to type name
-}
-
-[AuthorizeResource(ResourceKinds.EventSession, AuthorizationActions.Update)]
-public sealed class TestEventSessionSecureCommand(Guid eventSessionId) : IRequest<BaseCommandResponse<Guid>>, ISecureRequest
-{
-    string? ISecureRequest.ResourceId => eventSessionId.ToString();
 }

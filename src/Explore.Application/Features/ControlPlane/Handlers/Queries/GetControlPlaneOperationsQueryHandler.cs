@@ -7,8 +7,6 @@ using Explore.Application.Contracts.Services;
 using Explore.Application.DTOs.ControlPlane;
 using Explore.Application.DTOs.Onboarding;
 using Explore.Application.Features.ControlPlane.Requests.Queries;
-using Explore.Application.Settings;
-using Explore.Application.Settings.Groups;
 using Explore.Domain;
 using Explore.Domain.Enums;
 using MediatR;
@@ -19,9 +17,6 @@ namespace Explore.Application.Features.ControlPlane.Handlers.Queries;
 public sealed class GetControlPlaneOperationsQueryHandler(
     IOutboxRepository outboxRepository,
     IEmailDispatchOutboxRepository emailDispatchOutboxRepository,
-    IEventReportRepository eventReportRepository,
-    ITenantRepository tenantRepository,
-    IHierarchicalSettingsResolver settingsResolver,
     IInstanceStorageSettingService storageSettingService,
     IInstanceSmtpSettingService smtpSettingService,
     IConfiguration configuration)
@@ -32,8 +27,6 @@ public sealed class GetControlPlaneOperationsQueryHandler(
     private const int DefaultDueDispatchWarningThreshold = 1000;
     private const int DefaultStaleProcessingWarningThreshold = 1;
     private const int DefaultDeadLetterWarningThreshold = 1;
-    private const int DefaultModerationReportingStuckSyncMinutes = 120;
-    private const int DefaultModerationReportingFailedWarningThreshold = 1;
 
     public async Task<ControlPlaneOperationsDto> Handle(
         GetControlPlaneOperationsQuery request,
@@ -63,28 +56,6 @@ public sealed class GetControlPlaneOperationsQueryHandler(
             processingStartedBefore,
             cancellationToken);
         var deadLetteredEmailDispatchCount = await emailDispatchOutboxRepository.CountDeadLetteredAsync(cancellationToken);
-        var moderationPendingCount = await eventReportRepository.CountExternalLinksBySyncStateAsync(
-            EventReportSyncState.Pending,
-            cancellationToken);
-        var moderationFailedCount = await eventReportRepository.CountExternalLinksBySyncStateAsync(
-            EventReportSyncState.Failed,
-            cancellationToken);
-        var moderationDisabledCount = await eventReportRepository.CountExternalLinksBySyncStateAsync(
-            EventReportSyncState.Disabled,
-            cancellationToken);
-        var moderationIgnoredCount = await eventReportRepository.CountExternalLinksBySyncStateAsync(
-            EventReportSyncState.Ignored,
-            cancellationToken);
-        var moderationStuckPendingCount = await eventReportRepository.CountExternalLinksBySyncStateBeforeAsync(
-            EventReportSyncState.Pending,
-            now.AddMinutes(-ReadInt(
-                "Reporting:Health:StuckProviderSyncMinutes",
-                DefaultModerationReportingStuckSyncMinutes)),
-            cancellationToken);
-        var activeTenantCount = await tenantRepository.GetActiveTenantCountAsync();
-        var tenantDelegation = await settingsResolver.ResolveGroupAsync<TenantDelegationSettingGroup>(
-            new SettingContext(),
-            cancellationToken);
         var storageSettings = await storageSettingService.ReadSettingsAsync(cancellationToken);
         var smtpSettings = await smtpSettingService.ReadSettingsAsync();
 
@@ -100,26 +71,12 @@ public sealed class GetControlPlaneOperationsQueryHandler(
             deadLetterWarningThreshold,
             smtpSettings,
             warnings);
-        var moderationReporting = BuildModerationReportingStatus(
-            moderationPendingCount,
-            moderationFailedCount,
-            moderationDisabledCount,
-            moderationIgnoredCount,
-            moderationStuckPendingCount,
-            activeTenantCount,
-            tenantDelegation.LockReportingProviders,
-            tenantDelegation.LockTenantOspreyProvider,
-            tenantDelegation.LockTenantCoopProvider,
-            ReadInt(
-                "Reporting:Health:FailedProviderSyncWarningThreshold",
-                DefaultModerationReportingFailedWarningThreshold),
-            warnings);
         var storage = BuildStorageStatus(storageSettings, warnings);
 
         return new ControlPlaneOperationsDto
         {
             GeneratedAtUtc = now,
-            Statuses = [generalOutbox, emailDispatch, moderationReporting, storage],
+            Statuses = [generalOutbox, emailDispatch, storage],
             Warnings = warnings
         };
     }
@@ -237,64 +194,6 @@ public sealed class GetControlPlaneOperationsQueryHandler(
                 Metric("retry-scheduled", "Retry scheduled", retryScheduledCount),
                 Metric("stale-processing", "Stale processing", staleProcessingCount),
                 Metric("dead-lettered", "Dead-lettered", deadLetteredCount)
-            ]
-        };
-    }
-
-    private static ControlPlaneOperationStatusDto BuildModerationReportingStatus(
-        int pendingCount,
-        int failedCount,
-        int disabledCount,
-        int ignoredCount,
-        int stuckPendingCount,
-        int activeTenantCount,
-        bool reportingProvidersLocked,
-        bool tenantOspreyLocked,
-        bool tenantCoopLocked,
-        int failedWarningThreshold,
-        ICollection<ControlPlaneWarningDto> warnings)
-    {
-        var hasFailures = failedCount >= failedWarningThreshold;
-        var hasStuckPending = stuckPendingCount > 0;
-
-        if (hasFailures)
-        {
-            warnings.Add(Warning(
-                "moderation_reporting_provider_sync_failures",
-                "warning",
-                "Moderation reporting provider sync has failed rows.",
-                "Review failed reporting provider sync records and provider configuration from an operator-approved path without exposing provider payloads."));
-        }
-
-        if (hasStuckPending)
-        {
-            warnings.Add(Warning(
-                "moderation_reporting_provider_sync_stuck",
-                "warning",
-                "Moderation reporting provider sync has pending rows older than the configured health window.",
-                "Verify the report provider sync dispatcher is running and review provider connectivity without exposing report payloads or provider identifiers."));
-        }
-
-        return new ControlPlaneOperationStatusDto
-        {
-            Key = "moderation-reporting",
-            DisplayName = "Moderation reporting",
-            Status = hasFailures || hasStuckPending ? "attention" : "healthy",
-            Severity = hasFailures || hasStuckPending ? "warning" : "normal",
-            Message = hasFailures || hasStuckPending
-                ? "Moderation reporting provider sync requires operator attention."
-                : "Moderation reporting provider sync counts are within the configured health window.",
-            Metrics =
-            [
-                Metric("pending-sync", "Pending sync", pendingCount),
-                Metric("stuck-pending-sync", "Stuck pending sync", stuckPendingCount),
-                Metric("failed-sync", "Failed sync", failedCount),
-                Metric("disabled-sync", "Disabled sync", disabledCount),
-                Metric("ignored-sync", "Ignored sync", ignoredCount),
-                Metric("reporting-locked-tenants", "Reporting locked tenants", reportingProvidersLocked ? activeTenantCount : 0),
-                Metric("reporting-unlocked-tenants", "Reporting unlocked tenants", reportingProvidersLocked ? 0 : activeTenantCount),
-                Metric("osprey-locked-tenants", "Osprey locked tenants", tenantOspreyLocked ? activeTenantCount : 0),
-                Metric("coop-locked-tenants", "Coop locked tenants", tenantCoopLocked ? activeTenantCount : 0)
             ]
         };
     }

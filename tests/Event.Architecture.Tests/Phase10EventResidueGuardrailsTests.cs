@@ -1,60 +1,52 @@
-// ABOUTME: Architecture guardrails preventing Event product residue in CURRENT source after Phase 10 teardown.
-// ABOUTME: Scans src/, cerbos policies, and generated artifacts for deleted Event product types/resources.
-// ABOUTME: Does NOT scan tests (self), migrations, docs, or generic technical event concepts.
+// ABOUTME: Architecture guardrails preventing deleted Event product residue after Phase 10 teardown.
+// ABOUTME: Scans live source, tests, Cerbos, schema, generated-client, and config artifacts with narrow exclusions.
 
 namespace Event.Architecture.Tests;
 
 using System.Text.RegularExpressions;
 
-/// <summary>
-/// Phase 10 guardrails: after Event product source deletion, no current source file may contain
-/// deleted Event-specific types, services, controllers, pages, or Cerbos resources.
-/// </summary>
-/// <remarks>
-/// Exclusions by design:
-/// - test sources (including this file) — guardrail must never self-match
-/// - historical EF migrations (immutable, timestamped)
-/// - dev docs, provenance, journal entries
-/// - legacy Event.* project/assembly namespace names (Event.API, Event.Application, etc.)
-/// - Event.Web.BffHosting, Event.MigrationService project names
-/// - generic technical terms: WebhookEventType, AuditEvent, OutboxEvent, AnalyticsEvent
-/// - shared lookup types: EventType, EventFormat, EventStatus
-/// </remarks>
 public sealed class Phase10EventResidueGuardrailsTests
 {
     private static readonly string RepoRoot = ResolveRepoRoot();
 
-    #region Scan Roots
-
-    private static readonly string[] SourceScanRoots =
+    private static readonly string[] ProductSourceRoots =
     [
         Path.Combine(RepoRoot, "src"),
     ];
 
-    private static readonly string[] CerbosPolicyRoots =
+    private static readonly string[] TestSourceRoots =
     [
-        Path.Combine(RepoRoot, "src", "Explore.API", "Cerbos", "Policies"),
-        Path.Combine(RepoRoot, "tests", "Event.API.IntegrationTests", "TestAssets", "cerbos", "policies"),
+        Path.Combine(RepoRoot, "tests"),
     ];
 
-    private static readonly string[] GeneratedArtifactRoots =
+    private static readonly string[] CerbosRoots =
     [
+        Path.Combine(RepoRoot, "cerbos", "policies"),
+        Path.Combine(RepoRoot, "cerbos", "policies", "_schemas"),
+        Path.Combine(RepoRoot, "cerbos", "tests"),
+    ];
+
+    private static readonly string[] ClientGeneratedConfigRoots =
+    [
+        Path.Combine(RepoRoot, "schemas"),
+        Path.Combine(RepoRoot, "src", "Explore.API"),
         Path.Combine(RepoRoot, "src", "Explore.Blazor.Client", "Clients"),
+        Path.Combine(RepoRoot, "src", "Explore.Blazor.Client", "Configuration"),
     ];
 
-    #endregion
+    private static readonly string[] OpenApiContractSourceFiles =
+    [
+        Path.Combine(RepoRoot, ".github", "workflows", "openapi-contract.yml"),
+        Path.Combine(RepoRoot, ".ci", "scripts", "validate-release-impact-pr.cs"),
+    ];
 
-    #region Forbidden Patterns (Deleted Event Product Artifacts)
+    private static readonly string[] SourceFileExtensions = [".cs", ".razor"];
+    private static readonly string[] ArtifactFileExtensions = [".cs", ".json", ".yaml", ".yml", ".xml", ".config", ".props", ".targets", ".csproj"];
 
-    /// <summary>
-    /// Precise regex patterns for deleted Event PRODUCT artifacts only.
-    /// Each pattern targets a specific deleted type, service, controller, page, or resource.
-    /// </summary>
     private static readonly string[] ForbiddenSourcePatterns =
     [
-        // Deleted DTOs
-        @"\bEventListDto\b",
         @"\bEventDto\b",
+        @"\bEventListDto\b",
         @"\bCreateEventDraftRequestDto\b",
         @"\bCreateEventRequest\b",
         @"\bUpdateEventRequest\b",
@@ -68,13 +60,17 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bHalCollectionResourceOfEventListDto\b",
         @"\bHalCollectionEmbeddedOfEventListDto\b",
 
-        // Deleted entities (word-bounded to avoid matching "EventType" etc.)
+        @"\bEvent\b",
+        @"\bEventType\b",
+        @"\bEventFormat\b",
+        @"\bEventStatus\b",
         @"\bEventRegistration\b",
         @"\bEventSession\b",
         @"\bEventDay\b",
         @"\bEventAgendaItem\b",
         @"\bEventRegistrationPolicy\b",
         @"\bEventCustomProperty\b",
+        @"\bEventCustomPropertyProjection\b",
         @"\bEventLocation\b",
         @"\bEventRoom\b",
         @"\bEventSpeaker\b",
@@ -86,7 +82,6 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bEventSessionGroup\b",
         @"\bEventSessionLanguage\b",
 
-        // Deleted services
         @"\bIEventService\b",
         @"\bIEventDayService\b",
         @"\bIEventAgendaItemService\b",
@@ -99,8 +94,6 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bIEventSeriesService\b",
         @"\bIEventReportService\b",
         @"\bIEventModerationService\b",
-
-        // Deleted controllers
         @"\bEventController\b",
         @"\bEventDayController\b",
         @"\bEventSessionController\b",
@@ -110,16 +103,12 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bEventCustomPropertyController\b",
         @"\bEventReportsController\b",
         @"\bEventSeriesController\b",
-
-        // Deleted Blazor pages
         @"\bEventList\.razor\b",
         @"\bEventDetail\.razor\b",
         @"\bEventEdit\.razor\b",
         @"\bEventCreate\.razor\b",
         @"\bCreateEvent\.razor\b",
         @"\bMyEvents\.razor\b",
-
-        // Deleted query/command/handler names
         @"\bGetEventList\b",
         @"\bGetEventDetail\b",
         @"\bCreateEventCommand\b",
@@ -128,17 +117,14 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bPublishEvent\b",
         @"\bUpdateEventDraft\b",
 
-        // Deleted API client
         @"\bEventApiClient\.g\.cs\b",
-        @"\bIEventApiClient\b",
-
-        // Deleted domain entity (Explore.Domain.Event with word boundary, NOT EventType/EventFormat)
+        @"\bopenapi_islamu-event\.json\b",
+        @"\bschemas/openapi_islamu-event\.json\b",
+        @"\bschemas/islamu-event\.md\b",
+        @"\bislamu-event\.md\b",
         @"Explore\.Domain\.Event\b",
     ];
 
-    /// <summary>
-    /// Cerbos policy filenames and resource identifiers that were deleted.
-    /// </summary>
     private static readonly string[] ForbiddenCerbosResources =
     [
         "islamuevent_event",
@@ -150,220 +136,348 @@ public sealed class Phase10EventResidueGuardrailsTests
         "islamuevent_event_contact_share_consent",
         "islamuevent_event_session_group",
         "islamuevent_event_session_agenda_item",
+        "islamuevent_custom_property_projection",
     ];
 
-    #endregion
+    private static readonly string[] AllowedLegacyProjectFragments =
+    [
+        "Event.API",
+        "Event.Application",
+        "Event.Architecture.Tests",
+        "Event.Benchmarks",
+        "Event.Domain",
+        "Event.Infrastructure",
+        "Event.MigrationService",
+        "Event.Persistence",
+        "Event.Web.BffHosting",
+    ];
 
-    #region Exclusion Predicates
-
-    private static bool IsExcludedPath(string relativePath)
+    [Test]
+    [DisplayName("Product source must not reference deleted Event product artifacts")]
+    public async Task ProductSource_MustNotReference_DeletedEventProductArtifacts()
     {
-        // Exclude test sources (including this guardrail file)
-        if (relativePath.StartsWith("tests/", StringComparison.Ordinal))
+        var violations = await ScanRootsAsync(ProductSourceRoots, SourceFileExtensions, includeGuardrailFile: true);
+
+        await AssertNoViolationsAsync(
+            violations,
+            "Phase 10 deleted the Event product; live product source must not reference deleted Event types, routes, resources, generated clients, or schema artifacts");
+    }
+
+    [Test]
+    [DisplayName("Test source must not reference deleted Event product artifacts")]
+    public async Task TestSource_MustNotReference_DeletedEventProductArtifacts()
+    {
+        var violations = await ScanRootsAsync(TestSourceRoots, SourceFileExtensions, includeGuardrailFile: false);
+
+        await AssertNoViolationsAsync(
+            violations,
+            "Phase 10 deleted the Event product; tests may keep legacy project names and framework identifiers, but not deleted Event product symbols or artifacts");
+    }
+
+    [Test]
+    [DisplayName("Cerbos roots must not contain deleted Event product resources")]
+    public async Task CerbosRoots_MustNotContain_DeletedEventProductResources()
+    {
+        var violations = new List<string>();
+
+        foreach (var file in EnumerateFiles(CerbosRoots, ArtifactFileExtensions))
+        {
+            var relativePath = Relative(file);
+            var content = await File.ReadAllTextAsync(file);
+
+            foreach (var resource in ForbiddenCerbosResources)
+            {
+                if (content.Contains(resource, StringComparison.Ordinal)
+                    || Path.GetFileName(file).Contains(resource, StringComparison.Ordinal))
+                {
+                    violations.Add($"{relativePath}: contains deleted Cerbos resource '{resource}'");
+                }
+            }
+        }
+
+        await AssertNoViolationsAsync(
+            violations,
+            "Phase 10 deleted Event product Cerbos resources; policy, schema, and test roots must not reference them");
+    }
+
+    [Test]
+    [DisplayName("Client, generated, config, and schema artifacts must use the ISLAMU contract identity")]
+    public async Task ClientGeneratedConfigArtifacts_MustNotUse_DeletedEventContractIdentity()
+    {
+        var violations = await ScanRootsAsync(ClientGeneratedConfigRoots, ArtifactFileExtensions, includeGuardrailFile: true);
+
+        await AssertNoViolationsAsync(
+            violations,
+            "schemas/openapi_islamu.json is the canonical schema identity; old islamu-event schema/config names and deleted generated client artifacts are forbidden");
+    }
+
+    [Test]
+    [DisplayName("OpenAPI contract sources must not reference deleted Event artifacts")]
+    public async Task OpenApiContractSources_MustNotReference_DeletedEventArtifacts()
+    {
+        var violations = await ScanExactFilesAsync(OpenApiContractSourceFiles, DeletedContractArtifactMarkers());
+
+        await AssertNoViolationsAsync(
+            violations,
+            "OpenAPI CI, release-impact classification, and inventory metadata must use the canonical Islamu schema and generated client names");
+    }
+
+    private static async Task<List<string>> ScanRootsAsync(
+        IEnumerable<string> roots,
+        IReadOnlyCollection<string> extensions,
+        bool includeGuardrailFile)
+    {
+        var violations = new List<string>();
+
+        foreach (var file in EnumerateFiles(roots, extensions))
+        {
+            var relativePath = Relative(file);
+            if (IsExcludedPath(relativePath, includeGuardrailFile))
+                continue;
+
+            var lines = await File.ReadAllLinesAsync(file);
+            for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+            {
+                var line = lines[lineIndex];
+
+                foreach (var pattern in ForbiddenSourcePatterns)
+                {
+                    if (!Regex.IsMatch(line, pattern, RegexOptions.CultureInvariant))
+                        continue;
+
+                    if (IsAllowedLine(relativePath, line, pattern))
+                        continue;
+
+                    violations.Add($"{relativePath}:{lineIndex + 1}: matches '{pattern}' => {line.Trim()}");
+                }
+
+                foreach (var resource in ForbiddenCerbosResources)
+                {
+                    if (line.Contains(resource, StringComparison.Ordinal))
+                    {
+                        violations.Add($"{relativePath}:{lineIndex + 1}: contains deleted Cerbos resource '{resource}' => {line.Trim()}");
+                    }
+                }
+            }
+        }
+
+        return violations.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+    }
+
+    private static async Task<List<string>> ScanExactFilesAsync(IEnumerable<string> files, IReadOnlyCollection<string> markers)
+    {
+        var violations = new List<string>();
+
+        foreach (var file in files.Where(File.Exists).Distinct(StringComparer.Ordinal))
+        {
+            var relativePath = Relative(file);
+            var lines = await File.ReadAllLinesAsync(file);
+
+            for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
+            {
+                var line = lines[lineIndex];
+
+                foreach (var marker in markers)
+                {
+                    if (!line.Contains(marker, StringComparison.Ordinal))
+                        continue;
+
+                    if (IsAllowedPriorBranchSchemaFallback(relativePath, line, marker))
+                        continue;
+
+                    violations.Add($"{relativePath}:{lineIndex + 1}: contains deleted OpenAPI artifact '{marker}' => {line.Trim()}");
+                }
+            }
+        }
+
+        return violations.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+    }
+
+    private static string[] DeletedContractArtifactMarkers()
+    {
+        var deletedSchema = "schemas/openapi_islamu" + "-event.json";
+        var deletedClient = "Event" + "ApiClient";
+
+        return
+        [
+            deletedSchema,
+            "Clients/" + deletedClient + ".g.cs",
+            deletedClient + ".g.cs",
+            deletedClient,
+        ];
+    }
+
+    private static bool IsAllowedPriorBranchSchemaFallback(string relativePath, string line, string marker)
+    {
+        return relativePath.Equals(".github/workflows/openapi-contract.yml", StringComparison.Ordinal)
+            && marker.Equals("schemas/openapi_islamu" + "-event.json", StringComparison.Ordinal)
+            && line.Contains("prior-branch legacy comparison fallback only", StringComparison.Ordinal);
+    }
+
+    private static IEnumerable<string> EnumerateFiles(IEnumerable<string> roots, IReadOnlyCollection<string> extensions)
+    {
+        foreach (var root in roots.Where(Directory.Exists).Distinct(StringComparer.Ordinal))
+        {
+            foreach (var file in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                if (extensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase))
+                    yield return file;
+            }
+        }
+    }
+
+    private static bool IsExcludedPath(string relativePath, bool includeGuardrailFile)
+    {
+        if (!includeGuardrailFile
+            && relativePath.Equals("tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs", StringComparison.Ordinal))
             return true;
 
-        // Exclude historical EF migrations
-        if (relativePath.Contains("/Migrations/", StringComparison.Ordinal))
-            return true;
-
-        // Exclude dev docs and provenance
-        if (relativePath.StartsWith("docs/", StringComparison.Ordinal)
-            || relativePath.StartsWith("dev/", StringComparison.Ordinal)
-            || relativePath.StartsWith(".claude/", StringComparison.Ordinal))
-            return true;
-
-        // Exclude generated build artifacts
         if (relativePath.Contains("/bin/", StringComparison.Ordinal)
             || relativePath.Contains("/obj/", StringComparison.Ordinal))
             return true;
 
-        return false;
+        return relativePath.Contains("/Migrations/", StringComparison.Ordinal);
     }
 
-    private static bool IsExcludedLine(string line)
+    private static bool IsAllowedLine(string relativePath, string line, string pattern)
     {
         var trimmed = line.Trim();
 
-        // Namespace declarations using legacy project names are allowed
-        if (trimmed.StartsWith("namespace ", StringComparison.Ordinal))
+        if (IsAboutmeOrCommentMention(trimmed))
             return true;
 
-        // Using statements for legacy project assemblies are allowed
-        if (trimmed.StartsWith("using ", StringComparison.Ordinal)
-            && (trimmed.Contains("Event.API", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Application", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Architecture", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Domain", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Persistence", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Infrastructure", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Benchmarks", StringComparison.Ordinal)
-                || trimmed.Contains("Event.MigrationService", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Web.BffHosting", StringComparison.Ordinal)))
+        if (IsLegacyProjectNameLine(trimmed))
             return true;
 
-        // XML doc references to legacy projects are allowed
-        if (trimmed.StartsWith("///", StringComparison.Ordinal)
-            && (trimmed.Contains("Event.API", StringComparison.Ordinal)
-                || trimmed.Contains("Event.Application", StringComparison.Ordinal)
-                || trimmed.Contains("Event.MigrationService", StringComparison.Ordinal)))
+        if (IsBffFrameworkIdentifierLine(trimmed))
             return true;
 
-        // Generic technical event terms (not product-specific)
-        if (trimmed.Contains("WebhookEventType", StringComparison.Ordinal)
-            || trimmed.Contains("AuditEvent", StringComparison.Ordinal)
-            || trimmed.Contains("OutboxEvent", StringComparison.Ordinal)
-            || trimmed.Contains("AnalyticsEvent", StringComparison.Ordinal)
-            || trimmed.Contains("IntegrationEvent", StringComparison.Ordinal)
-            || trimmed.Contains("DomainEvent", StringComparison.Ordinal))
+        if (IsTask34AppHostIdentifier(relativePath, trimmed))
             return true;
 
-        // Shared lookup types (still exist)
-        if (trimmed.Contains("EventType", StringComparison.Ordinal)
-            || trimmed.Contains("EventFormat", StringComparison.Ordinal)
-            || trimmed.Contains("EventStatus", StringComparison.Ordinal))
+        if (IsGenericTechnicalEventConcept(relativePath, trimmed, pattern))
             return true;
 
         return false;
     }
 
-    #endregion
-
-    [Test]
-    [DisplayName("Source must not reference deleted Event product types or services")]
-    public async Task Source_MustNotReference_DeletedEventProductArtifacts()
+    private static bool IsAboutmeOrCommentMention(string trimmed)
     {
-        var violations = new List<string>();
-
-        foreach (var root in SourceScanRoots.Where(Directory.Exists))
-        {
-            var csFiles = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories);
-
-            foreach (var file in csFiles)
-            {
-                var relativePath = Path.GetRelativePath(RepoRoot, file);
-
-                if (IsExcludedPath(relativePath))
-                    continue;
-
-                var content = await File.ReadAllTextAsync(file);
-
-                foreach (var pattern in ForbiddenSourcePatterns)
-                {
-                    if (Regex.IsMatch(content, pattern, RegexOptions.None))
-                    {
-                        var lines = content.Split('\n');
-                        for (int i = 0; i < lines.Length; i++)
-                        {
-                            if (Regex.IsMatch(lines[i], pattern, RegexOptions.None))
-                            {
-                                if (IsExcludedLine(lines[i]))
-                                    continue;
-
-                                violations.Add($"{relativePath}:{i + 1}: matches '{pattern}' => {lines[i].Trim()}");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        var uniqueViolations = violations.Distinct().ToList();
-
-        if (uniqueViolations.Count > 0)
-        {
-            Console.WriteLine($"Phase 10 Source Residue Violations ({uniqueViolations.Count}):");
-            foreach (var v in uniqueViolations)
-            {
-                Console.WriteLine($"  - {v}");
-            }
-        }
-
-        await Assert.That(uniqueViolations).IsEmpty()
-            .Because("Phase 10 deleted the Event product; no source file may reference deleted Event types, services, controllers, pages, or API clients");
+        return trimmed.StartsWith("// ABOUT" + "ME:", StringComparison.Ordinal)
+            || trimmed.StartsWith("///", StringComparison.Ordinal);
     }
 
-    [Test]
-    [DisplayName("Cerbos policies must not contain deleted Event product resources")]
-    public async Task CerbosPolicies_MustNotContain_DeletedEventProductResources()
+    private static bool IsLegacyProjectNameLine(string trimmed)
     {
-        var violations = new List<string>();
-
-        foreach (var root in CerbosPolicyRoots.Where(Directory.Exists))
+        if (!trimmed.StartsWith("namespace ", StringComparison.Ordinal)
+            && !trimmed.StartsWith("using ", StringComparison.Ordinal)
+            && !trimmed.Contains("<ProjectReference", StringComparison.Ordinal)
+            && !trimmed.Contains("AssemblyName", StringComparison.Ordinal))
         {
-            var yamlFiles = Directory.GetFiles(root, "*.yaml", SearchOption.AllDirectories)
-                .Concat(Directory.GetFiles(root, "*.yml", SearchOption.AllDirectories));
-
-            foreach (var file in yamlFiles)
-            {
-                var relativePath = Path.GetRelativePath(RepoRoot, file);
-                var content = await File.ReadAllTextAsync(file);
-
-                foreach (var resource in ForbiddenCerbosResources)
-                {
-                    if (content.Contains(resource, StringComparison.Ordinal))
-                    {
-                        violations.Add($"{relativePath}: contains deleted Cerbos resource '{resource}'");
-                    }
-                }
-            }
+            return false;
         }
 
-        var uniqueViolations = violations.Distinct().ToList();
-
-        if (uniqueViolations.Count > 0)
-        {
-            Console.WriteLine($"Phase 10 Cerbos Residue Violations ({uniqueViolations.Count}):");
-            foreach (var v in uniqueViolations)
-            {
-                Console.WriteLine($"  - {v}");
-            }
-        }
-
-        await Assert.That(uniqueViolations).IsEmpty()
-            .Because("Phase 10 deleted Event product Cerbos resources; no policy file may reference them");
+        return AllowedLegacyProjectFragments.Any(fragment => trimmed.Contains(fragment, StringComparison.Ordinal));
     }
 
-    [Test]
-    [DisplayName("Generated API client artifacts must not contain deleted Event product types")]
-    public async Task GeneratedArtifacts_MustNotContain_DeletedEventProductTypes()
+    private static bool IsBffFrameworkIdentifierLine(string trimmed)
     {
-        var violations = new List<string>();
+        return trimmed.Contains("EventBff", StringComparison.Ordinal)
+            || trimmed.Contains("EventApiBaseAddressResolver", StringComparison.Ordinal)
+            || trimmed.Contains("EventApiProxyExtensions", StringComparison.Ordinal);
+    }
 
-        foreach (var root in GeneratedArtifactRoots.Where(Directory.Exists))
+    private static bool IsTask34AppHostIdentifier(string relativePath, string trimmed)
+    {
+        if (!relativePath.Equals("src/Explore.AppHost/AppHost.cs", StringComparison.Ordinal)
+            && !relativePath.Equals("tests/Event.Architecture.Tests/AspireLocalInfrastructureArchitectureTests.cs", StringComparison.Ordinal)
+            && !relativePath.Equals("tests/Explore.Blazor.Client.E2ETests/Fixtures/AppHostFixture.cs", StringComparison.Ordinal))
         {
-            var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
-                .Concat(Directory.GetFiles(root, "*.json", SearchOption.AllDirectories))
-                .Concat(Directory.GetFiles(root, "*.yaml", SearchOption.AllDirectories))
-                .Concat(Directory.GetFiles(root, "*.yml", SearchOption.AllDirectories));
+            return false;
+        }
 
-            foreach (var file in files)
+        return trimmed.Contains("Event.MigrationService", StringComparison.Ordinal)
+            || trimmed.Contains("islamu-event-blazor", StringComparison.Ordinal)
+            || trimmed.Contains("islamu-event-api", StringComparison.Ordinal)
+            || trimmed.Contains("islamu-event-blazor-secret", StringComparison.Ordinal);
+    }
+
+    private static bool IsGenericTechnicalEventConcept(string relativePath, string trimmed, string pattern)
+    {
+        if (pattern is @"\bEventFormat\b" or @"\bEventStatus\b")
+            return false;
+
+        if (trimmed.Contains("WebhookEventType", StringComparison.Ordinal))
+            return IsWebhookContext(relativePath, trimmed);
+
+        if (pattern is @"\bEvent\b" or @"\bEventType\b")
+        {
+            return IsWebhookContext(relativePath, trimmed)
+                || IsOutboxContext(relativePath, trimmed)
+                || IsDomainOrIntegrationEventContext(relativePath, trimmed)
+                || IsAuditOrSupportLifecycleContext(relativePath, trimmed)
+                || IsDotNetEventHandlerContext(relativePath, trimmed);
+        }
+
+        return false;
+    }
+
+    private static bool IsWebhookContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("/Webhooks/", StringComparison.Ordinal)
+            || relativePath.Contains("Webhook", StringComparison.Ordinal)
+            || trimmed.Contains("Webhook", StringComparison.Ordinal)
+            || trimmed.Contains("Svix", StringComparison.Ordinal);
+    }
+
+    private static bool IsOutboxContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("Outbox", StringComparison.Ordinal)
+            || trimmed.Contains("Outbox", StringComparison.Ordinal);
+    }
+
+    private static bool IsDomainOrIntegrationEventContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("Integration", StringComparison.Ordinal)
+            || trimmed.Contains("IntegrationEvent", StringComparison.Ordinal)
+            || trimmed.Contains("DomainEvent", StringComparison.Ordinal)
+            || trimmed.Contains("IEventHandler", StringComparison.Ordinal);
+    }
+
+    private static bool IsAuditOrSupportLifecycleContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("Audit", StringComparison.Ordinal)
+            || relativePath.Contains("Support", StringComparison.Ordinal)
+            || trimmed.Contains("AuditEvent", StringComparison.Ordinal)
+            || trimmed.Contains("SupportAccessAuditEvent", StringComparison.Ordinal)
+            || trimmed.Contains("IsLifecycleEvent", StringComparison.Ordinal)
+            || trimmed.Contains("Lifecycle", StringComparison.Ordinal);
+    }
+
+    private static bool IsDotNetEventHandlerContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("Components/", StringComparison.Ordinal)
+            && (trimmed.Contains("EventCallback", StringComparison.Ordinal)
+                || trimmed.Contains("EventArgs", StringComparison.Ordinal));
+    }
+
+    private static async Task AssertNoViolationsAsync(IReadOnlyCollection<string> violations, string because)
+    {
+        if (violations.Count > 0)
+        {
+            Console.WriteLine($"Phase 10 Event residue violations ({violations.Count}):");
+            foreach (var violation in violations)
             {
-                var relativePath = Path.GetRelativePath(RepoRoot, file);
-                var content = await File.ReadAllTextAsync(file);
-
-                foreach (var pattern in ForbiddenSourcePatterns)
-                {
-                    if (Regex.IsMatch(content, pattern, RegexOptions.None))
-                    {
-                        violations.Add($"{relativePath}: matches '{pattern}'");
-                    }
-                }
+                Console.WriteLine($"  - {violation}");
             }
         }
 
-        var uniqueViolations = violations.Distinct().ToList();
+        await Assert.That(violations).IsEmpty().Because(because);
+    }
 
-        if (uniqueViolations.Count > 0)
-        {
-            Console.WriteLine($"Phase 10 Generated Artifact Residue Violations ({uniqueViolations.Count}):");
-            foreach (var v in uniqueViolations)
-            {
-                Console.WriteLine($"  - {v}");
-            }
-        }
-
-        await Assert.That(uniqueViolations).IsEmpty()
-            .Because("Phase 10 deleted Event product types; no generated artifact may contain them");
+    private static string Relative(string file)
+    {
+        return Path.GetRelativePath(RepoRoot, file).Replace(Path.DirectorySeparatorChar, '/');
     }
 
     private static string ResolveRepoRoot()
@@ -373,6 +487,7 @@ public sealed class Phase10EventResidueGuardrailsTests
         {
             directory = directory.Parent;
         }
+
         return directory?.FullName ?? throw new InvalidOperationException("Could not resolve repository root");
     }
 }

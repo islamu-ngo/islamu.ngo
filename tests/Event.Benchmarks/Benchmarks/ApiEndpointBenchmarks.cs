@@ -95,12 +95,8 @@ public sealed record ApiBenchmarkScenario(
 
     public static IReadOnlyList<ApiBenchmarkScenario> ReadScenarios { get; } =
     [
-        new("event-list-minimal", "/api/event?pageNumber=1&pageSize=20", false, true),
-        new("event-list-hal", "/api/event?pageNumber=1&pageSize=20", false, false),
         new("lookup-category-types", "/api/categorytype/with-categories", false, true),
-        new("system-onboarding-status", "/api/system/onboarding-status", false, true),
-        new("my-events-minimal", "/api/event/my?pageNumber=1&pageSize=20", true, true),
-        new("event-creation-context", "/api/event/creation-context", true, true)
+        new("system-onboarding-status", "/api/system/onboarding-status", false, true)
     ];
 
     public override string ToString() => Name;

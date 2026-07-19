@@ -56,7 +56,7 @@ public sealed class SvixVersionConformanceTests(SvixConformanceContainerFixture 
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
             WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.EventCatalog);
+            WebhookProviderCapability.OperationalCallbacks);
     }
 
     [Test]

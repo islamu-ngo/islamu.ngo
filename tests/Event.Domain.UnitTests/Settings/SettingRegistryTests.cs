@@ -132,9 +132,6 @@ public class SettingRegistryTests
             GovernanceSettingKeys.Tenants.SelfServiceRegistration,
             GovernanceSettingKeys.Tenants.WhiteLabelingEnabled,
             GovernanceSettingKeys.Routing.DefaultPublicHomePage,
-            GovernanceSettingKeys.Events.UserSubmissionEnabled,
-            GovernanceSettingKeys.Events.RequireApproval,
-            GovernanceSettingKeys.Events.CardClickOpensDetailPage,
             GovernanceSettingKeys.Organizations.VerificationRequired,
             GovernanceSettingKeys.Organizations.TenantCanOmitVerification,
             GovernanceSettingKeys.Modules.IslamicEnabled,
@@ -184,11 +181,9 @@ public class SettingRegistryTests
             GovernanceSettingKeys.Analytics.EndpointUrl,
             GovernanceSettingKeys.Analytics.PersonalApiKey,
             GovernanceSettingKeys.PublicExperience.Mode,
-            GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
             GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId,
             GovernanceSettingKeys.PublicExperience.HomeBlocks,
             GovernanceSettingKeys.PublicExperience.Ctas,
-            GovernanceSettingKeys.PublicExperience.EventSectionPresets,
         };
 
         var missingKeys = governanceKeys
@@ -294,15 +289,6 @@ public class SettingRegistryTests
     }
 
     [Test]
-    public async Task Registry_EventCardClickBehaviorSupportsUserOverrides()
-    {
-        var definition = SettingRegistry.Get(GovernanceSettingKeys.Events.CardClickOpensDetailPage);
-
-        await Assert.That(definition).IsNotNull();
-        await Assert.That(definition!.MaxScope).IsEqualTo(SettingScope.User);
-    }
-
-    [Test]
     public async Task Registry_PublicExperienceKeysAreRegistered()
     {
         var keys = PublicExperienceSettingDefinitions.All.Select(d => d.Key).ToArray();
@@ -310,11 +296,9 @@ public class SettingRegistryTests
         await Assert.That(keys).IsEquivalentTo(new[]
         {
             GovernanceSettingKeys.PublicExperience.Mode,
-            GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
             GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId,
             GovernanceSettingKeys.PublicExperience.HomeBlocks,
             GovernanceSettingKeys.PublicExperience.Ctas,
-            GovernanceSettingKeys.PublicExperience.EventSectionPresets,
             GovernanceSettingKeys.PublicExperience.AnnouncementBarEnabled,
             GovernanceSettingKeys.PublicExperience.AnnouncementBarMessage,
             GovernanceSettingKeys.PublicExperience.AnnouncementBarLinkText,
@@ -382,7 +366,6 @@ public class SettingRegistryTests
         {
             [GovernanceSettingKeys.PublicExperience.HomeBlocks] = "blocks",
             [GovernanceSettingKeys.PublicExperience.Ctas] = "ctas",
-            [GovernanceSettingKeys.PublicExperience.EventSectionPresets] = "presets",
         };
 
         foreach (var (key, arrayPropertyName) in expectedArrayPropertiesByKey)
@@ -401,14 +384,9 @@ public class SettingRegistryTests
     }
 
     [Test]
-    public async Task Registry_PublicExperienceStringDefaultsAreMetadataOnly()
+    public async Task Registry_PublicExperiencePrimaryOrganizationDefaultIsMetadataOnly()
     {
-        var eventCatalogLabel = SettingRegistry.Get(GovernanceSettingKeys.PublicExperience.EventCatalogLabel);
         var primaryOrganizationId = SettingRegistry.Get(GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId);
-
-        await Assert.That(eventCatalogLabel).IsNotNull();
-        await Assert.That(eventCatalogLabel!.ValueType).IsEqualTo(SettingValueType.String);
-        await Assert.That(eventCatalogLabel.DefaultValue).IsEqualTo("\"Events\"");
 
         await Assert.That(primaryOrganizationId).IsNotNull();
         await Assert.That(primaryOrganizationId!.ValueType).IsEqualTo(SettingValueType.String);

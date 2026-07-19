@@ -63,8 +63,8 @@ public class PolicySyncServiceTests
                 GeneratedAt: generatedAt,
                 Artifacts:
                 [
-                    new PolicyPackageArtifact("islamuevent_event.yaml", PolicyArtifactKind.Policy, "hash1", 10, new Dictionary<string, string>()),
-                    new PolicyPackageArtifact("_schemas/islamuevent_event.json", PolicyArtifactKind.Schema, "hash2", 20, new Dictionary<string, string>())
+                    new PolicyPackageArtifact("islamuevent_blog.yaml", PolicyArtifactKind.Policy, "hash1", 10, new Dictionary<string, string>()),
+                    new PolicyPackageArtifact("_schemas/islamuevent_blog.json", PolicyArtifactKind.Schema, "hash2", 20, new Dictionary<string, string>())
                 ])));
         var service = CreateService(packageService);
 

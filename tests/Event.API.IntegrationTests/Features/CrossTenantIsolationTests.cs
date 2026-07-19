@@ -268,16 +268,16 @@ public class CrossTenantIsolationTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Isolation_RegularUser_DeniedEventCreate()
+    public async Task Isolation_RegularUser_DeniedBlogCreate()
     {
         var token = await _keycloak.TokenClient.GetUserTokenAsync();
-        using var request = Auth(HttpMethod.Post, "/api/event", token);
+        using var request = Auth(HttpMethod.Post, "/api/blog", token);
 
         var response = await _regularUserClient.SendAsync(request);
 
         response.StatusCode.Should().BeOneOf(
             new[] { HttpStatusCode.Forbidden, HttpStatusCode.BadRequest },
-            "regular user should be denied event creation");
+            "regular user should be denied blog creation");
     }
 
     #endregion
@@ -449,7 +449,7 @@ public class CrossTenantIsolationTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_isolation;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",

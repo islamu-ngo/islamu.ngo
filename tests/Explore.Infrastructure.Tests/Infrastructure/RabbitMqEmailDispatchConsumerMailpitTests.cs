@@ -151,11 +151,9 @@ public sealed class RabbitMqEmailDispatchConsumerMailpitTests(
         var missingPointer = new EmailDispatchPointer(
             TenantId: Guid.CreateVersion7(),
             PublishEventId: Guid.CreateVersion7(),
-            Kind: EmailDispatchKind.RegistrationConfirmation,
-            SourceType: "event-registration",
+            Kind: EmailDispatchKind.TenantAdministratorInvitation,
+            SourceType: "tenant-administrator-invitation",
             SourceId: Guid.CreateVersion7(),
-            EventId: Guid.CreateVersion7(),
-            RegistrationIntentId: Guid.CreateVersion7(),
             UserId: Guid.CreateVersion7());
 
         await consumer.StartAsync(CancellationToken.None);
@@ -318,11 +316,9 @@ public sealed class RabbitMqEmailDispatchConsumerMailpitTests(
         Id = Guid.CreateVersion7(),
         TenantId = Guid.CreateVersion7(),
         PublishEventId = Guid.CreateVersion7(),
-        Kind = EmailDispatchKind.RegistrationConfirmation,
-        SourceType = "event-registration",
+        Kind = EmailDispatchKind.TenantAdministratorInvitation,
+        SourceType = "tenant-administrator-invitation",
         SourceId = Guid.CreateVersion7(),
-        EventId = Guid.CreateVersion7(),
-        RegistrationIntentId = Guid.CreateVersion7(),
         UserId = Guid.CreateVersion7(),
         RecipientEmail = "attendee@example.test",
         Subject = subject,

@@ -1,3 +1,6 @@
+// ABOUTME: WebApplicationFactory for API integration tests with in-memory infrastructure overrides.
+// ABOUTME: Configures test database, caching, channels, and authentication provider services.
+
 using System.Threading.Channels;
 using Explore.Domain.Constants;
 using Explore.Persistence;
@@ -27,7 +30,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 {"ConnectionStrings:DefaultConnection", "Host=localhost;Database=explore_db_test;Username=postgres;Password=postgres"},
                 {"Keycloak:Authority", "https://auth.example.com"},
                 {"Keycloak:Realm", "ISLAMU"},
-                {"Keycloak:Audience", "islamu-event-api"},
+                {"Keycloak:Audience", "islamu-ngo-api"},
                 {"Keycloak:RequireHttpsMetadata", "false"},
                 {"Keycloak:MetadataAddress", "https://auth.example.com/.well-known/openid-configuration"},
                 {"S3Settings:Region", "us-east-1"},

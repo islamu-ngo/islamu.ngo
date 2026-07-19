@@ -24,16 +24,13 @@ internal static class OpenApiStringEnumSchemaCatalog
 {
     public static IReadOnlyCollection<Type> EnumTypes { get; } =
     [
-        typeof(CustomPropertyFilterOperator),
         typeof(DeclineBehavior),
         typeof(EntityTypeName),
         typeof(ExposureLevel),
-        typeof(GenderSegregationMode),
         typeof(KeycloakBootstrapMode),
         typeof(ManagedProviderOrganizerKindDto),
         typeof(PosthogCookielessMode),
         typeof(PosthogPersonProfiles),
-        typeof(PrayerTime),
         typeof(PromotionRecommendation),
         typeof(PropertyType),
         typeof(PublicExperienceCtaPlacement),
@@ -42,10 +39,8 @@ internal static class OpenApiStringEnumSchemaCatalog
         typeof(PublicExperienceMode),
         typeof(PublicExperiencePrimaryOrganizationState),
         typeof(RoleEnum),
-        typeof(SessionStartTimeType),
         typeof(SessionEndTimeType),
         typeof(SettingSource),
-        typeof(SkillLevel),
         typeof(SupportAccessModeEnum),
         typeof(BatchUpdateMode),
         typeof(DeploymentMode)

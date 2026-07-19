@@ -21,48 +21,6 @@ public class HateoasLinkDeserializationTests
     }
 
     [Test]
-    public async Task EventDto_DeserializedFromHalResource_PreservesEditLink()
-    {
-        var userId = Guid.NewGuid();
-        using var listRequest = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, "/api/event", userId);
-        var listResponse = await _fixture.Client.SendAsync(listRequest);
-
-        var eventId = await TryFindFirstEmbeddedItemIdAsync(listResponse);
-        if (eventId is null)
-        {
-            return; // No seeded events — not a regression without data.
-        }
-
-        using var detailRequest = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"/api/event/{eventId}", userId);
-        var response = await _fixture.Client.SendAsync(detailRequest);
-
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        await Assert.That(doc.RootElement.TryGetProperty("_links", out _)).IsTrue();
-    }
-
-    [Test]
-    public async Task EventListDto_DeserializedFromCollection_PreservesLinksOnEmbeddedItems()
-    {
-        var userId = Guid.NewGuid();
-        using var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, "/api/event", userId);
-
-        var response = await _fixture.Client.SendAsync(request);
-
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-        var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-
-        if (!TryGetEmbeddedItems(doc, out var items) || items.GetArrayLength() == 0)
-        {
-            return; // No data — not a regression.
-        }
-
-        // Each embedded item must carry _links so EventListDto.AdditionalProperties["_links"] preserves it.
-        var firstItem = items[0];
-        await Assert.That(firstItem.TryGetProperty("_links", out _)).IsTrue();
-    }
-
-    [Test]
     public async Task OrganizationDto_DeserializedFromHalResource_PreservesLinks()
     {
         var userId = Guid.NewGuid();

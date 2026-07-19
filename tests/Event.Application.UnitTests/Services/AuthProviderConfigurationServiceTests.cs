@@ -92,7 +92,7 @@ public sealed class AuthProviderConfigurationServiceTests
         var partial = CreateService(new Dictionary<string, string?>
         {
             ["Keycloak:Authority"] = "https://id.example.test/realms/events",
-            ["Keycloak:Audience"] = "islamu-event-api"
+            ["Keycloak:Audience"] = "islamu-ngo-api"
         });
 
         await Assert.That(await complete.IsConfiguredAsync()).IsTrue();

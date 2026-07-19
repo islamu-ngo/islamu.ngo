@@ -145,6 +145,8 @@ public static class MachineScopeMapping
         AuthorizationActions.EmailDispatches.ManageTenant => true,
         AuthorizationActions.EmailDispatches.Park => true,
         AuthorizationActions.EmailDispatches.Replay => true,
+        AuthorizationActions.Blogs.Publish => true,
+        AuthorizationActions.Blogs.Unpublish => true,
         _ => false
     };
 

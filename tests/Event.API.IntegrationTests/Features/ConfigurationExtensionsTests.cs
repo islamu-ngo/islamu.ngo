@@ -39,6 +39,34 @@ public sealed class ConfigurationExtensionsTests
     }
 
     [Test]
+    public async Task AddInfisicalCompatibility_UsesNgoKeycloakDefaultsWhenAuthorityExists()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["KEYCLOAK_ENDPOINT"] = "https://keycloak.example/auth",
+            ["KEYCLOAK_REALM"] = "ISLAMU"
+        });
+
+        await Assert.That(configuration["Keycloak:ClientId"]).IsEqualTo("islamu-ngo-blazor");
+        await Assert.That(configuration["Keycloak:Audience"]).IsEqualTo("islamu-ngo-api");
+    }
+
+    [Test]
+    public async Task AddInfisicalCompatibility_DoesNotOverrideCanonicalKeycloakValues()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["KEYCLOAK_ENDPOINT"] = "https://keycloak.example/auth",
+            ["KEYCLOAK_REALM"] = "ISLAMU",
+            ["Keycloak:ClientId"] = "canonical-client",
+            ["Keycloak:Audience"] = "canonical-api"
+        });
+
+        await Assert.That(configuration["Keycloak:ClientId"]).IsEqualTo("canonical-client");
+        await Assert.That(configuration["Keycloak:Audience"]).IsEqualTo("canonical-api");
+    }
+
+    [Test]
     public async Task AddInfisicalCompatibility_DoesNotOverrideCanonicalCerbosUsePolicyScope()
     {
         var configuration = BuildConfiguration(new Dictionary<string, string?>
@@ -125,7 +153,7 @@ public sealed class ConfigurationExtensionsTests
             ["MAIL_SMTP_PASSWORD"] = "smtp-secret",
             ["MAIL_SMTP_ENCRYPTION"] = "None",
             ["MAIL_SMTP_FROM_ADDRESS"] = "noreply@localhost",
-            ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Event Dev"
+            ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Website Dev"
         });
 
         await Assert.That(configuration["Smtp:Host"]).IsEqualTo("mailpit");
@@ -134,7 +162,7 @@ public sealed class ConfigurationExtensionsTests
         await Assert.That(configuration["Smtp:Password"]).IsEqualTo("smtp-secret");
         await Assert.That(configuration["Smtp:Encryption"]).IsEqualTo("None");
         await Assert.That(configuration["Smtp:FromAddress"]).IsEqualTo("noreply@localhost");
-        await Assert.That(configuration["Smtp:FromName"]).IsEqualTo("ISLAMU Event Dev");
+        await Assert.That(configuration["Smtp:FromName"]).IsEqualTo("ISLAMU Website Dev");
     }
 
     [Test]

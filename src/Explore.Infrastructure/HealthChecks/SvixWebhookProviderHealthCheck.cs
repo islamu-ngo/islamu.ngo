@@ -86,14 +86,6 @@ public sealed class SvixWebhookProviderHealthCheck(
                 data: data);
         }
 
-        if (currentOptions.Svix.SyncEventTypesOnStartup &&
-            !Supports(profile.Capabilities, WebhookProviderCapability.EventCatalog))
-        {
-            return HealthCheckResult.Unhealthy(
-                "The selected Svix profile does not prove the enabled event catalog capability.",
-                data: data);
-        }
-
         var authTokenSettingKey = currentOptions.Svix.AuthTokenSecretRef?.Trim();
         if (string.IsNullOrWhiteSpace(authTokenSettingKey))
         {

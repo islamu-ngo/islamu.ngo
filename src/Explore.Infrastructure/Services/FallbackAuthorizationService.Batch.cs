@@ -97,9 +97,7 @@ public partial class FallbackAuthorizationService
                 => action is "view" || EvaluateTenantScopedWithProfile(profile, resourceAttributes),
             "islamuevent_custom_property_value"
                 => action is "view" || IsAdminForOrgScope(profile, resourceAttributes, resourceId),
-            "islamuevent_custom_property_projection"
-                => EvaluateCustomPropertyProjectionWithProfile(profile, action, resourceAttributes),
-            "islamuevent_custom_property_governance" or "islamuevent_email_dispatch" or "islamuevent_webhook"
+            "islamuevent_custom_property_governance" or "islamuevent_email_dispatch" or "islamuevent_blog" or "islamuevent_webhook"
                 => EvaluateTenantScopedWithProfile(profile, resourceAttributes),
             "islamuevent_support_access_session"
                 => EvaluateSupportAccessSessionWithProfile(profile, action, resourceAttributes),
@@ -158,18 +156,6 @@ public partial class FallbackAuthorizationService
             return profile.IsTenantAdmin;
 
         return profile.IsTenantAdmin
-            && TryResolveGuidAttribute(resourceAttributes, "tenantId", out var tenantId)
-            && tenantId == profile.TenantId;
-    }
-
-    private static bool EvaluateCustomPropertyProjectionWithProfile(
-        AuthorityProfile profile,
-        string action,
-        IDictionary<string, object>? resourceAttributes)
-    {
-        return action is AuthorizationActions.CustomPropertyProjections.View
-                or AuthorizationActions.CustomPropertyProjections.Update
-            && profile.IsTenantAdmin
             && TryResolveGuidAttribute(resourceAttributes, "tenantId", out var tenantId)
             && tenantId == profile.TenantId;
     }

@@ -124,7 +124,7 @@ public sealed class SettingMutationBoundaryArchitectureTests
         bool hasTenantSetting = services.Any(descriptor =>
             descriptor.ServiceType == typeof(IGenericRepository<TenantSetting, Guid>));
         bool hasLegitimateClosedRepository = services.Any(descriptor =>
-            descriptor.ServiceType == typeof(IGenericRepository<EventReportDecision, Guid>));
+            descriptor.ServiceType == typeof(IGenericRepository<UserPii, Guid>));
 
         using ServiceProvider provider = services.BuildServiceProvider();
         object? resolvedSystemSettingRepository = provider.GetService<IGenericRepository<SystemSetting, Guid>>();

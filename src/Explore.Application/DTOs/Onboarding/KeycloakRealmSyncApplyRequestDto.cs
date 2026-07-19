@@ -11,7 +11,7 @@ public class KeycloakRealmSyncApplyRequestDto
 
     public string? BootstrapAdminPassword { get; set; }
 
-    public string? ApiClientId { get; set; } = "islamu-event-api";
+    public string? ApiClientId { get; set; } = "islamu-ngo-api";
 
     public IReadOnlyList<string> BlazorRedirectUris { get; set; } = [];
 

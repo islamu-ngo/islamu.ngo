@@ -1,6 +1,5 @@
-// ABOUTME: Endpoint authorization matrix — verifies that every API endpoint enforces the correct
-// ABOUTME: authentication and authorization behavior across all personas (anonymous, regular user,
-// ABOUTME: tenant admin, instance admin). Uses Local RBAC mode with mocked IAdminContext.
+// ABOUTME: Endpoint authorization matrix verifying API authentication and authorization behavior.
+// ABOUTME: Covers anonymous, regular user, tenant admin, and instance admin personas with Local RBAC.
 
 using System.Net;
 using System.Net.Http.Headers;
@@ -92,25 +91,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
 
     #region Tier 0 — Public Endpoints (AllowAnonymous)
 
-    [Test]
-    public async Task Matrix_Public_EventFormats_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventformat");
-    }
-
-    [Test]
-    public async Task Matrix_Public_EventStatuses_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventstatus");
-    }
-
-    [Test]
-    public async Task Matrix_Public_EventTypes_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventtype");
-    }
-
-    [Test]
     public async Task Matrix_Public_Categories_AnonymousOK()
     {
         await AssertAnonymousOk("/api/category");
@@ -135,9 +115,9 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Matrix_Public_Events_AnonymousOK()
+    public async Task Matrix_Public_Blogs_AnonymousOK()
     {
-        await AssertAnonymousOk("/api/event");
+        await AssertAnonymousOk("/api/blog");
     }
 
     [Test]
@@ -158,13 +138,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
         await AssertAnonymousOk("/api/location");
     }
 
-    [Test]
-    public async Task Matrix_Public_EventSessions_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventsession");
-    }
-
-    [Test]
     public async Task Matrix_Public_TenantNavigation_AnonymousOK()
     {
         await AssertAnonymousOk("/api/tenant/navigation");
@@ -218,13 +191,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
         await AssertAnonymousOk("/api/scheduleitemkind");
     }
 
-    [Test]
-    public async Task Matrix_Public_EventSessionKinds_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventsessionkind");
-    }
-
-    [Test]
     public async Task Matrix_Public_AuthProviderStatus_AnonymousOK()
     {
         await AssertAnonymousOk("/api/instance/settings/auth-provider/status");
@@ -241,9 +207,9 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
     #region Tier 1 — Authenticated Endpoints (401 for Anonymous)
 
     [Test]
-    public async Task Matrix_Auth_EventMy_AnonymousDenied()
+    public async Task Matrix_Auth_BlogManagement_AnonymousDenied()
     {
-        await AssertAnonymousUnauthorized("/api/event/my");
+        await AssertAnonymousUnauthorized("/api/blog/manage");
     }
 
     [Test]
@@ -270,31 +236,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
         await AssertAnonymousUnauthorized("/api/tenant-user-role-grants", HttpMethod.Post);
     }
 
-    [Test]
-    public async Task Matrix_Auth_EventRegistrations_ListAnonymousDenied()
-    {
-        await AssertAnonymousUnauthorized("/api/eventregistration");
-    }
-
-    [Test]
-    public async Task Matrix_Auth_EventRegistrations_DetailAnonymousDenied()
-    {
-        await AssertAnonymousUnauthorized("/api/eventregistration/00000000-0000-0000-0000-000000000001");
-    }
-
-    [Test]
-    public async Task Matrix_Auth_EventRegistrations_BySessionAnonymousDenied()
-    {
-        await AssertAnonymousUnauthorized("/api/eventregistration/by-session/00000000-0000-0000-0000-000000000001");
-    }
-
-    [Test]
-    public async Task Matrix_Auth_EventRegistrations_ByUserAnonymousDenied()
-    {
-        await AssertAnonymousUnauthorized("/api/eventregistration/by-user/00000000-0000-0000-0000-000000000001");
-    }
-
-    [Test]
     public async Task Matrix_Auth_TenantUserRoleGrants_ListAnonymousDenied()
     {
         await AssertAnonymousUnauthorized("/api/tenant-user-role-grants");
@@ -846,21 +787,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
             "user settings should be accessible to all authenticated users");
     }
 
-    [Test]
-    public async Task Matrix_SelfService_EventRegistrationCreate_RegularUserOK()
-    {
-        var token = await _keycloak.TokenClient.GetUserTokenAsync();
-        using var request = Auth(HttpMethod.Post, "/api/eventregistration", token);
-
-        var response = await _regularUserClient.SendAsync(request);
-
-        response.StatusCode.Should().BeOneOf(
-            new[] { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.BadRequest },
-            "event registration create should be available to all authenticated users " +
-            "(actual status depends on request body validation)");
-    }
-
-    [Test]
     public async Task Matrix_SelfService_StorageUploadUrl_RegularUserOK()
     {
         var token = await _keycloak.TokenClient.GetUserTokenAsync();
@@ -1106,7 +1032,7 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_matrix;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",

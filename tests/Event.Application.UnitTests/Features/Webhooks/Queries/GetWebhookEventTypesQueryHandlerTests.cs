@@ -25,9 +25,9 @@ public sealed class GetWebhookEventTypesQueryHandlerTests
                     new WebhookEventType
                     {
                         Id = persistedId,
-                        Name = WebhookEventNames.EventPublished,
-                        GroupName = "event",
-                        Description = "Raised when an event becomes publicly published.",
+                        Name = WebhookEventNames.OrganizationVerified,
+                        GroupName = "organization",
+                        Description = "Raised when an organization is verified.",
                         SchemaJson = """{"type":"object"}""",
                         SchemaVersion = 1,
                         IsPublic = true,
@@ -42,24 +42,22 @@ public sealed class GetWebhookEventTypesQueryHandlerTests
 
         var result = await handler.Handle(new GetWebhookEventTypesQuery(), CancellationToken.None);
 
-        await Assert.That(result).Count().IsEqualTo(13);
-        await Assert.That(result.Select(eventType => eventType.Name)).Contains(WebhookEventNames.EventPublished);
-        await Assert.That(result.Select(eventType => eventType.Name)).Contains(WebhookEventNames.EventHeavyRedacted);
+        await Assert.That(result).Count().IsEqualTo(2);
+        await Assert.That(result.Select(eventType => eventType.Name)).Contains(WebhookEventNames.OrganizationVerified);
         await Assert.That(result.Select(eventType => eventType.Name)).Contains(WebhookEventNames.WebhookTest);
 
-        var published = result.Single(eventType => eventType.Name == WebhookEventNames.EventPublished);
-        await Assert.That(published.Id).IsEqualTo(persistedId);
-        await Assert.That(published.GroupName).IsEqualTo("event");
-        await Assert.That(published.SchemaVersion).IsEqualTo(1);
-        await Assert.That(published.IsPublic).IsTrue();
-        await Assert.That(published.IsEnabled).IsTrue();
-        await Assert.That(published.PayloadRetentionDays).IsEqualTo(14);
-        await Assert.That(published.DataFields.Select(field => field.Name)).Contains("eventId");
-        await Assert.That(published.DataFields.Single(field => field.Name == "publicUrl").Required).IsFalse();
+        var verified = result.Single(eventType => eventType.Name == WebhookEventNames.OrganizationVerified);
+        await Assert.That(verified.Id).IsEqualTo(persistedId);
+        await Assert.That(verified.GroupName).IsEqualTo("organization");
+        await Assert.That(verified.SchemaVersion).IsEqualTo(1);
+        await Assert.That(verified.IsPublic).IsTrue();
+        await Assert.That(verified.IsEnabled).IsTrue();
+        await Assert.That(verified.PayloadRetentionDays).IsEqualTo(14);
+        await Assert.That(verified.DataFields.Select(field => field.Name)).Contains("organizationId");
 
-        using var schema = JsonDocument.Parse(published.SchemaJson);
-        using var example = JsonDocument.Parse(published.ExamplePayloadJson);
+        using var schema = JsonDocument.Parse(verified.SchemaJson);
+        using var example = JsonDocument.Parse(verified.ExamplePayloadJson);
         await Assert.That(schema.RootElement.GetProperty("type").GetString()).IsEqualTo("object");
-        await Assert.That(example.RootElement.GetProperty("type").GetString()).IsEqualTo(WebhookEventNames.EventPublished);
+        await Assert.That(example.RootElement.GetProperty("type").GetString()).IsEqualTo(WebhookEventNames.OrganizationVerified);
     }
 }

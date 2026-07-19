@@ -7,6 +7,7 @@ namespace Explore.Application.Contracts.Persistence;
 
 public interface IStorageObjectRepository : IGenericRepository<StorageObject, Guid>
 {
+    Task<StorageObject?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<StorageObject?> GetFileWithDetails(Guid id);
     Task<List<StorageObject>> GetFilesWithDetails();
     Task<(List<StorageObject> Items, int TotalCount)> GetFilesWithDetailsPaged(int pageNumber, int pageSize);

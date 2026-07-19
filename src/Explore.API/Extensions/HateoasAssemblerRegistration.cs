@@ -6,12 +6,12 @@ namespace Explore.API.Extensions;
 using Explore.API.Hateoas;
 using Explore.API.Hateoas.Assemblers;
 using Explore.API.Hateoas.Policies;
-using Explore.API.Hateoas.Resources;
 using Explore.Application.Contracts.Hateoas;  // For ILinkPolicy, ICollectionLinkPolicy
 using Explore.Application.DTOs.Actor;
 using Explore.Application.DTOs.ActorSubscription;
 using Explore.Application.DTOs.Ai;
 using Explore.Application.DTOs.AtprotoRecord;
+using Explore.Application.DTOs.Blog;
 using Explore.Application.DTOs.Category;
 using Explore.Application.DTOs.ControlPlane;
 using Explore.Application.DTOs.CustomPropertyDefinition;
@@ -71,6 +71,10 @@ public static class HateoasAssemblerRegistration
         services.AddScoped<ILinkPolicy<LocationDto>, LocationDetailLinkPolicy>();
         services.AddScoped<ICollectionLinkPolicy<LocationListDto>, LocationCollectionLinkPolicy>();
         services.AddScoped<IResourceAssembler<LocationDto, LocationListDto>, LocationResourceAssembler>();
+
+        services.AddScoped<ILinkPolicy<BlogDetailDto>, BlogDetailLinkPolicy>();
+        services.AddScoped<ICollectionLinkPolicy<BlogSummaryDto>, BlogCollectionLinkPolicy>();
+        services.AddScoped<IResourceAssembler<BlogDetailDto, BlogSummaryDto>, BlogResourceAssembler>();
 
         // Category
         services.AddScoped<ILinkPolicy<CategoryDto>, CategoryDetailLinkPolicy>();

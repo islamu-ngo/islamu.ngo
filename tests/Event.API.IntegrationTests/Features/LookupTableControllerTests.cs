@@ -1,3 +1,6 @@
+// ABOUTME: Integration tests for retained lookup table controllers and public read accessibility.
+// ABOUTME: Verifies non-Event lookup endpoints return successfully and avoid server errors.
+
 using System.Net;
 using Event.Api.IntegrationTests.Fixtures;
 using TUnit.Assertions;
@@ -20,60 +23,6 @@ public class LookupTableControllerTests
     {
         _fixture = fixture;
     }
-
-    #region EventType Controller
-
-    [Test]
-    public async Task EventType_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventtype");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task EventType_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventtype/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
-    #region EventStatus Controller
-
-    [Test]
-    public async Task EventStatus_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventstatus");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task EventStatus_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventstatus/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
-    #region EventFormat Controller
-
-    [Test]
-    public async Task EventFormat_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventformat");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task EventFormat_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventformat/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
 
     #region VisibilityType Controller
 
@@ -107,17 +56,6 @@ public class LookupTableControllerTests
     {
         var response = await _fixture.Client.GetAsync("/api/registrationmode/1");
         await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
-    #region EventSessionKind Controller
-
-    [Test]
-    public async Task EventSessionKind_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/eventsessionkind");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
 
     #endregion

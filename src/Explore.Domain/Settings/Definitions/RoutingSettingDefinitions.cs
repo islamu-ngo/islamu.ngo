@@ -90,9 +90,9 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition RenderPolicyPreset = new(
         Key: "routing.render_policy.preset",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"balanced\"",
+        DefaultValue: "\"AllInteractiveServer\"",
         Category: "Routing",
-        Description: "Render policy preset (balanced, performance, compatibility)");
+        Description: "Render policy preset controlling prerender defaults");
 
     public static readonly SettingDefinition RenderPolicyAdvancedEnabled = new(
         Key: "routing.render_policy.advanced_enabled",
@@ -101,25 +101,18 @@ public static class RoutingSettingDefinitions
         Category: "Routing",
         Description: "Whether advanced render policy configuration is enabled");
 
-    public static readonly SettingDefinition RenderPolicyDisallowInteractiveServerOnOnboarding = new(
-        Key: "routing.render_policy.onboarding.disallow_interactive_server",
-        ValueType: SettingValueType.Boolean,
-        DefaultValue: "false",
-        Category: "Routing",
-        Description: "Disallow InteractiveServer render mode on onboarding pages");
-
     // Fallback (Global)
     public static readonly SettingDefinition FallbackRenderMode = new(
         Key: "routing.render_policy.global.render_mode",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"InteractiveAuto\"",
+        DefaultValue: "\"InteractiveServer\"",
         Category: "Routing",
         Description: "Global fallback render mode");
 
     public static readonly SettingDefinition FallbackPrerenderEnabled = new(
         Key: "routing.render_policy.global.prerender_enabled",
         ValueType: SettingValueType.Boolean,
-        DefaultValue: "true",
+        DefaultValue: "false",
         Category: "Routing",
         Description: "Global fallback prerender enabled");
 
@@ -127,7 +120,7 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition PublicSeoRenderMode = new(
         Key: "routing.render_policy.public_seo.render_mode",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"InteractiveAuto\"",
+        DefaultValue: "\"InteractiveServer\"",
         Category: "Routing",
         Description: "Public SEO pages render mode");
 
@@ -142,14 +135,14 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition OperationalRenderMode = new(
         Key: "routing.render_policy.operational.render_mode",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"InteractiveAuto\"",
+        DefaultValue: "\"InteractiveServer\"",
         Category: "Routing",
         Description: "Operational pages render mode");
 
     public static readonly SettingDefinition OperationalPrerenderEnabled = new(
         Key: "routing.render_policy.operational.prerender_enabled",
         ValueType: SettingValueType.Boolean,
-        DefaultValue: "true",
+        DefaultValue: "false",
         Category: "Routing",
         Description: "Operational pages prerender enabled");
 
@@ -157,14 +150,14 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition AdminRenderMode = new(
         Key: "routing.render_policy.admin.render_mode",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"InteractiveAuto\"",
+        DefaultValue: "\"InteractiveServer\"",
         Category: "Routing",
         Description: "Admin pages render mode");
 
     public static readonly SettingDefinition AdminPrerenderEnabled = new(
         Key: "routing.render_policy.admin.prerender_enabled",
         ValueType: SettingValueType.Boolean,
-        DefaultValue: "true",
+        DefaultValue: "false",
         Category: "Routing",
         Description: "Admin pages prerender enabled");
 
@@ -172,14 +165,14 @@ public static class RoutingSettingDefinitions
     public static readonly SettingDefinition OnboardingRenderMode = new(
         Key: "routing.render_policy.onboarding.render_mode",
         ValueType: SettingValueType.String,
-        DefaultValue: "\"InteractiveAuto\"",
+        DefaultValue: "\"InteractiveServer\"",
         Category: "Routing",
         Description: "Onboarding pages render mode");
 
     public static readonly SettingDefinition OnboardingPrerenderEnabled = new(
         Key: "routing.render_policy.onboarding.prerender_enabled",
         ValueType: SettingValueType.Boolean,
-        DefaultValue: "true",
+        DefaultValue: "false",
         Category: "Routing",
         Description: "Onboarding pages prerender enabled");
 
@@ -191,7 +184,6 @@ public static class RoutingSettingDefinitions
         RenderPolicyAllowTenantOverride, RenderPolicyLockTenantPublicSeo,
         RenderPolicyLockTenantOperational, RenderPolicyLockTenantAdmin,
         RenderPolicyVersion, RenderPolicyPreset, RenderPolicyAdvancedEnabled,
-        RenderPolicyDisallowInteractiveServerOnOnboarding,
         FallbackRenderMode, FallbackPrerenderEnabled,
         PublicSeoRenderMode, PublicSeoPrerenderEnabled,
         OperationalRenderMode, OperationalPrerenderEnabled,

@@ -34,7 +34,7 @@ public class SaveAuthProviderConfigurationCommandHandlerTests
         _configurationService.ReadConfigurationAsync().Returns(new AuthProviderConfigurationDto
         {
             KeycloakAuthority = "https://id.example.test/realms/event",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecretOwnership = { Configured = true }
         });
         var configuration = CreateKeycloakConfiguration();
@@ -75,7 +75,7 @@ public class SaveAuthProviderConfigurationCommandHandlerTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://id.example.test/realms/event",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecret = string.Empty
         };
     }

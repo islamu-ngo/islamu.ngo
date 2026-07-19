@@ -1,0 +1,36 @@
+# ABOUTME: Cerbos resource policy for Blog editorial management actions.
+# ABOUTME: Grants instance admins and same-tenant tenant admins; public reads bypass Cerbos.
+
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "islamuevent_blog"
+  version: "default"
+  importDerivedRoles:
+    - islamuevent_explore_admin_roles
+  schemas:
+    principalSchema:
+      ref: cerbos:///islamuevent_principal.json
+    resourceSchema:
+      ref: cerbos:///islamuevent_blog.json
+  rules:
+    - actions:
+        - "view"
+        - "create"
+        - "update"
+        - "delete"
+        - "publish"
+        - "unpublish"
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - islamuevent_instance_admin
+
+    - actions:
+        - "view"
+        - "create"
+        - "update"
+        - "delete"
+        - "publish"
+        - "unpublish"
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - islamuevent_tenant_admin

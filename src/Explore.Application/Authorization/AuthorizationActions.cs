@@ -14,7 +14,7 @@ namespace Explore.Application.Authorization;
 /// </para>
 /// <para>
 /// Phase 5 of the modernization plan may migrate these values to a <c>resource:verb</c> format
-/// (e.g., <c>"islamuevent_event:view"</c>) alongside matching Cerbos policy changes.
+/// (e.g., <c>"islamuevent_blog:view"</c>) alongside matching Cerbos policy changes.
 /// Until then, values use simple verb strings for backward compatibility.
 /// </para>
 /// </summary>
@@ -302,6 +302,16 @@ public static class AuthorizationActions
         public const string ManageTenant = "manage_tenant";
         public const string Park = "park";
         public const string Replay = "replay";
+    }
+
+    public static class Blogs
+    {
+        public const string View = AuthorizationActions.View;
+        public const string Create = AuthorizationActions.Create;
+        public const string Update = AuthorizationActions.Update;
+        public const string Delete = AuthorizationActions.Delete;
+        public const string Publish = "publish";
+        public const string Unpublish = "unpublish";
     }
 
     public static class Webhooks

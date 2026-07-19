@@ -117,7 +117,6 @@ public static class NormalizedLookupMetadata
         (int)Explore.Domain.WebhookProviderCapability.Replay => new(id, "REPLAY", "Replay"),
         (int)Explore.Domain.WebhookProviderCapability.PayloadInspection => new(id, "PAYLOAD_INSPECTION", "Payload inspection"),
         (int)Explore.Domain.WebhookProviderCapability.AppPortal => new(id, "APP_PORTAL", "App portal"),
-        (int)Explore.Domain.WebhookProviderCapability.EventCatalog => new(id, "EVENT_CATALOG", "Event catalog"),
         (int)Explore.Domain.WebhookProviderCapability.ProviderRetentionControl => new(id, "PROVIDER_RETENTION_CONTROL", "Provider retention control"),
         (int)Explore.Domain.WebhookProviderCapability.ApplicationThrottling => new(id, "APPLICATION_THROTTLING", "Application throttling"),
         (int)Explore.Domain.WebhookProviderCapability.EndpointThrottling => new(id, "ENDPOINT_THROTTLING", "Endpoint throttling"),

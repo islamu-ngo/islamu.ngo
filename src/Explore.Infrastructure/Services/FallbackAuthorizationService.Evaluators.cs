@@ -222,35 +222,6 @@ public partial class FallbackAuthorizationService
             or AuthorizationActions.Webhooks.ViewDelivery
             or AuthorizationActions.Webhooks.OpenProviderPortal;
 
-    private async Task<bool> EvaluateCustomPropertyProjectionAccessAsync(
-        string resourceId,
-        string action,
-        IDictionary<string, object>? resourceAttributes,
-        CancellationToken cancellationToken)
-    {
-        if (action is not (AuthorizationActions.CustomPropertyProjections.View or AuthorizationActions.CustomPropertyProjections.Update))
-        {
-            LogDecision("deny", "invalid_projection_action", ResourceKinds.CustomPropertyProjection, resourceId, action);
-            return false;
-        }
-
-        if (!TryResolveGuidAttribute(resourceAttributes, "tenantId", out var tenantId))
-        {
-            LogDecision("deny", "missing_tenant_context", ResourceKinds.CustomPropertyProjection, resourceId, action);
-            return false;
-        }
-
-        if (tenantId != _tenantContext.TenantId)
-        {
-            LogDecision("deny", "tenant_mismatch", ResourceKinds.CustomPropertyProjection, resourceId, action);
-            return false;
-        }
-
-        var isTenantAdmin = await _adminContext.IsTenantAdminAsync(tenantId, cancellationToken);
-        LogDecision(isTenantAdmin ? "allow" : "deny", $"is_tenant_admin={isTenantAdmin}", ResourceKinds.CustomPropertyProjection, resourceId, action);
-        return isTenantAdmin;
-    }
-
     private async Task<bool> EvaluateTenantResourceAccessAsync(
         string resourceId,
         string action,

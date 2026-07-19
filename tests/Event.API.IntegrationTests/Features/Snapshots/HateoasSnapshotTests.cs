@@ -1,4 +1,4 @@
-// ABOUTME: Verify snapshots for stable HAL collection and ProblemDetails API contracts.
+// ABOUTME: Verify snapshots for stable ProblemDetails API contracts.
 // ABOUTME: Uses ContractApiFixture so snapshots run without Docker-backed runtime infrastructure.
 
 using System.Net;
@@ -17,37 +17,9 @@ public class HateoasSnapshotTests(ContractApiFixture fixture)
     private readonly ContractApiFixture _fixture = fixture;
 
     [Test]
-    public async Task EventList_AnonymousContract_MatchesSnapshot()
-    {
-        var response = await _fixture.Client.GetAsync("/api/event?pageNumber=1&pageSize=5");
-
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var json = await response.Content.ReadAsStringAsync();
-
-        await VerifyJson(NormalizeJson(json), CreateSnapshotSettings());
-    }
-
-    [Test]
-    public async Task EventList_AuthenticatedContract_MatchesSnapshot()
-    {
-        var request = _fixture.CreateAuthenticatedRequest(
-            HttpMethod.Get,
-            "/api/event?pageNumber=1&pageSize=5");
-
-        var response = await _fixture.Client.SendAsync(request);
-
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var json = await response.Content.ReadAsStringAsync();
-
-        await VerifyJson(NormalizeJson(json), CreateSnapshotSettings());
-    }
-
-    [Test]
     public async Task ProblemDetails_NotFoundContract_MatchesSnapshot()
     {
-        using var client = CreateClientThatThrows(new NotFoundException("Event", Guid.Parse("11111111-1111-1111-1111-111111111111")));
+        using var client = CreateClientThatThrows(new NotFoundException("Actor", Guid.Parse("11111111-1111-1111-1111-111111111111")));
 
         var response = await client.GetAsync("/api/actor/11111111-1111-1111-1111-111111111111");
 

@@ -21,7 +21,7 @@ public sealed class WebPushDispatchDrainServiceTests
     public async Task ProcessBatchAsync_WhenPreferenceAllowsDelivery_SendsGenericPayloadAndMarksDelivered()
     {
         var fixture = new Fixture();
-        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.EventUpdates);
+        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         var subscription = CreateSubscription(dispatch);
         WebPushSendEnvelope? sentRequest = null;
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
@@ -37,15 +37,15 @@ public sealed class WebPushDispatchDrainServiceTests
         await Assert.That(sentRequest).IsNotNull();
         await Assert.That(sentRequest!.PayloadJson).Contains("notification_refresh");
         await Assert.That(sentRequest.PayloadJson).DoesNotContain("<script>");
-        await Assert.That(sentRequest.TimeToLiveSeconds).IsGreaterThanOrEqualTo(21590);
-        await Assert.That(sentRequest.TimeToLiveSeconds).IsLessThanOrEqualTo(21600);
-        await Assert.That(sentRequest.Topic).IsEqualTo("event-updates");
-        await Assert.That(sentRequest.Urgency).IsEqualTo(WebPushUrgency.Normal);
+        await Assert.That(sentRequest.TimeToLiveSeconds).IsGreaterThanOrEqualTo(86390);
+        await Assert.That(sentRequest.TimeToLiveSeconds).IsLessThanOrEqualTo(86400);
+        await Assert.That(sentRequest.Topic).IsEqualTo("product-announcements");
+        await Assert.That(sentRequest.Urgency).IsEqualTo(WebPushUrgency.Low);
         await fixture.PreferenceResolver.Received(1).ResolveAsync(
             Arg.Is<NotificationPreferenceResolveRequest>(request =>
                 request.TenantId == dispatch.TenantId &&
                 request.UserId == dispatch.UserId &&
-                request.CategoryCode == NotificationPreferenceCategoryCodes.EventUpdates &&
+                request.CategoryCode == NotificationPreferenceCategoryCodes.ProductAnnouncements &&
                 request.ChannelCode == NotificationPreferenceChannelCodes.Push),
             Arg.Any<CancellationToken>());
         await fixture.DispatchRepository.Received(1).MarkAsDelivered(
@@ -81,7 +81,7 @@ public sealed class WebPushDispatchDrainServiceTests
     public async Task ProcessBatchAsync_WhenProviderReportsGone_PermanentlyFailsAndDeactivatesSubscription()
     {
         var fixture = new Fixture();
-        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.EventUpdates);
+        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
         fixture.DispatchRepository.TryMarkAsProcessing(dispatch.Id, Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
         fixture.DispatchRepository.MarkPermanentFailureAndDeactivateSubscription(
@@ -116,7 +116,7 @@ public sealed class WebPushDispatchDrainServiceTests
     public async Task ProcessBatchAsync_WhenProviderReportsRateLimit_SchedulesRetryWithoutCleanup()
     {
         var fixture = new Fixture();
-        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.EventUpdates);
+        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
         fixture.DispatchRepository.TryMarkAsProcessing(dispatch.Id, Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
         fixture.DispatchRepository.MarkAsFailed(dispatch.Id, Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), true, Arg.Any<TimeSpan>(), Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
@@ -145,7 +145,7 @@ public sealed class WebPushDispatchDrainServiceTests
     public async Task ProcessBatchAsync_WhenDispatchTtlExpired_SkipsWithoutProviderSend()
     {
         var fixture = new Fixture();
-        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.EventUpdates);
+        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         dispatch.CreatedAt = DateTime.UtcNow.AddHours(-7);
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
         fixture.DispatchRepository.TryMarkAsProcessing(dispatch.Id, Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
@@ -168,7 +168,7 @@ public sealed class WebPushDispatchDrainServiceTests
     public async Task ProcessBatchAsync_WhenProviderReportsBadRequest_DeadLettersWithoutDeletingValidSubscription()
     {
         var fixture = new Fixture();
-        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.EventUpdates);
+        var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
         fixture.DispatchRepository.TryMarkAsProcessing(dispatch.Id, Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
         fixture.DispatchRepository.MarkAsFailed(dispatch.Id, Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), false, Arg.Any<TimeSpan>(), Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);

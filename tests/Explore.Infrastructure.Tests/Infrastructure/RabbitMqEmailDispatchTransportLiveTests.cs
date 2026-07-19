@@ -134,8 +134,6 @@ public sealed class RabbitMqEmailDispatchTransportLiveTests(RabbitMqContainerFix
         await Assert.That(payload).Contains(dispatch.PublishEventId.ToString());
         await Assert.That(payload).Contains(dispatch.SourceType);
         await Assert.That(payload).Contains(dispatch.SourceId.ToString());
-        await Assert.That(payload).Contains(dispatch.EventId!.Value.ToString());
-        await Assert.That(payload).Contains(dispatch.RegistrationIntentId!.Value.ToString());
         await Assert.That(payload).Contains(dispatch.UserId!.Value.ToString());
         await Assert.That(payload).DoesNotContain(dispatch.RecipientEmail);
         await Assert.That(payload).DoesNotContain(dispatch.Subject);
@@ -202,11 +200,9 @@ public sealed class RabbitMqEmailDispatchTransportLiveTests(RabbitMqContainerFix
     private static EmailDispatchPointer CreatePointer() => new(
         TenantId: Guid.CreateVersion7(),
         PublishEventId: Guid.CreateVersion7(),
-        Kind: EmailDispatchKind.RegistrationConfirmation,
-        SourceType: "event-registration",
+        Kind: EmailDispatchKind.TenantAdministratorInvitation,
+        SourceType: "tenant-administrator-invitation",
         SourceId: Guid.CreateVersion7(),
-        EventId: Guid.CreateVersion7(),
-        RegistrationIntentId: Guid.CreateVersion7(),
         UserId: Guid.CreateVersion7());
 
     private static EmailDispatchOutbox CreateDispatchWithSensitiveSnapshot() => new()
@@ -214,11 +210,9 @@ public sealed class RabbitMqEmailDispatchTransportLiveTests(RabbitMqContainerFix
         Id = Guid.CreateVersion7(),
         TenantId = Guid.CreateVersion7(),
         PublishEventId = Guid.CreateVersion7(),
-        Kind = EmailDispatchKind.RegistrationConfirmation,
-        SourceType = "event-registration",
+        Kind = EmailDispatchKind.TenantAdministratorInvitation,
+        SourceType = "tenant-administrator-invitation",
         SourceId = Guid.CreateVersion7(),
-        EventId = Guid.CreateVersion7(),
-        RegistrationIntentId = Guid.CreateVersion7(),
         UserId = Guid.CreateVersion7(),
         RecipientEmail = $"attendee-{Guid.CreateVersion7():N}@example.test",
         Subject = $"registration-subject-{Guid.CreateVersion7():N}",

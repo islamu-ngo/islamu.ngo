@@ -11,12 +11,9 @@ using Explore.Application.Authorization;
 using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Persistence;
-using Explore.Application.Contracts.Services;
-using Explore.Application.Features.Events.Requests.Commands;
 using Explore.Application.Features.Organizations.Requests.Commands;
 using Explore.Application.Features.StorageObjects.Requests.Commands;
 using Explore.Application.Models;
-using Explore.Application.Settings;
 using Explore.Application.SupportAccess;
 using Explore.Domain;
 using Explore.Domain.Constants;
@@ -75,7 +72,7 @@ public class RuntimeAuthorizationProviderTests
         var runtimeProvider = new RuntimeAuthorizationProvider(
             new CerbosAuthorizationService(
                 cerbosClient,
-                new CerbosPrincipalBuilder(adminContext, machinePrincipalAccessor, Substitute.For<IEventAuthoritySnapshotService>()),
+                new CerbosPrincipalBuilder(adminContext, machinePrincipalAccessor),
                 adminContext,
                 machinePrincipalAccessor,
                 settingsResolver,
@@ -86,7 +83,6 @@ public class RuntimeAuthorizationProviderTests
             new FallbackAuthorizationService(
                 adminContext,
                 machinePrincipalAccessor,
-                Substitute.For<IEventAuthoritySnapshotService>(),
                 settingsResolver,
                 tenantContext,
                 Substitute.For<ILogger<FallbackAuthorizationService>>()),
@@ -205,33 +201,6 @@ public class RuntimeAuthorizationProviderTests
     }
 
     [Test]
-    public async Task IsAllowedBatchAsync_WithInstanceCerbosMode_UsesLocalAuthorizationForEventPreCreate()
-    {
-        var fixture = CreateRuntimeProviderFixture();
-        fixture.AdminContext.UserId.Returns(Guid.NewGuid());
-        fixture.AdminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        fixture.SystemSettingRepository.GetByKey(GovernanceSettingKeys.Security.AuthorizationProvider)
-            .Returns(CreateAuthorizationProviderSetting("cerbos"));
-
-        var results = await fixture.RuntimeProvider.IsAllowedBatchAsync(
-        [
-            new AuthorizationCheck(
-                ResourceKinds.Event,
-                CreateEventCommand.PreCreateResourceId,
-                AuthorizationActions.Create,
-                new Dictionary<string, object>
-                {
-                    ["authorizationPhase"] = CreateEventCommand.PreCreateAuthorizationPhase
-                })
-        ]);
-
-        await Assert.That(results).IsEquivalentTo([true]);
-        await fixture.CerbosClient.DidNotReceive().CheckResourcesAsync(
-            Arg.Any<CheckResourcesRequest>(),
-            Arg.Any<Metadata>());
-    }
-
-    [Test]
     public async Task IsAllowedBatchAsync_WithInstanceCerbosMode_UsesLocalAuthorizationForOrganizationPreCreate()
     {
         var fixture = CreateRuntimeProviderFixture();
@@ -259,61 +228,6 @@ public class RuntimeAuthorizationProviderTests
     }
 
     [Test]
-    public async Task IsAllowedBatchAsync_WithInstanceCerbosMode_UsesLocalAuthorizationForEventSessionPreCreateInMixedBatch()
-    {
-        var fixture = CreateRuntimeProviderFixture();
-        var eventId = Guid.NewGuid();
-        var categoryId = Guid.NewGuid().ToString();
-        var userId = Guid.NewGuid();
-
-        fixture.AdminContext.UserId.Returns(userId);
-        fixture.AdminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(false);
-        fixture.AdminContext.IsInstanceAdminAsync(userId, Arg.Any<CancellationToken>()).Returns(false);
-        fixture.AdminContext.IsTenantAdminAsync(TestTenantId, Arg.Any<CancellationToken>()).Returns(true);
-        fixture.AdminContext.GetAdminTenantIdsAsync(userId, Arg.Any<CancellationToken>()).Returns([TestTenantId]);
-        fixture.AdminContext.GetAdminOrganizationIdsAsync(userId, Arg.Any<CancellationToken>()).Returns([]);
-        fixture.SystemSettingRepository.GetByKey(GovernanceSettingKeys.Security.AuthorizationProvider)
-            .Returns(CreateAuthorizationProviderSetting("cerbos"));
-
-        var cerbosResponse = new Cerbos.Api.V1.Response.CheckResourcesResponse();
-        cerbosResponse.Results.Add(CreateResultEntry(
-            categoryId,
-            ResourceKinds.Category,
-            AuthorizationActions.Create,
-            Effect.Deny));
-        fixture.CerbosClient.CheckResourcesAsync(Arg.Any<CheckResourcesRequest>(), Arg.Any<Metadata>())
-            .Returns(new CheckResourcesResponse(cerbosResponse));
-
-        var results = await fixture.RuntimeProvider.IsAllowedBatchAsync(
-        [
-            new AuthorizationCheck(
-                ResourceKinds.EventSession,
-                eventId.ToString(),
-                AuthorizationActions.Create,
-                new Dictionary<string, object>
-                {
-                    ["tenantId"] = TestTenantId.ToString(),
-                    ["eventId"] = eventId.ToString(),
-                    ["authorizationPhase"] = AuthorizationPhases.PreCreate
-                }),
-            new AuthorizationCheck(
-                ResourceKinds.Category,
-                categoryId,
-                AuthorizationActions.Create,
-                new Dictionary<string, object>
-                {
-                    ["tenantId"] = TestTenantId.ToString()
-                },
-                new AuthorizationScope(TenantId: TestTenantId.ToString()))
-        ]);
-
-        await Assert.That(results).IsEquivalentTo([true, false]);
-        await fixture.CerbosClient.Received(1).CheckResourcesAsync(
-            Arg.Any<CheckResourcesRequest>(),
-            Arg.Any<Metadata>());
-    }
-
-    [Test]
     [Arguments(nameof(CreateStorageUploadSessionCommand), true)]
     [Arguments("019ecd1d-6b34-7b05-9945-970edd3c1440", false)]
     public async Task IsAllowedBatchAsync_WithInstanceCerbosMode_UsesLocalAuthorizationForStorageUploadSessionGate(
@@ -333,7 +247,7 @@ public class RuntimeAuthorizationProviderTests
 
         if (includeUploadMetadata)
         {
-            attributes["purpose"] = "event_image";
+            attributes["purpose"] = StorageObjectPurposes.LegacyImage;
             attributes["visibility"] = "public_image";
         }
 
@@ -404,7 +318,7 @@ public class RuntimeAuthorizationProviderTests
         fixture.RuntimeLogger.Received(1).Log(
             LogLevel.Warning,
             Arg.Any<EventId>(),
-            Arg.Is<object>(state => ProviderModeFailureLogStateIsRedacted(state, secretMessage)),
+            Arg.Is<object>(state => ProviderModeFailureLogStateIsRedacted(state!, secretMessage)),
             Arg.Is<Exception?>(ex => ex == null),
             Arg.Any<Func<object, Exception?, string>>());
     }
@@ -542,6 +456,37 @@ public class RuntimeAuthorizationProviderTests
             new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") });
 
         await Assert.That(result).IsFalse();
+    }
+
+    [Test]
+    public async Task IsAllowedBatchAsync_WithReadOnlySupportAccess_AllowsBlogViewAndDeniesPublishActions()
+    {
+        var fixture = CreateRuntimeProviderFixture();
+        fixture.AdminContext.UserId.Returns(Guid.NewGuid());
+        fixture.AdminContext.IsInstanceAdminAsync(Arg.Any<CancellationToken>()).Returns(true);
+        fixture.SupportAccessSessionService.GetCurrentAsync(Arg.Any<CancellationToken>())
+            .Returns(CreateSupportContext(SupportAccessModeEnum.ReadOnly, TestTenantId));
+        var attrs = new Dictionary<string, object> { ["tenantId"] = TestTenantId.ToString("D") };
+
+        var view = await fixture.RuntimeProvider.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.View,
+            attrs);
+        var publish = await fixture.RuntimeProvider.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Publish,
+            attrs);
+        var unpublish = await fixture.RuntimeProvider.IsAllowedAsync(
+            ResourceKinds.Blog,
+            Guid.NewGuid().ToString("D"),
+            AuthorizationActions.Blogs.Unpublish,
+            attrs);
+
+        await Assert.That(view).IsTrue();
+        await Assert.That(publish).IsFalse();
+        await Assert.That(unpublish).IsFalse();
     }
 
     [Test]
@@ -710,14 +655,13 @@ public class RuntimeAuthorizationProviderTests
         var localProvider = new FallbackAuthorizationService(
             adminContext,
             machinePrincipalAccessor,
-            Substitute.For<IEventAuthoritySnapshotService>(),
             settingsResolver,
             tenantContext,
             Substitute.For<ILogger<FallbackAuthorizationService>>());
 
         var cerbosProvider = new CerbosAuthorizationService(
             cerbosClient,
-            new CerbosPrincipalBuilder(adminContext, machinePrincipalAccessor, Substitute.For<IEventAuthoritySnapshotService>()),
+            new CerbosPrincipalBuilder(adminContext, machinePrincipalAccessor),
             adminContext,
             machinePrincipalAccessor,
             settingsResolver,

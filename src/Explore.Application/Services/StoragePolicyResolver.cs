@@ -221,7 +221,7 @@ public sealed class StoragePolicyResolver : IStoragePolicyResolver
         var visibility = request.Visibility.Trim().ToLowerInvariant();
         var contentType = request.ContentType.Trim().ToLowerInvariant();
 
-        if (purpose is StorageObjectPurposes.LegacyImage or StorageObjectPurposes.ProfileImage or StorageObjectPurposes.EventImage ||
+        if (purpose is StorageObjectPurposes.LegacyImage or StorageObjectPurposes.ProfileImage ||
             visibility == StorageObjectVisibilities.PublicImage ||
             contentType.StartsWith("image/", StringComparison.Ordinal))
         {

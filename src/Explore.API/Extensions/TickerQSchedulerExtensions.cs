@@ -2,6 +2,7 @@
 // ABOUTME: Uses PostgreSQL-backed scheduler state while keeping business outbox truth in Explore.Persistence.
 
 using Explore.API.Configuration;
+using Explore.API.Scheduling;
 using Explore.Secrets.Bootstrap;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;

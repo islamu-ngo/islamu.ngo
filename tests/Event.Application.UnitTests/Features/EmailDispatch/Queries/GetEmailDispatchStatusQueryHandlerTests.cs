@@ -51,10 +51,10 @@ public sealed class GetEmailDispatchStatusQueryHandlerTests
                 {
                     Id = outboxId,
                     TenantId = tenantId,
-                    SourceType = "event_registration_intent",
+                    SourceType = "tenant_administrator_invitation",
                     SourceId = sourceId,
-                    Kind = EmailDispatchKind.RegistrationConfirmation,
-                    RecipientEmail = "registrant@example.test",
+                    Kind = EmailDispatchKind.TenantAdministratorInvitation,
+                    RecipientEmail = "administrator@example.test",
                     Subject = "Sensitive subject",
                     PlainTextBody = "Sensitive plain text body",
                     HtmlBody = "<p>Sensitive HTML body</p>",
@@ -64,7 +64,7 @@ public sealed class GetEmailDispatchStatusQueryHandlerTests
                     Status = EmailDispatchStatus.Sent,
                     AttemptCount = 2,
                     SentAt = deliveredAt,
-                    CorrelationId = "registration-correlation"
+                    CorrelationId = "invitation-correlation"
                 }
             ]);
 
@@ -79,12 +79,12 @@ public sealed class GetEmailDispatchStatusQueryHandlerTests
         var dto = result.Id![0];
         await Assert.That(dto.OutboxId).IsEqualTo(outboxId);
         await Assert.That(dto.TenantId).IsEqualTo(tenantId);
-        await Assert.That(dto.SourceType).IsEqualTo("event_registration_intent");
+        await Assert.That(dto.SourceType).IsEqualTo("tenant_administrator_invitation");
         await Assert.That(dto.SourceId).IsEqualTo(sourceId);
         await Assert.That(dto.DeliveryStatus).IsEqualTo(nameof(EmailDispatchStatus.Sent));
         await Assert.That(dto.AttemptCount).IsEqualTo(2);
         await Assert.That(dto.DeliveredAt).IsEqualTo(deliveredAt);
-        await Assert.That(dto.CorrelationId).IsEqualTo("registration-correlation");
+        await Assert.That(dto.CorrelationId).IsEqualTo("invitation-correlation");
 
         var dtoPropertyNames = typeof(Explore.Application.DTOs.EmailDispatch.EmailDispatchStatusDto)
             .GetProperties()

@@ -168,7 +168,7 @@ public sealed class GetPresignedDownloadUrlRequestHandlerTests
             Sha256Checksum = "abc123",
             Size = 3,
             Visibility = visibility,
-            Purpose = StorageObjectPurposes.EventImage,
+            Purpose = StorageObjectPurposes.LegacyImage,
             LifecycleState = StorageObjectLifecycleStates.Active,
             CreatedBy = createdBy
         };

@@ -64,7 +64,7 @@ public sealed class WebPushFoundationPersistenceTests(PostgreSqlContainerFixture
         var decisions = await resolver.ResolveBatchAsync(
             [
                 new NotificationPreferenceResolveRequest(tenant.Id, user.Id, null, null, NotificationPreferenceCategoryCodes.AccountSecurity, NotificationPreferenceChannelCodes.Push),
-                new NotificationPreferenceResolveRequest(tenant.Id, user.Id, null, null, NotificationPreferenceCategoryCodes.EventUpdates, NotificationPreferenceChannelCodes.Push),
+                new NotificationPreferenceResolveRequest(tenant.Id, user.Id, null, null, NotificationPreferenceCategoryCodes.OrganizationUpdates, NotificationPreferenceChannelCodes.Push),
                 new NotificationPreferenceResolveRequest(tenant.Id, user.Id, null, null, NotificationPreferenceCategoryCodes.Marketing, NotificationPreferenceChannelCodes.Push)
             ]);
 
@@ -472,7 +472,7 @@ public sealed class WebPushFoundationPersistenceTests(PostgreSqlContainerFixture
             TenantId = tenantId,
             Tenant = null!,
             NotificationId = Guid.CreateVersion7(),
-            CategoryId = (int)NotificationPreferenceCategoryEnum.EventUpdates,
+            CategoryId = (int)NotificationPreferenceCategoryEnum.OrganizationUpdates,
             Category = null!,
             SubscriptionId = subscriptionId,
             Subscription = null!,

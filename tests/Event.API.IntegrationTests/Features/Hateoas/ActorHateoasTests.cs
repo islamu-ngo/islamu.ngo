@@ -1,3 +1,6 @@
+// ABOUTME: HATEOAS-specific tests for ActorController retained resource links.
+// ABOUTME: Verifies actor collection, item, detail, and Prefer-minimal behavior without Event links.
+
 using System.Net;
 using System.Text.Json;
 using Event.Api.IntegrationTests.Fixtures;
@@ -8,7 +11,7 @@ namespace Event.Api.IntegrationTests.Features.Hateoas;
 
 /// <summary>
 /// HATEOAS-specific tests for ActorController.
-/// Validates actor-specific links including events and type-specific links.
+/// Validates actor-specific collection, item, and type-specific links.
 /// </summary>
 [NotInParallel("ApiTestFixture")]
 [ClassDataSource<ApiTestFixture>(Shared = SharedType.PerAssembly)]
@@ -62,36 +65,6 @@ public class ActorHateoasTests
                 await Assert.That(itemLinks.TryGetProperty("self", out var selfLink)).IsTrue();
                 var href = selfLink.GetProperty("href").GetString();
                 await Assert.That(href).Contains("/api/actor/");
-            }
-        }
-    }
-
-    [Test]
-    public async Task GetAll_ItemLinks_ShouldIncludeEventsLink()
-    {
-        // Act
-        var response = await _fixture.Client.GetAsync(BaseUrl);
-
-        // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var content = await response.Content.ReadAsStringAsync();
-        var json = JsonDocument.Parse(content);
-
-        if (json.RootElement.TryGetProperty("_embedded", out var embedded) &&
-            embedded.TryGetProperty("items", out var items) &&
-            items.GetArrayLength() > 0)
-        {
-            var firstItem = items[0];
-
-            if (firstItem.TryGetProperty("_links", out var itemLinks))
-            {
-                // Actor items should have events link (events organized by this actor)
-                if (itemLinks.TryGetProperty("events", out var eventsLink))
-                {
-                    var href = eventsLink.GetProperty("href").GetString();
-                    await Assert.That(href).Contains("/api/event");
-                }
             }
         }
     }

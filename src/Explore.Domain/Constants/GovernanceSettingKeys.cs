@@ -39,7 +39,6 @@ public static class GovernanceSettingKeys
             public const string Version = Base + ".version";
             public const string Preset = Base + ".preset";
             public const string AdvancedEnabled = Base + ".advanced_enabled";
-            public const string DisallowInteractiveServerOnOnboarding = Base + ".onboarding.disallow_interactive_server";
             public const string AllowTenantOverride = Base + ".allow_tenant_override";
             public const string LockTenantPublicSeo = Base + ".lock_tenant_public_seo";
             public const string LockTenantOperational = Base + ".lock_tenant_operational";
@@ -167,6 +166,7 @@ public static class GovernanceSettingKeys
             public const string InstanceUrl = "integrations.listmonk.instance_url";
             public const string DefaultListId = "integrations.listmonk.default_list_id";
             public const string PreconfirmSubscriptions = "integrations.listmonk.preconfirm_subscriptions";
+            public const string SyncOnRegistration = "integrations.listmonk.sync_on_registration";
         }
     }
 
@@ -293,6 +293,9 @@ public static class GovernanceSettingKeys
         public const string LockAnalytics = "governance.lock_tenant_analytics";
         public const string LockAiAssistant = "governance.lock_tenant_ai_assistant";
         public const string LockIntegrations = "governance.lock_tenant_integrations";
+        public const string LockReportingProviders = "governance.lock_tenant_reporting_providers";
+        public const string LockTenantOspreyProvider = "governance.lock_tenant_osprey_provider";
+        public const string LockTenantCoopProvider = "governance.lock_tenant_coop_provider";
         public const string LockMcp = "governance.lock_tenant_mcp";
         public const string LockMcpLegacySse = "governance.lock_tenant_mcp_legacy_sse";
     }

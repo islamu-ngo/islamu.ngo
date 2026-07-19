@@ -14,14 +14,11 @@ public static class ExternalApiKeyScopeCeiling
 {
     private static readonly IReadOnlySet<string> UserScopes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        ExternalApiKeyScopes.EventsRead,
-        ExternalApiKeyScopes.EventsWrite,
         ExternalApiKeyScopes.UsersRead,
         ExternalApiKeyScopes.UsersWrite,
         ExternalApiKeyScopes.LookupsRead,
         ExternalApiKeyScopes.McpRead,
         ExternalApiKeyScopes.McpPropose,
-        ExternalApiKeyScopes.RegistrationsWrite,
         ExternalApiKeyScopes.ApiKeysManage
     };
 
@@ -40,14 +37,11 @@ public static class ExternalApiKeyScopeCeiling
     private static readonly IReadOnlySet<string> TenantScopes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         // Tenant gets all user + org + group scopes + admin:tenant
-        ExternalApiKeyScopes.EventsRead,
-        ExternalApiKeyScopes.EventsWrite,
         ExternalApiKeyScopes.UsersRead,
         ExternalApiKeyScopes.UsersWrite,
         ExternalApiKeyScopes.LookupsRead,
         ExternalApiKeyScopes.McpRead,
         ExternalApiKeyScopes.McpPropose,
-        ExternalApiKeyScopes.RegistrationsWrite,
         ExternalApiKeyScopes.ApiKeysManage,
         ExternalApiKeyScopes.OrganizationsRead,
         ExternalApiKeyScopes.OrganizationsWrite,

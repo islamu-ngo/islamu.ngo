@@ -1,3 +1,6 @@
+// ABOUTME: Reflection tests for shared Domain auditing, soft-delete, and tenant interface contracts.
+// ABOUTME: Uses current User and Blog entities as concrete registry-scan sentinels.
+
 namespace Event.Domain.UnitTests.Interfaces;
 
 using Explore.Domain;
@@ -58,12 +61,12 @@ public class InterfaceImplementationTests
 
         await Assert.That(auditableTypes.Contains(typeof(User))).IsTrue();
         await Assert.That(softDeletableTypes.Contains(typeof(User))).IsTrue();
-        await Assert.That(tenantTypes.Contains(typeof(global::Explore.Domain.Event))).IsTrue();
+        await Assert.That(tenantTypes.Contains(typeof(Blog))).IsTrue();
     }
 
     private static Type[] GetConcreteImplementations<TInterface>()
     {
-        return typeof(global::Explore.Domain.Event).Assembly
+        return typeof(Blog).Assembly
             .GetTypes()
             .Where(type => typeof(TInterface).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
             .ToArray();

@@ -50,7 +50,7 @@ public class OfflineTranslationProviderTests
 
         var hasAppName = translations.TryGetValue(EmbeddedAppNameKey, out var appName);
         await Assert.That(hasAppName).IsTrue();
-        await Assert.That(appName).IsEqualTo("ISLAMU Event");
+        await Assert.That(appName).IsEqualTo("ISLAMU");
     }
 
     [Test]
@@ -96,7 +96,7 @@ public class OfflineTranslationProviderTests
             var translations = (await provider.ExportTranslationsAsync("en"))
                 .ToDictionary(item => item.KeyName, item => item.Value);
 
-            await Assert.That(translations[EmbeddedAppNameKey]).IsEqualTo("ISLAMU Event");
+            await Assert.That(translations[EmbeddedAppNameKey]).IsEqualTo("ISLAMU");
             await Assert.That(translations.ContainsKey("bad key")).IsFalse();
         }
         finally

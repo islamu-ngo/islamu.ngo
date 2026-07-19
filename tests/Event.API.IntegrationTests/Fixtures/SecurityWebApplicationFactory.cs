@@ -62,7 +62,7 @@ public class SecurityWebApplicationFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=explore_db_test;Username=postgres;Password=postgres",
                 ["Keycloak:Authority"] = _keycloakAuthority,
                 ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                ["Keycloak:Audience"] = "islamu-event-api",
+                ["Keycloak:Audience"] = "islamu-ngo-api",
                 ["Keycloak:RequireHttpsMetadata"] = "false",
                 ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                 ["S3Settings:Region"] = "us-east-1",

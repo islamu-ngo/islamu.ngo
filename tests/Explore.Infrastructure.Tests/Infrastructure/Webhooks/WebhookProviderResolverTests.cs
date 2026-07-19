@@ -77,7 +77,7 @@ public sealed class WebhookProviderResolverTests
         var eventType = new WebhookEventType
         {
             Id = Guid.CreateVersion7(),
-            Name = WebhookEventNames.EventPublished,
+            Name = WebhookEventNames.OrganizationVerified,
             GroupName = "events",
             Description = "Event published",
             SchemaJson = "{}",
@@ -176,7 +176,7 @@ public sealed class WebhookProviderResolverTests
         var eventType = new WebhookEventType
         {
             Id = Guid.CreateVersion7(),
-            Name = WebhookEventNames.EventPublished,
+            Name = WebhookEventNames.OrganizationVerified,
             GroupName = "events",
             Description = "Event published",
             SchemaJson = "{}",
@@ -293,7 +293,7 @@ public sealed class WebhookProviderResolverTests
         var eventType = new WebhookEventType
         {
             Id = Guid.CreateVersion7(),
-            Name = WebhookEventNames.EventPublished,
+            Name = WebhookEventNames.OrganizationVerified,
             GroupName = "events",
             Description = "Event published",
             SchemaJson = "{}",
@@ -372,7 +372,7 @@ public sealed class WebhookProviderResolverTests
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
             WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.EventCatalog);
+            WebhookProviderCapability.OperationalCallbacks);
         await Assert.That(resolution.ProviderCapabilities.HasFlag(WebhookProviderCapability.Replay)).IsFalse();
         await Assert.That(resolution.ProviderEnvironment)
             .IsEqualTo(SvixConformanceProfileRegistry.SelfHostedEnvironment);
@@ -391,7 +391,7 @@ public sealed class WebhookProviderResolverTests
         await Assert.That(resolution.IsProviderModeAvailable).IsTrue();
         await Assert.That(resolution.LocalCapabilities).IsEqualTo(
             WebhookProviderCapability.EndpointManagement |
-            WebhookProviderCapability.EventCatalog);
+            WebhookProviderCapability.OperationalCallbacks);
         await Assert.That(resolution.ProviderCapabilities).IsEqualTo(WebhookProviderCapability.None);
         await Assert.That(resolution.SupportsLocalConfiguration(WebhookProviderCapability.EndpointManagement)).IsTrue();
         await Assert.That(resolution.SupportsLocalConfiguration(WebhookProviderCapability.ProviderAttemptVisibility)).IsFalse();
@@ -474,7 +474,7 @@ public sealed class WebhookProviderResolverTests
         return new WebhookEventBuildContext(
             messageId,
             tenantId,
-            WebhookEventNames.EventPublished,
+            WebhookEventNames.OrganizationVerified,
             "domain-event-1",
             "Event",
             aggregateId,

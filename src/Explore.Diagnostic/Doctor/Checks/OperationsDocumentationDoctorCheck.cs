@@ -9,10 +9,11 @@ public sealed class OperationsDocumentationDoctorCheck(IDoctorFileSystem fileSys
 {
     private static readonly string[] RequiredDocs =
     [
+        "docs/GETTING_STARTED.md",
         "docs/OPERATIONS.md",
+        "docs/PRODUCTION_OPERATIONS.md",
         "docs/TROUBLESHOOTING.md",
         "docs/CONFIGURATION.md",
-        "docs/SELF_HOSTING.md",
         "docs/SECRETS.md",
     ];
 

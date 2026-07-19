@@ -104,8 +104,7 @@ public class AuthorizationIntegrationTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]

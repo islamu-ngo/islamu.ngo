@@ -167,17 +167,6 @@ public class CerbosAuthorizationService : IAuthorizationProvider
         var correlationId = Activity.Current?.Id ?? string.Empty;
         var principal = await _principalBuilder.BuildPrincipalAsync(userId, cancellationToken);
 
-        var eventIds = ExtractEventIdsFromChecks(checks);
-        if (eventIds.Count > 0 && userId.HasValue)
-        {
-            var tenantId = ResolveTenantIdFromChecks(checks);
-            if (tenantId != Guid.Empty)
-            {
-                await _principalBuilder.EnrichWithEventAssignmentsAsync(
-                    principal, userId.Value, tenantId, eventIds, cancellationToken);
-            }
-        }
-
         var resourceEntries = BuildResourceEntries(checks);
 
         _logger.LogDebug(
@@ -249,45 +238,6 @@ public class CerbosAuthorizationService : IAuthorizationProvider
                 return entry;
             })
             .ToArray();
-    }
-
-    private static HashSet<Guid> ExtractEventIdsFromChecks(IReadOnlyList<AuthorizationCheck> checks)
-    {
-        var eventIds = new HashSet<Guid>();
-        foreach (var check in checks)
-        {
-            if (check.ResourceAttributes is null)
-                continue;
-
-            if (check.ResourceAttributes.TryGetValue("eventId", out var eventIdObj))
-            {
-                var eventIdStr = eventIdObj?.ToString();
-                if (Guid.TryParse(eventIdStr, out var eventId))
-                    eventIds.Add(eventId);
-            }
-        }
-        return eventIds;
-    }
-
-    private Guid ResolveTenantIdFromChecks(IReadOnlyList<AuthorizationCheck> checks)
-    {
-        foreach (var check in checks)
-        {
-            if (!string.IsNullOrEmpty(check.Scope?.TenantId) &&
-                Guid.TryParse(check.Scope.TenantId, out var scopedTenantId))
-            {
-                return scopedTenantId;
-            }
-
-            if (check.ResourceAttributes?.TryGetValue("tenantId", out var tenantIdObj) == true)
-            {
-                var tenantIdStr = tenantIdObj?.ToString();
-                if (Guid.TryParse(tenantIdStr, out var tenantId))
-                    return tenantId;
-            }
-        }
-
-        return _tenantContext.TenantId;
     }
 
     private IReadOnlyList<bool> BuildDecisionResults(

@@ -1,5 +1,5 @@
 // ABOUTME: Integration tests for runtime database seeding against PostgreSQL.
-// ABOUTME: Verifies development catalog seeding remains idempotent and preserves user state across API startups.
+// ABOUTME: Verifies development infrastructure settings are seeded from local configuration and environment.
 
 using Event.Persistence.IntegrationTests.Fixtures;
 using Explore.Domain;
@@ -21,197 +21,6 @@ namespace Event.Persistence.IntegrationTests.Seed;
 public class DatabaseSeederTests(PostgreSqlContainerFixture fixture)
 {
     private static readonly IHostEnvironment DevelopmentEnvironment = new TestHostEnvironment();
-
-    [Test]
-    public async Task SeedAsync_InDevelopment_IsIdempotentAcrossStartups()
-    {
-        await fixture.ResetAsync();
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        await using var verifyContext = fixture.CreateDbContext();
-        var visibleCatalogCount = await verifyContext.Events
-            .Where(e => SeedIds.IslamicEventCatalogIds.Contains(e.Id))
-            .CountAsync();
-        var unfilteredCatalogCount = await verifyContext.Events
-            .IgnoreQueryFilters()
-            .Where(e => SeedIds.IslamicEventCatalogIds.Contains(e.Id))
-            .CountAsync();
-        var softDeletedCatalogCount = await verifyContext.Events
-            .IgnoreQueryFilters()
-            .Where(e => SeedIds.IslamicEventCatalogIds.Contains(e.Id) && e.IsDeleted)
-            .CountAsync();
-
-        await Assert.That(visibleCatalogCount).IsEqualTo(SeedIds.IslamicEventCatalogIds.Length);
-        await Assert.That(unfilteredCatalogCount).IsEqualTo(SeedIds.IslamicEventCatalogIds.Length);
-        await Assert.That(softDeletedCatalogCount).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task SeedAsync_InDevelopment_RepairsLaunchCatalogDiscoveryFieldsAcrossStartups()
-    {
-        await fixture.ResetAsync();
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        await using (var staleContext = fixture.CreateDbContext())
-        {
-            var catalogEvents = await staleContext.Events
-                .IgnoreQueryFilters()
-                .Where(e => SeedIds.IslamicEventCatalogIds.Contains(e.Id))
-                .ToListAsync();
-            foreach (var catalogEvent in catalogEvents)
-            {
-                catalogEvent.LastSessionEndUtc = null;
-            }
-
-            var catalogSessions = await staleContext.EventSessions
-                .IgnoreQueryFilters()
-                .Where(session => SeedIds.IslamicEventCatalogIds.Contains(session.EventId))
-                .ToListAsync();
-            foreach (var catalogSession in catalogSessions)
-            {
-                catalogSession.EventSessionStatusId = (int)EventSessionStatusEnum.Draft;
-            }
-
-            await staleContext.SaveChangesAsync();
-        }
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        await using var verifyContext = fixture.CreateDbContext();
-        var repairedEvents = await verifyContext.Events
-            .IgnoreQueryFilters()
-            .Where(e => SeedIds.IslamicEventCatalogIds.Contains(e.Id))
-            .Select(e => new { e.Id, e.FirstSessionStartUtc, e.LastSessionEndUtc })
-            .ToListAsync();
-        var repairedSessions = await verifyContext.EventSessions
-            .IgnoreQueryFilters()
-            .Where(session => SeedIds.IslamicEventCatalogIds.Contains(session.EventId))
-            .Select(session => new { session.Id, session.EventSessionStatusId })
-            .ToListAsync();
-
-        await Assert.That(repairedEvents.Count).IsEqualTo(SeedIds.IslamicEventCatalogIds.Length);
-        await Assert.That(repairedSessions.Count).IsEqualTo(SeedData.IslamicEventSessions.Count);
-        await Assert.That(repairedEvents.All(e =>
-            e.FirstSessionStartUtc.HasValue
-            && e.LastSessionEndUtc.HasValue
-            && e.LastSessionEndUtc.Value > e.FirstSessionStartUtc.Value)).IsTrue();
-        await Assert.That(repairedSessions.All(session =>
-            session.EventSessionStatusId == (int)EventSessionStatusEnum.Published)).IsTrue();
-    }
-
-    [Test]
-    public async Task SeedAsync_InDevelopment_PreservesRegistrationAndConsentAcrossStartups()
-    {
-        await fixture.ResetAsync();
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        var intentId = Guid.Parse("018e4e5c-7f00-7001-8000-000000010001");
-        var registrationId = Guid.Parse("018e4e5c-7f00-7001-8000-000000010002");
-        var consentId = Guid.Parse("018e4e5c-7f00-7001-8000-000000010003");
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            var eventId = SeedIds.QuranTafsirWomenEventId;
-            var sessionId = await context.EventSessions
-                .IgnoreQueryFilters()
-                .Where(session => session.EventId == eventId)
-                .Select(session => session.Id)
-                .FirstAsync();
-            var recipientActorId = await context.Events
-                .IgnoreQueryFilters()
-                .Where(e => e.Id == eventId)
-                .Select(e => e.ActorId)
-                .SingleAsync();
-
-            context.Set<EventRegistrationIntent>().Add(new EventRegistrationIntent
-            {
-                Id = intentId,
-                EventId = eventId,
-                Event = null!,
-                UserId = SeedIds.RegularUserId,
-                User = null!,
-                RegistrationScopeId = (int)RegistrationScopeEnum.SessionSelection,
-                RegistrationScope = null!,
-                ApprovalStatusId = (int)ApprovalStatusEnum.Approved,
-                TenantId = SeedIds.DefaultTenantId,
-                Tenant = null!,
-                CreatedAt = DateTime.UtcNow,
-                ConcurrencyStamp = Guid.Parse("018e4e5c-7f00-7001-8000-000000010004")
-            });
-            context.Set<EventRegistration>().Add(new EventRegistration
-            {
-                Id = registrationId,
-                EventId = eventId,
-                Event = null!,
-                UserId = SeedIds.RegularUserId,
-                User = null!,
-                EventSessionId = sessionId,
-                EventSession = null!,
-                EventRegistrationIntentId = intentId,
-                ApprovalStatusId = (int)ApprovalStatusEnum.Approved,
-                TenantId = SeedIds.DefaultTenantId,
-                Tenant = null!,
-                CreatedAt = DateTime.UtcNow
-            });
-            context.Set<EventContactShareConsent>().Add(new EventContactShareConsent
-            {
-                Id = consentId,
-                TenantId = SeedIds.DefaultTenantId,
-                SourceEventId = eventId,
-                UserId = SeedIds.RegularUserId,
-                RecipientActorId = recipientActorId,
-                SourceEventRegistrationIntentId = intentId,
-                PurposeCode = ConsentPurposeCodes.OrganizerFutureCommunications,
-                Status = ConsentStatus.Granted,
-                EmailSnapshot = "user@example.test",
-                EmailNormalizedSnapshot = "user@example.test",
-                ConsentTextSnapshot = "Share my email with the organizer.",
-                ConsentUiVersion = "v1",
-                GrantedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow
-            });
-            await context.SaveChangesAsync();
-        }
-
-        await using (var context = fixture.CreateDbContext())
-        {
-            await DatabaseSeeder.SeedAsync(context, DevelopmentEnvironment);
-        }
-
-        await using var verifyContext = fixture.CreateDbContext();
-        var intentExists = await verifyContext.Set<EventRegistrationIntent>()
-            .IgnoreQueryFilters()
-            .AnyAsync(intent => intent.Id == intentId && !intent.IsDeleted);
-        var registrationExists = await verifyContext.Set<EventRegistration>()
-            .IgnoreQueryFilters()
-            .AnyAsync(registration => registration.Id == registrationId && !registration.IsDeleted);
-        var consentExists = await verifyContext.Set<EventContactShareConsent>()
-            .AnyAsync(consent => consent.Id == consentId && consent.Status == ConsentStatus.Granted);
-
-        await Assert.That(intentExists).IsTrue();
-        await Assert.That(registrationExists).IsTrue();
-        await Assert.That(consentExists).IsTrue();
-    }
 
     [Test]
     public async Task SeedAsync_InDevelopment_SeedsSmtpSettingsFromConfiguration()
@@ -240,7 +49,7 @@ public class DatabaseSeederTests(PostgreSqlContainerFixture fixture)
                 ["MAIL_SMTP_PORT"] = "1025",
                 ["MAIL_SMTP_ENCRYPTION"] = "None",
                 ["MAIL_SMTP_FROM_ADDRESS"] = "noreply@localhost",
-                ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Event Dev"
+                ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Website Dev"
             })
             .Build();
 
@@ -296,7 +105,7 @@ public class DatabaseSeederTests(PostgreSqlContainerFixture fixture)
             await Assert.That(settings[GovernanceSettingKeys.Email.SmtpPort]).IsEqualTo("1025");
             await Assert.That(settings[GovernanceSettingKeys.Email.SmtpSecurity]).IsEqualTo("\"None\"");
             await Assert.That(settings[GovernanceSettingKeys.Email.FromAddress]).IsEqualTo("\"noreply@localhost\"");
-            await Assert.That(settings[GovernanceSettingKeys.Email.FromName]).IsEqualTo("\"ISLAMU Event Dev\"");
+            await Assert.That(settings[GovernanceSettingKeys.Email.FromName]).IsEqualTo("\"ISLAMU Website Dev\"");
         }
         finally
         {

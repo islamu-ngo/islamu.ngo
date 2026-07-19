@@ -224,7 +224,7 @@ public sealed class WebhookProviderDispatchIdentityTests
             WebhookMessage.Create(
                 MessageId,
                 TenantId,
-                WebhookEventNames.EventPublished,
+                WebhookEventNames.OrganizationVerified,
                 "evt-1",
                 "Event",
                 Guid.Parse("01900000-0000-7000-8000-000000000006"),

@@ -1,7 +1,6 @@
 // ABOUTME: API integration tests for the provider-neutral incoming webhook framework.
 // ABOUTME: Verifies verifier lookup, Svix signature verification, route metadata, and raw-body capture behavior.
 
-using System.Diagnostics.Metrics;
 using System.Reflection;
 using System.Text;
 using Explore.API.Attributes;
@@ -13,7 +12,6 @@ using Explore.Application.Contracts.Persistence;
 using Explore.Application.Contracts.Secrets;
 using Explore.Application.Contracts.Services;
 using Explore.Application.Contracts.Webhooks;
-using Explore.Application.Telemetry;
 using Explore.Domain;
 using Explore.Domain.Enums;
 using Explore.Infrastructure.Configuration;
@@ -127,28 +125,6 @@ public sealed class IncomingWebhookFrameworkTests
         await intakeService.Received(1).CaptureAsync(
             read,
             Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task CoopIncomingWebhookVerifier_WithValidTimestampedHmac_ReturnsVerifiedResult()
-    {
-        const string secret = "coop-secret";
-        const string payload = "{\"tenant_id\":\"018f0000-0000-7000-8000-000000000001\"}";
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-        var verifier = CreateCoopVerifier(secret);
-        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["X-Coop-Timestamp"] = timestamp,
-            ["X-Coop-Signature"] = $"sha256={ComputeCoopSignature(secret, timestamp, payload)}"
-        };
-
-        var result = await verifier.VerifyAsync(
-            new IncomingWebhookContext("coop", payload, Encoding.UTF8.GetBytes(payload), headers, DateTimeOffset.UtcNow),
-            CancellationToken.None);
-
-        await Assert.That(result.IsVerified).IsTrue();
-        await Assert.That(result.EventType).IsEqualTo("moderation.coop.decision");
-        await Assert.That(result.ProviderMessageId).StartsWith("sha256:");
     }
 
     [Test]
@@ -414,7 +390,6 @@ public sealed class IncomingWebhookFrameworkTests
                 OperationalWebhookMaxBodyBytes = 65_536
             }
         }),
-        CreateMetrics(),
         NullLogger<IncomingWebhooksController>.Instance)
     {
         ControllerContext = new ControllerContext
@@ -422,27 +397,6 @@ public sealed class IncomingWebhookFrameworkTests
             HttpContext = new DefaultHttpContext()
         }
     };
-
-    private static BusinessMetrics CreateMetrics()
-    {
-        var meterFactory = Substitute.For<IMeterFactory>();
-        meterFactory.Create(Arg.Any<MeterOptions>()).Returns(new Meter(BusinessMetrics.MeterName));
-
-        return new BusinessMetrics(meterFactory);
-    }
-
-    private static CoopIncomingWebhookVerifier CreateCoopVerifier(string secret)
-    {
-        var tenantContext = Substitute.For<ITenantContextAccessor>();
-        tenantContext.TenantId.Returns(Guid.Parse("018f0000-0000-7000-8000-000000000001"));
-        return new CoopIncomingWebhookVerifier(
-            new StaticOptionsMonitor<CoopProviderOptions>(new CoopProviderOptions
-            {
-                WebhookSecret = secret
-            }),
-            tenantContext,
-            NullLogger<CoopIncomingWebhookVerifier>.Instance);
-    }
 
     private static IncomingWebhookIntakeService CreateSvixIntakeService(string secret)
     {
@@ -488,12 +442,6 @@ public sealed class IncomingWebhookFrameworkTests
     {
         var secretBytes = Enumerable.Range(1, 32).Select(value => (byte)value).ToArray();
         return "whsec_" + Convert.ToBase64String(secretBytes);
-    }
-
-    private static string ComputeCoopSignature(string secret, string timestamp, string body)
-    {
-        using var hmac = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes($"{timestamp}.{body}"))).ToLowerInvariant();
     }
 
     private static string ComputePayloadHash(string payload) =>

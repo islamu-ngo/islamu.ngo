@@ -35,7 +35,7 @@ internal sealed class PostgreSqlApiBenchmarkHostFactory(string connectionString)
                 ["ConnectionStrings:DefaultConnection"] = connectionString,
                 ["Keycloak:Authority"] = "https://auth.benchmark.invalid",
                 ["Keycloak:Realm"] = "ISLAMU",
-                ["Keycloak:Audience"] = "islamu-event-api",
+                ["Keycloak:Audience"] = "islamu-ngo-api",
                 ["Keycloak:RequireHttpsMetadata"] = "false",
                 ["Keycloak:MetadataAddress"] = "https://auth.benchmark.invalid/.well-known/openid-configuration",
                 ["Testing:UseRealDatabase"] = "true",
@@ -118,8 +118,6 @@ internal sealed class PostgreSqlApiBenchmarkHostFactory(string connectionString)
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);
             await PostgresModelConstraintApplier.ApplyAsync(dbContext, cancellationToken);
             await DatabaseSeeder.SeedAsync(dbContext, environment, cancellationToken: cancellationToken);
-            await BenchmarkApiSeedData.SeedAsync(dbContext, cancellationToken);
-
             var lookupCache = scope.ServiceProvider.GetService<ILookupDataCache>();
             if (lookupCache is not null)
             {

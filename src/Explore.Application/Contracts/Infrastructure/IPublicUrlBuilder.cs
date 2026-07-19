@@ -1,22 +1,15 @@
 // ABOUTME: Contract for generating absolute, tenant-aware public URLs for external sharing.
-// ABOUTME: Used by OG meta tags, share buttons, calendar links, and future federation.
+// ABOUTME: Used by OG meta tags, share buttons, public links, and future federation.
 
 namespace Explore.Application.Contracts.Infrastructure;
 
 /// <summary>
 /// Generates absolute, canonical public URLs for externally shared resources.
 /// Handles reverse proxy awareness, tenant domain resolution, and scheme detection.
-/// All returned URLs are absolute and safe for use in OG tags, share links, and calendar entries.
+/// All returned URLs are absolute and safe for use in OG tags, share links, and public references.
 /// </summary>
 public interface IPublicUrlBuilder
 {
-    /// <summary>
-    /// Gets the absolute canonical URL for a specific event.
-    /// </summary>
-    /// <param name="eventId">The event identifier.</param>
-    /// <returns>Absolute URL, e.g. "https://events.example.org/events/550e8400-...".</returns>
-    string GetEventUrl(Guid eventId);
-
     /// <summary>
     /// Gets the absolute canonical URL for an actor's public profile page.
     /// Routes to the appropriate profile page based on actor type (organization, user, group).
@@ -50,7 +43,7 @@ public interface IPublicUrlBuilder
     /// Gets the absolute base URL for the current tenant/deployment.
     /// Includes scheme, host, and path base. No trailing slash.
     /// </summary>
-    /// <returns>Absolute base URL, e.g. "https://events.example.org".</returns>
+    /// <returns>Absolute base URL, e.g. "https://www.example.org".</returns>
     string GetBaseUrl();
 
     /// <summary>

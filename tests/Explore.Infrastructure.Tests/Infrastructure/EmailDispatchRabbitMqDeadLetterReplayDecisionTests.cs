@@ -25,16 +25,16 @@ public sealed class EmailDispatchRabbitMqDeadLetterReplayDecisionTests
     }
 
     [Test]
-    public async Task DecideWhenEventIdMismatchesParksMessage()
+    public async Task DecideWhenSourceIdMismatchesParksMessage()
     {
-        var pointer = CreatePointer(eventId: Guid.CreateVersion7());
+        var pointer = CreatePointer();
         var dispatch = CreateDispatch(pointer, EmailDispatchStatus.DeadLettered);
-        dispatch.EventId = Guid.CreateVersion7();
+        dispatch.SourceId = Guid.CreateVersion7();
 
         var decision = EmailDispatchRabbitMqDeadLetterReplayDecision.Decide(pointer, dispatch);
 
         await Assert.That(decision.Action).IsEqualTo(EmailDispatchRabbitMqDeadLetterReplayAction.Park);
-        await Assert.That(decision.FailureCategory).IsEqualTo("event_mismatch");
+        await Assert.That(decision.FailureCategory).IsEqualTo("source_mismatch");
     }
 
     [Test]
@@ -84,14 +84,12 @@ public sealed class EmailDispatchRabbitMqDeadLetterReplayDecisionTests
         await Assert.That(decision.RequiresDurableReplayReset).IsTrue();
     }
 
-    private static EmailDispatchPointer CreatePointer(Guid? eventId = null) => new(
+    private static EmailDispatchPointer CreatePointer() => new(
         Guid.CreateVersion7(),
         Guid.CreateVersion7(),
-        EmailDispatchKind.RegistrationConfirmation,
-        "event_registration_intent",
+        EmailDispatchKind.TenantAdministratorInvitation,
+        "tenant-administrator-invitation",
         Guid.CreateVersion7(),
-        eventId,
-        RegistrationIntentId: Guid.CreateVersion7(),
         UserId: Guid.CreateVersion7());
 
     private static EmailDispatchOutbox CreateDispatch(
@@ -104,8 +102,6 @@ public sealed class EmailDispatchRabbitMqDeadLetterReplayDecisionTests
             Kind = pointer.Kind,
             SourceType = pointer.SourceType,
             SourceId = pointer.SourceId ?? Guid.CreateVersion7(),
-            EventId = pointer.EventId,
-            RegistrationIntentId = pointer.RegistrationIntentId,
             UserId = pointer.UserId,
             RecipientEmail = "attendee@example.test",
             Subject = "Registration confirmation",

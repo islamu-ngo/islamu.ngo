@@ -1,5 +1,5 @@
 // ABOUTME: Generates absolute public URLs from HttpContext, respecting reverse proxy and tenant context.
-// ABOUTME: Single source of truth for all external-facing URLs used in OG tags, sharing, and calendar links.
+// ABOUTME: Single source of truth for all external-facing URLs used in OG tags, sharing, and public links.
 
 using Explore.Application.Contracts.Infrastructure;
 using Microsoft.AspNetCore.Http;
@@ -22,12 +22,6 @@ public class PublicUrlBuilder : IPublicUrlBuilder
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
-    }
-
-    /// <inheritdoc />
-    public string GetEventUrl(Guid eventId)
-    {
-        return $"{GetBaseUrl()}/events/{eventId}";
     }
 
     /// <inheritdoc />

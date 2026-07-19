@@ -49,17 +49,6 @@ principals:
       orgMemberships: {}
 
 resources:
-  event_image_upload_session:
-    kind: "islamuevent_storage_object"
-    id: "event-image-upload"
-    attr:
-      tenantId: "tenant-1"
-      owningResourceKind: "islamuevent_event"
-      owningResourceId: "event-1"
-      purpose: "event_image"
-      visibility: "public_image"
-      lifecycleState: "active"
-
   private_owner_file:
     kind: "islamuevent_storage_object"
     id: "private-owner-file"
@@ -71,54 +60,6 @@ resources:
       createdBy: "user-owner-id"
 
 tests:
-  - name: "Instance admin can manage storage objects"
-    input:
-      principals: ["islamuevent_instance_admin"]
-      resources: ["event_image_upload_session"]
-      actions: ["view", "create", "update", "delete", "download", "presigned_download"]
-    expected:
-      - principal: "islamuevent_instance_admin"
-        resource: "event_image_upload_session"
-        actions:
-          view: EFFECT_ALLOW
-          create: EFFECT_ALLOW
-          update: EFFECT_ALLOW
-          delete: EFFECT_ALLOW
-          download: EFFECT_ALLOW
-          presigned_download: EFFECT_ALLOW
-
-  - name: "Tenant admin can manage storage objects in their tenant"
-    input:
-      principals: ["islamuevent_tenant_admin"]
-      resources: ["event_image_upload_session"]
-      actions: ["view", "create", "update", "delete", "download", "presigned_download"]
-    expected:
-      - principal: "islamuevent_tenant_admin"
-        resource: "event_image_upload_session"
-        actions:
-          view: EFFECT_ALLOW
-          create: EFFECT_ALLOW
-          update: EFFECT_ALLOW
-          delete: EFFECT_ALLOW
-          download: EFFECT_ALLOW
-          presigned_download: EFFECT_ALLOW
-
-  - name: "Regular authenticated user can create upload sessions and download readable content but cannot view metadata"
-    input:
-      principals: ["regular_user"]
-      resources: ["event_image_upload_session"]
-      actions: ["view", "create", "download", "presigned_download", "update", "delete"]
-    expected:
-      - principal: "regular_user"
-        resource: "event_image_upload_session"
-        actions:
-          view: EFFECT_DENY
-          create: EFFECT_ALLOW
-          download: EFFECT_ALLOW
-          presigned_download: EFFECT_ALLOW
-          update: EFFECT_DENY
-          delete: EFFECT_DENY
-
   - name: "Private owner can download their own active private object"
     input:
       principals: ["private_owner"]
@@ -131,16 +72,3 @@ tests:
           view: EFFECT_DENY
           download: EFFECT_ALLOW
           presigned_download: EFFECT_ALLOW
-
-  - name: "Unrelated tenant admin cannot view or mutate another tenant storage object metadata"
-    input:
-      principals: ["unrelated_tenant_admin"]
-      resources: ["event_image_upload_session"]
-      actions: ["view", "update", "delete"]
-    expected:
-      - principal: "unrelated_tenant_admin"
-        resource: "event_image_upload_session"
-        actions:
-          view: EFFECT_DENY
-          update: EFFECT_DENY
-          delete: EFFECT_DENY

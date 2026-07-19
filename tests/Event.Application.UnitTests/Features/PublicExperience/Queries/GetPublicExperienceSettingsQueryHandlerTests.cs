@@ -103,7 +103,7 @@ public class GetPublicExperienceSettingsQueryHandlerTests
 
         _policySettingService.ReadEffectiveTenantSettingsAsync(tenantId).Returns(new TenantPolicySettingsDto
         {
-            PreferredHomePage = "EventList",
+            PreferredHomePage = "LandingPage",
             BrandDisplayName = "Tenant Brand"
         });
 
@@ -403,7 +403,6 @@ public class GetPublicExperienceSettingsQueryHandlerTests
         {
             DeploymentMode = new DeploymentModeDto { Mode = Explore.Domain.Enums.DeploymentMode.SingleTenant },
             Modules = new ModuleSettingsDto(),
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto(),
@@ -416,17 +415,16 @@ public class GetPublicExperienceSettingsQueryHandlerTests
                 RenderPolicyVersion = 4,
                 RenderPolicyPreset = "CustomAdvanced",
                 EnableAdvancedRenderPolicyOverrides = true,
-                GlobalRenderMode = "InteractiveWebAssembly",
+                GlobalRenderMode = "InteractiveServer",
                 GlobalPrerenderEnabled = true,
-                PublicSeoRenderMode = "InteractiveAuto",
+                PublicSeoRenderMode = "InteractiveServer",
                 PublicSeoPrerenderEnabled = true,
                 OperationalRenderMode = "InteractiveServer",
                 OperationalPrerenderEnabled = false,
                 AdminRenderMode = "InteractiveServer",
                 AdminPrerenderEnabled = false,
-                OnboardingRenderMode = "InteractiveAuto",
-                OnboardingPrerenderEnabled = false,
-                DisallowInteractiveServerOnOnboarding = true
+                OnboardingRenderMode = "InteractiveServer",
+                OnboardingPrerenderEnabled = false
             }
         });
 
@@ -437,10 +435,9 @@ public class GetPublicExperienceSettingsQueryHandlerTests
         await Assert.That(result.RenderPolicyVersion).IsEqualTo(4);
         await Assert.That(result.RenderPolicyPreset).IsEqualTo("CustomAdvanced");
         await Assert.That(result.EnableAdvancedRenderPolicyOverrides).IsTrue();
-        await Assert.That(result.GlobalRenderMode).IsEqualTo("InteractiveWebAssembly");
+        await Assert.That(result.GlobalRenderMode).IsEqualTo("InteractiveServer");
         await Assert.That(result.GlobalPrerenderEnabled).IsTrue();
         await Assert.That(result.OperationalRenderMode).IsEqualTo("InteractiveServer");
-        await Assert.That(result.DisallowInteractiveServerOnOnboarding).IsTrue();
     }
 
     [Test]
@@ -528,7 +525,6 @@ public class GetPublicExperienceSettingsQueryHandlerTests
         {
             DeploymentMode = new DeploymentModeDto { Mode = Explore.Domain.Enums.DeploymentMode.SingleTenant },
             Modules = new ModuleSettingsDto(),
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto(),

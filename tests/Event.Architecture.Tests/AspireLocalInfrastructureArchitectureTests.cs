@@ -6,6 +6,8 @@ namespace Event.Architecture.Tests;
 public sealed class AspireLocalInfrastructureArchitectureTests
 {
     private static readonly string RepoRoot = ResolveRepoRoot();
+    private const string LocalKeycloakAdminPassword = "local-keycloak-admin-fixture";
+    private const string LocalNgoBffClientSecret = "islamu-ngo-blazor-local-secret";
 
     [Test]
     public async Task LocalLite_MustRunMigrationServiceBeforeApiAndBlazorWithoutLocalInfra()
@@ -61,6 +63,90 @@ public sealed class AspireLocalInfrastructureArchitectureTests
         await Assert.That(cerbosConfig).Contains("storage:\n  driver: \"postgres\"");
         await Assert.That(appHost).Contains("\"CERBOS_PG_URL\"");
         await Assert.That(compose).Contains("CERBOS_PG_URL:");
+    }
+
+    [Test]
+    public async Task LocalFull_MustUseAdditiveNgoKeycloakProvisioner()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+
+        await Assert.That(appHost).Contains("keycloak-ngo-provisioner");
+        await Assert.That(appHost).Contains("quay.io/keycloak/keycloak");
+        await Assert.That(appHost).Contains("26.5.2");
+        await Assert.That(appHost).Contains("provision-islamu-ngo-client.sh");
+        await Assert.That(appHost).Contains("isReadOnly: true");
+        await Assert.That(appHost).Contains("KEYCLOAK_INTERNAL_URL");
+        await Assert.That(appHost).Contains("http://keycloak:8080/auth");
+        await Assert.That(appHost).Contains("KEYCLOAK_ALLOW_INSECURE_HTTP");
+        await Assert.That(appHost).Contains("KEYCLOAK_ADMIN_REALM");
+        await Assert.That(appHost).Contains("KEYCLOAK_ISLAMU_NGO_PROVISIONING_REQUIRED");
+        await Assert.That(appHost).Contains("islamu-ngo-blazor");
+        await Assert.That(appHost).Contains("islamu-ngo-api");
+        await Assert.That(appHost).Contains("islamu-ngo-api-audience");
+        await Assert.That(appHost).Contains(LocalNgoBffClientSecret);
+        await Assert.That(appHost).Contains(LocalKeycloakAdminPassword);
+        await Assert.That(appHost).DoesNotContain("keycloak-init");
+        await Assert.That(appHost).DoesNotContain("keycloak-init.sh");
+        await Assert.That(appHost).DoesNotContain("KEYCLOAK_INIT_ALLOW_DEFAULT_LOCAL_SECRET");
+        await Assert.That(appHost).DoesNotContain("islamu-event-blazor");
+        await Assert.That(appHost).DoesNotContain("islamu-event-api");
+        await Assert.That(appHost).DoesNotContain("\"islamu-ngo-blazor-secret\"");
+        await Assert.That(appHost).DoesNotContain("configuration[\"KEYCLOAK_ADMIN_PASSWORD\"] ?? \"admin\"");
+    }
+
+    [Test]
+    public async Task LocalKeycloakFixtures_MustStayAlignedBetweenAppHostAndEnvExample()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+        var envExample = await File.ReadAllTextAsync(Path.Combine(RepoRoot, ".env.example"));
+
+        await Assert.That(appHost).Contains($"LocalKeycloakAdminPassword = \"{LocalKeycloakAdminPassword}\"");
+        await Assert.That(appHost).Contains($"LocalNgoBffClientSecret = \"{LocalNgoBffClientSecret}\"");
+        await Assert.That(envExample).Contains($"KEYCLOAK_ADMIN_PASSWORD={LocalKeycloakAdminPassword}");
+        await Assert.That(envExample).Contains($"KEYCLOAK_BLAZOR_CLIENT_SECRET={LocalNgoBffClientSecret}");
+        await Assert.That(envExample).Contains($"KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET={LocalNgoBffClientSecret}");
+        await Assert.That(envExample).DoesNotContain("KEYCLOAK_ADMIN_PASSWORD=admin");
+        await Assert.That(envExample).DoesNotContain("islamu-ngo-blazor-secret");
+    }
+
+    [Test]
+    public async Task LocalProjects_MustWaitForNgoProvisionerCompletion()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+
+        await Assert.That(appHost).Contains("KeycloakNgoProvisioner: keycloakNgoProvisioner");
+        await Assert.That(appHost).Contains(".WaitForCompletion(resources.KeycloakNgoProvisioner)");
+        await Assert.That(appHost).DoesNotContain("resources.KeycloakInit");
+    }
+
+    [Test]
+    public async Task LocalCompose_MustUseAdditiveNgoKeycloakProvisioner()
+    {
+        var compose = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "docker-compose.yml"));
+
+        await Assert.That(compose).Contains("keycloak-ngo-provisioner:");
+        await Assert.That(compose).Contains("context: docker/keycloak");
+        await Assert.That(compose).Contains("dockerfile: Dockerfile.provisioner");
+        await Assert.That(compose).Contains("quay.io/keycloak/keycloak:26.5.2");
+        await Assert.That(compose).Contains("KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-keycloak-admin-fixture}");
+        await Assert.That(compose).Contains("KEYCLOAK_ALLOW_INSECURE_HTTP: \"true\"");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_PROVISIONING_REQUIRED: \"true\"");
+        await Assert.That(compose).Contains("KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-master}");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_ID: ${KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_ID:-islamu-ngo-blazor}");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID: ${KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID:-islamu-ngo-api}");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME: ${KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME:-islamu-ngo-api-audience}");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET: ${KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET:-islamu-ngo-blazor-local-secret}");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_REDIRECT_URIS:");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_WEB_ORIGINS:");
+        await Assert.That(compose).Contains("KEYCLOAK_ISLAMU_NGO_LOGOUT_REDIRECT_URIS:");
+        await Assert.That(compose).Contains("Keycloak__ClientId: ${KEYCLOAK_BLAZOR_CLIENT_ID:-islamu-ngo-blazor}");
+        await Assert.That(compose).Contains("Keycloak__ClientSecret: ${KEYCLOAK_BLAZOR_CLIENT_SECRET:-islamu-ngo-blazor-local-secret}");
+        await Assert.That(compose).Contains("keycloak-ngo-provisioner:\n        condition: service_completed_successfully");
+        await Assert.That(compose).DoesNotContain("keycloak-init:");
+        await Assert.That(compose).DoesNotContain("keycloak-init.sh");
+        await Assert.That(compose).DoesNotContain("KEYCLOAK_INIT_ALLOW_DEFAULT_LOCAL_SECRET");
+        await Assert.That(compose).DoesNotContain("islamu-event-blazor");
+        await Assert.That(compose).DoesNotContain("islamu-event-api");
     }
 
     private static string ResolveRepoRoot()

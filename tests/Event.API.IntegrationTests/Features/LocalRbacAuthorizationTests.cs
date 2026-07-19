@@ -1,6 +1,5 @@
-// ABOUTME: Tests verifying FallbackAuthorizationService (Local RBAC) works correctly when the operator
-// ABOUTME: chooses "local" authorization mode during onboarding. Uses real JWT auth + mocked role resolution
-// ABOUTME: to exercise the full RuntimeAuthorizationProvider → FallbackAuthorizationService pipeline.
+// ABOUTME: Tests Local RBAC authorization mode using real JWT auth and mocked role resolution.
+// ABOUTME: Exercises the RuntimeAuthorizationProvider to FallbackAuthorizationService pipeline.
 
 using System.Net;
 using System.Net.Http.Headers;
@@ -203,7 +202,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     [Test]
     public async Task LocalRbac_Anonymous_StillGets401()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
 
         var response = await _anonymousClient.SendAsync(request);
 
@@ -214,7 +213,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     [Test]
     public async Task LocalRbac_AnonymousEndpoints_StillWork()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/eventformat");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
 
         var response = await _anonymousClient.SendAsync(request);
 
@@ -260,7 +259,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     public async Task LocalRbac_TenantAdmin_CanEnableTenantModule()
     {
         var token = await _keycloak.TokenClient.GetTenantAdminTokenAsync();
-        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Tech/enable", token);
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Core/enable", token);
 
         var response = await _tenantAdminClient.SendAsync(request);
 
@@ -272,7 +271,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     public async Task LocalRbac_TenantAdmin_CanDisableTenantModule()
     {
         var token = await _keycloak.TokenClient.GetTenantAdminTokenAsync();
-        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Islamic/disable", token);
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Core/disable", token);
 
         var response = await _tenantAdminClient.SendAsync(request);
 
@@ -284,7 +283,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     public async Task LocalRbac_RegularUser_DeniedModuleEnable()
     {
         var token = await _keycloak.TokenClient.GetUserTokenAsync();
-        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Tech/enable", token);
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Core/enable", token);
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -296,7 +295,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
     public async Task LocalRbac_RegularUser_DeniedModuleDisable()
     {
         var token = await _keycloak.TokenClient.GetUserTokenAsync();
-        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Islamic/disable", token);
+        using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/module/Mod_Core/disable", token);
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -435,7 +434,7 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_local_rbac;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",
@@ -545,76 +544,41 @@ public class LocalRbacAuthorizationTests : IAsyncDisposable
                 CreatedAt = DateTime.UtcNow
             });
 
-            await SeedModuleGovernanceAsync(dbContext, cancellationToken);
+            if (!await dbContext.ModuleDefinitions.AnyAsync(cancellationToken))
+            {
+                dbContext.ModuleDefinitions.Add(new ModuleDefinition
+                {
+                    Id = SeedIds.ModuleCoreId,
+                    ModuleKey = "Mod_Core",
+                    Name = "Core",
+                    Description = "Shared platform capabilities",
+                    IconName = "Foundation",
+                    Category = "Core",
+                    DisplayOrder = 0,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (!await dbContext.TenantCapabilities.AnyAsync(cancellationToken))
+            {
+                dbContext.TenantCapabilities.Add(new TenantCapability
+                {
+                    Id = SeedIds.DefaultTenantCoreCapabilityId,
+                    TenantId = DefaultTenantId,
+                    Tenant = null!,
+                    ModuleId = SeedIds.ModuleCoreId,
+                    Module = null!,
+                    IsEnabled = true,
+                    EnabledAt = DateTime.UtcNow
+                });
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-        private static async Task SeedModuleGovernanceAsync(
-            ExploreDbContext dbContext,
-            CancellationToken cancellationToken)
-        {
-            var seedTimestamp = DateTime.UtcNow;
-
-            if (!await dbContext.ModuleDefinitions.AnyAsync(cancellationToken))
-            {
-                dbContext.ModuleDefinitions.AddRange(
-                    new ModuleDefinition
-                    {
-                        Id = SeedIds.ModuleCoreId,
-                        ModuleKey = "Mod_Core",
-                        Name = "Core Events",
-                        Description = "Basic event functionality",
-                        IconName = "Event",
-                        Category = "Core",
-                        DisplayOrder = 0,
-                        IsActive = true,
-                        CreatedAt = seedTimestamp
-                    },
-                    new ModuleDefinition
-                    {
-                        Id = SeedIds.ModuleIslamicId,
-                        ModuleKey = "Mod_Islamic",
-                        Name = "Islamic Events",
-                        Description = "Islamic-specific event features",
-                        IconName = "Mosque",
-                        Category = "Domain",
-                        DisplayOrder = 1,
-                        IsActive = true,
-                        CreatedAt = seedTimestamp
-                    },
-                    new ModuleDefinition
-                    {
-                        Id = SeedIds.ModuleTechId,
-                        ModuleKey = "Mod_Tech",
-                        Name = "Tech Events",
-                        Description = "Developer event features",
-                        IconName = "Code",
-                        Category = "Domain",
-                        DisplayOrder = 2,
-                        IsActive = true,
-                        CreatedAt = seedTimestamp
-                    });
-            }
-
-            if (!await dbContext.TenantCapabilities.AnyAsync(
-                    capability => capability.TenantId == DefaultTenantId &&
-                        capability.ModuleId == SeedIds.ModuleIslamicId,
-                    cancellationToken))
-            {
-                dbContext.TenantCapabilities.Add(new TenantCapability
-                {
-                    Id = SeedIds.DefaultTenantIslamicCapabilityId,
-                    TenantId = DefaultTenantId,
-                    Tenant = null!,
-                    ModuleId = SeedIds.ModuleIslamicId,
-                    Module = null!,
-                    IsEnabled = true,
-                    EnabledAt = seedTimestamp
-                });
-            }
-        }
     }
 
     #endregion

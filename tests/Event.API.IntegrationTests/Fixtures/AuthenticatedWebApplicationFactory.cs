@@ -1,5 +1,5 @@
 // ABOUTME: WebApplicationFactory that wires TestAuthHandler as the default authentication scheme.
-// Also replaces IAuthorizationProvider with an allow-all mock for endpoint-level auth tests.
+// ABOUTME: Replaces IAuthorizationProvider with an allow-all mock for endpoint-level auth tests.
 
 using System.Threading.Channels;
 using Explore.Application.Contracts.Infrastructure;
@@ -49,7 +49,7 @@ public class AuthenticatedWebApplicationFactory : WebApplicationFactory<Program>
                 {"ConnectionStrings:DefaultConnection", "Host=localhost;Database=explore_db_test;Username=postgres;Password=postgres"},
                 {"Keycloak:Authority", "https://auth.example.com"},
                 {"Keycloak:Realm", "ISLAMU"},
-                {"Keycloak:Audience", "islamu-event-api"},
+                {"Keycloak:Audience", "islamu-ngo-api"},
                 {"Keycloak:RequireHttpsMetadata", "false"},
                 {"Keycloak:MetadataAddress", "https://auth.example.com/.well-known/openid-configuration"},
                 {"Testing:SkipJwtAuthorityWarmup", "true"},

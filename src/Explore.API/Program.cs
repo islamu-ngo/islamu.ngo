@@ -106,8 +106,6 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
 builder.Services.AddApiCaching();
-builder.Services.AddScoped<ICoopWebhookSignatureValidator, CoopWebhookSignatureValidator>();
-builder.Services.AddScoped<IIncomingWebhookVerifier, CoopIncomingWebhookVerifier>();
 builder.Services.AddScoped<IIncomingWebhookVerifier, SvixIncomingWebhookVerifier>();
 builder.Services.AddScoped<IIncomingWebhookVerifierRegistry, IncomingWebhookVerifierRegistry>();
 builder.Services.AddScoped<IIncomingWebhookIntakeService, IncomingWebhookIntakeService>();
@@ -245,7 +243,7 @@ builder.Services.AddSwaggerGenWithAuth(builder.Configuration);
 
 // Configure native OpenAPI for the public Explore API contract.
 // Register document transformer to add missing DTO schemas that are hidden inside HAL wrappers
-builder.Services.AddOpenApi("v1", options =>
+builder.Services.AddOpenApi("islamu", options =>
 {
     options.ShouldInclude = (description) => true;
     options.AddDocumentTransformer((document, _, _) =>

@@ -193,7 +193,7 @@ public sealed class StoragePolicyResolverTests
 
         var imagePolicy = await resolver.ResolveAsync(
             null,
-            new StoragePolicyIntent(StorageObjectPurposes.EventImage, StorageObjectVisibilities.PublicImage, "image/png", ExpectedSizeBytes: 10));
+            new StoragePolicyIntent(StorageObjectPurposes.LegacyImage, StorageObjectVisibilities.PublicImage, "image/png", ExpectedSizeBytes: 10));
         var documentPolicy = await resolver.ResolveAsync(
             null,
             new StoragePolicyIntent(StorageObjectPurposes.Document, StorageObjectVisibilities.PrivateOwner, "application/pdf", ExpectedSizeBytes: 10));
@@ -251,7 +251,7 @@ public sealed class StoragePolicyResolverTests
 
         var policy = await resolver.ResolveAsync(
             TenantId,
-            new StoragePolicyIntent(StorageObjectPurposes.EventImage, StorageObjectVisibilities.PublicImage, "image/jpeg", ExpectedSizeBytes: 10));
+            new StoragePolicyIntent(StorageObjectPurposes.LegacyImage, StorageObjectVisibilities.PublicImage, "image/jpeg", ExpectedSizeBytes: 10));
 
         await Assert.That(policy.TenantOverridesAllowed).IsFalse();
         await Assert.That(policy.RouteKey).IsEqualTo(StorageRouteKeys.Images);

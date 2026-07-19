@@ -7,6 +7,7 @@ using Explore.Application.DTOs.Actor;
 using Explore.Application.DTOs.ActorSubscription;
 using Explore.Application.DTOs.Ai;
 using Explore.Application.DTOs.AtprotoRecord;
+using Explore.Application.DTOs.Blog;
 using Explore.Application.DTOs.Category;
 using Explore.Application.DTOs.CustomPropertyDefinition;
 using Explore.Application.DTOs.EmailDispatch;
@@ -105,6 +106,9 @@ public static class ResourceDescriptorRegistry
         // Email Dispatch
         [typeof(EmailDispatchStatusDto)] = global::Explore.Application.Authorization.ResourceKinds.EmailDispatch,
 
+        [typeof(BlogSummaryDto)] = global::Explore.Application.Authorization.ResourceKinds.Blog,
+        [typeof(BlogDetailDto)] = global::Explore.Application.Authorization.ResourceKinds.Blog,
+
         // Actor
         [typeof(ActorDto)] = global::Explore.Application.Authorization.ResourceKinds.Actor,
         [typeof(ActorListDto)] = global::Explore.Application.Authorization.ResourceKinds.Actor,
@@ -140,8 +144,6 @@ public static class ResourceDescriptorRegistry
             PermissionAction.Update => AuthorizationActions.Update,
             PermissionAction.Delete => AuthorizationActions.Delete,
             PermissionAction.ManageMembers => AuthorizationActions.ManageMembers,
-            PermissionAction.ViewSharedContacts => AuthorizationActions.ViewSharedContacts,
-            PermissionAction.ExportSharedContacts => AuthorizationActions.ExportSharedContacts,
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
         };
     }

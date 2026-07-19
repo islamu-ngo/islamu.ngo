@@ -45,11 +45,7 @@ public sealed class AiReplayReportGeneratorTests
         inspectorScenario.Diagnostics.Should().Contain("resources/list");
         inspectorScenario.Diagnostics.Should().Contain("resources/templates/list");
         inspectorScenario.Diagnostics.Should().Contain("prompts/list");
-        inspectorScenario.Diagnostics.Should().Contain("propose_create_event_draft");
-        inspectorScenario.Diagnostics.Should().Contain("propose_update_event_draft");
-        inspectorScenario.Diagnostics.Should().Contain("propose_publish_event");
-        inspectorScenario.Diagnostics.Should().Contain("propose_create_event_session");
-        inspectorScenario.Diagnostics.Should().Contain("44 registry-projected proposal tools");
+        inspectorScenario.Diagnostics.Should().Contain("0 registry-projected proposal tools");
         inspectorScenario.DatabaseSideEffectsDetected.Should().BeFalse();
     }
 
@@ -62,13 +58,11 @@ public sealed class AiReplayReportGeneratorTests
         var confirmationScenario = report.Results.Single(result => result.Code == AiReplayScenarioCodes.McpConfirmationRequired);
 
         projectedToolScenario.Status.Should().Be(AiReplayScenarioStatus.Pass);
-        projectedToolScenario.Diagnostics.Should().Contain("propose_create_event_draft");
-        projectedToolScenario.Diagnostics.Should().Contain("propose_update_event_draft");
-        projectedToolScenario.Diagnostics.Should().Contain("sub-resource propose_* tools");
-        projectedToolScenario.Diagnostics.Should().Contain("allow-listed");
+        projectedToolScenario.Diagnostics.Should().Contain("Clients must not invent action names");
+        projectedToolScenario.Diagnostics.Should().Contain("future registry definitions");
         confirmationScenario.Status.Should().Be(AiReplayScenarioStatus.Pass);
-        confirmationScenario.Summary.Should().Contain("proposals only");
-        confirmationScenario.Diagnostics.Should().Contain("before confirmation");
+        confirmationScenario.Summary.Should().Contain("no executable proposal surface");
+        confirmationScenario.Diagnostics.Should().Contain("current generic text/reference AI");
     }
 
     [Test]
@@ -79,7 +73,7 @@ public sealed class AiReplayReportGeneratorTests
 
         AiReplayArtifactSafetyPolicy.ContainsContentBearingData(report).Should().BeFalse();
         AiReplayArtifactSafetyPolicy.ContainsContentBearingData(combined).Should().BeFalse();
-        combined.Should().NotContain("Replay fixture");
+        combined.Should().NotContain("safe-reference");
         combined.Should().NotContain("018e4e5c");
         combined.Should().NotContain("OPENAI_API_KEY");
         combined.Should().NotContain("gpt-4");

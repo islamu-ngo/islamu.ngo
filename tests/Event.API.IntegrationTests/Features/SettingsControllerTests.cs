@@ -1,5 +1,5 @@
 // ABOUTME: Integration tests for the unified SettingsController verifying auth gates and endpoint availability.
-// ABOUTME: Tests both anonymous (401) and authenticated access for all 9 user/tenant settings endpoints.
+// ABOUTME: Tests anonymous and authenticated access for retained generic user/tenant setting endpoints.
 
 using System.Net;
 using System.Net.Http.Json;
@@ -27,7 +27,7 @@ public class SettingsControllerAnonymousTests
     [Test]
     public async Task GetUserSettings_WithoutAuth_ShouldReturnUnauthorized()
     {
-        var response = await _fixture.Client.GetAsync($"{BaseUrl}/user/EventList");
+        var response = await _fixture.Client.GetAsync($"{BaseUrl}/user/Email");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -37,10 +37,10 @@ public class SettingsControllerAnonymousTests
     {
         var body = new UpdateSettingBatchDto
         {
-            Values = new Dictionary<string, string> { ["event_list.page_size"] = "24" }
+            Values = new Dictionary<string, string> { ["email.smtp_port"] = "2525" }
         };
 
-        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/user/EventList", body);
+        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/user/Email", body);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -50,7 +50,7 @@ public class SettingsControllerAnonymousTests
     {
         var body = new UpdateSettingValueDto { Value = "24" };
 
-        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/user/keys/event_list.page_size", body);
+        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/user/keys/email.smtp_port", body);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -58,7 +58,7 @@ public class SettingsControllerAnonymousTests
     [Test]
     public async Task ResetUserSetting_WithoutAuth_ShouldReturnUnauthorized()
     {
-        var response = await _fixture.Client.DeleteAsync($"{BaseUrl}/user/keys/event_list.page_size");
+        var response = await _fixture.Client.DeleteAsync($"{BaseUrl}/user/keys/email.smtp_port");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -70,7 +70,7 @@ public class SettingsControllerAnonymousTests
     [Test]
     public async Task GetTenantSettings_WithoutAuth_ShouldReturnUnauthorized()
     {
-        var response = await _fixture.Client.GetAsync($"{BaseUrl}/tenant/EventList");
+        var response = await _fixture.Client.GetAsync($"{BaseUrl}/tenant/Email");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -80,10 +80,10 @@ public class SettingsControllerAnonymousTests
     {
         var body = new UpdateSettingBatchDto
         {
-            Values = new Dictionary<string, string> { ["event_list.page_size"] = "24" }
+            Values = new Dictionary<string, string> { ["email.smtp_port"] = "2525" }
         };
 
-        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/tenant/EventList", body);
+        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/tenant/Email", body);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -93,7 +93,7 @@ public class SettingsControllerAnonymousTests
     {
         var body = new UpdateSettingValueDto { Value = "24" };
 
-        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/tenant/keys/event_list.page_size", body);
+        var response = await _fixture.Client.PutAsJsonAsync($"{BaseUrl}/tenant/keys/email.smtp_port", body);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -101,7 +101,7 @@ public class SettingsControllerAnonymousTests
     [Test]
     public async Task LockTenantSetting_WithoutAuth_ShouldReturnUnauthorized()
     {
-        var response = await _fixture.Client.PostAsync($"{BaseUrl}/tenant/keys/event_list.page_size/lock", null);
+        var response = await _fixture.Client.PostAsync($"{BaseUrl}/tenant/keys/email.smtp_port/lock", null);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -109,7 +109,7 @@ public class SettingsControllerAnonymousTests
     [Test]
     public async Task UnlockTenantSetting_WithoutAuth_ShouldReturnUnauthorized()
     {
-        var response = await _fixture.Client.DeleteAsync($"{BaseUrl}/tenant/keys/event_list.page_size/lock");
+        var response = await _fixture.Client.DeleteAsync($"{BaseUrl}/tenant/keys/email.smtp_port/lock");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
@@ -135,14 +135,14 @@ public class SettingsControllerAuthenticatedTests
     public async Task GetUserSettings_WithAuth_ShouldReturnOk()
     {
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"{BaseUrl}/user/EventList", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"{BaseUrl}/user/Email", userId);
 
         var response = await _fixture.Client.SendAsync(request);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        await Assert.That(content).Contains("EventList");
+        await Assert.That(content).Contains("Email");
     }
 
     [Test]
@@ -189,7 +189,7 @@ public class SettingsControllerAuthenticatedTests
     {
         // Tenant GET resolves settings through handler — handler returns OK with CanEdit=false for non-admins
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"{BaseUrl}/tenant/EventList", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"{BaseUrl}/tenant/Email", userId);
 
         var response = await _fixture.Client.SendAsync(request);
 
@@ -200,7 +200,7 @@ public class SettingsControllerAuthenticatedTests
     public async Task LockTenantSetting_WithAuthNoAdmin_ShouldReturnForbidden()
     {
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, $"{BaseUrl}/tenant/keys/event_list.page_size/lock", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, $"{BaseUrl}/tenant/keys/email.smtp_port/lock", userId);
 
         var response = await _fixture.Client.SendAsync(request);
 
@@ -212,7 +212,7 @@ public class SettingsControllerAuthenticatedTests
     public async Task UnlockTenantSetting_WithAuthNoAdmin_ShouldReturnForbidden()
     {
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Delete, $"{BaseUrl}/tenant/keys/event_list.page_size/lock", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Delete, $"{BaseUrl}/tenant/keys/email.smtp_port/lock", userId);
 
         var response = await _fixture.Client.SendAsync(request);
 
@@ -223,7 +223,7 @@ public class SettingsControllerAuthenticatedTests
     public async Task UpdateTenantSetting_WithAuthNoAdmin_ShouldReturnForbidden()
     {
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Put, $"{BaseUrl}/tenant/keys/event_list.page_size", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Put, $"{BaseUrl}/tenant/keys/email.smtp_port", userId);
         request.Content = JsonContent.Create(new UpdateSettingValueDto { Value = "24" });
 
         var response = await _fixture.Client.SendAsync(request);
@@ -235,10 +235,10 @@ public class SettingsControllerAuthenticatedTests
     public async Task UpdateTenantSettingsBatch_WithAuthNoAdmin_ShouldReturnForbiddenOrBadRequest()
     {
         var userId = Guid.NewGuid();
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Put, $"{BaseUrl}/tenant/EventList", userId);
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Put, $"{BaseUrl}/tenant/Email", userId);
         request.Content = JsonContent.Create(new UpdateSettingBatchDto
         {
-            Values = new Dictionary<string, string> { ["event_list.page_size"] = "24" }
+            Values = new Dictionary<string, string> { ["email.smtp_port"] = "2525" }
         });
 
         var response = await _fixture.Client.SendAsync(request);

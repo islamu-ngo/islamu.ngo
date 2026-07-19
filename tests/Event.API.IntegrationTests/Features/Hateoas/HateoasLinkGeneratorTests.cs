@@ -1,3 +1,6 @@
+// ABOUTME: Integration tests for HAL link generation on retained collection and resource endpoints.
+// ABOUTME: Validates self, pagination, item, and resource-specific links without deleted Event routes.
+
 using System.Net;
 using System.Text.Json;
 using Event.Api.IntegrationTests.Fixtures;
@@ -31,8 +34,7 @@ public class HateoasLinkGeneratorTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]
@@ -258,64 +260,6 @@ public class HateoasLinkGeneratorTests
     #endregion
 
     #region Entity-Specific Related Links
-
-    [Test]
-    public async Task LinkGenerator_Events_ShouldHaveSessionsLink()
-    {
-        // Act
-        var response = await _fixture.Client.GetAsync("/api/event");
-
-        // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var content = await response.Content.ReadAsStringAsync();
-        var json = JsonDocument.Parse(content);
-
-        if (json.RootElement.TryGetProperty("_embedded", out var embedded) &&
-            embedded.TryGetProperty("items", out var items) &&
-            items.GetArrayLength() > 0)
-        {
-            var firstItem = items[0];
-            if (firstItem.TryGetProperty("_links", out var itemLinks))
-            {
-                // Events should have sessions link
-                if (itemLinks.TryGetProperty("sessions", out var sessionsLink))
-                {
-                    var href = sessionsLink.GetProperty("href").GetString();
-                    await Assert.That(href).Contains("/api/eventsession/by-event/");
-                }
-            }
-        }
-    }
-
-    [Test]
-    public async Task LinkGenerator_EventSessions_ShouldHaveEventLink()
-    {
-        // Act
-        var response = await _fixture.Client.GetAsync("/api/eventsession");
-
-        // Assert
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-
-        var content = await response.Content.ReadAsStringAsync();
-        var json = JsonDocument.Parse(content);
-
-        if (json.RootElement.TryGetProperty("_embedded", out var embedded) &&
-            embedded.TryGetProperty("items", out var items) &&
-            items.GetArrayLength() > 0)
-        {
-            var firstItem = items[0];
-            if (firstItem.TryGetProperty("_links", out var itemLinks))
-            {
-                // Event sessions should have parent event link
-                if (itemLinks.TryGetProperty("event", out var eventLink))
-                {
-                    var href = eventLink.GetProperty("href").GetString();
-                    await Assert.That(href).Contains("/api/event/");
-                }
-            }
-        }
-    }
 
     [Test]
     public async Task LinkGenerator_Categories_ShouldHaveChildrenLink()

@@ -116,7 +116,7 @@ public class CerbosFailClosedTests : IAsyncDisposable
     [Test]
     public async Task Anonymous_StillGetsUnauthorized_WhenCerbosDown()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
 
         var response = await _client.SendAsync(request);
 
@@ -128,7 +128,7 @@ public class CerbosFailClosedTests : IAsyncDisposable
     [Test]
     public async Task AnonymousEndpoints_StillWork_WhenCerbosDown()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/eventformat");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
 
         var response = await _client.SendAsync(request);
 
@@ -205,7 +205,7 @@ public class CerbosFailClosedTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_cerbos_fail_closed;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",

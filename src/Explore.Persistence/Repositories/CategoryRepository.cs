@@ -1,6 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+// ABOUTME: EF Core repository for category lookup and detail-loading queries.
+// ABOUTME: Keeps read queries no-tracking and returns domain entities only.
+
 using Explore.Application.Contracts.Persistence;
 using Explore.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +25,13 @@ public class CategoryRepository : GenericRepository<Category, Guid>, ICategoryRe
     public new async Task<Category?> GetById(Guid id)
     {
         return await GetByIdCompiled(_dbContext, id);
+    }
+
+    public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Categories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
     public async Task<Category> GetCategoryWithDetails(Guid id)

@@ -62,7 +62,7 @@ public sealed class GetControlPlaneDomainsQueryHandler(
         string? adminHost,
         bool allowTenantCustomDomains)
     {
-        var publicTarget = publicHost ?? instanceBaseDomain ?? "reverse proxy / public Event host";
+        var publicTarget = publicHost ?? instanceBaseDomain ?? "reverse proxy / public ISLAMU website host";
 
         return
         [
@@ -71,17 +71,17 @@ public sealed class GetControlPlaneDomainsQueryHandler(
                 Purpose = "Public platform",
                 RecordType = "A/AAAA or CNAME",
                 Name = publicHost ?? "(configure public origin or instance base domain)",
-                Target = "reverse proxy / public Event host",
+                Target = "reverse proxy / public ISLAMU website host",
                 Required = true,
                 Status = publicHost is null ? "missing_configuration" : "configured",
-                Guidance = "Routes the main public Event platform host to the deployment reverse proxy."
+                Guidance = "Routes the main public ISLAMU website host to the deployment reverse proxy."
             },
             new()
             {
                 Purpose = "Tenant subdomains",
                 RecordType = "Wildcard A/AAAA or CNAME",
                 Name = wildcardTenantHost ?? "(configure instance base domain)",
-                Target = "reverse proxy / public Event host",
+                Target = "reverse proxy / public ISLAMU website host",
                 Required = true,
                 Status = wildcardTenantHost is null ? "missing_configuration" : "configured",
                 Guidance = "Enables tenant subdomain routing such as tenant.example.org in multi-tenant mode."
@@ -104,7 +104,7 @@ public sealed class GetControlPlaneDomainsQueryHandler(
                 Target = publicTarget,
                 Required = false,
                 Status = ResolveCustomDomainStatus(allowTenantCustomDomains, publicHost),
-                Guidance = "Customer domains should CNAME to the public platform host or reverse-proxy target."
+                Guidance = "Customer domains should CNAME to the public website host or reverse-proxy target."
             }
         ];
     }

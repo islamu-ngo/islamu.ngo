@@ -50,11 +50,6 @@ public class GetPublicExperienceShellQueryHandlerTests
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<string?>(null));
         _settingsResolver.ResolveAsync<string>(
-                GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
-                Arg.Any<SettingContext>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<string?>(null));
-        _settingsResolver.ResolveAsync<string>(
                 GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId,
                 Arg.Any<SettingContext>(),
                 Arg.Any<CancellationToken>())
@@ -66,11 +61,6 @@ public class GetPublicExperienceShellQueryHandlerTests
             .Returns(Task.FromResult<string?>(null));
         _settingsResolver.ResolveAsync<string>(
                 GovernanceSettingKeys.PublicExperience.Ctas,
-                Arg.Any<SettingContext>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<string?>(null));
-        _settingsResolver.ResolveAsync<string>(
-                GovernanceSettingKeys.PublicExperience.EventSectionPresets,
                 Arg.Any<SettingContext>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<string?>(null));
@@ -95,8 +85,6 @@ public class GetPublicExperienceShellQueryHandlerTests
 
         await Assert.That(result.SchemaVersion).IsEqualTo(1);
         await Assert.That(result.Mode).IsEqualTo(PublicExperienceMode.DiscoveryCentric);
-        await Assert.That(result.EventCatalog.Label).IsEqualTo("Events");
-        await Assert.That(result.EventCatalog.Url).IsEqualTo("/events");
         await Assert.That(result.PrimaryOrganization.State).IsEqualTo(PublicExperiencePrimaryOrganizationState.NotConfigured);
         await Assert.That(result.Footer.Settings.Template).IsEqualTo("minimal");
         await _organizationRepository.DidNotReceive().GetOrganizationWithDetails(Arg.Any<Guid>());
@@ -117,11 +105,6 @@ public class GetPublicExperienceShellQueryHandlerTests
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<string?>("OrganizationCentric"));
         _settingsResolver.ResolveAsync<string>(
-                GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
-                Arg.Any<SettingContext>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<string?>("Programs"));
-        _settingsResolver.ResolveAsync<string>(
                 GovernanceSettingKeys.PublicExperience.PrimaryOrganizationId,
                 Arg.Any<SettingContext>(),
                 Arg.Any<CancellationToken>())
@@ -132,7 +115,6 @@ public class GetPublicExperienceShellQueryHandlerTests
         PublicExperienceShellDto result = await _handler.Handle(new GetPublicExperienceShellQuery(), CancellationToken.None);
 
         await Assert.That(result.Mode).IsEqualTo(PublicExperienceMode.OrganizationCentric);
-        await Assert.That(result.EventCatalog.Label).IsEqualTo("Programs");
         await Assert.That(result.PrimaryOrganization.State).IsEqualTo(PublicExperiencePrimaryOrganizationState.Available);
         await Assert.That(result.PrimaryOrganization.OrganizationId).IsEqualTo(organizationId);
         await Assert.That(result.PrimaryOrganization.ActorId).IsEqualTo(actorId);
@@ -157,11 +139,6 @@ public class GetPublicExperienceShellQueryHandlerTests
                 Arg.Any<SettingContext>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<string?>("OrganizationCentric"));
-        _settingsResolver.ResolveAsync<string>(
-                GovernanceSettingKeys.PublicExperience.EventCatalogLabel,
-                Arg.Any<SettingContext>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<string?>("Programs"));
         ConfigurePrimaryOrganizationId(organizationId);
         _organizationRepository.GetOrganizationWithDetails(organizationId)
             .Returns(CreateOrganization(tenantId, organizationId, actorId));
@@ -173,19 +150,7 @@ public class GetPublicExperienceShellQueryHandlerTests
         await Assert.That(result.Home.Blocks[0].Kind).IsEqualTo(PublicExperienceHomeBlockKind.OrganizationSummary);
         await Assert.That(result.Home.Blocks[0].Title).IsEqualTo("Primary organizer");
         await Assert.That(result.Home.Blocks[0].ImageUrl).IsEqualTo("https://cdn.example/avatar.png");
-        await Assert.That(result.Home.Blocks[0].LinkUrl).Contains($"ActorId={actorId:D}");
-
-        await Assert.That(result.EventSections.Count).IsEqualTo(1);
-        await Assert.That(result.EventSections[0].Key).IsEqualTo("primary-organization-events");
-        await Assert.That(result.EventSections[0].Label).IsEqualTo("Programs");
-        await Assert.That(result.EventSections[0].Url).Contains($"ActorId={actorId:D}");
-
-        await Assert.That(result.Ctas.Count).IsEqualTo(1);
-        await Assert.That(result.Ctas[0].Key).IsEqualTo("primary-organization-events");
-        await Assert.That(result.Ctas[0].Label).IsEqualTo("Browse Programs");
-        await Assert.That(result.Ctas[0].Url).Contains($"ActorId={actorId:D}");
         await Assert.That(result.Revision).Contains("primary-organization-summary");
-        await Assert.That(result.Revision).Contains("primary-organization-events");
     }
 
     [Test]
@@ -240,82 +205,6 @@ public class GetPublicExperienceShellQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_WhenEventSectionPresetConfigExists_ReturnsGeneratedEventUrls()
-    {
-        var tenantId = Guid.NewGuid();
-        var actorId = Guid.NewGuid();
-        var categoryId = Guid.NewGuid();
-        var tagId = Guid.NewGuid();
-        _tenantContext.TenantId.Returns(tenantId);
-        _settingsHandler.Handle(Arg.Any<GetPublicExperienceSettingsQuery>(), Arg.Any<CancellationToken>())
-            .Returns(CreateSettings(tenantId));
-
-        var presetConfig = new PublicEventSectionPresetsConfig(
-            Presets:
-            [
-                new PublicEventSectionPresetConfig(
-                    Id: "featured",
-                    Label: "Featured programs",
-                    Owners: new PublicEventSectionOwnerFilter(ActorIds: [actorId]),
-                    Filters: new PublicEventSectionEventFilter(
-                        CategoryIds: [categoryId],
-                        TagIds: [tagId],
-                        AudienceGenderIds: [1],
-                        AudienceAgeIds: [2],
-                        EventTypeIds: [3],
-                        EventFormatIds: [4],
-                        Date: new PublicEventSectionDateFilter(
-                            PublicEventSectionDateWindow.Custom,
-                            new DateOnly(2026, 5, 1),
-                            new DateOnly(2026, 5, 31)),
-                        CustomProperties:
-                        [
-                            new PublicEventSectionCustomPropertyFilter(
-                                Namespace: "tenant.event",
-                                Key: "track",
-                                Operator: PublicEventSectionCustomPropertyOperator.Equals,
-                                Values: ["youth"])
-                        ]),
-                    Icon: "calendar-star",
-                    SortOrder: 10,
-                    Limit: 6),
-                new PublicEventSectionPresetConfig(
-                    Id: "disabled",
-                    Label: "Disabled",
-                    IsEnabled: false)
-            ]);
-        _settingsResolver.ResolveAsync<string>(
-                GovernanceSettingKeys.PublicExperience.EventSectionPresets,
-                Arg.Any<SettingContext>(),
-                Arg.Any<CancellationToken>())
-            .Returns(JsonSerializer.Serialize(presetConfig, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
-
-        PublicExperienceShellDto result = await _handler.Handle(new GetPublicExperienceShellQuery(), CancellationToken.None);
-
-        await Assert.That(result.EventSections.Count).IsEqualTo(1);
-        PublicExperienceEventSectionDto section = result.EventSections[0];
-        await Assert.That(section.Key).IsEqualTo("featured");
-        await Assert.That(section.Label).IsEqualTo("Featured programs");
-        await Assert.That(section.Icon).IsEqualTo("calendar-star");
-        await Assert.That(section.SortOrder).IsEqualTo(10);
-        await Assert.That(section.Url).StartsWith("/events?");
-        await Assert.That(section.Url).Contains($"ActorId={actorId:D}");
-        await Assert.That(section.Url).Contains($"IncludedCategoryIds={categoryId:D}");
-        await Assert.That(section.Url).Contains($"IncludedTagIds={tagId:D}");
-        await Assert.That(section.Url).Contains("AudienceGenderIds=1");
-        await Assert.That(section.Url).Contains("AudienceAgeIds=2");
-        await Assert.That(section.Url).Contains("EventTypeIds=3");
-        await Assert.That(section.Url).Contains("FormatIds=4");
-        await Assert.That(section.Url).Contains("DateFrom=2026-05-01");
-        await Assert.That(section.Url).Contains("DateTo=2026-05-31");
-        await Assert.That(section.Url).Contains("CustomPropertyFilters%5B0%5D.Namespace=tenant.event");
-        await Assert.That(section.Url).Contains("CustomPropertyFilters%5B0%5D.Key=track");
-        await Assert.That(section.Url).Contains("CustomPropertyFilters%5B0%5D.Value=youth");
-        await Assert.That(section.Url).Contains("PageSize=6");
-        await Assert.That(result.Revision).Contains("featured");
-    }
-
-    [Test]
     public async Task Handle_WhenHomeBlocksAndCtasConfigured_ReturnsBoundedShellProjection()
     {
         var tenantId = Guid.NewGuid();
@@ -334,7 +223,7 @@ public class GetPublicExperienceShellQueryHandlerTests
                     Body: "Plain bounded copy",
                     ImageUrl: "/media/hero.png",
                     LinkText: "See programs",
-                    LinkUrl: "/events",
+                    LinkUrl: "/blog",
                     SortOrder: 2),
                 new PublicExperienceHomeBlockConfig(
                     Id: "disabled",
@@ -382,7 +271,7 @@ public class GetPublicExperienceShellQueryHandlerTests
         await Assert.That(block.Body).IsEqualTo("Plain bounded copy");
         await Assert.That(block.ImageUrl).IsEqualTo("/media/hero.png");
         await Assert.That(block.LinkText).IsEqualTo("See programs");
-        await Assert.That(block.LinkUrl).IsEqualTo("/events");
+        await Assert.That(block.LinkUrl).IsEqualTo("/blog");
 
         await Assert.That(result.Ctas.Count).IsEqualTo(1);
         PublicExperienceCtaDto cta = result.Ctas[0];
@@ -405,18 +294,18 @@ public class GetPublicExperienceShellQueryHandlerTests
         _navigationLinksHandler.Handle(Arg.Any<GetTenantNavLinksQuery>(), Arg.Any<CancellationToken>())
             .Returns([
                 new TenantNavigationLinkDto { Label = "Donate", Url = "/donate", Order = 20 },
-                new TenantNavigationLinkDto { Label = "Programs", Url = "/events", Order = 10 },
+                new TenantNavigationLinkDto { Label = "Blog", Url = "/blog", Order = 10 },
                 new TenantNavigationLinkDto { Label = "", Url = "/hidden", Order = 0 }
             ]);
 
         PublicExperienceShellDto result = await _handler.Handle(new GetPublicExperienceShellQuery(), CancellationToken.None);
 
         await Assert.That(result.Navigation.Links.Count).IsEqualTo(2);
-        await Assert.That(result.Navigation.Links[0].Label).IsEqualTo("Programs");
-        await Assert.That(result.Navigation.Links[0].Url).IsEqualTo("/events");
+        await Assert.That(result.Navigation.Links[0].Label).IsEqualTo("Blog");
+        await Assert.That(result.Navigation.Links[0].Url).IsEqualTo("/blog");
         await Assert.That(result.Navigation.Links[0].SortOrder).IsEqualTo(10);
         await Assert.That(result.Navigation.Links[1].Label).IsEqualTo("Donate");
-        await Assert.That(result.Revision).Contains("Programs:/events");
+        await Assert.That(result.Revision).Contains("Blog:/blog");
     }
 
     [Test]
@@ -499,7 +388,7 @@ public class GetPublicExperienceShellQueryHandlerTests
         return new PublicExperienceSettingsDto
         {
             TenantId = tenantId,
-            PreferredHomePage = "EventList",
+            PreferredHomePage = "LandingPage",
             BrandDisplayName = "Tenant brand",
             BrandLogoUrl = "/brand.svg",
             BrandFaviconUrl = "/favicon.ico",

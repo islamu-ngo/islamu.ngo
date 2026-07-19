@@ -24,9 +24,9 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task BuildManifestAsync_WithNamespacedArtifacts_ReturnsStableManifest()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), "resourcePolicy:\n  resource: islamuevent_event\n");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), "resourcePolicy:\n  resource: islamuevent_blog\n");
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "derived_roles.yaml"), "derivedRoles:\n  name: islamuevent_explore_admin_roles\n");
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_principal.json"), "{\"type\":\"object\"}");
 
         var service = CreateService(policiesRoot);
@@ -38,14 +38,14 @@ public class CerbosPolicyPackageServiceTests : IDisposable
         await Assert.That(manifest.ContentHash.Length).IsEqualTo(64);
         await Assert.That(manifest.Artifacts.Count).IsEqualTo(4);
         await Assert.That(manifest.Artifacts.Select(a => a.LogicalId)).IsEquivalentTo([
-            "_schemas/islamuevent_event.json",
+            "_schemas/islamuevent_blog.json",
             "_schemas/islamuevent_principal.json",
             "derived_roles.yaml",
-            "islamuevent_event.yaml"
+            "islamuevent_blog.yaml"
         ]);
-        await Assert.That(manifest.Artifacts.Single(a => a.LogicalId == "islamuevent_event.yaml").Kind)
+        await Assert.That(manifest.Artifacts.Single(a => a.LogicalId == "islamuevent_blog.yaml").Kind)
             .IsEqualTo(PolicyArtifactKind.Policy);
-        await Assert.That(manifest.Artifacts.Single(a => a.LogicalId == "_schemas/islamuevent_event.json").Kind)
+        await Assert.That(manifest.Artifacts.Single(a => a.LogicalId == "_schemas/islamuevent_blog.json").Kind)
             .IsEqualTo(PolicyArtifactKind.Schema);
     }
 
@@ -54,7 +54,7 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     {
         var policiesRoot = CreatePackageRoot();
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "event.yaml"), "resourcePolicy:\n  resource: event\n");
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var service = CreateService(policiesRoot);
 
@@ -69,7 +69,7 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task BuildManifestAsync_WithLegacySchemaFile_Throws()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), "resourcePolicy:\n  resource: islamuevent_event\n");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), "resourcePolicy:\n  resource: islamuevent_blog\n");
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "event.json"), "{\"type\":\"object\"}");
 
         var service = CreateService(policiesRoot);
@@ -85,10 +85,10 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task ExportArchiveAsync_WithNamespacedArtifacts_IncludesPoliciesSchemasManifestAndInstructions()
     {
         var policiesRoot = CreatePackageRoot();
-        const string policy = "resourcePolicy:\n  resource: islamuevent_event\n";
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), policy);
+        const string policy = "resourcePolicy:\n  resource: islamuevent_blog\n";
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), policy);
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "derived_roles.yaml"), "derivedRoles:\n  name: islamuevent_explore_admin_roles\n");
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_principal.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
@@ -106,15 +106,15 @@ public class CerbosPolicyPackageServiceTests : IDisposable
         using var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
         var entryNames = zipArchive.Entries.Select(entry => entry.FullName).ToArray();
 
-        await Assert.That(entryNames).Contains("_schemas/islamuevent_event.json");
+        await Assert.That(entryNames).Contains("_schemas/islamuevent_blog.json");
         await Assert.That(entryNames).Contains("_schemas/islamuevent_principal.json");
         await Assert.That(entryNames).Contains("derived_roles.yaml");
-        await Assert.That(entryNames).Contains("islamuevent_event.yaml");
+        await Assert.That(entryNames).Contains("islamuevent_blog.yaml");
         await Assert.That(entryNames).Contains("manifest.json");
         await Assert.That(entryNames).Contains("INSTRUCTIONS.md");
 
         var instructions = await ReadEntryAsync(zipArchive, "INSTRUCTIONS.md");
-        await Assert.That(await ReadEntryAsync(zipArchive, "islamuevent_event.yaml")).IsEqualTo(policy);
+        await Assert.That(await ReadEntryAsync(zipArchive, "islamuevent_blog.yaml")).IsEqualTo(policy);
         await Assert.That(instructions).Contains("docker compose --profile authz run --rm cerbos-policy-sync");
         await Assert.That(instructions).Contains("cerbosctl put policy --recursive .");
         await Assert.That(instructions).Contains("cerbosctl put schema --recursive _schemas");
@@ -141,7 +141,7 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     {
         var policiesRoot = Path.Combine(_tempRoot, "policies-without-schemas");
         Directory.CreateDirectory(policiesRoot);
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
         var service = CreateService(policiesRoot);
 
         var exception = await Assert.ThrowsAsync<PolicyPackageUnavailableException>(async () =>
@@ -157,8 +157,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     {
         var policiesRoot = CreatePackageRoot();
         const string schema = "{\"type\":\"object\"}";
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), "apiVersion: api.cerbos.dev/v1\nresourcePolicy:\n  resource: islamuevent_event\n  version: default\n  rules: []\n");
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), schema);
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), "apiVersion: api.cerbos.dev/v1\nresourcePolicy:\n  resource: islamuevent_blog\n  version: default\n  rules: []\n");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), schema);
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -177,22 +177,22 @@ public class CerbosPolicyPackageServiceTests : IDisposable
 
         using var schemaPayload = JsonDocument.Parse(handler.Requests[0].Body);
         var schemaItem = schemaPayload.RootElement.GetProperty("schemas")[0];
-        await Assert.That(schemaItem.GetProperty("id").GetString()).IsEqualTo("islamuevent_event.json");
+        await Assert.That(schemaItem.GetProperty("id").GetString()).IsEqualTo("islamuevent_blog.json");
         await Assert.That(Encoding.UTF8.GetString(Convert.FromBase64String(schemaItem.GetProperty("definition").GetString() ?? string.Empty)))
             .IsEqualTo(schema);
 
         using var policyPayload = JsonDocument.Parse(handler.Requests[1].Body);
         var policy = policyPayload.RootElement.GetProperty("policies")[0];
         await Assert.That(policy.GetProperty("apiVersion").GetString()).IsEqualTo("api.cerbos.dev/v1");
-        await Assert.That(policy.GetProperty("resourcePolicy").GetProperty("resource").GetString()).IsEqualTo("islamuevent_event");
+        await Assert.That(policy.GetProperty("resourcePolicy").GetProperty("resource").GetString()).IsEqualTo(ResourceKinds.Blog);
     }
 
     [Test]
     public async Task PublishAsync_WithByoAdminConfiguration_UsesResolvedEndpointAndCredentialsOnly()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var service = CreateService(
@@ -225,8 +225,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishInstanceAsync_WithByoAdminConfiguration_UsesInstanceTargetOnly()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var configResolver = Substitute.For<ICerbosConfigResolver>();
@@ -256,8 +256,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WithByoAdminEndpointMissingCredentials_FailsWithoutHttpRequest()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var service = CreateService(
@@ -291,8 +291,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WithUnsafeByoAdminEndpoint_FailsWithoutHttpRequest(string adminEndpoint)
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var service = CreateService(
@@ -321,8 +321,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WithPolicyLimit_SplitsPolicyRequests()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_tenant.yaml"), CreatePolicyYaml("islamuevent_tenant"));
         await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_organization.yaml"), CreatePolicyYaml("islamuevent_organization"));
 
@@ -344,8 +344,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WhenSchemaUploadFails_ReturnsFailureWithoutPolicyUpload()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(request => request.RequestUri?.AbsolutePath == "/admin/schema"
             ? new HttpResponseMessage(HttpStatusCode.Unauthorized) { Content = new StringContent("bad credentials") }
@@ -367,8 +367,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WhenSchemaUploadIsUnavailable_ReturnsAdminApiUnavailableIssue()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(request => request.RequestUri?.AbsolutePath == "/admin/schema"
             ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("upstream unavailable with secret") }
@@ -389,8 +389,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WhenSchemaUploadTransportFails_ReturnsAdminApiUnavailableIssue()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(request => request.RequestUri?.AbsolutePath == "/admin/schema"
             ? throw new HttpRequestException("tenant-secret transport failure")
@@ -411,8 +411,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WhenReloadFails_ReturnsFailureAfterUpload()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(request => request.RequestUri?.AbsolutePath == "/admin/store/reload"
             ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
@@ -435,8 +435,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task PublishAsync_WhenReloadTransportFails_ReturnsReloadFailedIssue()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(request => request.RequestUri?.AbsolutePath == "/admin/store/reload"
             ? throw new HttpRequestException("tenant-secret reload failure")
@@ -460,8 +460,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task GetStatusAsync_WithConfiguredAdminApi_ReturnsUnknownPackageStatusWithoutHttpRequest()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var service = CreateService(policiesRoot, handler: handler);
@@ -480,8 +480,8 @@ public class CerbosPolicyPackageServiceTests : IDisposable
     public async Task GetStatusAsync_WithByoAdminEndpointMissingCredentials_ReturnsNotConfiguredWithoutSecretLeak()
     {
         var policiesRoot = CreatePackageRoot();
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_event.yaml"), CreatePolicyYaml("islamuevent_event"));
-        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_event.json"), "{\"type\":\"object\"}");
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "islamuevent_blog.yaml"), CreatePolicyYaml(ResourceKinds.Blog));
+        await File.WriteAllTextAsync(Path.Combine(policiesRoot, "_schemas", "islamuevent_blog.json"), "{\"type\":\"object\"}");
 
         var handler = new RecordingMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var service = CreateService(

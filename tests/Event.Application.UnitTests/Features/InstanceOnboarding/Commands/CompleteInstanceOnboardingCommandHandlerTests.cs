@@ -166,12 +166,8 @@ public class CompleteInstanceOnboardingCommandHandlerTests
             && setting.Value == JsonSerializer.Serialize("DiscoveryCentric")), Arg.Any<CancellationToken>());
         await _systemSettingRepository.Received(1).UpsertAsync(Arg.Is<SystemSetting>(setting =>
             setting != null
-            && setting.SettingKey == GovernanceSettingKeys.PublicExperience.EventCatalogLabel
-            && setting.Value == JsonSerializer.Serialize("Events")), Arg.Any<CancellationToken>());
-        await _systemSettingRepository.Received(1).UpsertAsync(Arg.Is<SystemSetting>(setting =>
-            setting != null
             && setting.SettingKey == GovernanceSettingKeys.Routing.DefaultPublicHomePage
-            && setting.Value == JsonSerializer.Serialize("EventList")), Arg.Any<CancellationToken>());
+            && setting.Value == JsonSerializer.Serialize("LandingPage")), Arg.Any<CancellationToken>());
         await _systemSettingRepository.Received(1).UpsertAsync(Arg.Is<SystemSetting>(setting =>
             setting != null
             && setting.SettingKey == GovernanceSettingKeys.PublicExperience.HomeBlocks
@@ -181,7 +177,7 @@ public class CompleteInstanceOnboardingCommandHandlerTests
             setting != null
             && setting.SettingKey == GovernanceSettingKeys.PublicExperience.Ctas
             && setting.ValueType == SettingValueType.Json
-            && ContainsDefaultCta(setting.Value)), Arg.Any<CancellationToken>());
+            && ContainsNoDefaultCtas(setting.Value)), Arg.Any<CancellationToken>());
         await _tenantUserRepository.Received(1).Create(Arg.Is<TenantUser>(tenantUser =>
             tenantUser != null
             && tenantUser.TenantId == PlatformDefaults.DefaultTenantId
@@ -301,18 +297,12 @@ public class CompleteInstanceOnboardingCommandHandlerTests
             && block.Id == "hero"
             && block.Kind == PublicExperienceHomeBlockKind.Hero
             && block.Title == expectedTitle
-            && block.LinkUrl == "/events";
+            && block.LinkUrl is null;
     }
 
-    private static bool ContainsDefaultCta(string value)
+    private static bool ContainsNoDefaultCtas(string value)
     {
         var config = JsonSerializer.Deserialize<PublicExperienceCtasConfig>(value);
-        var cta = config?.Ctas.SingleOrDefault();
-
-        return cta is not null
-            && cta.Id == "browse-events"
-            && cta.Url == "/events"
-            && cta.Placement == PublicExperienceCtaPlacement.Hero
-            && cta.Style == PublicExperienceCtaStyle.Primary;
+        return config?.Ctas.Count == 0;
     }
 }

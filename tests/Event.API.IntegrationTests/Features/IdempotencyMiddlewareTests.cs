@@ -34,7 +34,7 @@ public class IdempotencyMiddlewareTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
 
         var response = await _fixture.Client.SendAsync(request);
@@ -50,8 +50,8 @@ public class IdempotencyMiddlewareTests(RealRuntimeApiFixture fixture)
         await _fixture.ResetDatabaseAsync();
 
         // POST without Idempotency-Key header — middleware is opt-in
-        var content = new StringContent("""{"title":"No Key Event"}""", Encoding.UTF8, "application/json");
-        var response = await _fixture.Client.PostAsync("/api/event", content);
+        var content = new StringContent("""{"title":"No Key Blog","contentMarkdown":"# Draft"}""", Encoding.UTF8, "application/json");
+        var response = await _fixture.Client.PostAsync("/api/blog", content);
 
         // Should get 401 (anonymous POST), not a middleware error
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
@@ -64,9 +64,9 @@ public class IdempotencyMiddlewareTests(RealRuntimeApiFixture fixture)
         await _fixture.ResetDatabaseAsync();
 
         var tooLongKey = new string('x', 129);
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, "/api/event");
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, "/api/blog");
         request.Headers.Add("Idempotency-Key", tooLongKey);
-        request.Content = new StringContent("""{"title":"Too Long Key"}""", Encoding.UTF8, "application/json");
+        request.Content = new StringContent("""{"title":"Too Long Key","contentMarkdown":"# Draft"}""", Encoding.UTF8, "application/json");
 
         var response = await _fixture.Client.SendAsync(request);
 
@@ -81,9 +81,9 @@ public class IdempotencyMiddlewareTests(RealRuntimeApiFixture fixture)
     {
         await _fixture.ResetDatabaseAsync();
 
-        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, "/api/event");
+        var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Post, "/api/blog");
         request.Headers.Add("Idempotency-Key", "invalid key with spaces");
-        request.Content = new StringContent("""{"title":"Space Key"}""", Encoding.UTF8, "application/json");
+        request.Content = new StringContent("""{"title":"Space Key","contentMarkdown":"# Draft"}""", Encoding.UTF8, "application/json");
 
         var response = await _fixture.Client.SendAsync(request);
 
@@ -101,19 +101,19 @@ public class IdempotencyMiddlewareTests(RealRuntimeApiFixture fixture)
         var idempotencyKey = Guid.NewGuid().ToString("N");
 
         var firstRequest = _fixture.CreateAuthenticatedRequest(
-            HttpMethod.Post, "/api/event");
+            HttpMethod.Post, "/api/blog");
         firstRequest.Headers.Add("Idempotency-Key", idempotencyKey);
         firstRequest.Content = new StringContent(
-            """{"title":"Invalid Event"}""", Encoding.UTF8, "application/json");
+            """{"title":""}""", Encoding.UTF8, "application/json");
 
         var firstResponse = await _fixture.Client.SendAsync(firstRequest);
         await Assert.That(firstResponse.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
 
         var secondRequest = _fixture.CreateAuthenticatedRequest(
-            HttpMethod.Post, "/api/event");
+            HttpMethod.Post, "/api/blog");
         secondRequest.Headers.Add("Idempotency-Key", idempotencyKey);
         secondRequest.Content = new StringContent(
-            """{"title":"Invalid Event Retry"}""", Encoding.UTF8, "application/json");
+            """{"title":""}""", Encoding.UTF8, "application/json");
 
         var secondResponse = await _fixture.Client.SendAsync(secondRequest);
 

@@ -14,7 +14,6 @@ using Explore.Application.Contracts.Identity;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Infrastructure.Ai;
 using Explore.Application.Contracts.Services;
-using Explore.Application.Contracts.Strategies;
 using Explore.Application.Contracts.Webhooks;
 using Explore.Application.Management;
 using Explore.Application.Models;

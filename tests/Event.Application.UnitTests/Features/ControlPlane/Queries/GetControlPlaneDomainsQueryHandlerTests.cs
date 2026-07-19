@@ -94,7 +94,6 @@ public sealed class GetControlPlaneDomainsQueryHandlerTests
         {
             DeploymentMode = new DeploymentModeDto { Mode = DeploymentMode.MultiTenant },
             Modules = new ModuleSettingsDto(),
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto

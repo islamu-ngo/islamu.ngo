@@ -122,18 +122,18 @@ public sealed class BusinessMetricsAiProviderTests
     }
 
     [Test]
-    public async Task RecordAiProviderProposedActionsRecordsOnlyBoundedActionKindTags()
+    public async Task RecordAiProviderProposedActionsMapsRemovedActionKindsToUnknown()
     {
         using var metricsCapture = new MetricsCapture();
         var metrics = CreateMetrics();
 
-        metrics.RecordAiProviderProposedActions("openai", 2, "delete_event_tech_aspect");
+        metrics.RecordAiProviderProposedActions("openai", 2, "removed_action_kind");
 
         var measurement = await metricsCapture.SingleAsync("explore.ai.provider.proposed_actions");
 
         await Assert.That(measurement.Value).IsEqualTo(2d);
         await Assert.That(measurement.Tags["provider"]?.ToString()).IsEqualTo("openai");
-        await Assert.That(measurement.Tags["action_kind"]?.ToString()).IsEqualTo("delete_event_tech_aspect");
+        await Assert.That(measurement.Tags["action_kind"]?.ToString()).IsEqualTo("unknown");
         await AssertNoSensitiveTagsAsync(measurement);
     }
 

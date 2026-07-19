@@ -1,5 +1,5 @@
 // ABOUTME: WebApplicationFactory backed by a real PostgreSQL database with TestAuthHandler authentication.
-// Accepts a connection string from Testcontainers and optional configuration overrides per host profile.
+// ABOUTME: Accepts a connection string from Testcontainers and optional configuration overrides per host profile.
 
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Domain.Constants;
@@ -48,7 +48,7 @@ public class PostgreSqlApiWebApplicationFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:DefaultConnection"] = _connectionString,
                 ["Keycloak:Authority"] = "https://localhost:8443/realms/ISLAMU",
                 ["Keycloak:Realm"] = "ISLAMU",
-                ["Keycloak:Audience"] = "islamu-event-api",
+                ["Keycloak:Audience"] = "islamu-ngo-api",
                 ["Keycloak:RequireHttpsMetadata"] = "false",
                 ["Keycloak:MetadataAddress"] = "https://localhost:8443/realms/ISLAMU/.well-known/openid-configuration",
                 ["S3Settings:Region"] = "us-east-1",

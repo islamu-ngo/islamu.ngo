@@ -10,6 +10,7 @@ using Explore.API.Extensions;
 using Explore.Application.Contracts.Services;
 using Explore.Application.DTOs.EmailUnsubscribe;
 using Explore.Domain.Constants;
+using Explore.Domain.Enums;
 using Explore.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -34,7 +35,7 @@ public sealed class EmailUnsubscribeControllerTests(ContractApiFixture fixture)
         var body = await response.Content.ReadFromJsonAsync<EmailUnsubscribeResponseDto>();
         await Assert.That(body).IsNotNull();
         await Assert.That(body!.Status).IsEqualTo("confirmation_required");
-        await Assert.That(body.Category).IsEqualTo(NotificationPreferenceCategories.RegistrationConfirmations);
+        await Assert.That(body.Category).IsEqualTo(NotificationPreferenceCategoryCodes.ProductAnnouncements);
         await Assert.That(body.RequiresConfirmation).IsTrue();
     }
 
@@ -57,7 +58,7 @@ public sealed class EmailUnsubscribeControllerTests(ContractApiFixture fixture)
             .AsNoTracking()
             .SingleAsync(x => x.TenantId == payload.TenantId
                 && x.UserId == payload.UserId
-                && x.Category == NotificationPreferenceCategories.RegistrationConfirmations);
+                && x.Category == NotificationPreferenceCategoryCodes.ProductAnnouncements);
 
         await Assert.That(preference.IsEnabled).IsFalse();
         await Assert.That(preference.UpdatedBy).IsEqualTo(payload.UserId);
@@ -105,7 +106,7 @@ public sealed class EmailUnsubscribeControllerTests(ContractApiFixture fixture)
         return new EmailUnsubscribeTokenPayload(
             PlatformDefaults.DefaultTenantId,
             Guid.NewGuid(),
-            NotificationPreferenceCategories.RegistrationConfirmations,
+            NotificationPreferenceCategoryCodes.ProductAnnouncements,
             DateTime.UtcNow);
     }
 

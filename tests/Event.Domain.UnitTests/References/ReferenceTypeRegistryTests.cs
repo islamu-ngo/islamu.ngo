@@ -162,8 +162,8 @@ public class ReferenceTypeRegistryTests
             NotificationType = null!,
             Title = "Bad link",
             DeduplicationKey = "reference-test-bad-link",
-            NotificationEntityTypeId = (int)NotificationEntityTypeEnum.Event,
-            EntityId = "event-123",
+            NotificationEntityTypeId = (int)NotificationEntityTypeEnum.Organization,
+            EntityId = "organization-123",
             NotificationScope = null!,
             Tenant = null!,
         });
@@ -189,25 +189,8 @@ public class ReferenceTypeRegistryTests
     [Test]
     public async Task CustomPropertyTargets_SharedDefinitionsAreOnlyForOrganizationsAndGroups()
     {
-        await Assert.That(ReferenceTypeRegistry.SupportsSharedCustomPropertyDefinitions(EntityTypeName.Event)).IsFalse();
         await Assert.That(ReferenceTypeRegistry.SupportsSharedCustomPropertyDefinitions(EntityTypeName.Organization)).IsTrue();
         await Assert.That(ReferenceTypeRegistry.SupportsSharedCustomPropertyDefinitions(EntityTypeName.Group)).IsTrue();
-
-        ReferenceTypeRegistry.TryGetCustomPropertyTarget(EntityTypeName.Event, out var eventTarget);
-
-        await Assert.That(eventTarget.StorageModel).Contains(nameof(Explore.Domain.EventCustomPropertyDefinition));
-        await Assert.That(eventTarget.CleanupBehavior).IsEqualTo(ReferenceCleanupBehavior.CascadeWithOwner);
-        await Assert.That(string.IsNullOrWhiteSpace(eventTarget.ValidationRule)).IsFalse();
-    }
-
-    [Test]
-    public async Task ValidateSharedCustomPropertyDefinition_RejectsEventSharedDefinitions()
-    {
-        var eventErrors = ReferenceTypeRegistry.ValidateSharedCustomPropertyDefinition(EntityTypeName.Event);
-        var organizationErrors = ReferenceTypeRegistry.ValidateSharedCustomPropertyDefinition(EntityTypeName.Organization);
-
-        await Assert.That(eventErrors.Any(error => error.Contains("does not support shared custom-property definitions", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(organizationErrors.Count).IsEqualTo(0);
     }
 
     private static IReadOnlyCollection<string> PublicStringConstants(Type type) =>

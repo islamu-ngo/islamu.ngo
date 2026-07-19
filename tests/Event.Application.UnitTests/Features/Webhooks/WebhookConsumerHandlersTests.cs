@@ -157,7 +157,7 @@ public sealed class WebhookConsumerHandlersTests
         const string providerVersion = "1.96.1";
         const string resolutionVersion = "selfhost-v1.96.1-v1";
         var providerCapabilities = WebhookProviderCapability.EndpointManagement |
-            WebhookProviderCapability.EventCatalog;
+            WebhookProviderCapability.OperationalCallbacks;
         var profile = WebhookProviderCapabilityProfile.Create(
             WebhookProviderKind.Svix,
             providerVersion,
@@ -509,7 +509,7 @@ public sealed class WebhookConsumerHandlersTests
         await Assert.That(result!.Name).IsEqualTo("Tenant automation");
         await Assert.That(result.StatusName).IsEqualTo(nameof(WebhookConsumerStatus.Active));
         await Assert.That(result.ProviderCapabilityAuthorityAvailable).IsTrue();
-        await Assert.That(result.ProviderCapabilities.Count).IsEqualTo(12);
+        await Assert.That(result.ProviderCapabilities.Count).IsEqualTo(11);
         await Assert.That(result.ProviderCapabilities.Single(capability =>
             capability.CapabilityId == (int)WebhookProviderCapability.EndpointManagement).IsAvailable).IsTrue();
         await Assert.That(result.ProviderCapabilities.Single(capability =>
@@ -537,7 +537,7 @@ public sealed class WebhookConsumerHandlersTests
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
             WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.EventCatalog;
+            WebhookProviderCapability.OperationalCallbacks;
         var binding = WebhookConsumerProviderBinding.CreatePending(
             tenantId,
             consumer.Id,
@@ -1445,7 +1445,7 @@ public sealed class WebhookConsumerHandlersTests
         await Assert.That(result.Count).IsEqualTo(1);
         await Assert.That(result[0].Id).IsEqualTo(attempt.Id);
         await Assert.That(result[0].TenantId).IsEqualTo(tenantId);
-        await Assert.That(result[0].MessageEventType).IsEqualTo(WebhookEventNames.EventPublished);
+        await Assert.That(result[0].MessageEventType).IsEqualTo(WebhookEventNames.OrganizationVerified);
         await Assert.That(typeof(Explore.Application.DTOs.Webhooks.WebhookDeliveryAttemptDto).GetProperty("EndpointUrl")).IsNull();
         await Assert.That(typeof(Explore.Application.DTOs.Webhooks.WebhookDeliveryAttemptDto).GetProperty("ResponseBodyPreview")).IsNull();
         await Assert.That(typeof(Explore.Application.DTOs.Webhooks.WebhookDeliveryAttemptDto).GetProperty("ResponseBody")).IsNull();
@@ -1789,9 +1789,9 @@ public sealed class WebhookConsumerHandlersTests
         return WebhookMessage.Create(
             Guid.CreateVersion7(),
             tenantId,
-            WebhookEventNames.EventPublished,
+            WebhookEventNames.OrganizationVerified,
             Guid.CreateVersion7().ToString("D"),
-            "Event",
+            "Organization",
             Guid.CreateVersion7(),
             consumer.Id,
             Encoding.UTF8.GetBytes("""{"secret":"must-not-leak"}"""),
@@ -1832,7 +1832,7 @@ public sealed class WebhookConsumerHandlersTests
         public WebhookProviderModeCapabilityResolution Resolve(WebhookProviderMode providerMode)
         {
             var localCapabilities = providerMode is WebhookProviderMode.Local or WebhookProviderMode.Composite
-                ? WebhookProviderCapability.EndpointManagement | WebhookProviderCapability.EventCatalog
+                ? WebhookProviderCapability.EndpointManagement | WebhookProviderCapability.OperationalCallbacks
                 : WebhookProviderCapability.None;
             return new WebhookProviderModeCapabilityResolution(
                 providerMode,

@@ -51,8 +51,7 @@ public class InstanceGovernanceSettingServiceTests
         await Assert.That(result.RenderPolicy.RenderPolicyPreset).IsEqualTo("AllInteractiveServer");
         await Assert.That(result.RenderPolicy.PublicSeoRenderMode).IsEqualTo("InteractiveServer");
         await Assert.That(result.RenderPolicy.PublicSeoPrerenderEnabled).IsFalse();
-        await Assert.That(result.RenderPolicy.OnboardingRenderMode).IsEqualTo("InteractiveAuto");
-        await Assert.That(result.RenderPolicy.DisallowInteractiveServerOnOnboarding).IsTrue();
+        await Assert.That(result.RenderPolicy.OnboardingRenderMode).IsEqualTo("InteractiveServer");
     }
 
     [Test]
@@ -69,23 +68,18 @@ public class InstanceGovernanceSettingServiceTests
     }
 
     [Test]
-    public async Task ApplySettingsAsync_WhenOnboardingInteractiveServerProvided_NormalizesAndPersistsGuardrail()
+    public async Task ApplySettingsAsync_WhenOnboardingInteractiveServerProvided_PersistsServerMode()
     {
         _systemSettingRepository.GetByKey(Arg.Any<string>()).Returns((SystemSetting?)null);
 
         var settings = CreateValidSettings();
         settings.RenderPolicy.OnboardingRenderMode = "InteractiveServer";
-        settings.RenderPolicy.DisallowInteractiveServerOnOnboarding = true;
 
         await _service.ApplySettingsAsync(Guid.NewGuid(), settings, Guid.NewGuid());
 
         await _systemSettingRepository.Received().UpsertAsync(Arg.Is<SystemSetting>(
             s => s.SettingKey == GovernanceSettingKeys.Routing.RenderPolicy.Onboarding.RenderMode
-                 && s.Value == "\"InteractiveAuto\""), Arg.Any<CancellationToken>());
-
-        await _systemSettingRepository.Received().UpsertAsync(Arg.Is<SystemSetting>(
-            s => s.SettingKey == GovernanceSettingKeys.Routing.RenderPolicy.DisallowInteractiveServerOnOnboarding
-                 && s.Value == "true"), Arg.Any<CancellationToken>());
+                 && s.Value == "\"InteractiveServer\""), Arg.Any<CancellationToken>());
     }
 
     [Test]
@@ -99,7 +93,7 @@ public class InstanceGovernanceSettingServiceTests
 
         await _systemSettingRepository.Received(1).UpsertAsync(Arg.Is<SystemSetting>(
             s => s.SettingKey == GovernanceSettingKeys.Routing.DefaultPublicHomePage
-                 && s.Value == "\"EventList\""), Arg.Any<CancellationToken>());
+                 && s.Value == "\"LandingPage\""), Arg.Any<CancellationToken>());
     }
 
     [Test]
@@ -154,7 +148,7 @@ public class InstanceGovernanceSettingServiceTests
 
         var tenantResolved = new List<ResolvedSetting>
         {
-            CreateResolvedSetting(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.RenderMode, "\"InteractiveWebAssembly\"")
+            CreateResolvedSetting(GovernanceSettingKeys.Routing.RenderPolicy.PublicSeo.PrerenderEnabled, "false")
         };
         _resolver.ResolveBatchAsync(
             Arg.Any<IEnumerable<string>>(),
@@ -166,6 +160,7 @@ public class InstanceGovernanceSettingServiceTests
         var result = await _service.ReadEffectiveSettingsForTenantAsync(tenantId);
 
         await Assert.That(result.RenderPolicy.PublicSeoRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(result.RenderPolicy.PublicSeoPrerenderEnabled).IsFalse();
     }
 
     [Test]
@@ -180,7 +175,7 @@ public class InstanceGovernanceSettingServiceTests
 
         var tenantResolved = new List<ResolvedSetting>
         {
-            CreateResolvedSetting(GovernanceSettingKeys.Routing.RenderPolicy.Operational.RenderMode, "\"InteractiveWebAssembly\"")
+            CreateResolvedSetting(GovernanceSettingKeys.Routing.RenderPolicy.Operational.PrerenderEnabled, "true")
         };
         _resolver.ResolveBatchAsync(
             Arg.Any<IEnumerable<string>>(),
@@ -191,7 +186,8 @@ public class InstanceGovernanceSettingServiceTests
         var tenantId = Guid.NewGuid();
         var result = await _service.ReadEffectiveSettingsForTenantAsync(tenantId);
 
-        await Assert.That(result.RenderPolicy.OperationalRenderMode).IsEqualTo("InteractiveWebAssembly");
+        await Assert.That(result.RenderPolicy.OperationalRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(result.RenderPolicy.OperationalPrerenderEnabled).IsTrue();
     }
 
     [Test]
@@ -365,7 +361,6 @@ public class InstanceGovernanceSettingServiceTests
                 EnableIslamicModule = true,
                 EnableTechModule = true
             },
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto(),
@@ -373,7 +368,7 @@ public class InstanceGovernanceSettingServiceTests
             Mcp = new McpGovernanceSettingsDto(),
             TenantDelegation = new TenantDelegationSettingsDto
             {
-                DefaultPublicHomePage = "EventList"
+                DefaultPublicHomePage = "LandingPage"
             },
             AdminPortal = new AdminPortalSettingsDto(),
             RenderPolicy = new RenderPolicySettingsDto
@@ -390,8 +385,7 @@ public class InstanceGovernanceSettingServiceTests
                 AdminRenderMode = "InteractiveServer",
                 AdminPrerenderEnabled = false,
                 OnboardingRenderMode = "InteractiveServer",
-                OnboardingPrerenderEnabled = false,
-                DisallowInteractiveServerOnOnboarding = false
+                OnboardingPrerenderEnabled = false
             }
         };
     }

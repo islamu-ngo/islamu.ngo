@@ -54,7 +54,7 @@ public class AuthProviderConfigurationDtoValidatorTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://id.example.test/realms/event",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecret = string.Empty
         };
     }

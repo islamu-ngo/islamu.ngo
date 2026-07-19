@@ -19,7 +19,7 @@ public sealed class InstanceOnboardingOpenApiContractTests
     public async Task InstanceProbeOperations_MustDeclareConcreteSuccessSchemas()
     {
         var repositoryRoot = ResolveRepositoryRoot();
-        var schemaPath = Path.Combine(repositoryRoot, "schemas", "openapi_islamu-event.json");
+        var schemaPath = Path.Combine(repositoryRoot, "schemas", "openapi_islamu.json");
         await using var schemaStream = File.OpenRead(schemaPath);
         using var document = await JsonDocument.ParseAsync(schemaStream);
 

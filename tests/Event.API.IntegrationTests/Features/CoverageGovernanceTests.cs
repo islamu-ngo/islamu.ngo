@@ -90,12 +90,6 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_InstanceSettings_Events_DeniesRegularUser()
-    {
-        await AssertRegularUserDenied(HttpMethod.Get, "/api/instance/settings/events");
-    }
-
-    [Test]
     public async Task Governance_InstanceSettings_Organizations_DeniesRegularUser()
     {
         await AssertRegularUserDenied(HttpMethod.Get, "/api/instance/settings/organizations");
@@ -184,12 +178,6 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_InstanceSettings_Events_AllowsInstanceAdmin()
-    {
-        await AssertInstanceAdminOk(HttpMethod.Get, "/api/instance/settings/events");
-    }
-
-    [Test]
     public async Task Governance_InstanceSettings_Branding_AllowsInstanceAdmin()
     {
         await AssertInstanceAdminOk(HttpMethod.Get, "/api/instance/settings/branding");
@@ -228,13 +216,6 @@ public class CoverageGovernanceTests : IAsyncDisposable
     {
         await AssertRegularUserDenied(HttpMethod.Get,
             $"/api/admin/custom-property-definitions/governance-report?tenantId={DefaultTenantId}");
-    }
-
-    [Test]
-    public async Task Governance_Admin_CustomPropertyProjections_AllowsAuthenticatedStatusView()
-    {
-        await AssertRegularUserDenied(HttpMethod.Get,
-            $"/api/admin/custom-property-projections/status?tenantId={DefaultTenantId}");
     }
 
     [Test]
@@ -278,30 +259,6 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_Lookup_EventDayCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventday");
-    }
-
-    [Test]
-    public async Task Governance_Lookup_EventSessionCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventsession");
-    }
-
-    [Test]
-    public async Task Governance_Lookup_EventAgendaItemCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventagendaitem");
-    }
-
-    [Test]
-    public async Task Governance_Lookup_EventSeriesCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventseries");
-    }
-
-    [Test]
     public async Task Governance_Lookup_CustomPropertyDefCreate_DeniesAnonymous()
     {
         await AssertAnonymous401(HttpMethod.Post, "/api/custompropertydefinition");
@@ -320,50 +277,14 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_Lookup_EventCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/event");
-    }
-
-    [Test]
-    public async Task Governance_Lookup_EventRegistrationCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventregistration");
-    }
-
-    [Test]
     public async Task Governance_Lookup_StorageUpload_DeniesAnonymous()
     {
         await AssertAnonymous401(HttpMethod.Post, "/api/storageobject/generate-upload-url");
     }
 
-    [Test]
-    public async Task Governance_Lookup_EventTemplateCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventtemplate");
-    }
-
-    [Test]
-    public async Task Governance_Lookup_EventSessionTemplateCreate_DeniesAnonymous()
-    {
-        await AssertAnonymous401(HttpMethod.Post, "/api/eventsessiontemplate");
-    }
-
     #endregion
 
     #region Lookup Tables — Read Operations Public
-
-    [Test]
-    public async Task Governance_PublicLookup_EventFormats_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventformat");
-    }
-
-    [Test]
-    public async Task Governance_PublicLookup_EventStatuses_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventstatus");
-    }
 
     [Test]
     public async Task Governance_PublicLookup_VisibilityTypes_AnonymousOK()
@@ -441,12 +362,6 @@ public class CoverageGovernanceTests : IAsyncDisposable
     public async Task Governance_PublicLookup_ActorTypes_AnonymousOK()
     {
         await AssertAnonymousOk("/api/actortype");
-    }
-
-    [Test]
-    public async Task Governance_PublicLookup_EventRegistrationPolicies_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/eventregistrationpolicy");
     }
 
     #endregion
@@ -599,7 +514,7 @@ public class CoverageGovernanceTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_governance;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",

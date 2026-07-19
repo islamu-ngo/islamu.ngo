@@ -135,7 +135,7 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
             user.Id,
             null,
             null,
-            NotificationPreferenceCategoryCodes.EventUpdates,
+            NotificationPreferenceCategoryCodes.OrganizationUpdates,
             NotificationPreferenceChannelCodes.Email));
 
         context.NotificationChannelPreferences.Add(CreateTenantPreference(
@@ -210,7 +210,7 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
         Guid tenantId,
         bool isEnabled,
         bool isLocked = false,
-        string categoryCode = NotificationPreferenceCategoryCodes.EventUpdates)
+        string categoryCode = NotificationPreferenceCategoryCodes.OrganizationUpdates)
     {
         return new NotificationChannelPreference
         {
@@ -240,7 +240,7 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
             Scope = null!,
             UserId = userId,
             User = null!,
-            CategoryId = (int)NotificationPreferenceCategoryEnum.EventUpdates,
+            CategoryId = (int)NotificationPreferenceCategoryEnum.OrganizationUpdates,
             Category = null!,
             ChannelId = (int)NotificationPreferenceChannelEnum.Email,
             Channel = null!,
@@ -250,7 +250,6 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
 
     private static int CategoryId(string categoryCode) => categoryCode switch
     {
-        NotificationPreferenceCategoryCodes.EventUpdates => (int)NotificationPreferenceCategoryEnum.EventUpdates,
         NotificationPreferenceCategoryCodes.OrganizationUpdates => (int)NotificationPreferenceCategoryEnum.OrganizationUpdates,
         _ => throw new ArgumentOutOfRangeException(nameof(categoryCode), categoryCode, null),
     };

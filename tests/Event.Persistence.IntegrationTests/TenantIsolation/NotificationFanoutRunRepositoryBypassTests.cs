@@ -121,7 +121,7 @@ public class NotificationFanoutRunRepositoryBypassTests(PostgreSqlContainerFixtu
             TenantId = tenantId,
             Tenant = null!,
             FanoutKind = fanoutKind,
-            NotificationEntityTypeId = (int)NotificationEntityTypeEnum.Event,
+            NotificationEntityTypeId = (int)NotificationEntityTypeEnum.Organization,
             NotificationEntityType = null!,
             EntityId = Guid.CreateVersion7(),
             SourceActorId = sourceActorId,

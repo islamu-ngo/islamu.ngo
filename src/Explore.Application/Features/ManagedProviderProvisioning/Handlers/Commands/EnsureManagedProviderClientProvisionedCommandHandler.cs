@@ -967,9 +967,9 @@ public class EnsureManagedProviderClientProvisionedCommandHandler(
                     SourceId = operationId,
                     UserId = administrator.Id,
                     RecipientEmail = request.Administrator.Invitation.Email,
-                    Subject = $"Administrator invitation for {tenant.FullName}",
-                    PlainTextBody = $"Assalamu alaykum,\n\nYou have been invited to administer {tenant.FullName}. Sign in with this verified email address: {signInUrl.AbsoluteUri}\n\nEvent Platform",
-                    HtmlBody = $"<p>Assalamu alaykum,</p><p>You have been invited to administer {WebUtility.HtmlEncode(tenant.FullName)}.</p><p><a href=\"{encodedUrl}\">Sign in to Event</a> with this verified email address.</p><p>Event Platform</p>",
+                    Subject = $"ISLAMU administrator invitation for {tenant.FullName}",
+                    PlainTextBody = $"Assalamu alaykum,\n\nYou have been invited to administer {tenant.FullName} on the ISLAMU community platform. Sign in with this verified email address: {signInUrl.AbsoluteUri}\n\nISLAMU",
+                    HtmlBody = $"<p>Assalamu alaykum,</p><p>You have been invited to administer {WebUtility.HtmlEncode(tenant.FullName)} on the ISLAMU community platform.</p><p><a href=\"{encodedUrl}\">Sign in to ISLAMU</a> with this verified email address.</p><p>ISLAMU</p>",
                     CorrelationId = operationId.ToString("D"),
                     CreatedAt = now,
                     CreatedBy = null

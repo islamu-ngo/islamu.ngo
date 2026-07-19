@@ -46,13 +46,13 @@ public sealed class GetFooterConfigQueryHandlerTests
         var settingGroup = CreateConfiguredFooterSettings();
         var groups = new List<TenantFooterLinkGroup>
         {
-            CreateFooterLinkGroup(tenantId, "Community", 1),
-            CreateFooterLinkGroup(tenantId, "Legal", 2)
+            CreateFooterLinkGroup(tenantId, "Quick Links", 1),
+            CreateFooterLinkGroup(tenantId, "Community", 2)
         };
         var expectedGroups = new List<FooterLinkGroupDto>
         {
-            CreateLinkGroupDto(groups[0], "Events", "/events"),
-            CreateLinkGroupDto(groups[1], "Privacy", "/privacy")
+            CreateLinkGroupDto(groups[0], "Contact", "/contact"),
+            CreateLinkGroupDto(groups[1], "Community Guidelines", "/community-guidelines")
         };
         _settingsResolver.ResolveGroupAsync<FooterSettingGroup>(
                 Arg.Is<SettingContext>(context => context.TenantId == tenantId),
@@ -74,8 +74,11 @@ public sealed class GetFooterConfigQueryHandlerTests
         await Assert.That(result.Settings.CopyrightText).IsEqualTo("© 2026 ISLAMU");
         await Assert.That(result.Settings.ShowCookieSettingsLink).IsFalse();
         await Assert.That(result.LinkGroups.Count).IsEqualTo(2);
-        await Assert.That(result.LinkGroups[0].Title).IsEqualTo("Community");
-        await Assert.That(result.LinkGroups[1].Links[0].Label).IsEqualTo("Privacy");
+        await Assert.That(result.LinkGroups[0].Links[0].Url).IsEqualTo("/contact");
+        await Assert.That(result.LinkGroups[1].Links[0].Url).IsEqualTo("/community-guidelines");
+        var publicFooterPaths = result.LinkGroups.SelectMany(group => group.Links).Select(link => link.Url).ToArray();
+        await Assert.That(publicFooterPaths).DoesNotContain("/privacy");
+        await Assert.That(publicFooterPaths).DoesNotContain("/terms");
         await _settingsResolver.Received(1).ResolveGroupAsync<FooterSettingGroup>(
             Arg.Is<SettingContext>(context => context.TenantId == tenantId),
             Arg.Any<CancellationToken>());

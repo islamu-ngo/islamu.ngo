@@ -31,7 +31,7 @@ public sealed class BootstrapConfigurationDoctorCheck(IDoctorFileSystem fileSyst
                 Category,
                 "docker-compose.yml is missing, so bootstrap environment variables cannot be verified.",
                 "Restore docker-compose.yml or run doctor from the repository root.",
-                "docs/SELF_HOSTING.md"));
+                "docs/OPERATIONS.md"));
         }
 
         var compose = fileSystem.ReadAllText(composePath);

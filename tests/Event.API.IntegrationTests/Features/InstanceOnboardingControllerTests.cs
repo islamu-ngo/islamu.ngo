@@ -556,7 +556,7 @@ public class InstanceOnboardingControllerTests
         await Assert.That(internalConfig).IsNotNull();
         await Assert.That(internalConfig!.KeycloakEnabled).IsTrue();
         await Assert.That(internalConfig.KeycloakAuthority).IsEqualTo("https://keycloak.example.com/realms/ISLAMU");
-        await Assert.That(internalConfig.KeycloakClientId).IsEqualTo("islamu-event-blazor");
+        await Assert.That(internalConfig.KeycloakClientId).IsEqualTo("islamu-ngo-blazor");
         await Assert.That(internalConfig.KeycloakClientSecret).IsEqualTo("runtime-blazor-secret");
         await Assert.That(internalConfig.KeycloakClientSecret).DoesNotContain("one-time-admin-password");
     }
@@ -1066,9 +1066,9 @@ public class InstanceOnboardingControllerTests
         {
             KeycloakBaseUrl = "https://keycloak.example.com",
             Realm = "ISLAMU",
-            BlazorClientId = "islamu-event-blazor",
+            BlazorClientId = "islamu-ngo-blazor",
             BlazorClientSecret = "runtime-blazor-secret",
-            ApiClientId = "islamu-event-api",
+            ApiClientId = "islamu-ngo-api",
             ApiClientSecret = "runtime-api-secret",
             Mode = KeycloakBootstrapMode.PatchExistingRealm,
             BootstrapAdminUsername = "keycloak-admin",

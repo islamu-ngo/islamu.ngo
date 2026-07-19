@@ -28,9 +28,9 @@ public sealed class KeycloakBootstrapServiceTests
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("[]")),
             Expect(HttpMethod.Post, "/auth/admin/realms/ISLAMU/clients", _ => new HttpResponseMessage(HttpStatusCode.Created)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
-            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson("blazor-uuid", "islamu-event-blazor"))),
+            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson("blazor-uuid", "islamu-ngo-blazor"))),
             ExpectOfflineAccessRole(),
             ExpectDefaultRole(),
             ExpectDefaultRoleCompositeUpdate(),
@@ -48,9 +48,9 @@ public sealed class KeycloakBootstrapServiceTests
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("[]")),
             Expect(HttpMethod.Post, "/auth/admin/realms/ISLAMU/clients", _ => new HttpResponseMessage(HttpStatusCode.Created)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "api-uuid", "clientId": "islamu-event-api" }]
+                [{ "id": "api-uuid", "clientId": "islamu-ngo-api" }]
                 """)),
-            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid", _ => JsonResponse(ClientRepresentationJson("api-uuid", "islamu-event-api"))),
+            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid", _ => JsonResponse(ClientRepresentationJson("api-uuid", "islamu-ngo-api"))),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid/client-secret", _ => JsonResponse("""
                 { "value": "old-api-secret" }
                 """)),
@@ -88,9 +88,9 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => new HttpResponseMessage(HttpStatusCode.OK)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
-            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson("blazor-uuid", "islamu-event-blazor"))),
+            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson("blazor-uuid", "islamu-ngo-blazor"))),
             ExpectOfflineAccessRole(),
             ExpectDefaultRole(),
             ExpectDefaultRoleCompositeUpdate(),
@@ -106,9 +106,9 @@ public sealed class KeycloakBootstrapServiceTests
             Expect(HttpMethod.Put, "/auth/admin/realms/ISLAMU/clients/blazor-uuid/optional-client-scopes/offline-scope-uuid", _ => new HttpResponseMessage(HttpStatusCode.NoContent)),
             Expect(HttpMethod.Put, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => new HttpResponseMessage(HttpStatusCode.NoContent)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "api-uuid", "clientId": "islamu-event-api" }]
+                [{ "id": "api-uuid", "clientId": "islamu-ngo-api" }]
                 """)),
-            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid", _ => JsonResponse(ClientRepresentationJson("api-uuid", "islamu-event-api"))),
+            Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid", _ => JsonResponse(ClientRepresentationJson("api-uuid", "islamu-ngo-api"))),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/api-uuid/client-secret", _ => JsonResponse("""
                 { "value": "old-api-secret" }
                 """)),
@@ -135,11 +135,11 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => new HttpResponseMessage(HttpStatusCode.OK)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 "runtime-blazor-secret",
                 includeRefreshTokenSettings: false))),
             ExpectOfflineAccessRole(),
@@ -177,11 +177,11 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => new HttpResponseMessage(HttpStatusCode.OK)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 "runtime-blazor-secret",
                 includeRefreshTokenSettings: true,
                 includeAudienceMapper: true))),
@@ -215,11 +215,11 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => new HttpResponseMessage(HttpStatusCode.OK)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 "runtime-blazor-secret",
                 includeRefreshTokenSettings: true))),
             ExpectOfflineAccessRole(),
@@ -238,8 +238,8 @@ public sealed class KeycloakBootstrapServiceTests
         await Assert.That(handler.Requests[10].Body).Contains("https://localhost:7177/*");
         await Assert.That(handler.Requests[10].Body).Contains("\"webOrigins\":[\"\\u002B\"]");
         await Assert.That(handler.Requests[10].Body).Contains("\"post.logout.redirect.uris\":\"\\u002B\"");
-        await Assert.That(handler.Requests[10].Body).Contains("islamu-event-api-audience");
-        await Assert.That(handler.Requests[10].Body).Contains("\"included.client.audience\":\"islamu-event-api\"");
+        await Assert.That(handler.Requests[10].Body).Contains("islamu-ngo-api-audience");
+        await Assert.That(handler.Requests[10].Body).Contains("\"included.client.audience\":\"islamu-ngo-api\"");
     }
 
     [Test]
@@ -328,7 +328,7 @@ public sealed class KeycloakBootstrapServiceTests
             UseTemporaryAdminCredentials = true,
             BootstrapAdminUsername = "bootstrap-admin",
             BootstrapAdminPassword = "temporary-admin-secret",
-            ApiClientId = "islamu-event-api"
+            ApiClientId = "islamu-ngo-api"
         };
         var handler = new OrderedMessageHandler(
             Expect(HttpMethod.Get, "/auth/realms/ISLAMU/.well-known/openid-configuration", _ => JsonResponse("{}")),
@@ -337,11 +337,11 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => JsonResponse("{}")),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 includeRefreshTokenSettings: true))),
             ExpectOfflineAccessRole(),
             ExpectDefaultRole(),
@@ -357,7 +357,7 @@ public sealed class KeycloakBootstrapServiceTests
                 [{ "id": "offline-role-uuid", "name": "offline_access" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "api-uuid", "clientId": "islamu-event-api" }]
+                [{ "id": "api-uuid", "clientId": "islamu-ngo-api" }]
                 """)));
         var service = CreateService(handler);
 
@@ -388,7 +388,7 @@ public sealed class KeycloakBootstrapServiceTests
 
         await Assert.That(result.Status).IsEqualTo("blocked");
         await Assert.That(result.DesiredState.DestructiveOperationsSupported).IsFalse();
-        await Assert.That(result.DesiredState.Clients.Any(client => client.ClientId == "islamu-event-blazor")).IsTrue();
+        await Assert.That(result.DesiredState.Clients.Any(client => client.ClientId == "islamu-ngo-blazor")).IsTrue();
         await Assert.That(result.Operations.Any(operation => operation.OperationId == "keycloak-admin-credentials-required")).IsTrue();
         await Assert.That(handler.Requests.Count).IsEqualTo(1);
         await Assert.That(handler.Requests[0].Method).IsEqualTo(HttpMethod.Get);
@@ -404,7 +404,7 @@ public sealed class KeycloakBootstrapServiceTests
             UseTemporaryAdminCredentials = true,
             BootstrapAdminUsername = "bootstrap-admin",
             BootstrapAdminPassword = "temporary-admin-secret",
-            ApiClientId = "islamu-event-api"
+            ApiClientId = "islamu-ngo-api"
         };
         var handler = new OrderedMessageHandler(
             Expect(HttpMethod.Get, "/auth/realms/ISLAMU/.well-known/openid-configuration", _ => JsonResponse("{}")),
@@ -413,18 +413,18 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => JsonResponse("{}")),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 includeRefreshTokenSettings: false))),
             ExpectOfflineAccessRole(),
             ExpectDefaultRole(),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/roles-by-id/default-role-uuid/composites/realm", _ => JsonResponse("[]")),
             ExpectOfflineAccessScopeLookup(),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid/optional-client-scopes", _ => JsonResponse("[]")),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid/default-client-scopes", _ => JsonResponse("[]")),
@@ -471,7 +471,7 @@ public sealed class KeycloakBootstrapServiceTests
             BackupConfirmed = true,
             BootstrapAdminUsername = "bootstrap-admin",
             BootstrapAdminPassword = "temporary-admin-secret",
-            ApiClientId = "islamu-event-api"
+            ApiClientId = "islamu-ngo-api"
         };
         var handler = new OrderedMessageHandler(
             Expect(HttpMethod.Get, "/auth/realms/ISLAMU/.well-known/openid-configuration", _ => JsonResponse("{}")),
@@ -480,11 +480,11 @@ public sealed class KeycloakBootstrapServiceTests
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU", _ => JsonResponse("{}")),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 includeRefreshTokenSettings: false))),
             Expect(HttpMethod.Put, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => new HttpResponseMessage(HttpStatusCode.NoContent)),
             ExpectOfflineAccessRole(),
@@ -493,7 +493,7 @@ public sealed class KeycloakBootstrapServiceTests
             ExpectDefaultRoleCompositeUpdate(),
             ExpectOfflineAccessScopeLookup(),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid/optional-client-scopes", _ => JsonResponse("[]")),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid/default-client-scopes", _ => JsonResponse("[]")),
@@ -527,7 +527,7 @@ public sealed class KeycloakBootstrapServiceTests
         var configuration = CreateConfiguration();
         var request = new KeycloakClientSecretRotationRequestDto
         {
-            ClientId = "islamu-event-blazor",
+            ClientId = "islamu-ngo-blazor",
             SecretOwnershipMode = "application-managed",
             ConfirmApplicationManagedSecret = true,
             NewClientSecret = "replacement-client-secret",
@@ -540,11 +540,11 @@ public sealed class KeycloakBootstrapServiceTests
                 { "access_token": "admin-token" }
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients", _ => JsonResponse("""
-                [{ "id": "blazor-uuid", "clientId": "islamu-event-blazor" }]
+                [{ "id": "blazor-uuid", "clientId": "islamu-ngo-blazor" }]
                 """)),
             Expect(HttpMethod.Get, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => JsonResponse(ClientRepresentationJson(
                 "blazor-uuid",
-                "islamu-event-blazor",
+                "islamu-ngo-blazor",
                 secret: "old-client-secret",
                 includeRefreshTokenSettings: true))),
             Expect(HttpMethod.Put, "/auth/admin/realms/ISLAMU/clients/blazor-uuid", _ => new HttpResponseMessage(HttpStatusCode.NoContent)));
@@ -603,9 +603,9 @@ public sealed class KeycloakBootstrapServiceTests
         {
             KeycloakBaseUrl = keycloakBaseUrl,
             Realm = "ISLAMU",
-            BlazorClientId = "islamu-event-blazor",
+            BlazorClientId = "islamu-ngo-blazor",
             BlazorClientSecret = "runtime-blazor-secret",
-            ApiClientId = "islamu-event-api",
+            ApiClientId = "islamu-ngo-api",
             ApiClientSecret = "optional-api-secret",
             Mode = mode,
             BootstrapAdminUsername = "bootstrap-admin",
@@ -619,7 +619,7 @@ public sealed class KeycloakBootstrapServiceTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://keycloak.example.com/auth/realms/ISLAMU",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecret = "runtime-blazor-secret"
         };
     }
@@ -712,12 +712,12 @@ public sealed class KeycloakBootstrapServiceTests
                 ,
                   "protocolMappers": [
                     {
-                      "name": "islamu-event-api-audience",
+                      "name": "islamu-ngo-api-audience",
                       "protocol": "openid-connect",
                       "protocolMapper": "oidc-audience-mapper",
                       "consentRequired": false,
                       "config": {
-                        "included.client.audience": "islamu-event-api",
+                        "included.client.audience": "islamu-ngo-api",
                         "id.token.claim": "false",
                         "access.token.claim": "true"
                       }

@@ -25,7 +25,7 @@ namespace Explore.API.Extensions;
 public static class AuthenticationExtensions
 {
     // Security: audiences validated in both 'aud' and 'azp' claims (Keycloak BFF pattern)
-    private static readonly string[] DefaultValidAudiences = ["islamu-event-api", "islamu-event-blazor"];
+    private static readonly string[] DefaultValidAudiences = ["islamu-ngo-api", "islamu-ngo-blazor"];
 
     public static IServiceCollection AddApiAuthentication(
         this IServiceCollection services,

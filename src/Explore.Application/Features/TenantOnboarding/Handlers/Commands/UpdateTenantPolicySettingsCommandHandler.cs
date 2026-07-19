@@ -131,14 +131,6 @@ public class UpdateTenantPolicySettingsCommandHandler : IRequestHandler<UpdateTe
 
         AddLockedValueChangeFailure(
             failures,
-            nameof(requestSettings.EventCardClickOpensDetailPage),
-            effectiveSettings.CanOverrideEventCardClickBehavior,
-            effectiveSettings.EventCardClickOpensDetailPage,
-            requestSettings.EventCardClickOpensDetailPage,
-            "Event card click behavior is locked by instance policy.");
-
-        AddLockedValueChangeFailure(
-            failures,
             nameof(requestSettings.RenderPolicyPreset),
             effectiveSettings.CanOverrideRenderPolicy,
             effectiveSettings.RenderPolicyPreset,

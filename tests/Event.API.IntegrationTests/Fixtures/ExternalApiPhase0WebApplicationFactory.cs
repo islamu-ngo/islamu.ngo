@@ -94,7 +94,7 @@ public sealed class ExternalApiPhase0WebApplicationFactory : WebApplicationFacto
                 ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=explore_db_test;Username=postgres;Password=postgres",
                 ["Keycloak:Authority"] = TestIssuer,
                 ["Keycloak:Realm"] = "ISLAMU",
-                ["Keycloak:Audience"] = "islamu-event-api",
+                ["Keycloak:Audience"] = "islamu-ngo-api",
                 ["Keycloak:RequireHttpsMetadata"] = "false",
                 ["Keycloak:MetadataAddress"] = $"{TestIssuer}/.well-known/openid-configuration",
                 ["S3Settings:Region"] = "us-east-1",
@@ -315,7 +315,7 @@ public sealed class ExternalApiPhase0WebApplicationFactory : WebApplicationFacto
                     ValidateIssuer = true,
                     ValidIssuer = TestIssuer,
                     ValidateAudience = true,
-                    ValidAudience = "islamu-event-api",
+                    ValidAudience = "islamu-ngo-api",
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
                     ValidateIssuerSigningKey = true,
@@ -345,7 +345,7 @@ public sealed class ExternalApiPhase0WebApplicationFactory : WebApplicationFacto
 
         var token = new JwtSecurityToken(
             issuer: TestIssuer,
-            audience: "islamu-event-api",
+            audience: "islamu-ngo-api",
             claims: claims,
             notBefore: DateTime.UtcNow.AddMinutes(-1),
             expires: DateTime.UtcNow.AddMinutes(30),

@@ -1,9 +1,6 @@
 // ABOUTME: Registers EF Core persistence, repositories, caches, and unit-of-work services.
 // ABOUTME: Keeps DbContext pooling compatible with property-injected scoped tenant and user dependencies.
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Application.Contracts.Persistence;
 using Explore.Application.Contracts.Services;
@@ -181,8 +178,6 @@ public static class PersistenceServicesRegistration
         // Location Repository
         services.AddScoped<ILocationRepository, LocationRepository>();
         services.AddScoped<ILocationRoomRepository, LocationRoomRepository>();
-        services.AddScoped<ICustomPropertyProjectionDirtyScopeRepository, CustomPropertyProjectionDirtyScopeRepository>();
-        services.AddScoped<ICustomPropertyProjectionStatusRepository, CustomPropertyProjectionStatusRepository>();
 
         // Storage Repository
         services.AddScoped<IStorageObjectRepository, StorageObjectRepository>();
@@ -190,6 +185,7 @@ public static class PersistenceServicesRegistration
         services.AddScoped<IStorageUsageCounterRepository, StorageUsageCounterRepository>();
 
         // Tag & Category Repositories
+        services.AddScoped<IBlogRepository, BlogRepository>();
         services.AddScoped<ITagRepository, TagRepository>();
         services.AddScoped<ITagTypeRepository, TagTypeRepository>();
         services.AddScoped<ITagTypeTagsRepository, TagTypeTagsRepository>();

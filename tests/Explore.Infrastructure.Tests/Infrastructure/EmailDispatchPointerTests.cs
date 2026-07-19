@@ -18,11 +18,9 @@ public sealed class EmailDispatchPointerTests
         {
             TenantId = Guid.CreateVersion7(),
             PublishEventId = Guid.CreateVersion7(),
-            Kind = EmailDispatchKind.RegistrationConfirmation,
-            SourceType = "event-registration",
+            Kind = EmailDispatchKind.TenantAdministratorInvitation,
+            SourceType = "tenant-administrator-invitation",
             SourceId = Guid.CreateVersion7(),
-            EventId = Guid.CreateVersion7(),
-            RegistrationIntentId = Guid.CreateVersion7(),
             UserId = Guid.CreateVersion7(),
             RecipientEmail = "person@example.test",
             Subject = "Registration confirmed",

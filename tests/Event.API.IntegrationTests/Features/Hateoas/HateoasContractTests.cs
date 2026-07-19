@@ -29,8 +29,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]
@@ -57,7 +56,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_SelfLink_ShouldHaveHrefStartingWithSlash()
     {
-        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/event"));
+        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/blog"));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -75,7 +74,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_SelfLink_ShouldIncludeMethodProperty()
     {
-        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/event"));
+        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/blog"));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -96,7 +95,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_ShouldIncludePaginationMetadata()
     {
-        var response = await _fixture.Client.GetAsync("/api/event?pageNumber=1&pageSize=10");
+        var response = await _fixture.Client.GetAsync("/api/blog?pageNumber=1&pageSize=10");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -115,7 +114,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_FirstPage_ShouldNotHavePrevLink()
     {
-        var response = await _fixture.Client.GetAsync("/api/event?pageNumber=1&pageSize=5");
+        var response = await _fixture.Client.GetAsync("/api/blog?pageNumber=1&pageSize=5");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -130,7 +129,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_PaginationLinks_ShouldContainCorrectParameters()
     {
-        var response = await _fixture.Client.GetAsync("/api/event?pageNumber=1&pageSize=5");
+        var response = await _fixture.Client.GetAsync("/api/blog?pageNumber=1&pageSize=5");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -151,7 +150,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
+    [Arguments("/api/blog")]
     public async Task GetAll_WithPreferMinimal_ShouldReturnPreferenceAppliedHeader(string endpoint)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
@@ -170,8 +169,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]
@@ -199,7 +197,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_WithPreferMinimal_ShouldStillHavePaginationMetadata()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Add("Prefer", "return=minimal");
 
         var response = await _fixture.Client.SendAsync(request);
@@ -216,7 +214,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_WithPreferRepresentation_ShouldIncludeLinks()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Add("Prefer", "return=representation");
 
         var response = await _fixture.Client.SendAsync(request);
@@ -230,7 +228,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_WithMultiplePreferValues_ShouldProcessReturnMinimal()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Add("Prefer", "return=minimal, respond-async, wait=100");
 
         var response = await _fixture.Client.SendAsync(request);
@@ -244,7 +242,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_WithoutPreferHeader_ShouldNotReturnPreferenceAppliedHeader()
     {
-        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/event"));
+        var response = await _fixture.Client.GetAsync(WithCacheBust("/api/blog"));
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -259,7 +257,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_DefaultAccept_ShouldReturnSupportedJsonContentType()
     {
-        var response = await _fixture.Client.GetAsync("/api/event");
+        var response = await _fixture.Client.GetAsync("/api/blog");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
@@ -271,7 +269,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetAll_AcceptHalJson_ShouldReturnValidContentType()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
         request.Headers.Add("Accept", "application/hal+json");
 
         var response = await _fixture.Client.SendAsync(request);
@@ -290,7 +288,7 @@ public class HateoasContractTests(ContractApiFixture fixture)
     [Test]
     public async Task GetById_NonExistent_ShouldReturnNotFound_WithoutHalStructure()
     {
-        var response = await _fixture.Client.GetAsync($"/api/event/{Guid.NewGuid()}");
+        var response = await _fixture.Client.GetAsync($"/api/blog/missing-{Guid.NewGuid():N}");
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
 

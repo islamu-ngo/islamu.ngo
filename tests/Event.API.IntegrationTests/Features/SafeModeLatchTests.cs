@@ -212,7 +212,7 @@ public class SafeModeLatchTests : IAsyncDisposable
     [Test]
     public async Task SafeMode_Anonymous_StillGets401()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog/manage");
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -223,7 +223,7 @@ public class SafeModeLatchTests : IAsyncDisposable
     [Test]
     public async Task SafeMode_AnonymousEndpoints_StillWork()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/eventformat");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -365,7 +365,7 @@ public class SafeModeLatchTests : IAsyncDisposable
                     ["ConnectionStrings:DefaultConnection"] = "Host=localhost;Database=test_safe_mode;Username=postgres;Password=postgres",
                     ["Keycloak:Authority"] = _keycloakAuthority,
                     ["Keycloak:Realm"] = KeycloakContainerFixture.RealmName,
-                    ["Keycloak:Audience"] = "islamu-event-api",
+                    ["Keycloak:Audience"] = "islamu-ngo-api",
                     ["Keycloak:RequireHttpsMetadata"] = "false",
                     ["Keycloak:MetadataAddress"] = _keycloakMetadataAddress,
                     ["S3Settings:Region"] = "us-east-1",

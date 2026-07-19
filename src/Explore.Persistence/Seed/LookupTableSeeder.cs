@@ -158,7 +158,6 @@ public static class LookupTableSeeder
             new() { Id = (int)WebhookProviderCapability.Replay, MasterCode = "REPLAY", FullName = "Replay", Description = "Request provider-side replay or recovery" },
             new() { Id = (int)WebhookProviderCapability.PayloadInspection, MasterCode = "PAYLOAD_INSPECTION", FullName = "Payload inspection", Description = "Inspect retained message payload content" },
             new() { Id = (int)WebhookProviderCapability.AppPortal, MasterCode = "APP_PORTAL", FullName = "App portal", Description = "Issue tenant-scoped provider portal sessions" },
-            new() { Id = (int)WebhookProviderCapability.EventCatalog, MasterCode = "EVENT_CATALOG", FullName = "Event catalog", Description = "Synchronize webhook event definitions" },
             new() { Id = (int)WebhookProviderCapability.ProviderRetentionControl, MasterCode = "PROVIDER_RETENTION_CONTROL", FullName = "Provider retention control", Description = "Select provider-side payload retention" },
             new() { Id = (int)WebhookProviderCapability.ApplicationThrottling, MasterCode = "APPLICATION_THROTTLING", FullName = "Application throttling", Description = "Apply provider application-level throttling" },
             new() { Id = (int)WebhookProviderCapability.EndpointThrottling, MasterCode = "ENDPOINT_THROTTLING", FullName = "Endpoint throttling", Description = "Apply provider endpoint-level throttling" },
@@ -585,8 +584,6 @@ public static class LookupTableSeeder
             {
                 new() { Id = (int)NotificationCategoryEnum.IdentityLifecycle, MasterCode = "IDENTITY_LIFECYCLE", FullName = "Identity lifecycle", Description = "Credential-token lifecycle notifications owned by an account authority" },
                 new() { Id = (int)NotificationCategoryEnum.ProductLifecycle, MasterCode = "PRODUCT_LIFECYCLE", FullName = "Product lifecycle", Description = "ISLAMU product-domain lifecycle notifications" },
-                new() { Id = (int)NotificationCategoryEnum.TrustSafetyReporting, MasterCode = "TRUST_SAFETY_REPORTING", FullName = "Trust and safety reporting", Description = "Report intake and reporter-facing trust and safety notifications" },
-                new() { Id = (int)NotificationCategoryEnum.TrustSafetyModeration, MasterCode = "TRUST_SAFETY_MODERATION", FullName = "Trust and safety moderation", Description = "Moderation decision and safety enforcement notifications" },
                 new() { Id = (int)NotificationCategoryEnum.ProviderInternal, MasterCode = "PROVIDER_INTERNAL", FullName = "Provider internal", Description = "External provider console or workflow notifications not sent as ISLAMU user-facing email" },
                 new() { Id = (int)NotificationCategoryEnum.PlatformOperations, MasterCode = "PLATFORM_OPERATIONS", FullName = "Platform operations", Description = "Platform operational notices and operator-visible lifecycle notifications" },
                 new() { Id = (int)NotificationCategoryEnum.Marketing, MasterCode = "MARKETING", FullName = "Marketing", Description = "Consent-controlled product marketing notifications" }
@@ -666,9 +663,6 @@ public static class LookupTableSeeder
             {
                 new() { Id = (int)NotificationRecipientKindEnum.User, MasterCode = "USER", FullName = "User", Description = "A platform user recipient" },
                 new() { Id = (int)NotificationRecipientKindEnum.TenantAdmin, MasterCode = "TENANT_ADMIN", FullName = "Tenant administrator", Description = "A tenant administrator recipient" },
-                new() { Id = (int)NotificationRecipientKindEnum.Organizer, MasterCode = "ORGANIZER", FullName = "Organizer", Description = "An event organizer recipient" },
-                new() { Id = (int)NotificationRecipientKindEnum.Reporter, MasterCode = "REPORTER", FullName = "Reporter", Description = "A trust and safety report submitter" },
-                new() { Id = (int)NotificationRecipientKindEnum.Moderator, MasterCode = "MODERATOR", FullName = "Moderator", Description = "A trust and safety moderator recipient" },
                 new() { Id = (int)NotificationRecipientKindEnum.ProviderOperator, MasterCode = "PROVIDER_OPERATOR", FullName = "Provider operator", Description = "An external provider console or workflow operator" },
                 new() { Id = (int)NotificationRecipientKindEnum.System, MasterCode = "SYSTEM", FullName = "System", Description = "A system or operational recipient" },
                 new() { Id = (int)NotificationRecipientKindEnum.Other, MasterCode = "OTHER", FullName = "Other", Description = "A recipient kind not otherwise classified" }
@@ -719,8 +713,6 @@ public static class LookupTableSeeder
             new ExternalWorkflowProviderKindLookup[]
             {
                 new() { Id = (int)ExternalWorkflowProviderKindEnum.None, MasterCode = "NONE", FullName = "None", Description = "No external workflow provider is assigned" },
-                new() { Id = (int)ExternalWorkflowProviderKindEnum.Coop, MasterCode = "COOP", FullName = "Coop", Description = "Coop moderation or review workflow provider" },
-                new() { Id = (int)ExternalWorkflowProviderKindEnum.Osprey, MasterCode = "OSPREY", FullName = "Osprey", Description = "Osprey safety workflow provider" },
                 new() { Id = (int)ExternalWorkflowProviderKindEnum.TicketingProvider, MasterCode = "TICKETING_PROVIDER", FullName = "Ticketing provider", Description = "External ticketing or payment workflow provider" },
                 new() { Id = (int)ExternalWorkflowProviderKindEnum.WebhookProvider, MasterCode = "WEBHOOK_PROVIDER", FullName = "Webhook provider", Description = "External webhook workflow provider" },
                 new() { Id = (int)ExternalWorkflowProviderKindEnum.Other, MasterCode = "OTHER", FullName = "Other", Description = "External workflow provider not otherwise classified" }
@@ -1174,8 +1166,6 @@ public static class LookupTableSeeder
         if (await context.Set<NotificationType>().AnyAsync(ct)) return;
 
         context.Set<NotificationType>().AddRange(
-            new NotificationType { Id = (int)NotificationTypeEnum.ApprovalGranted, MasterCode = "APPROVAL_GRANTED", FullName = "Approval Granted", Description = "An approval request was granted" },
-            new NotificationType { Id = (int)NotificationTypeEnum.ApprovalRejected, MasterCode = "APPROVAL_REJECTED", FullName = "Approval Rejected", Description = "An approval request was rejected" },
             new NotificationType { Id = (int)NotificationTypeEnum.MemberInvited, MasterCode = "MEMBER_INVITED", FullName = "Member Invited", Description = "Invited to join an organization or group" },
             new NotificationType { Id = (int)NotificationTypeEnum.MemberRemoved, MasterCode = "MEMBER_REMOVED", FullName = "Member Removed", Description = "Removed from an organization or group" },
             new NotificationType { Id = (int)NotificationTypeEnum.General, MasterCode = "GENERAL", FullName = "General", Description = "General purpose notification" });
@@ -1194,11 +1184,36 @@ public static class LookupTableSeeder
     }
 
     /// <summary>
-    /// Seeds default instance-level footer link groups (TenantId = null) with standard navigation links.
+    /// Seeds default instance-level footer link groups (TenantId = null) with implemented navigation links.
     /// Only runs if no instance-level footer link groups exist yet.
     /// </summary>
     private static async Task SeedDefaultFooterLinkGroupsAsync(ExploreDbContext context, CancellationToken ct)
     {
+        var retiredLegalGroupId = Guid.Parse("019573a0-0002-7000-8000-000000000001");
+        Guid[] retiredLegalLinkIds =
+        [
+            Guid.Parse("019573a0-0006-7000-8000-000000000001"),
+            Guid.Parse("019573a0-0007-7000-8000-000000000001")
+        ];
+        var retiredLegalLinks = await context.Set<TenantFooterLink>()
+            .Where(link => link.FooterLinkGroupId == retiredLegalGroupId && retiredLegalLinkIds.Contains(link.Id))
+            .ToListAsync(ct);
+        context.Set<TenantFooterLink>().RemoveRange(retiredLegalLinks);
+
+        var retiredLegalGroup = await context.Set<TenantFooterLinkGroup>()
+            .SingleOrDefaultAsync(group => group.Id == retiredLegalGroupId, ct);
+        var hasRetainedLinks = await context.Set<TenantFooterLink>()
+            .AnyAsync(link => link.FooterLinkGroupId == retiredLegalGroupId && !retiredLegalLinkIds.Contains(link.Id), ct);
+        if (retiredLegalGroup is not null && !hasRetainedLinks)
+        {
+            context.Set<TenantFooterLinkGroup>().Remove(retiredLegalGroup);
+        }
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync(ct);
+        }
+
         // Only seed if no instance-level (TenantId = null) footer link groups exist
         if (await context.Set<TenantFooterLinkGroup>().AnyAsync(g => g.TenantId == null, ct)) return;
 
@@ -1215,18 +1230,7 @@ public static class LookupTableSeeder
             CreatedAt = now,
         };
 
-        // Group 2: Legal
-        var legalGroup = new TenantFooterLinkGroup
-        {
-            Id = Guid.Parse("019573a0-0002-7000-8000-000000000001"),
-            TenantId = null,
-            Title = "Legal",
-            Order = 1,
-            IsActive = true,
-            CreatedAt = now,
-        };
-
-        context.Set<TenantFooterLinkGroup>().AddRange(quickLinksGroup, legalGroup);
+        context.Set<TenantFooterLinkGroup>().Add(quickLinksGroup);
         await context.SaveChangesAsync(ct);
 
         // Quick Links
@@ -1250,31 +1254,6 @@ public static class LookupTableSeeder
                 Url = "/contact",
                 OpenInNewTab = false,
                 Order = 2,
-                IsActive = true,
-                CreatedAt = now,
-            });
-
-        // Legal
-        context.Set<TenantFooterLink>().AddRange(
-            new TenantFooterLink
-            {
-                Id = Guid.Parse("019573a0-0006-7000-8000-000000000001"),
-                FooterLinkGroupId = legalGroup.Id,
-                Label = "Terms of Service",
-                Url = "/terms",
-                OpenInNewTab = false,
-                Order = 0,
-                IsActive = true,
-                CreatedAt = now,
-            },
-            new TenantFooterLink
-            {
-                Id = Guid.Parse("019573a0-0007-7000-8000-000000000001"),
-                FooterLinkGroupId = legalGroup.Id,
-                Label = "Privacy Policy",
-                Url = "/privacy",
-                OpenInNewTab = false,
-                Order = 1,
                 IsActive = true,
                 CreatedAt = now,
             });

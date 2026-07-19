@@ -58,8 +58,7 @@ public static class SvixConformanceProfileRegistry
             false,
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
-            WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.EventCatalog)
+            WebhookProviderCapability.AppPortal)
     ];
 
     public static IReadOnlyList<SvixConformanceProfile> All => Profiles;

@@ -14,14 +14,13 @@ public class ExternalApiKeyScopeCeilingTests
     {
         var ceiling = ExternalApiKeyScopeCeiling.GetCeiling(ExternalApiKeyOwnerType.User);
 
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.EventsRead);
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.EventsWrite);
+        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.UsersRead);
+        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.UsersWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.UsersRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.UsersWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.LookupsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.McpRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.McpPropose);
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.RegistrationsWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.ApiKeysManage);
 
         await Assert.That(ceiling).DoesNotContain(ExternalApiKeyScopes.OrganizationsRead);
@@ -37,7 +36,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         var ceiling = ExternalApiKeyScopeCeiling.GetCeiling(ExternalApiKeyOwnerType.Organization);
 
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.EventsRead);
+        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.OrganizationsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.OrganizationsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.OrganizationsWrite);
 
@@ -52,7 +51,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         var ceiling = ExternalApiKeyScopeCeiling.GetCeiling(ExternalApiKeyOwnerType.Group);
 
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.EventsRead);
+        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.GroupsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.GroupsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.GroupsWrite);
 
@@ -68,11 +67,9 @@ public class ExternalApiKeyScopeCeilingTests
         var ceiling = ExternalApiKeyScopeCeiling.GetCeiling(ExternalApiKeyOwnerType.Tenant);
 
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.AdminTenant);
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.EventsWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.OrganizationsWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.GroupsWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.UsersWrite);
-        await Assert.That(ceiling).Contains(ExternalApiKeyScopes.RegistrationsWrite);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.LookupsRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.McpRead);
         await Assert.That(ceiling).Contains(ExternalApiKeyScopes.McpPropose);
@@ -97,7 +94,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         bool result = ExternalApiKeyScopeCeiling.AreWithinCeiling(
             ExternalApiKeyOwnerType.User,
-            [ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.OrganizationsWrite]);
+            [ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.OrganizationsWrite]);
 
         await Assert.That(result).IsFalse();
     }
@@ -107,7 +104,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         bool result = ExternalApiKeyScopeCeiling.AreWithinCeiling(
             ExternalApiKeyOwnerType.User,
-            [ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.LookupsRead, ExternalApiKeyScopes.UsersRead]);
+            [ExternalApiKeyScopes.McpRead, ExternalApiKeyScopes.LookupsRead, ExternalApiKeyScopes.UsersRead]);
 
         await Assert.That(result).IsTrue();
     }
@@ -117,7 +114,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         bool result = ExternalApiKeyScopeCeiling.AreWithinCeiling(
             ExternalApiKeyOwnerType.Organization,
-            [ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.GroupsRead]);
+            [ExternalApiKeyScopes.OrganizationsRead, ExternalApiKeyScopes.GroupsRead]);
 
         await Assert.That(result).IsFalse();
     }
@@ -127,7 +124,7 @@ public class ExternalApiKeyScopeCeilingTests
     {
         bool result = ExternalApiKeyScopeCeiling.AreWithinCeiling(
             ExternalApiKeyOwnerType.Group,
-            [ExternalApiKeyScopes.EventsRead, ExternalApiKeyScopes.OrganizationsWrite]);
+            [ExternalApiKeyScopes.GroupsRead, ExternalApiKeyScopes.OrganizationsWrite]);
 
         await Assert.That(result).IsFalse();
     }
@@ -158,7 +155,7 @@ public class ExternalApiKeyScopeCeilingTests
         var exceeding = ExternalApiKeyScopeCeiling.GetExceeding(
             ExternalApiKeyOwnerType.User,
             [
-                ExternalApiKeyScopes.EventsRead,
+                ExternalApiKeyScopes.UsersRead,
                 ExternalApiKeyScopes.OrganizationsWrite,
                 ExternalApiKeyScopes.AdminTenant,
                 ExternalApiKeyScopes.UsersRead
@@ -166,7 +163,7 @@ public class ExternalApiKeyScopeCeilingTests
 
         await Assert.That(exceeding).Contains(ExternalApiKeyScopes.OrganizationsWrite);
         await Assert.That(exceeding).Contains(ExternalApiKeyScopes.AdminTenant);
-        await Assert.That(exceeding).DoesNotContain(ExternalApiKeyScopes.EventsRead);
+        await Assert.That(exceeding).DoesNotContain(ExternalApiKeyScopes.UsersRead);
         await Assert.That(exceeding).DoesNotContain(ExternalApiKeyScopes.UsersRead);
     }
 

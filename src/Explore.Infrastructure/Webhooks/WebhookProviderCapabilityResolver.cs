@@ -14,8 +14,7 @@ public sealed class WebhookProviderCapabilityResolver(IOptionsMonitor<WebhookOpt
     public const string LocalResolutionVersion = "event-local-v1";
 
     public static readonly WebhookProviderCapability LocalCapabilities =
-        WebhookProviderCapability.EndpointManagement |
-        WebhookProviderCapability.EventCatalog;
+        WebhookProviderCapability.EndpointManagement;
 
     public WebhookProviderModeCapabilityResolution Resolve(WebhookProviderMode providerMode)
     {

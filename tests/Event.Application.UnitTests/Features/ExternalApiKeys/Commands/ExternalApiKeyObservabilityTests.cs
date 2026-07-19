@@ -71,7 +71,7 @@ public class ExternalApiKeyObservabilityTests
             {
                 Name = "Deploy Bot",
                 ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User,
-                Scopes = ["events:read", "events:write"]
+                Scopes = [ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite]
             }
         };
 
@@ -138,7 +138,7 @@ public class ExternalApiKeyObservabilityTests
                 {
                     Name = "Deploy Bot",
                     ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read", "events:write"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite]
                 }
             },
             CancellationToken.None);
@@ -417,7 +417,7 @@ public class ExternalApiKeyObservabilityTests
                 {
                     Name = "Ops\nBot",
                     ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User,
-                    Scopes = [ExternalApiKeyScopes.EventsRead]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             },
             CancellationToken.None);
@@ -441,7 +441,7 @@ public class ExternalApiKeyObservabilityTests
                     Name = "Ops Bot",
                     Description = new string('a', 1001),
                     ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User,
-                    Scopes = [ExternalApiKeyScopes.EventsRead]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             },
             CancellationToken.None);
@@ -470,7 +470,7 @@ public class ExternalApiKeyObservabilityTests
                 {
                     Name = " Ops Bot ",
                     ExternalApiKeyOwnerTypeId = (int)ExternalApiKeyOwnerType.User,
-                    Scopes = [ExternalApiKeyScopes.EventsRead]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             },
             CancellationToken.None);
@@ -497,7 +497,7 @@ public class ExternalApiKeyObservabilityTests
             Name = "Ops Bot",
             KeyId = "key-policy-validation",
             SecretHash = "hash",
-            Scopes = ExternalApiKeyScopes.EventsRead,
+            Scopes = ExternalApiKeyScopes.UsersRead,
             OwnerType = ExternalApiKeyOwnerType.User,
             OwnerId = userId,
             ExternalApiKeyStatusId = (int)ExternalApiKeyStatusEnum.Active,
@@ -514,7 +514,7 @@ public class ExternalApiKeyObservabilityTests
                 {
                     Id = externalApiKey.Id,
                     Name = "Ops\nBot",
-                    Scopes = [ExternalApiKeyScopes.EventsWrite]
+                    Scopes = [ExternalApiKeyScopes.UsersWrite]
                 }
             },
             CancellationToken.None);
@@ -564,7 +564,7 @@ public class ExternalApiKeyObservabilityTests
             Name = "Ops Bot",
             KeyId = "key-1234567890",
             SecretHash = "hash",
-            Scopes = "events:read",
+            Scopes = ExternalApiKeyScopes.UsersRead,
             OwnerType = ExternalApiKeyOwnerType.User,
             OwnerId = userId,
             ExternalApiKeyStatusId = (int)ExternalApiKeyStatusEnum.Active,

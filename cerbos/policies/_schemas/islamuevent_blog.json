@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Blog resource attributes for Cerbos editorial management checks.",
+  "type": "object",
+  "properties": {
+    "tenantId": {
+      "type": "string",
+      "description": "Owning tenant used by the tenant-admin derived role."
+    },
+    "blogId": {
+      "type": "string",
+      "description": "Optional Blog identifier."
+    },
+    "isPublished": {
+      "type": "boolean",
+      "description": "Optional publication state marker."
+    },
+    "hasPublishedAt": {
+      "type": "boolean",
+      "description": "Optional marker for whether a publication timestamp exists."
+    },
+    "publishedAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional publication timestamp in UTC."
+    },
+    "publicationIntent": {
+      "type": "string",
+      "description": "Optional editorial command or publication workflow context."
+    }
+  },
+  "required": ["tenantId"],
+  "additionalProperties": true
+}

@@ -86,7 +86,6 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
 
         var settings = CreateValidSettings();
         settings.RenderPolicy.OnboardingRenderMode = "InteractiveServer";
-        settings.RenderPolicy.DisallowInteractiveServerOnOnboarding = false;
 
         using var cancellationSource = new CancellationTokenSource();
         var result = await _handler.Handle(CreateCommand(settings), cancellationSource.Token);
@@ -232,7 +231,6 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
                 EnableIslamicModule = true,
                 EnableTechModule = true
             },
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto(),
@@ -240,7 +238,7 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
             Mcp = new McpGovernanceSettingsDto(),
             TenantDelegation = new TenantDelegationSettingsDto
             {
-                DefaultPublicHomePage = "EventList"
+                DefaultPublicHomePage = "LandingPage"
             },
             AdminPortal = new AdminPortalSettingsDto(),
             RenderPolicy = new RenderPolicySettingsDto
@@ -257,8 +255,7 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
                 AdminRenderMode = "InteractiveServer",
                 AdminPrerenderEnabled = false,
                 OnboardingRenderMode = "InteractiveServer",
-                OnboardingPrerenderEnabled = false,
-                DisallowInteractiveServerOnOnboarding = false
+                OnboardingPrerenderEnabled = false
             }
         };
     }
@@ -273,7 +270,6 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
                 EnableIslamicModule = true,
                 EnableTechModule = true
             },
-            EventPolicy = new EventPolicyDto(),
             OrganizationPolicy = new OrganizationPolicyDto(),
             Branding = new BrandingSettingsDto(),
             Domains = new DomainSettingsDto(),
@@ -281,7 +277,7 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
             Mcp = new McpGovernanceSettingsDto(),
             TenantDelegation = new TenantDelegationSettingsDto
             {
-                DefaultPublicHomePage = "EventList"
+                DefaultPublicHomePage = "LandingPage"
             },
             AdminPortal = new AdminPortalSettingsDto(),
             RenderPolicy = new RenderPolicySettingsDto
@@ -298,8 +294,7 @@ public class UpdateInstanceGovernanceSettingsCommandHandlerTests
                 AdminRenderMode = "InteractiveServer",
                 AdminPrerenderEnabled = false,
                 OnboardingRenderMode = "InteractiveServer",
-                OnboardingPrerenderEnabled = false,
-                DisallowInteractiveServerOnOnboarding = false
+                OnboardingPrerenderEnabled = false
             }
         };
     }

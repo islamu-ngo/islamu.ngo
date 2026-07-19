@@ -39,7 +39,7 @@ public class ApiEndpointPostgreSqlBenchmarks : IAsyncDisposable
         {
             AllowAutoRedirect = false
         });
-        _authenticatedHeader = ApiBenchmarkAuthHandler.CreateUserHeaderValue(BenchmarkApiSeedData.BenchmarkUserId);
+        _authenticatedHeader = ApiBenchmarkAuthHandler.CreateUserHeaderValue(Guid.Parse("018f6d10-7b7b-7f20-8c61-3c3e7f1b6a11"));
     }
 
     [Benchmark]

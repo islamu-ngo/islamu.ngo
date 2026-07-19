@@ -1,5 +1,5 @@
-// ABOUTME: Typed policy for Blazor render mode governance — presets, per-context modes, and prerender flags.
-// ABOUTME: Controls both global and per-page-context render strategies with tenant override locks.
+// ABOUTME: Typed policy for server-only Blazor render governance across presets, contexts, and prerender flags.
+// ABOUTME: Controls global and per-page server render mode selection with configurable prerender and tenant locks.
 
 namespace Explore.Domain.Policies;
 
@@ -18,7 +18,6 @@ public sealed class RenderPolicy
     public PolicySlot<bool> AdminPrerenderEnabled { get; set; } = new(false);
     public PolicySlot<string> OnboardingRenderMode { get; set; } = new("InteractiveServer");
     public PolicySlot<bool> OnboardingPrerenderEnabled { get; set; } = new(false);
-    public PolicySlot<bool> DisallowInteractiveServerOnOnboarding { get; set; } = new(true, ChildOverrideMode.Deny);
     public PolicySlot<bool> AllowTenantOverride { get; set; } = new(false, ChildOverrideMode.Deny);
     public PolicySlot<bool> LockTenantPublicSeo { get; set; } = new(false, ChildOverrideMode.Deny);
     public PolicySlot<bool> LockTenantOperational { get; set; } = new(false, ChildOverrideMode.Deny);

@@ -135,7 +135,7 @@ public class StressRateLimitingTests(StressApiFixture fixture)
         // GET endpoints are AllowAnonymous and not subject to Write policy
         for (var i = 0; i < 10; i++)
         {
-            var response = await _fixture.Client.GetAsync("/api/event");
+            var response = await _fixture.Client.GetAsync("/api/blog");
             // GET should not hit write rate limit
             await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.TooManyRequests);
         }

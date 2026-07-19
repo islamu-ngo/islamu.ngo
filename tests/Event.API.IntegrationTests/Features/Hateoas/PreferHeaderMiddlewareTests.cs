@@ -1,3 +1,6 @@
+// ABOUTME: Integration tests for PreferHeaderMiddleware RFC 7240 return=minimal behavior.
+// ABOUTME: Verifies header parsing and collection response shaping across retained endpoints.
+
 using System.Net;
 using Event.Api.IntegrationTests.Fixtures;
 using TUnit.Assertions;
@@ -258,8 +261,7 @@ public class PreferHeaderMiddlewareTests
 
     [Test]
     [Arguments("/api/organization")]
-    [Arguments("/api/event")]
-    [Arguments("/api/eventsession")]
+    [Arguments("/api/blog")]
     [Arguments("/api/actor")]
     [Arguments("/api/location")]
     [Arguments("/api/category")]

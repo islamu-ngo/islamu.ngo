@@ -122,10 +122,10 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
     #region Instance Admin — Full Access
 
     [Test]
-    public async Task InstanceAdmin_GetEvents_ShouldReturnOk()
+    public async Task InstanceAdmin_GetBlogs_ShouldReturnOk()
     {
         var token = await _infra.TokenClient.GetAdminTokenAsync();
-        using var request = CreateGetRequest("/api/event", token);
+        using var request = CreateGetRequest("/api/blog", token);
 
         var response = await _instanceAdminClient.SendAsync(request);
 
@@ -151,10 +151,10 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
     #region Regular User — Read Access
 
     [Test]
-    public async Task RegularUser_GetEvents_ShouldReturnOk()
+    public async Task RegularUser_GetBlogs_ShouldReturnOk()
     {
         var token = await _infra.TokenClient.GetUserTokenAsync();
-        using var request = CreateGetRequest("/api/event", token);
+        using var request = CreateGetRequest("/api/blog", token);
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -194,9 +194,9 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
     #region Unauthenticated — Public Read, Denied Write
 
     [Test]
-    public async Task Unauthenticated_GetEvents_ShouldReturnOk()
+    public async Task Unauthenticated_GetBlogs_ShouldReturnOk()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/blog");
 
         var response = await _regularUserClient.SendAsync(request);
 
@@ -205,9 +205,9 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Unauthenticated_CreateEvent_ShouldReturnUnauthorized()
+    public async Task Unauthenticated_CreateBlog_ShouldReturnUnauthorized()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/event")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/blog")
         {
             Content = JsonContent.Create(new { })
         };
@@ -243,26 +243,26 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
     #region Cerbos Decision Verification
 
     [Test]
-    public async Task CerbosPDP_InstanceAdmin_ShouldAllowAllEventActions()
+    public async Task CerbosPDP_InstanceAdmin_ShouldAllowAllOrganizationActions()
     {
         var result = await CheckCerbosDecision(
             isInstanceAdmin: true,
             tenantMemberships: new Dictionary<string, string>(),
             orgMemberships: new Dictionary<string, string>(),
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             actions: ["view", "create", "update", "delete"]);
 
         result.Should().ContainValues("EFFECT_ALLOW", "EFFECT_ALLOW", "EFFECT_ALLOW", "EFFECT_ALLOW");
     }
 
     [Test]
-    public async Task CerbosPDP_RegularUser_ShouldOnlyViewEvents()
+    public async Task CerbosPDP_RegularUser_ShouldOnlyViewOrganizations()
     {
         var result = await CheckCerbosDecision(
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string>(),
             orgMemberships: new Dictionary<string, string>(),
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             actions: ["view", "create", "update", "delete"]);
 
         result["view"].Should().Be("EFFECT_ALLOW");
@@ -278,34 +278,34 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string> { ["tenant-1"] = "admin" },
             orgMemberships: new Dictionary<string, string>(),
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "moderate-light"]);
+            actions: ["view"]);
 
         ownTenantResult.Values.Should().OnlyContain(v => v == "EFFECT_ALLOW",
-            "tenant admin should be allowed view and moderation actions on events in own tenant");
+            "tenant admin should be allowed to view organizations in own tenant");
 
         var ownTenantMutations = await CheckCerbosDecision(
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string> { ["tenant-1"] = "admin" },
             orgMemberships: new Dictionary<string, string>(),
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
             actions: ["create", "update", "delete"]);
 
         ownTenantMutations.Values.Should().OnlyContain(v => v == "EFFECT_DENY",
-            "tenant admin should be denied direct event mutations in own tenant (delegated to org admins)");
+            "tenant admin should be denied direct organization mutations in own tenant (delegated to org admins)");
 
         var otherTenantResult = await CheckCerbosDecision(
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string> { ["tenant-1"] = "admin" },
             orgMemberships: new Dictionary<string, string>(),
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-2", organizationId = "org-2" },
-            actions: ["create", "update", "delete", "moderate-light"]);
+            actions: ["create", "update", "delete"]);
 
         otherTenantResult.Values.Should().OnlyContain(v => v == "EFFECT_DENY",
-            "tenant admin should be denied all mutations and moderation on events in other tenant");
+            "tenant admin should be denied direct organization mutations in other tenant");
     }
 
     [Test]
@@ -315,7 +315,7 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string>(),
             orgMemberships: new Dictionary<string, string> { ["org-1"] = "admin" },
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
             actions: ["view", "create", "update"]);
 
@@ -325,12 +325,12 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             isInstanceAdmin: false,
             tenantMemberships: new Dictionary<string, string>(),
             orgMemberships: new Dictionary<string, string> { ["org-1"] = "admin" },
-            resourceKind: ResourceKinds.Event,
+            resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-other" },
             actions: ["create", "update", "delete"]);
 
         otherOrgResult.Values.Should().OnlyContain(v => v == "EFFECT_DENY",
-            "org admin should be denied mutations on events in other org");
+            "org admin should be denied mutations on organizations in other org");
     }
 
     #endregion

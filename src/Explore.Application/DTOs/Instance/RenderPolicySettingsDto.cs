@@ -1,5 +1,5 @@
 // ABOUTME: Sub-resource DTO for render policy configuration.
-// ABOUTME: Controls Blazor InteractiveAuto/Server/WASM render modes per page context.
+// ABOUTME: Controls server-only Blazor render mode plus prerender flags per page context.
 
 namespace Explore.Application.DTOs.Instance;
 
@@ -18,7 +18,6 @@ public class RenderPolicySettingsDto
     public bool AdminPrerenderEnabled { get; set; }
     public string OnboardingRenderMode { get; set; } = "InteractiveServer";
     public bool OnboardingPrerenderEnabled { get; set; }
-    public bool DisallowInteractiveServerOnOnboarding { get; set; } = true;
     public bool AllowTenantRenderPolicyOverride { get; set; }
     public bool LockTenantPublicSeoRenderPolicy { get; set; }
     public bool LockTenantOperationalRenderPolicy { get; set; }

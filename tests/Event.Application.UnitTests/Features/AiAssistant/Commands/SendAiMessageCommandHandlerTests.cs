@@ -337,13 +337,13 @@ public sealed class SendAiMessageCommandHandlerTests
     {
         var conversation = CreateConversation();
         IdempotencyRecord? savedIdempotency = null;
-        var eventReferenceId = Guid.CreateVersion7();
+        var organizationReferenceId = Guid.CreateVersion7();
         var actorReferenceId = Guid.CreateVersion7();
         IReadOnlyList<AiSelectedReferenceDto> references =
         [
-            new("Event", eventReferenceId, "Community Iftar", "Public evening program"),
+            new("Organization", organizationReferenceId, "Community Org", "Public organization"),
             new("Actor", actorReferenceId, "Amina Speaker", null),
-            new("Event", eventReferenceId, "Community Iftar duplicate", "Duplicate should be ignored")
+            new("Organization", organizationReferenceId, "Community Org duplicate", "Duplicate should be ignored")
         ];
 
         _conversationRepository.GetByIdForUpdateAsync(_conversationId, Arg.Any<CancellationToken>())
@@ -357,9 +357,9 @@ public sealed class SendAiMessageCommandHandlerTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(conversation.References.Count).IsEqualTo(2);
-        await Assert.That(conversation.References.Select(reference => reference.Kind)).Contains(AiReferenceKind.Event);
+        await Assert.That(conversation.References.Select(reference => reference.Kind)).Contains(AiReferenceKind.Organization);
         await Assert.That(conversation.References.Select(reference => reference.Kind)).Contains(AiReferenceKind.Actor);
-        await Assert.That(conversation.References.Single(reference => reference.Kind == AiReferenceKind.Event).DisplayName).IsEqualTo("Community Iftar");
+        await Assert.That(conversation.References.Single(reference => reference.Kind == AiReferenceKind.Organization).DisplayName).IsEqualTo("Community Org");
         await Assert.That(savedIdempotency).IsNotNull();
         await Assert.That(savedIdempotency!.RequestBodyHash).IsEqualTo(
             ComputeBodyHash(

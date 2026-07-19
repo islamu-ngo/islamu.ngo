@@ -140,7 +140,7 @@ public sealed class EmailDispatchDrainServiceTests
     {
         var fixture = new Fixture();
         var dispatch = CreateDispatch(EmailDispatchStatus.Pending);
-        dispatch.Kind = EmailDispatchKind.EventReminder;
+        dispatch.Kind = EmailDispatchKind.TenantAdministratorInvitation;
         EmailMessage? sentMessage = null;
         fixture.Repository.GetByTenantAndPublishEventId(dispatch.TenantId, dispatch.PublishEventId, Arg.Any<CancellationToken>())
             .Returns(dispatch);
@@ -152,13 +152,13 @@ public sealed class EmailDispatchDrainServiceTests
         fixture.PreferenceRepository.GetByUserAndCategory(
                 dispatch.TenantId,
                 dispatch.UserId!.Value,
-                NotificationPreferenceCategories.EventReminders)
+                NotificationPreferenceCategoryCodes.ProductAnnouncements)
             .Returns((UserNotificationPreference?)null);
         fixture.UnsubscribeTokenService.GenerateToken(
                 Arg.Is<EmailUnsubscribeTokenPayload>(payload =>
                     payload.TenantId == dispatch.TenantId &&
                     payload.UserId == dispatch.UserId &&
-                    payload.Category == NotificationPreferenceCategories.EventReminders),
+                    payload.Category == NotificationPreferenceCategoryCodes.ProductAnnouncements),
                 Arg.Any<TimeSpan?>())
             .Returns("token+value");
         fixture.EmailService.SendAsync(Arg.Do<EmailMessage>(message => sentMessage = message), Arg.Any<CancellationToken>())
@@ -185,7 +185,7 @@ public sealed class EmailDispatchDrainServiceTests
     {
         var fixture = new Fixture();
         var dispatch = CreateDispatch(EmailDispatchStatus.Pending);
-        dispatch.Kind = EmailDispatchKind.EventReminder;
+        dispatch.Kind = EmailDispatchKind.TenantAdministratorInvitation;
         fixture.Repository.GetByTenantAndPublishEventId(dispatch.TenantId, dispatch.PublishEventId, Arg.Any<CancellationToken>())
             .Returns(dispatch);
         fixture.Repository.IsTenantPaused(dispatch.TenantId, Arg.Any<CancellationToken>()).Returns(false);
@@ -196,13 +196,13 @@ public sealed class EmailDispatchDrainServiceTests
         fixture.PreferenceRepository.GetByUserAndCategory(
                 dispatch.TenantId,
                 dispatch.UserId!.Value,
-                NotificationPreferenceCategories.EventReminders)
+                NotificationPreferenceCategoryCodes.ProductAnnouncements)
             .Returns(new UserNotificationPreference
             {
                 TenantId = dispatch.TenantId,
                 Tenant = null!,
                 UserId = dispatch.UserId.Value,
-                Category = NotificationPreferenceCategories.EventReminders,
+                Category = NotificationPreferenceCategoryCodes.ProductAnnouncements,
                 IsEnabled = false
             });
 
@@ -239,7 +239,7 @@ public sealed class EmailDispatchDrainServiceTests
     {
         var fixture = new Fixture();
         var dispatch = CreateDispatch(EmailDispatchStatus.Pending);
-        dispatch.Kind = EmailDispatchKind.EventReminder;
+        dispatch.Kind = EmailDispatchKind.TenantAdministratorInvitation;
         fixture.Repository.GetByTenantAndPublishEventId(dispatch.TenantId, dispatch.PublishEventId, Arg.Any<CancellationToken>())
             .Returns(dispatch);
         fixture.Repository.IsTenantPaused(dispatch.TenantId, Arg.Any<CancellationToken>()).Returns(false);
@@ -250,7 +250,7 @@ public sealed class EmailDispatchDrainServiceTests
         fixture.PreferenceRepository.GetByUserAndCategory(
                 dispatch.TenantId,
                 dispatch.UserId!.Value,
-                NotificationPreferenceCategories.EventReminders)
+                NotificationPreferenceCategoryCodes.ProductAnnouncements)
             .Returns((UserNotificationPreference?)null);
         fixture.PreferenceResolver.ResolveAsync(Arg.Any<NotificationPreferenceResolveRequest>(), Arg.Any<CancellationToken>())
             .Returns(call => DisabledDecision(call.Arg<NotificationPreferenceResolveRequest>()));
@@ -285,7 +285,7 @@ public sealed class EmailDispatchDrainServiceTests
             Arg.Is<NotificationPreferenceResolveRequest>(request =>
                 request.TenantId == dispatch.TenantId &&
                 request.UserId == dispatch.UserId &&
-                request.CategoryCode == NotificationPreferenceCategoryCodes.EventUpdates &&
+                request.CategoryCode == NotificationPreferenceCategoryCodes.ProductAnnouncements &&
                 request.ChannelCode == NotificationPreferenceChannelCodes.Email),
             Arg.Any<CancellationToken>());
     }
@@ -295,13 +295,7 @@ public sealed class EmailDispatchDrainServiceTests
     {
         var cases = new[]
         {
-            (EmailDispatchKind.RegistrationConfirmation, NotificationPreferenceCategories.RegistrationConfirmations),
-            (EmailDispatchKind.RegistrationApproved, NotificationPreferenceCategories.EventUpdates),
-            (EmailDispatchKind.RegistrationRejected, NotificationPreferenceCategories.EventUpdates),
-            (EmailDispatchKind.WaitlistPromoted, NotificationPreferenceCategories.EventUpdates),
-            (EmailDispatchKind.EventReminder, NotificationPreferenceCategories.EventReminders),
-            (EmailDispatchKind.EventCancelled, NotificationPreferenceCategories.EventUpdates),
-            (EmailDispatchKind.OrganizerNotification, NotificationPreferenceCategories.OrganizerAnnouncements)
+            (EmailDispatchKind.TenantAdministratorInvitation, NotificationPreferenceCategoryCodes.ProductAnnouncements)
         };
 
         foreach (var (kind, category) in cases)
@@ -540,12 +534,12 @@ public sealed class EmailDispatchDrainServiceTests
             TenantId = Guid.CreateVersion7(),
             PublishEventId = Guid.CreateVersion7(),
             UserId = Guid.CreateVersion7(),
-            Kind = EmailDispatchKind.RegistrationConfirmation,
-            SourceType = "event-registration",
+            Kind = EmailDispatchKind.TenantAdministratorInvitation,
+            SourceType = "tenant-administrator-invitation",
             SourceId = Guid.CreateVersion7(),
-            RecipientEmail = "attendee@example.test",
-            Subject = "Registration confirmation",
-            PlainTextBody = "Registration confirmed.",
+            RecipientEmail = "administrator@example.test",
+            Subject = "Administrator invitation",
+            PlainTextBody = "You have been invited as an administrator.",
             Status = status
         };
     }

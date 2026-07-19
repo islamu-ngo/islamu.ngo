@@ -59,12 +59,11 @@ public static class TenantScenarioSeed
     }
 
     /// <summary>
-    /// Seeds an active tenant user plus an approved organization publisher the user can create events for.
+    /// Seeds an active tenant user plus an approved organization administered by that user.
     /// </summary>
     public static async Task<TenantOrganizationScenarioResult> SeedActiveTenantWithOrganizationPublisherAsync(ExploreDbContext context)
     {
         TenantScenarioResult seeded = await SeedActiveTenantWithUserAsync(context);
-        await EnsureOrgAdminCanCreateEventsAsync(context);
 
         var organizationId = Guid.CreateVersion7();
         var organization = new Organization
@@ -116,34 +115,6 @@ public static class TenantScenarioSeed
             seeded.ActorId,
             organizationId,
             organizationActor.Id);
-    }
-
-    private static async Task EnsureOrgAdminCanCreateEventsAsync(ExploreDbContext context)
-    {
-        var eventCreatePermissionId = await context.Permissions
-            .Where(permission => permission.MasterCode == PermissionCodes.EventCreate)
-            .Select(permission => permission.Id)
-            .SingleAsync();
-
-        var roleId = (int)RoleEnum.OrgAdmin;
-        var exists = await context.RolePermissions
-            .AnyAsync(rolePermission => rolePermission.RoleId == roleId
-                && rolePermission.PermissionId == eventCreatePermissionId);
-
-        if (exists)
-        {
-            return;
-        }
-
-        context.RolePermissions.Add(new RolePermission
-        {
-            RoleId = roleId,
-            Role = null!,
-            PermissionId = eventCreatePermissionId,
-            Permission = null!,
-            GrantedAt = DateTime.UtcNow
-        });
-        await context.SaveChangesAsync();
     }
 
     /// <summary>

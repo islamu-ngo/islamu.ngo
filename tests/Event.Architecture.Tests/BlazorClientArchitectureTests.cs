@@ -1,4 +1,4 @@
-// ABOUTME: Architecture fitness functions for Blazor (Explore.Blazor host + Explore.Blazor.Client WASM).
+// ABOUTME: Architecture fitness functions for Blazor InteractiveServer host plus Razor RCL boundaries.
 // ABOUTME: File-scanning tests — the arch project does not reference Blazor assemblies, so patterns are string-matched.
 
 using System.Text.RegularExpressions;
@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace Event.Architecture.Tests;
 
 /// <summary>
-/// Architectural guardrails for the Blazor layer (host + client).
+/// Architectural guardrails for the Blazor layer (InteractiveServer host + Razor RCL).
 /// Each rule has a deliberately minimal exception list — NEW violations are forbidden.
 /// Exception lists should shrink over time; they document TODOs, not permanent carve-outs.
 /// </summary>
@@ -15,12 +15,101 @@ public class BlazorClientArchitectureTests
     private static readonly string? BlazorClientRoot = ResolveProjectRoot("Explore.Blazor.Client");
     private static readonly string? BlazorHostRoot = ResolveProjectRoot("Explore.Blazor");
 
+    [Test]
+    public async Task BlazorHost_MustUse_InteractiveServerOnly()
+    {
+        if (BlazorHostRoot is null)
+        {
+            await Assert.That(true).IsTrue().Because("Explore.Blazor source not found — skipping");
+            return;
+        }
+
+        var program = await File.ReadAllTextAsync(Path.Combine(BlazorHostRoot, "Program.cs"));
+
+        await Assert.That(program.Contains(".AddInteractiveServerComponents()", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(program.Contains(".AddInteractiveServerRenderMode()", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(program.Contains(".AddAdditionalAssemblies(typeof(Explore.Blazor.Client._Imports).Assembly)", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(program.Contains("AddInteractiveWebAssemblyComponents", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(program.Contains("AddAuthenticationStateSerialization", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(program.Contains("UseWebAssemblyDebugging", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(program.Contains("AddInteractiveWebAssemblyRenderMode", StringComparison.Ordinal)).IsFalse();
+    }
+
+    [Test]
+    public async Task BlazorApp_MustUse_RuntimePolicyInteractiveServerRenderMode()
+    {
+        if (BlazorHostRoot is null)
+        {
+            await Assert.That(true).IsTrue().Because("Explore.Blazor source not found — skipping");
+            return;
+        }
+
+        var app = await File.ReadAllTextAsync(Path.Combine(BlazorHostRoot, "Components", "App.razor"));
+
+        await Assert.That(app.Contains("@inject IRuntimeRenderPolicyService RuntimeRenderPolicyService", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("HttpContextAccessor.HttpContext?.Request.Path.Value", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("RuntimeRenderPolicyService.ResolveForPathAsync(requestPath)", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("new InteractiveServerRenderMode(prerender: true)", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("new InteractiveServerRenderMode(prerender: decision.PrerenderEnabled)", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("<HeadOutlet @rendermode=\"EffectiveRenderMode\" />", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("<EmbeddedControlPlaneRoutes @rendermode=\"EffectiveRenderMode\" />", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(app.Contains("<Routes @rendermode=\"EffectiveRenderMode\" />", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(Regex.Matches(app, "@rendermode=\"EffectiveRenderMode\"", RegexOptions.CultureInvariant).Count).IsEqualTo(3);
+        await Assert.That(app.Contains("@rendermode=\"InteractiveServer\"", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(app.Contains("InteractiveWebAssemblyRenderMode", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(app.Contains("InteractiveAutoRenderMode", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(app.Contains("InteractiveWebAssembly", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(app.Contains("InteractiveAuto", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(app.Contains("wasm-unsafe-eval", StringComparison.Ordinal)).IsFalse();
+    }
+
+    [Test]
+    public async Task BlazorClientProject_MustBe_RazorRcl_NotWebAssemblyHost()
+    {
+        if (BlazorClientRoot is null)
+        {
+            await Assert.That(true).IsTrue().Because("Explore.Blazor.Client source not found — skipping");
+            return;
+        }
+
+        var project = await File.ReadAllTextAsync(Path.Combine(BlazorClientRoot, "Explore.Blazor.Client.csproj"));
+
+        await Assert.That(project.Contains("Sdk=\"Microsoft.NET.Sdk.Razor\"", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(project.Contains("Microsoft.NET.Sdk.BlazorWebAssembly", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(project.Contains("Blazouter.WebAssembly", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(project.Contains("Microsoft.AspNetCore.Components.WebAssembly", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(project.Contains("WasmStripILAfterAOT", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(project.Contains("GenerateIslamuApiClient", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(BlazorClientRoot, "Program.cs"))).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(BlazorClientRoot, "Contracts", "Providers", "ILazyAssemblyLoader.cs"))).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(BlazorClientRoot, "Services", "LazyAssemblyLoader.cs"))).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(BlazorClientRoot, "Services", "Http", "BrowserCredentialsMessageHandler.cs"))).IsFalse();
+        await Assert.That(File.Exists(Path.Combine(BlazorClientRoot, "Services", "Http", "DirectStorageUploadMessageHandler.cs"))).IsFalse();
+    }
+
+    [Test]
+    public async Task BffRefitRegistration_MustUse_ServerSafeHandlerChain()
+    {
+        if (BlazorHostRoot is null || BlazorClientRoot is null)
+        {
+            await Assert.That(true).IsTrue().Because("Blazor source not found — skipping");
+            return;
+        }
+
+        var sharedRegistration = await File.ReadAllTextAsync(Path.Combine(BlazorClientRoot, "Extensions", "RefitClientRegistrationExtensions.cs"));
+        var serverRegistration = await File.ReadAllTextAsync(Path.Combine(BlazorHostRoot, "Extensions", "ServiceRegistrationExtensions.cs"));
+
+        await Assert.That(sharedRegistration.Contains("BrowserCredentialsMessageHandler", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(sharedRegistration.Contains("AddHttpMessageHandler<BffAntiforgeryMessageHandler>", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(sharedRegistration.Contains("AddHttpMessageHandler<BffUnauthorizedHandler>", StringComparison.Ordinal)).IsTrue();
+        await Assert.That(serverRegistration.Contains("AddTransient<BrowserCredentialsMessageHandler>", StringComparison.Ordinal)).IsFalse();
+        await Assert.That(serverRegistration.Contains("AddHttpMessageHandler<BffCookieForwardingHandler>", StringComparison.Ordinal)).IsTrue();
+    }
+
     // --------------------------------------------------------------------------------------------
     // Exception lists — all paths relative to the repository root (forward slashes).
     // Every entry represents a deliberate deferral. Shrink these aggressively.
     // --------------------------------------------------------------------------------------------
-
-    private static readonly HashSet<string> Known_IEventApiClient_ComponentExceptions = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly HashSet<string> Known_ConsoleWriteLine_Files = new(StringComparer.OrdinalIgnoreCase);
 
@@ -62,7 +151,6 @@ public class BlazorClientArchitectureTests
     private static readonly HashSet<string> Known_ModelTypesInInterfaceFile_Files = new(StringComparer.OrdinalIgnoreCase)
     {
         // Wave A Phase 2 extracts DTOs co-located with these interfaces into Models/ subfolders.
-        "Explore.Blazor.Client/Contracts/Services/IContactShareConsentService.cs",
         "Explore.Blazor.Client/Contracts/Services/ILocalizationAdminService.cs",
         "Explore.Blazor.Client/Contracts/Services/Footer/IFooterAdminService.cs",
     };

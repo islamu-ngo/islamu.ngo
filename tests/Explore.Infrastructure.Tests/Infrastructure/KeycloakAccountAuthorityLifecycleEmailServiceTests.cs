@@ -161,7 +161,7 @@ public sealed class KeycloakAccountAuthorityLifecycleEmailServiceTests
             Realm = "ISLAMU",
             AdminUsername = "runtime-admin",
             AdminPassword = "runtime-admin-secret",
-            DefaultClientId = "islamu-event-blazor",
+            DefaultClientId = "islamu-ngo-blazor",
             DefaultLifespanSeconds = 900,
             AccountAuthorityKind = ApplicationAccountAuthorityKind.Keycloak
         };
@@ -175,7 +175,7 @@ public sealed class KeycloakAccountAuthorityLifecycleEmailServiceTests
             "keycloak-user-123",
             CurrentEmail: "old@example.test",
             ProposedEmail: "new@example.test",
-            ClientId: "islamu-event-blazor",
+            ClientId: "islamu-ngo-blazor",
             RedirectUri: "https://event.example.test/account",
             LifespanSeconds: 300,
             CorrelationId: correlationId ?? Guid.CreateVersion7().ToString("N"));
@@ -217,7 +217,7 @@ public sealed class KeycloakAccountAuthorityLifecycleEmailServiceTests
 
         var query = request.RequestUri?.Query ?? string.Empty;
         if (!query.Contains("redirectUri=", StringComparison.Ordinal)
-            || !query.Contains("clientId=islamu-event-blazor", StringComparison.Ordinal)
+            || !query.Contains("clientId=islamu-ngo-blazor", StringComparison.Ordinal)
             || !query.Contains("lifespan=300", StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Unexpected execute-actions-email query: {query}");

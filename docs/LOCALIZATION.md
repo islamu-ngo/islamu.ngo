@@ -167,7 +167,10 @@ Format: flat key-value JSON:
 }
 ```
 
-Starter bundles shipped: `en.json`, `fr.json`, `ar.json`.
+Starter bundles shipped: `en.json`, `fr.json`, `ar.json`. They intentionally contain only the
+shared app name and loading label, with identical keys in all three files. This is offline fallback
+parity, not evidence that the public journey is fully translated; current public page copy remains
+predominantly hard-coded English and must not be advertised as three-locale content parity.
 
 Bundle schema rules are enforced by `BundleSchema` before local writes and while
 loading embedded/writable bundles:
@@ -274,3 +277,4 @@ admin bundle boundaries instead.
 - [CONFIGURATION.md](CONFIGURATION.md) — `localization.*` governance keys
 - [EXTENSIBILITY.md](EXTENSIBILITY.md) — TMS provider abstraction pattern
 - [DOMAIN.md](DOMAIN.md) — Tag/Category entities (tenant-scoped, translatable)
+- [CONTENT_ROUTE_INVENTORY.md](CONTENT_ROUTE_INVENTORY.md) — current locale and public-content truth states

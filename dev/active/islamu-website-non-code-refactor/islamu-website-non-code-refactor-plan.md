@@ -41,7 +41,7 @@ The website is ISLAMU's first-party digital front door, not a brochure and not a
 
 The target is not a white-label distribution and not a supported self-hostable product. The public repository remains AGPL-3.0-or-later, and the README must preserve the imported source SHA and license provenance. Weblate remains the localization platform, PostHog remains the rich analytics integration, and Mailpit remains local email-capture infrastructure. Listmonk/email material is retained and reframed because waitlists, newsletters, and transactional email are named future needs. Retention means preserving each load-bearing end-to-end slice, not merely leaving a Compose service or a paragraph behind.
 
-This plan owns **artifact disposition and non-code content**. `dev/active/init-import-islamu-event/` continues to own product source deletion, runtime behavior, data/schema migrations, generated-client regeneration, Blog implementation, and navigation implementation. Non-code content that describes those areas is finalized only after the corresponding Phase 10, 11, or 12 behavior is verifiable.
+This plan owns **artifact disposition and non-code content**. `dev/zarchive/init-import-islamu-event/` records the completed product source deletion, runtime behavior, data/schema migrations, generated-client regeneration, Blog implementation, and navigation implementation. Non-code content that describes those areas is finalized only after the corresponding Phase 10, 11, or 12 behavior is verifiable.
 
 Out of scope:
 
@@ -59,7 +59,7 @@ Out of scope:
 | Claim | Evidence | Confidence | Notes |
 |---|---|---:|---|
 | The repository still declares itself the ISLAMU Event platform | `AGENTS.md`; `docs/PROJECT.md`; `.claude/commands/dev-docs.md` | High | The canonical entrypoints actively teach stale product assumptions. |
-| The target is one first-party deployment, not a self-hostable product | `dev/active/init-import-islamu-event/init-import-islamu-event-plan.md` Revision 3.1, decisions D7/D8 | High | Binding owner decision; public AGPL licensing remains. |
+| The target is one first-party deployment, not a self-hostable product | `dev/zarchive/init-import-islamu-event/init-import-islamu-event-plan.md` Revision 3.1, decisions D7/D8 | High | Binding owner decision; public AGPL licensing remains. |
 | Event deletion and new Blog/navigation code are already planned elsewhere | Init workstream Phases 10, 11, and 12 | High | This workstream must not duplicate those code tasks. |
 | `README.md` is incomplete and stale | `README.md` | High | Uses OpenISLAMU wording, has minimal onboarding, broken/TODO privacy link, and a provenance section that must survive. |
 | Core product documentation is Event/self-host oriented | `docs/PROJECT.md`, `docs/index.md`, `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/SELF_HOSTING.md`, `docs/DEPLOYMENT_MODES.md`, `docs/DEPLOYMENT_TIERS.md` | High | These files define the wrong product and audience model. |
@@ -211,7 +211,7 @@ Each row also records an alignment reason from the init workstream methodology: 
 - `README.md` retains source repository SHA `5cfa996b2344969856946955270dd333e06fc61d` and factual AGPL provenance.
 - Weblate, PostHog, and Mailpit are retained. Mailpit is local/test infrastructure, not a production email provider. PostHog retention does not imply a new local Compose service.
 - Event-only non-code artifacts are deleted, not hidden behind compatibility aliases.
-- Product source/test implementation remains owned by `dev/active/init-import-islamu-event/`; this workstream must not race it.
+- Product source/test implementation is recorded by `dev/zarchive/init-import-islamu-event/`; this workstream must preserve those completed decisions.
 - No generated OpenAPI/database artifact is manually edited.
 - No file is deleted until tracked references, Markdown links, source anchors, workflow references, test constants, and active dev docs have been checked.
 - Canonical docs separate Implemented, Planned, and Historical behavior and include required metadata/source anchors.
@@ -239,7 +239,7 @@ Each row also records an alignment reason from the init workstream methodology: 
 - **Why:** It prevents duplicate Phase 10-12 work and avoids documentation describing behavior that is still moving.
 - **Alternatives considered:** Fold all work into the init plan. Rejected because the non-code surface is repository-wide and needs an independent, auditable ledger.
 - **Consequences:** Shared boundaries use explicit handoff gates; source-coupled artifacts remain `Needs code decision` until the init ledger is current.
-- **Files/layers affected:** `dev/active/init-import-islamu-event/`, generated schemas, Cerbos, configuration, canonical docs.
+- **Files/layers affected:** `dev/zarchive/init-import-islamu-event/`, generated schemas, Cerbos, configuration, canonical docs.
 
 ### Decision 3: Rewrite Semantics, Never Global-Replace Branding
 
@@ -455,16 +455,17 @@ Each row also records an alignment reason from the init workstream methodology: 
 - **Effort:** L
 - **Validation:** Execute documented build/architecture commands and one canonical dev startup smoke; no unsupported `dotnet test --filter` examples.
 
-#### Task 2.6: Establish The ISLAMU Experience And Content Contract — DOCUMENT CONTRACT COMPLETE, ROUTE HANDOFF PENDING
+#### Task 2.6: Establish The ISLAMU Experience And Content Contract — INVENTORY CONVERGED, MANUAL WALK-THROUGH PENDING
 
 - **Type:** modify/docs/product
 - **Layer:** Docs/Product/Design
-- **Files:** `docs/PROJECT.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/SEO.md`, `docs/RENDER_POLICIES.md`
+- **Files:** `docs/PROJECT.md`, `docs/CONTENT_ROUTE_INVENTORY.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/SEO.md`, `docs/RENDER_POLICIES.md`
 - **Description:** Translate the digital-front-door north star into an executable public experience contract. Define the public journey from purpose to content to real participation, then maintain a content/route inventory with route or CTA, audience need, owner, state (`Implemented`, `Planned`, or `Deferred`), locale readiness, analytics/consent impact, source evidence, and owning implementation workstream. Preserve the existing token/layer/wrapper foundations while replacing the Event admin “command center” atmosphere with a calm, editorial, values-led ISLAMU web experience. Actual pages, components, routes, and features remain owned by init Phases 11-12 or future approved workstreams.
 - **Acceptance Criteria:** The contract is recognizably ISLAMU rather than Event administration or generic marketing; only implemented destinations may be linked; no ownerless claim, impact statistic, testimonial, campaign, image-rights assertion, or placeholder CTA is published; English/French/Arabic and RTL are first-class; WCAG 2.2 AA, keyboard/touch, 200% zoom, reduced motion, fast/resilient delivery, truthful SEO, privacy/consent, and editorial ownership are launch gates.
 - **Dependencies:** 2.1; init Phase 12 route inventory for final route states.
 - **Effort:** L
 - **Validation:** Review the content/route inventory against implemented routes and init handoffs; manually walk the public journey in all three locales; run documentation metadata/link/source-anchor checks. UI/browser validation remains in the owning implementation workstream.
+- **Implementation note (2026-07-19):** `docs/CONTENT_ROUTE_INVENTORY.md` now records source-backed claims, public and operational route families, navigation/CTA state, honest starter-bundle parity, consent-aware page-view analytics, and the absence of public email capture. Privacy/Terms publication and complete three-locale page parity remain Deferred/Planned rather than clickable promises.
 
 ### Phase 3: Event And Self-Hosting Documentation Removal
 

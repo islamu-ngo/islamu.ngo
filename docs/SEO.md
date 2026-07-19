@@ -6,7 +6,7 @@
 > **Audience:** Product/content owners | Contributors | First-party operators
 > **Status:** Active
 > **Owner:** Frontend | Content
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Infrastructure/Services/PublicUrlBuilder.cs`, `src/Explore.Blazor/Controllers/RobotsController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/BlogIndex.razor`, `src/Explore.Blazor.Client/Pages/Blogs/BlogArticle.razor`, `src/Explore.Blazor.Client/Services/RuntimeRenderPolicyService.cs`
 
 ## Implemented Discovery Contract
@@ -33,8 +33,6 @@ Implemented today:
 | `/blog` | weekly | 0.8 |
 | `/about` | monthly | 0.5 |
 | `/contact` | monthly | 0.5 |
-| `/privacy` | yearly | 0.3 |
-| `/terms` | yearly | 0.3 |
 | `/community-guidelines` | yearly | 0.3 |
 
 It also pages through published Blog summaries and emits `/blog/{escaped-slug}` only when the slug
@@ -75,9 +73,10 @@ Authenticated `/blog/manage*` pages emit `noindex,nofollow`.
 
 ## Navigation And Discoverability
 
-The public `SiteMegaMenu` links directly to Home, Blog, About, Contact, Community Guidelines,
-Privacy, and Terms. These are implemented destinations, not placeholders. Dynamic catalog/product
-links are not part of the navigation or SEO contract.
+The public `SiteMegaMenu` links directly to Home, Blog, About, Contact, and Community Guidelines.
+These are implemented destinations, not placeholders. Dynamic catalog/product links are not part
+of the navigation or SEO contract. Privacy and Terms remain deferred and absent from navigation and
+the sitemap until approved legal text and accountable ownership exist.
 
 ## Render Policy Boundary
 
@@ -96,6 +95,7 @@ Therefore, do not claim Blog prerendering from the `SeoBalanced` preset. If Blog
 - Site-wide dynamic metadata for every route.
 - Search Console integration, keyword tooling, SEO scoring, or automated audits.
 - A standalone SEO administration page.
+- Public Privacy or Terms pages and their sitemap entries.
 - A generated checked-in website OpenAPI/client contract; that is an API generation concern, not
   SEO evidence.
 
@@ -112,6 +112,7 @@ Do not publish these as available capabilities until source and observable verif
 ## Related
 
 - [PROJECT.md](PROJECT.md)
+- [CONTENT_ROUTE_INVENTORY.md](CONTENT_ROUTE_INVENTORY.md)
 - [RENDER_POLICIES.md](RENDER_POLICIES.md)
 - [ACCESSIBILITY.md](ACCESSIBILITY.md)
 - [LOCALIZATION.md](LOCALIZATION.md)

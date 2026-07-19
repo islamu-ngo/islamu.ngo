@@ -295,7 +295,7 @@ Skip-to-content link. Automatically present in MainLayout. No page-level action 
 
 ```bash
 # bUnit accessibility and component tests
-dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
 
 # Architecture convention tests, including accessibility guardrails
 dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet

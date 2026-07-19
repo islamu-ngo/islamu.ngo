@@ -6,7 +6,7 @@
 > **Audience:** Product contributors | Maintainers | Designers | Operators | AI agents
 > **Status:** Active
 > **Owner:** Product | Platform/Ops
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `dev/report/EVENT_REFERENCE_ALIGNMENT.md`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`
 
 ## Product
@@ -23,7 +23,7 @@ source identifiers, not product branding.
 
 ### Foundation
 
-- Public Home, About, Contact, Community Guidelines, Privacy, and Terms destinations.
+- Public Home, About, Contact, and Community Guidelines destinations.
 - Keycloak-backed authentication through the server-side Blazor BFF.
 - English, French, and Arabic/RTL infrastructure, accessibility guardrails, and a responsive shell.
 - PostgreSQL persistence, HAL APIs, authorization, storage, observability, and durable outbox
@@ -48,12 +48,15 @@ build, migrations, or tests, so it does not claim runtime acceptance.
 ### Navigation
 
 `SiteMegaMenu` is the implemented public navigation model. It exposes only real routes, grouped as
-Discover, About ISLAMU, Community, and Policies. Desktop uses accessible disclosure panels; mobile
+Discover, About ISLAMU, and Community. Desktop uses accessible disclosure panels; mobile
 uses a temporary drawer with native `details` groups. Escape handling, route dismissal, viewport
 switching, focus save/restore, and reduced-motion CSS are part of the implementation.
 
 The menu is intentionally static and typed. Dynamic product discovery and placeholder
 destinations are not implemented.
+
+The source-backed state of public claims, routes, navigation, calls to action, locales, analytics,
+and email capture is maintained in the [content and route truth inventory](CONTENT_ROUTE_INVENTORY.md).
 
 ## Retained Platform Chassis
 
@@ -75,6 +78,7 @@ until the owning build/generation lane creates and verifies it.
 ## Planned, Not Publicly Available
 
 - Newsletter, waitlist, campaign, preference-center, and other engagement journeys.
+- Public Privacy and Terms pages, pending approved legal text and accountable ownership.
 - Product/service catalog expansion, donations, community tools, or personalization.
 - Public federation/PDS experiences and product-domain webhook publications without a named owner.
 - Dynamic navigation or placeholder routes for future services.

@@ -72,7 +72,7 @@ This repository contains a snapshot import of the ISLAMU Event platform:
   the original license terms without modification.
 - **Divergence:** `islamu.ngo` is the single first-party ISLAMU deployment, not a supported
   self-hostable or white-label product. Intentional divergences are recorded in
-  [`dev/active/init-import-islamu-event/`](dev/active/init-import-islamu-event/).
+  [`dev/report/EVENT_REFERENCE_ALIGNMENT.md`](dev/report/EVENT_REFERENCE_ALIGNMENT.md).
 
 ## License
 

@@ -131,9 +131,9 @@ Last Updated: 2026-07-19 Europe/Brussels
   - **Dependencies:** Init Task 3.4; Phases 3-4 evidence.
 
 - [ ] **2.6 Establish the ISLAMU experience and content contract** — IMPLEMENTED, AUDIENCE WALK-THROUGH PENDING
-  - **Files:** `docs/PROJECT.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/SEO.md`, `docs/RENDER_POLICIES.md`.
+- **Files:** `docs/PROJECT.md`, `docs/CONTENT_ROUTE_INVENTORY.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/SEO.md`, `docs/RENDER_POLICIES.md`.
   - **Acceptance:** Defines the purpose-to-content-to-participation journey and content/route inventory; only implemented destinations are clickable; no ownerless claims/placeholders; English/French/Arabic+RTL, WCAG 2.2 AA, keyboard/touch/zoom, reduced motion, performance/resilience, truthful SEO, privacy/consent, and editorial ownership are launch gates.
-  - **Validation:** Reconcile inventory with implemented routes and init handoffs; manual three-locale journey review; documentation metadata/link/source-anchor checks.
+- **Validation:** Source reconciliation completed 2026-07-19 for claims, routes, menu/CTA state, starter-bundle parity, analytics, and email capture. JSON/bundle parity checks passed; focused localization tests passed 10/10; the Blazor client test project built with 0 errors; focused Home tests passed 8/8. Manual three-locale journey review and final documentation metadata/link/source-anchor checks remain.
   - **Effort:** L
   - **Dependencies:** 2.1; init Phase 12 for final route states.
 
@@ -325,7 +325,7 @@ Last Updated: 2026-07-19 Europe/Brussels
 
 ## Remaining / Deferred Work
 
-- Product source deletion, migrations, Blog, and navigation remain in `dev/active/init-import-islamu-event/`.
+- Product source deletion, migrations, Blog, and navigation are recorded in `dev/zarchive/init-import-islamu-event/`.
 - Production hosting/DNS/TLS/Coolify execution is outside this workstream; only truthful metadata/docs disposition is included.
 - A local PostHog stack is intentionally not planned; add only if a concrete local/offline analytics requirement appears.
 - Tolgee is not deleted until the code ledger resolves its surviving caller/owner.

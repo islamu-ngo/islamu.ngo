@@ -40,12 +40,15 @@ Last Updated: 2026-07-19 Europe/Brussels
 - Source-coupled docs and metadata advanced after Phase 9-12 implementation landed: active product/security/integration/platform/operations/history docs now describe current first-party website, Blog, navigation, production, Weblate/Tolgee/PostHog/Mailpit/Listmonk, Cerbos, and webhook/federation/Coop/Osprey boundaries without reviving Event product promises.
 - Deleted `docs/SELF_HOSTING.md`, `docs/MODULAR_EVENTS.md`, `docs/TEMPLATE_SYNC.md`, and `docs/CONTACT_SHARING.md` after active references were repaired. Historical/workstream mentions remain only as implementation history.
 - Removed public `/privacy` and `/terms` pages, routes, navigation, sitemap, and seeded footer links because the repository has an engineering privacy inventory but no approved public legal policy. Tests were adjusted to assert legal-route absence rather than publishing unsupported claims.
+- Converged public content/runtime truth in `docs/CONTENT_ROUTE_INVENTORY.md`: current claims, route families, static navigation, calls to action, locale readiness, consent-aware page views, and absence of public email capture now have explicit owners and Implemented/Planned/Deferred states. `docs/PROJECT.md` and `docs/SEO.md` no longer claim Privacy, Terms, or a nonexistent Policies menu group.
+- Corrected the French and Arabic offline app names to the first-party `ISLAMU` brand, added starter-bundle key/name parity coverage, and removed the welcome page's unsupported account-creation CTA in favor of its actual sign-in route. Full French/Arabic public-page translation remains unproven and is recorded as Planned.
 - Reconciled agent/CI/generated-contract metadata: `.claude/context-state.json`, intents, benchmarks, CI/OpenAPI/Cerbos/security workflows, Dependabot paths, release-impact labels, hook mirrors, and CTO outputs now target first-party website contracts. Canonical generated outputs `schemas/openapi_islamu.json` and `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` were produced by configured project owners.
 - Compile/test convergence progressed: Domain constants and retained Listmonk/Coop/Osprey/custom-property contracts were restored without Event aliases; `Event.Application.UnitTests` direct execution is green with 1,441 passed, 0 failed, 0 skipped. `Explore.API`, `Explore.Infrastructure.Tests`, `Explore.Blazor.Client`, and `Event.Architecture.Tests` compile individually. The full solution remains ungreen.
 
 ### IN PROGRESS
 
 - Final convergence is in progress. API integration and Blazor downstream test lanes failed/time-boxed with stale Event/generated-client/legal-route references still to adapt. Phase 10 residue guardrails currently report three failing categories that require classification rather than blind replacement.
+- Task 2.6 still requires the final three-locale browser journey and documentation preflight; starter-bundle parity alone is not launch evidence.
 
 ### NEXT
 
@@ -93,6 +96,7 @@ Last Updated: 2026-07-19 Europe/Brussels
 | `README.md` | Existing | Public docs | Repository/product entrypoint | Rewritten; source SHA and AGPL provenance preserved |
 | `AGENTS.md` | Existing | Agent context | Canonical contribution contract | First-party framing complete; final Phase 10 rule pass pending |
 | `docs/PROJECT.md` | Existing | Product docs | Product scope/source of truth | Rewritten as the first-party digital-front-door contract |
+| `docs/CONTENT_ROUTE_INVENTORY.md` | New | Product/content docs | Claims, routes, navigation, CTA, locale, analytics, and email-capture truth states | Source-reconciled; manual three-locale walk-through remains |
 | `docs/DESIGN.md` | Existing | Product/design docs | Public ISLAMU atmosphere and experience principles | Replace Event admin command-center framing; retain useful tokens and motion restraint |
 | `docs/DESIGN_SYSTEM.md` | Existing | Design-system docs | CSS layers, tokens, wrappers, isolation | Retain technical system; rewrite stale examples only |
 | `docs/ACCESSIBILITY.md` | Existing | Accessibility docs | WCAG 2.2 AA and interaction gates | Retain RTL, keyboard, zoom, targets, focus, and reduced-motion constraints |
@@ -200,7 +204,7 @@ This table completes Task 0.2 without pretending that source-coupled decisions h
 | `LICENSE` | Retain unchanged | Repository owner | AGPL license continuity | Must remain byte-identical |
 | `legal/CLA.md`, `docs/legal/**`, `.github/workflows/cla.yml`, `.github/PULL_REQUEST_TEMPLATE.md` | Versioned rewrite | Legal owner + this workstream | CLA v2.0 and contribution governance | Implemented; legal approval remains |
 | `AGENTS.md`, `CLAUDE.md` | Rewrite/retain | This workstream | Canonical agent entrypoints | `AGENTS.md` re-baselined; `CLAUDE.md` remains a routing shim |
-| `docs/PROJECT.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/PRIVACY_DATA_INVENTORY.md` | Rewrite/retain | This workstream | Canonical product and experience contract | Implemented or retained with first-party framing |
+| `docs/PROJECT.md`, `docs/CONTENT_ROUTE_INVENTORY.md`, `docs/DESIGN.md`, `docs/DESIGN_SYSTEM.md`, `docs/ACCESSIBILITY.md`, `docs/LOCALIZATION.md`, `docs/PRIVACY_DATA_INVENTORY.md` | Create/rewrite/retain | This workstream | Canonical product and experience contract | Implemented or retained with first-party framing; final three-locale walk-through remains |
 | `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `docs/DOCUMENTATION_SYNTHESIS.md`, `docs/PUBLIC_DOCS_ROADMAP.md`, `docs/index.md` | Rewrite/retain | This workstream | Canonical docs governance and navigation | Core rewrite implemented; final residual pass remains |
 | `docs/ARCHITECTURE.md`, `docs/CODEBASE_STRUCTURE.md`, `docs/QUICK_REFERENCE.md`, `docs/GOVERNANCE.md` | Transitional rewrite, then finalize | This workstream after init Phase 10/11 | Surviving source-grounded architecture | Transitional framing implemented; no invented Blog/Event-free flow |
 | `docs/SEO.md`, `docs/RENDER_POLICIES.md` | Transitional rewrite, then finalize | This workstream after init Phase 11/12 | Implemented public route/index/render truth | Current imported behavior separated from planned website behavior |
@@ -211,7 +215,7 @@ This table completes Task 0.2 without pretending that source-coupled decisions h
 | `docs/DEPLOYMENT_MODES.md`, `docs/DEPLOYMENT_TIERS.md` | Delete | This workstream | None | Deleted after active non-concurrent references were removed |
 | `docs/docs-website/**` | Delete | This workstream | None | Deleted; repository Markdown remains the single docs source |
 | `docs/MODULAR_EVENTS.md`, `docs/TEMPLATE_SYNC.md`, `docs/CONTACT_SHARING.md`, `docs/TEMPLATE_GLOSSARY.md` | Needs code decision, likely delete | Init Phase 10 | Merge only proven reusable content | Event feature contracts; no early deletion |
-| `docs/FEDERATION.md`, `docs/LEXICONS.md`, `docs/COOP_INTEGRATION.md`, `docs/OSPREY_INTEGRATION.md`, `docs/WEBHOOKS.md` | Needs code decision, likely delete | Init Phase 10 | None unless surviving caller evidence exists | Provider/federation/Webhook source-coupled |
+| `docs/FEDERATION.md`, `docs/LEXICONS.md`, `docs/OSPREY_INTEGRATION.md`, `docs/WEBHOOKS.md` | Needs code decision, likely delete | Init Phase 10 | None unless surviving caller evidence exists | Provider/federation/Webhook source-coupled; obsolete Coop callback/verifier documentation removed |
 | `docs/API.md`, `docs/API_COOKBOOK.md`, `docs/API_CHANGELOG.md`, `docs/API_CONTRACT_INVENTORY.md`, `docs/API_CONTRACT_TEST_DEBT.md` | Regenerate/rewrite/delete by surviving API | Init Phase 10/11 + generator/code owner | Website/Blog API truth only | Never hand-edit generated inventory as final truth |
 | `docs/MULTI_TENANCY.md`, `docs/ADMIN_GUIDE.md`, `docs/ADMIN_HIERARCHY.md`, `docs/AUTHORIZATION.md`, `docs/AUTHORIZATION_PATTERNS.md`, `docs/SECURITY-MODEL.md` | Needs code decision | Init Phase 10 | Surviving first-party auth/data-scope docs or deletion | Tenant/admin claims leave only with source/policy/tests |
 | `docs/DOMAIN.md`, `docs/INTEGRATIONS.md`, `docs/EXTENSIBILITY.md`, `docs/NOTIFICATIONS.md`, `docs/OUTBOX_PATTERN.md`, `docs/CUSTOM_PROPERTIES.md`, `docs/FOOTER_MANAGEMENT.md` | Rewrite/retain/delete by caller evidence | Init Phase 10/11 | Reusable chassis patterns only | Do not preserve speculative flexibility |
@@ -245,7 +249,7 @@ This table completes Task 0.2 without pretending that source-coupled decisions h
 | `assets/images/adopters/islamu-text-only.png`, `assets/images/adopters/islamu-logo-text-only.svg` | Retain | Brand owner | ISLAMU branding | Active logo assets retained |
 | `assets/fff.png`, `assets/event-list-image.png`, `assets/Roadmap Kanban View.png` | Delete | This workstream | None | Deleted after zero inbound references |
 | `dev/active/islamu-website-non-code-refactor/**` | Retain/update | This workstream | Durable execution memory | Canonical plan/context/tasks |
-| `dev/active/init-import-islamu-event/**`, `dev/active/braindump.md` | Retain unchanged here | Init owner | Code migration memory/inspiration | Concurrent/owner-controlled |
+| `dev/zarchive/init-import-islamu-event/**`, `dev/active/braindump.md` | Retain unchanged here | Init owner | Code migration memory/inspiration | Archived/completed and owner-controlled |
 | `dev/active/**`, `dev/pause/**` excluding rows above | Owning-workstream decision | Respective owner | Active/paused memory | Never delete because a link is stale without ownership check |
 | `dev/_journal/**` | Retain historical; update index framing only | Repository owner | Durable findings | Historical Event terms are allowed evidence |
 | `.omo/**` | Retain as orchestration state | Active work owners | Execution ledger/artifacts | Not product documentation; do not publish as product truth |
@@ -414,6 +418,7 @@ These failures occur in concurrent source/package ownership, not in the governan
 #### Validation
 
 - Task 0.4 residual inspection passed and scoped `git diff --check` was clean.
+- Content/runtime truth slice: all three starter bundles parse and expose the same two fallback keys; focused `OfflineTranslationProviderTests` passed 10/10; the Blazor client test project built with 0 errors and five existing package warnings; focused `HomeTests` passed 8/8. The full architecture suite reached 227 passed, 6 failed, 1 skipped; all six failures are existing CQRS/naming or Phase 10 residue lanes outside this slice.
 - Domain constants and direct WebAssembly package references were repaired by later convergence workers; `Event.Application.UnitTests` direct executable is green: 1,441 passed, 0 failed, 0 skipped.
 - `Explore.API`, `Explore.Infrastructure.Tests`, `Explore.Blazor.Client`, and `Event.Architecture.Tests` compile individually. `Explore.API` generation produced `schemas/openapi_islamu.json`; Blazor client generation produced `IslamuApiClient.g.cs`.
 - Full solution remains ungreen: the latest worker stopped after reaching downstream API integration, Blazor downstream, Phase 10 residue, and additional generated-contract/test consumers. Final exact error count is pending a fresh writable build after current lanes settle.

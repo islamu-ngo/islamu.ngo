@@ -6,7 +6,7 @@
 > **Audience:** Public readers | Contributors | Operators | Product owners | AI agents
 > **Status:** Active
 > **Owner:** Architecture
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `README.md`, `docs/PROJECT.md`, `Explore.slnx`, `dev/report/EVENT_REFERENCE_ALIGNMENT.md`
 
 This index describes the first-party ISLAMU website. Event-product source and its Event-only
@@ -16,6 +16,8 @@ identifiers, not a supported Event product.
 ## Start Here
 
 - [Product definition](PROJECT.md) — implemented Foundation, Blog, and public navigation
+- [Content and route truth inventory](CONTENT_ROUTE_INVENTORY.md) — claims, routes, CTAs, locales,
+  analytics, and email-capture states
 - [Architecture](ARCHITECTURE.md)
 - [Codebase structure](CODEBASE_STRUCTURE.md)
 - [Getting started](GETTING_STARTED.md)
@@ -66,7 +68,6 @@ self-hosting or deployment-tier promise.
 - [Outbox pattern](OUTBOX_PATTERN.md)
 - [Webhooks](WEBHOOKS.md)
 - [Federation and PDS integration](FEDERATION.md)
-- [Coop integration](COOP_INTEGRATION.md)
 - [Osprey integration](OSPREY_INTEGRATION.md)
 - [Email notifications](EMAIL_NOTIFICATIONS.md)
 - [Notifications](NOTIFICATIONS.md)

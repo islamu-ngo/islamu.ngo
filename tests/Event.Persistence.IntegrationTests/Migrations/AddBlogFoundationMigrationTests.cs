@@ -104,6 +104,14 @@ public class AddBlogFoundationMigrationTests
             (Name: "Explore.Domain.NotificationExternalDelegation", Table: "notification_external_delegations"),
             (Name: "Explore.Domain.OrganizationReview", Table: "organization_reviews")
         };
+        var retiredProperties = new Dictionary<string, string[]>
+        {
+            ["Explore.Domain.EmailDispatchOutbox"] = ["EventId", "RegistrationIntentId"],
+            ["Explore.Domain.IntegrationSyncOutbox"] = ["EventId", "RegistrationIntentId"],
+            ["Explore.Domain.NotificationIntent"] = ["EventId", "ReportId", "ReportDecisionId"],
+            ["Explore.Domain.NotificationExternalDelegation"] = ["ReportId", "ReportDecisionId"],
+            ["Explore.Domain.OrganizationReview"] = ["EventId"]
+        };
 
         foreach (var frozenModel in frozenModels)
         {
@@ -115,6 +123,11 @@ public class AddBlogFoundationMigrationTests
                     .IsNotNull()
                     .Because($"{frozenModel.Name} must retain {retainedEntity.Name} metadata");
                 await Assert.That(entityType!.GetTableName()).IsEqualTo(retainedEntity.Table);
+
+                foreach (var retiredProperty in retiredProperties[retainedEntity.Name])
+                {
+                    await Assert.That(entityType.FindProperty(retiredProperty)).IsNull();
+                }
             }
         }
     }

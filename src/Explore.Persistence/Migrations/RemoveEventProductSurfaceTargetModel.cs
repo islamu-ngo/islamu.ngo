@@ -2373,6 +2373,203 @@ namespace Explore.Persistence.Migrations
                     b.ToTable("email_dispatch_attempts", (string)null);
                 });
 
+            modelBuilder.Entity("Explore.Domain.EmailDispatchOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_count");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeadLetteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dead_lettered_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("HtmlBody")
+                        .HasColumnType("text")
+                        .HasColumnName("html_body");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTime?>("LastFailureAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_failure_at");
+
+                    b.Property<string>("LastFailureCategory")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_failure_category");
+
+                    b.Property<int>("MaxAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(5)
+                        .HasColumnName("max_attempts");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<DateTime?>("ParkedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("parked_at");
+
+                    b.Property<string>("PlainTextBody")
+                        .HasColumnType("text")
+                        .HasColumnName("plain_text_body");
+
+                    b.Property<Guid?>("ProcessingLeaseToken")
+                        .HasColumnType("uuid")
+                        .HasColumnName("processing_lease_token");
+
+                    b.Property<DateTime?>("ProcessingStartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processing_started_at");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("provider_message_id");
+
+                    b.Property<Guid>("PublishEventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("publish_event_id");
+
+                    b.Property<DateTime?>("RabbitMqLastPublishAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rabbit_mq_last_publish_attempt_at");
+
+                    b.Property<string>("RabbitMqLastPublishFailureCategory")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("rabbit_mq_last_publish_failure_category");
+
+                    b.Property<DateTime?>("RabbitMqLastPublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rabbit_mq_last_published_at");
+
+                    b.Property<int>("RabbitMqPublishAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rabbit_mq_publish_attempt_count");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("recipient_email");
+
+                    b.Property<string>("ReplyTo")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("reply_to");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source_type");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("subject");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UnknownAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("unknown_at");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_email_dispatch_outbox");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_email_dispatch_outbox_user_id");
+
+                    b.HasIndex("TenantId", "PublishEventId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_email_dispatch_outbox_tenant_publish_event");
+
+                    b.HasIndex("Status", "NextAttemptAt", "CreatedAt")
+                        .HasDatabaseName("ix_email_dispatch_outbox_worker_poll");
+
+                    b.HasIndex("TenantId", "Status", "LastFailureAt")
+                        .HasDatabaseName("ix_email_dispatch_outbox_tenant_status");
+
+                    b.HasIndex("Status", "NextAttemptAt", "RabbitMqLastPublishAttemptAt", "CreatedAt")
+                        .HasDatabaseName("ix_email_dispatch_outbox_rabbitmq_publish");
+
+                    b.HasIndex("TenantId", "SourceType", "SourceId", "Kind")
+                        .IsUnique()
+                        .HasDatabaseName("ux_email_dispatch_outbox_tenant_source_kind")
+                        .HasFilter("is_deleted = false");
+
+                    b.ToTable("email_dispatch_outbox", (string)null);
+                });
+
             modelBuilder.Entity("Explore.Domain.EmailDispatchReceipt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4137,6 +4334,156 @@ namespace Explore.Persistence.Migrations
                     b.ToTable("instance_bootstrap_states", (string)null);
                 });
 
+            modelBuilder.Entity("Explore.Domain.IntegrationSyncOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_count");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeadLetteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dead_lettered_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTime?>("LastFailureAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_failure_at");
+
+                    b.Property<int>("ListmonkListId")
+                        .HasColumnType("integer")
+                        .HasColumnName("listmonk_list_id");
+
+                    b.Property<int>("MaxAttempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(5)
+                        .HasColumnName("max_attempts");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<bool>("PreconfirmSubscriptions")
+                        .HasColumnType("boolean")
+                        .HasColumnName("preconfirm_subscriptions");
+
+                    b.Property<Guid?>("ProcessingLeaseToken")
+                        .HasColumnType("uuid")
+                        .HasColumnName("processing_lease_token");
+
+                    b.Property<DateTime?>("ProcessingStartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processing_started_at");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source_type");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("SubscriberEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("subscriber_email");
+
+                    b.Property<string>("SubscriberName")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("subscriber_name");
+
+                    b.Property<string>("SubscriberPayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("subscriber_payload_json");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_integration_sync_outbox");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_integration_sync_outbox_user_id");
+
+                    b.HasIndex("Status", "NextAttemptAt", "CreatedAt")
+                        .HasDatabaseName("ix_integration_sync_outbox_worker_poll");
+
+                    b.HasIndex("TenantId", "Status", "LastFailureAt")
+                        .HasDatabaseName("ix_integration_sync_outbox_tenant_status");
+
+                    b.HasIndex("TenantId", "SourceType", "SourceId", "Kind")
+                        .IsUnique()
+                        .HasDatabaseName("ux_integration_sync_outbox_tenant_source_kind")
+                        .HasFilter("is_deleted = false");
+
+                    b.ToTable("integration_sync_outbox", (string)null);
+                });
+
             modelBuilder.Entity("Explore.Domain.Language", b =>
                 {
                     b.Property<int>("Id")
@@ -5292,6 +5639,126 @@ namespace Explore.Persistence.Migrations
                     b.ToTable("notification_entity_types", (string)null);
                 });
 
+            modelBuilder.Entity("Explore.Domain.NotificationExternalDelegation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<int?>("AccountAuthorityKindId")
+                        .HasColumnType("integer")
+                        .HasColumnName("account_authority_kind_id");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("ExternalCorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("external_correlation_id");
+
+                    b.Property<string>("ExternalDeliveryStatus")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("external_delivery_status");
+
+                    b.Property<string>("ExternalProviderId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("external_provider_id");
+
+                    b.Property<string>("FailureCategory")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("failure_category");
+
+                    b.Property<Guid>("NotificationIntentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("notification_intent_id");
+
+                    b.Property<int>("ProviderKindId")
+                        .HasColumnType("integer")
+                        .HasColumnName("provider_kind_id");
+
+                    b.Property<int>("RecipientKindId")
+                        .HasColumnType("integer")
+                        .HasColumnName("recipient_kind_id");
+
+                    b.Property<DateTime?>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("SafePayloadHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("safe_payload_hash");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_id");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("template_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notification_external_delegations");
+
+                    b.HasIndex("AccountAuthorityKindId")
+                        .HasDatabaseName("ix_notification_external_delegations_account_authority_kind_id");
+
+                    b.HasIndex("NotificationIntentId")
+                        .HasDatabaseName("ix_notification_external_delegations_notification_intent_id");
+
+                    b.HasIndex("ProviderKindId")
+                        .HasDatabaseName("ix_notification_external_delegations_provider_kind_id");
+
+                    b.HasIndex("RecipientKindId")
+                        .HasDatabaseName("ix_notification_external_delegations_recipient_kind_id");
+
+                    b.HasIndex("StatusId")
+                        .HasDatabaseName("ix_notification_external_delegations_status_id");
+
+                    b.HasIndex("TenantId", "ExternalCorrelationId")
+                        .HasDatabaseName("ix_notification_external_delegations_tenant_external_correlation");
+
+                    b.HasIndex("TenantId", "NotificationIntentId")
+                        .HasDatabaseName("ix_notification_external_delegations_tenant_intent");
+
+                    b.HasIndex("TenantId", "AccountAuthorityKindId", "StatusId", "CreatedAt")
+                        .HasDatabaseName("ix_notification_external_delegations_tenant_account_authority_status");
+
+                    b.HasIndex("TenantId", "ProviderKindId", "StatusId", "CreatedAt")
+                        .HasDatabaseName("ix_notification_external_delegations_tenant_provider_status");
+
+                    b.ToTable("notification_external_delegations", (string)null);
+                });
+
             modelBuilder.Entity("Explore.Domain.NotificationExternalDelegationStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -5439,6 +5906,128 @@ namespace Explore.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_notification_fanout_runs_status", "status IN ('pending', 'processing', 'completed', 'failed')");
                         });
+                });
+
+            modelBuilder.Entity("Explore.Domain.NotificationIntent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("category_id");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DeduplicationKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("deduplication_key");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("OwnershipTypeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ownership_type_id");
+
+                    b.Property<int>("RecipientKindId")
+                        .HasColumnType("integer")
+                        .HasColumnName("recipient_kind_id");
+
+                    b.Property<string>("SafePayloadHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("safe_payload_hash");
+
+                    b.Property<string>("SafePayloadReference")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("safe_payload_reference");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_id");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("template_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notification_intents");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_notification_intents_category_id");
+
+                    b.HasIndex("OwnershipTypeId")
+                        .HasDatabaseName("ix_notification_intents_ownership_type_id");
+
+                    b.HasIndex("RecipientKindId")
+                        .HasDatabaseName("ix_notification_intents_recipient_kind_id");
+
+                    b.HasIndex("StatusId")
+                        .HasDatabaseName("ix_notification_intents_status_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_notification_intents_user_id");
+
+                    b.HasIndex("TenantId", "DeduplicationKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_notification_intents_tenant_deduplication_key")
+                        .HasFilter("is_deleted = false");
+
+                    b.HasIndex("TenantId", "CategoryId", "CreatedAt")
+                        .HasDatabaseName("ix_notification_intents_tenant_category_created");
+
+                    b.HasIndex("TenantId", "OwnershipTypeId", "CreatedAt")
+                        .HasDatabaseName("ix_notification_intents_tenant_owner_created");
+
+                    b.HasIndex("TenantId", "StatusId", "CreatedAt")
+                        .HasDatabaseName("ix_notification_intents_tenant_status_created");
+
+                    b.ToTable("notification_intents", (string)null);
                 });
 
             modelBuilder.Entity("Explore.Domain.NotificationIntentStatus", b =>
@@ -6082,6 +6671,84 @@ namespace Explore.Persistence.Migrations
                         .HasName("pk_organization_positions");
 
                     b.ToTable("organization_positions", (string)null);
+                });
+
+            modelBuilder.Entity("Explore.Domain.OrganizationReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("ReviewerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("reviewer_name");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_organization_reviews");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_organization_reviews_organization_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_organization_reviews_tenant_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_organization_reviews_user_id");
+
+                    b.ToTable("organization_reviews", (string)null);
                 });
 
             modelBuilder.Entity("Explore.Domain.OrganizationSetting", b =>
@@ -12840,6 +13507,26 @@ namespace Explore.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Explore.Domain.EmailDispatchOutbox", b =>
+                {
+                    b.HasOne("Explore.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_email_dispatch_outbox_tenants_tenant_id");
+
+                    b.HasOne("Explore.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_email_dispatch_outbox_users_user_id");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Explore.Domain.EmailDispatchReceipt", b =>
                 {
                     b.HasOne("Explore.Domain.EmailDispatchOutbox", "EmailDispatchOutbox")
@@ -13197,6 +13884,26 @@ namespace Explore.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Explore.Domain.IntegrationSyncOutbox", b =>
+                {
+                    b.HasOne("Explore.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_integration_sync_outbox_tenants_tenant_id");
+
+                    b.HasOne("Explore.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_integration_sync_outbox_users_user_id");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Explore.Domain.Location", b =>
                 {
                     b.HasOne("Explore.Domain.Tenant", "Tenant")
@@ -13446,6 +14153,62 @@ namespace Explore.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Explore.Domain.NotificationExternalDelegation", b =>
+                {
+                    b.HasOne("Explore.Domain.AccountAuthorityKindLookup", "AccountAuthorityKind")
+                        .WithMany()
+                        .HasForeignKey("AccountAuthorityKindId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_notification_external_delegations_account_authority_kinds_a");
+
+                    b.HasOne("Explore.Domain.NotificationIntent", "NotificationIntent")
+                        .WithMany("ExternalDelegations")
+                        .HasForeignKey("NotificationIntentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_external_delegations_notification_intents_noti");
+
+                    b.HasOne("Explore.Domain.ExternalWorkflowProviderKindLookup", "ProviderKind")
+                        .WithMany()
+                        .HasForeignKey("ProviderKindId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_external_delegations_external_workflow_provide");
+
+                    b.HasOne("Explore.Domain.NotificationRecipientKind", "RecipientKind")
+                        .WithMany()
+                        .HasForeignKey("RecipientKindId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_external_delegations_notification_recipient_ki");
+
+                    b.HasOne("Explore.Domain.NotificationExternalDelegationStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_external_delegations_notification_external_del");
+
+                    b.HasOne("Explore.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_external_delegations_tenants_tenant_id");
+
+                    b.Navigation("AccountAuthorityKind");
+
+                    b.Navigation("NotificationIntent");
+
+                    b.Navigation("ProviderKind");
+
+                    b.Navigation("RecipientKind");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Explore.Domain.NotificationFanoutRun", b =>
                 {
                     b.HasOne("Explore.Domain.NotificationEntityType", "NotificationEntityType")
@@ -13475,6 +14238,62 @@ namespace Explore.Persistence.Migrations
                     b.Navigation("SourceActor");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Explore.Domain.NotificationIntent", b =>
+                {
+                    b.HasOne("Explore.Domain.NotificationCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_intents_notification_categories_category_id");
+
+                    b.HasOne("Explore.Domain.NotificationOwnershipType", "OwnershipType")
+                        .WithMany()
+                        .HasForeignKey("OwnershipTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_intents_notification_ownership_types_ownership");
+
+                    b.HasOne("Explore.Domain.NotificationRecipientKind", "RecipientKind")
+                        .WithMany()
+                        .HasForeignKey("RecipientKindId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_intents_notification_recipient_kinds_recipient");
+
+                    b.HasOne("Explore.Domain.NotificationIntentStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_intents_notification_intent_statuses_status_id");
+
+                    b.HasOne("Explore.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_intents_tenants_tenant_id");
+
+                    b.HasOne("Explore.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_notification_intents_users_user_id");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("OwnershipType");
+
+                    b.Navigation("RecipientKind");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Explore.Domain.NotificationPreferenceProfile", b =>
@@ -13608,6 +14427,36 @@ namespace Explore.Persistence.Migrations
                         .HasConstraintName("fk_organization_pii_organizations_organization_id");
 
                     b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Explore.Domain.OrganizationReview", b =>
+                {
+                    b.HasOne("Explore.Domain.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_organization_reviews_organizations_organization_id");
+
+                    b.HasOne("Explore.Domain.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_organization_reviews_tenants_tenant_id");
+
+                    b.HasOne("Explore.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_organization_reviews_users_user_id");
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Explore.Domain.OrganizationSetting", b =>

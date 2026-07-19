@@ -1,17 +1,18 @@
-<!-- ABOUTME: High-signal implementation rules that are easy to miss when reading code quickly. -->
-<!-- ABOUTME: Distinguishes current imported constraints from the first-party ISLAMU target. -->
+<!-- ABOUTME: High-signal implementation rules for the current first-party ISLAMU website source. -->
+<!-- ABOUTME: Anchors surviving constraints to canonical docs and executable architecture tests. -->
 
 # Quick Reference
 
 > **Audience:** Contributors | Maintainers | AI agents
-> **Status:** Active during import refactor
+> **Status:** Active
 > **Owner:** Architecture
-> **Last Verified:** 2026-07-15
-> **Source Anchors:** `AGENTS.md`, `docs/GOVERNANCE.md`, `dev/active/init-import-islamu-event/`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `AGENTS.md`, `docs/GOVERNANCE.md`, `docs/ARCHITECTURE.md`, `tests/Event.Architecture.Tests/CleanArchitectureTests.cs`, `tests/Event.Architecture.Tests/BlazorIsolationArchitectureTests.cs`, `tests/Event.Architecture.Tests/ApiContractArchitectureTests.cs`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
 
-This file describes constraints that still exist in the current source tree. Event-specific and
-multi-tenant entries are transitional truths, not target-product commitments. Remove each only
-with its owning Phase 10 source/policy/test slice; do not preserve it as compatibility behavior.
+This file describes constraints that exist in the current source tree. The Event product has been
+removed. Legacy `Explore.*` and `Event.*` project/test names remain source identifiers, not product
+capabilities or compatibility requirements. Tenant machinery remains technical isolation
+scaffolding and is not a public multi-tenant product promise.
 
 ## Critical Rules
 1. Repositories return entities, not DTOs; mapping happens in handlers.
@@ -30,13 +31,12 @@ with its owning Phase 10 source/policy/test slice; do not preserve it as compati
 14. Rate limiting is disabled in `Testing` environment (all policies replaced with `NoLimiter`).
 15. Middleware pipeline order in `Program.cs` is critical — do not rearrange without understanding dependencies.
 16. HATEOAS link policies use `yield return` pattern; each entity has separate detail and collection policies.
-17. `EventQuerySpecification` is an immutable builder — every `With*()` call returns a new instance.
-18. Module-conditional filters (Islamic, Tech) are silently ignored when the module is disabled for the tenant.
-19. ETag middleware uses weak ETags (SHA256) — only on `application/json` and `application/hal+json` responses.
-20. Named route constants in `RouteNames` must match `[HttpGet(Name = "...")]` attribute values on controller actions.
-21. **HAL links are the single source of truth for UI**: Clients must gate action affordances (Edit, Delete, etc.) by checking for the presence of the corresponding link in the `_links` object, never by local role/claim inspection.
-22. Normalized lookup DTOs expose `*Id`, `*Code`, and `*Name`; do not expose persisted enum wrappers in API contracts.
-23. **Blazor is fully isolated from API implementation layers**: `Explore.Blazor`, `Explore.Blazor.Client`, and their tests must not reference Domain, Application, Infrastructure, or Persistence. Backend communication and backend/domain models come only from the generated `IEventApiClient` contract.
+17. `BlogQuerySpecification` is an immutable builder — filter/sort methods return new instances.
+18. ETag middleware uses weak ETags (SHA256) — only on `application/json` and `application/hal+json` responses.
+19. Named route constants in `RouteNames` must match `[HttpGet(Name = "...")]` attribute values on controller actions.
+20. **HAL links are the single source of truth for UI**: Clients must gate action affordances (Edit, Delete, etc.) by checking for the presence of the corresponding link in the `_links` object, never by local role/claim inspection.
+21. Normalized lookup DTOs expose `*Id`, `*Code`, and `*Name`; do not expose persisted enum wrappers in API contracts.
+22. **Blazor is fully isolated from API implementation layers**: `Explore.Blazor`, `Explore.Blazor.Client`, and their tests must not reference Domain, Application, Infrastructure, or Persistence. Backend communication and backend/domain models come only from the configured generated `IIslamuApiClient` contract.
 
 ## Multi-Tenancy Reminder
 Runtime tenant resolution:
@@ -64,7 +64,7 @@ Governance settings resolution uses a **5-tier cascade**: User → Group → Org
 1. DTO changed but NSwag client not regenerated.
 2. Wrong tenant context while debugging list/query results.
 3. Repository returning DTOs and leaking app-layer concerns.
-4. Assuming one command-response pattern across all legacy features without checking local feature conventions.
+4. Assuming one command-response pattern across all features without checking local conventions.
 5. Changing middleware pipeline order in Program.cs without understanding dependencies (e.g., rate limiting after auth).
 6. Adding a normalized lookup table without stable IDs/codes in `LookupTableSeeder` and matching DTO metadata projection.
 
@@ -113,15 +113,15 @@ All disabled in `Testing` environment.
 
 | # | Rule | Correct | Wrong |
 |---|---|---|---|
-| 1 | Repository return type | `Task<Event?> GetByIdAsync(Guid id)` returning the aggregate | `Task<EventDto?> GetByIdAsync(Guid id)` (leaks mapping into the repo) |
-| 2 | Validator lifetime | `var validator = new CreateEventValidator(); var result = await validator.ValidateAsync(cmd, ct);` | Constructor-injected `IValidator<T>` (DI-bound) |
+| 1 | Repository return type | `Task<Blog?> GetByTenantAndIdAsync(...)` returning the aggregate | `Task<BlogDetailDto?> GetByTenantAndIdAsync(...)` (leaks mapping into the repo) |
+| 2 | Validator lifetime | `var validator = new CreateBlogCommandValidator(); await validator.ValidateAndThrowAsync(cmd, ct);` | Constructor-injected `IValidator<T>` (DI-bound) |
 | 3 | ID types | `public int CountryId` (lookup), `public Guid Id` (aggregate), `public long Size` (bytes/cursor) | `public long CountryId` for a lookup FK |
-| 4 | GET auth attribute | `[HttpGet("events", Name = RouteNames.ListEvents)] [AllowAnonymous]` | `[HttpGet]` with no explicit route template or name |
+| 4 | GET auth attribute | `[HttpGet("{slug}", Name = RouteNames.GetPublishedBlogBySlug)] [AllowAnonymous]` | `[HttpGet]` with no explicit route template or name |
 | 5 | User ID extraction | Helper that falls back `sub` → `nameidentifier` → `sid` (exact order) | `User.FindFirst(ClaimTypes.NameIdentifier)?.Value` alone |
 | 6 | UI action gating | `@if (dto.HasHalLink("edit")) { <AppButton /> }` driven by API `_links` | `@if (authState.User.IsInRole("Admin"))` (local claim check) |
-| 7 | Tenant filter override | `ctx.Events.IgnoreQueryFilters([QueryFilterNames.SoftDelete])` (named filter only) | `ctx.Events.IgnoreQueryFilters()` (drops Tenant filter — security bug) |
-| 8 | Specification builder | `var spec = new EventQuerySpecification().WithTitle(x).WithDate(y);` returns new instances | `spec.Title = x; spec.Date = y;` (mutates existing instance) |
-| 9 | Command response | `Task<BaseCommandResponse<Guid>> Handle(CreateEventCommand cmd, CancellationToken ct)` | `Task<EventDto> Handle(CreateEventCommand cmd)` (missing wrapper + no CT) |
-| 10 | HAL link policy | `yield return new LinkDefinition("edit", Url.Link(RouteNames.EditEvent, new { id })!, HttpMethods.Put);` | `links.Add(new LinkDefinition(...))` (list mutation instead of `yield return`) |
+| 7 | Tenant filter override | `ctx.Blogs.IgnoreQueryFilters([QueryFilterNames.SoftDelete])` (named filter only) | `ctx.Blogs.IgnoreQueryFilters()` (drops Tenant filter — security bug) |
+| 8 | Specification builder | `BlogQuerySpecification.Empty.WithCategory(id).SortByTitle()` returns new instances | Mutating filter/sort properties on a shared specification instance |
+| 9 | Command response | `Task<BaseCommandResponse<Guid>> Handle(CreateBlogCommand cmd, CancellationToken ct)` | `Task<BlogDetailDto> Handle(CreateBlogCommand cmd)` (missing wrapper + no CT) |
+| 10 | HAL link policy | `yield return new LinkDefinition(LinkRelations.Edit, RouteNames.UpdateBlog, new { id }, "PATCH");` | `links.Add(new LinkDefinition(...))` (list mutation instead of `yield return`) |
 
 These are enforced by `Event.Architecture.Tests` and the `.claude/rules/` path-scoped rule files — see [`.claude/rules/README.md`](../.claude/rules/README.md).

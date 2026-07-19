@@ -1,36 +1,39 @@
-ABOUTME: Extensibility model implemented in this codebase (modules, typed sector schema, and Layer 3 custom properties).
-ABOUTME: Focuses on what exists today and documents the boundary between typed sector semantics and governed custom extensions.
+<!-- ABOUTME: Documents current internal extension seams: modules, Organization/Group custom properties, TMS providers, and API keys. -->
+<!-- ABOUTME: Separates source-backed compile-time extension points from deleted Event and speculative plugin/product promises. -->
 
 # Extensibility
 
-## Implemented Building Blocks
+> **Audience:** Contributors | Platform maintainers
+> **Status:** Active
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Domain/Modules/`, `src/Explore.API/Controllers/ModuleController.cs`, `src/Explore.Infrastructure/Services/ModuleService.cs`, `src/Explore.Domain/CustomPropertyDefinition.cs`, `src/Explore.Infrastructure/Localization/RuntimeTranslationProvider.cs`, `src/Explore.API/Controllers/ExternalApiKeyController.cs`
 
-1. Layer 2 typed schema for events and sessions:
-   - `EventIslamicAspect` (1:1 with `Event` via shared PK `Id`)
-   - `EventTechAspect` (1:1 with `Event` via shared PK `Id`)
-   - `EventSessionIslamicAspect` (1:1 with `EventSession` via shared key `EventSessionId`)
-2. Module governance entities:
-   - `ModuleDefinition` (global catalog)
-   - `TenantCapability` (tenant-level enable/disable state)
-3. Layer 3 governed custom-property entities:
-   - `CustomPropertyDefinition`, `CustomPropertyOption`, `CustomPropertyValue` for shared Organization / Group extension catalogs
-   - `EventTemplate`, `EventTemplateCustomPropertyDefinition`, `EventTemplateCustomPropertyOption` for versioned event blueprints
-   - `EventCustomPropertyDefinition`, `EventCustomPropertyOption`, `EventCustomPropertyValue` for event-local runtime extension state
-   - `EventCustomPropertyProjection` for derived read/query optimization
-   - planned next: session template/runtime/projection families mirroring the event-local Layer 3 architecture
+## Boundary
 
-## Module Keys And Defaults
+These are internal, source-owned extension seams for the first-party ISLAMU website. They do not
+define a third-party plugin marketplace, runtime assembly loading contract, SaaS integration tier,
+or compatibility promise.
 
-Seeded module keys:
-- `Mod_Core`
-- `Mod_Islamic`
-- `Mod_Tech`
+Current extensibility consists of:
 
-Module definitions are seeded by `LookupTableSeeder`; tenant capabilities are seeded in `DatabaseSeeder` (development data path).
+1. compile-time module definitions with tenant capability records;
+2. tenant-scoped typed custom properties for `Organization` and `Group`;
+3. a runtime-selected translation-management provider behind one interface; and
+4. scoped external API keys for approved machine callers.
 
-## Runtime Module Operations
+Deleted Event, EventSession, sector-aspect, Event-template, Event-custom-property, projection,
+strategy, route, and UI types are not extension points.
+
+## Modules
+
+`ModuleDefinition` is the global catalog and `TenantCapability` records tenant enablement. The
+current seed creates only `Mod_Core`. Source still contains optional Islamic/Tech capability
+flags, but no current seed definition or deleted Event sector model makes those flags a product
+feature.
 
 `ModuleController` exposes:
+
 - `GET /api/module/available`
 - `GET /api/module/enabled`
 - `GET /api/module/{moduleKey}/enabled`
@@ -38,132 +41,74 @@ Module definitions are seeded by `LookupTableSeeder`; tenant capabilities are se
 - `POST /api/module/{moduleKey}/enable`
 - `POST /api/module/{moduleKey}/disable`
 
-Important behavior:
-- disabling a module marks capability `IsEnabled=false`; data rows are preserved.
-- `ModuleService` caches module lookups for 5 minutes (`Modules_All`, `Modules_Tenant_{tenantId}`).
+Reads use the resolved tenant context where applicable. Writes require authentication and dispatch
+MediatR commands. Disabling a tenant capability sets `IsEnabled=false`; it does not delete the
+capability record. `ModuleService` caches the global and per-tenant views for five minutes and
+invalidates the affected cache on mutation.
 
-## How Modules Affect Event Queries
+Modules are compiled application capabilities. `WizardSchemaUrl` is catalog metadata, not proof
+that a schema-driven UI exists. Adding a module requires source, authorization, persistence,
+operator UI, and tests; registering a key alone is insufficient.
 
-`GetEventListRequestHandler` applies aspect filters only when the related module is enabled for the current tenant:
-- Islamic filters require `Mod_Islamic`.
-- Tech filters require `Mod_Tech`.
+## Organization And Group Custom Properties
 
-If module-specific filters are sent while the module is disabled, they are ignored (endpoint still succeeds).
+The surviving Layer 3 model is:
 
-## UI-Facing Module Flags
+- `CustomPropertyDefinition`: tenant-scoped namespace/key, target entity type, value type,
+  validation, exposure/governance flags, audit fields, concurrency stamp, and soft delete;
+- `CustomPropertyOption`: stable namespaced options, ordering, hierarchy, audit, and soft delete;
+  and
+- `CustomPropertyValue`: tenant-scoped typed values for an Organization or Group id, including
+  deterministic multi-value ordering.
 
-`PublicExperienceSettingsDto` includes:
-- `IsIslamicModuleEnabled`
-- `IsTechModuleEnabled`
-- `EnabledModules`
+The definition's `EntityTypeName` discriminates Organization from Group. The polymorphic
+`EntityId` has no database foreign key, so Application validation and the reference-type
+registry remain required. Tenant query filters and server authorization are mandatory; a custom
+property cannot broaden data scope.
 
-Blazor event list uses these flags to control filter/UI exposure.
+Use a custom property for local, non-authoritative metadata. Add a typed first-class field instead
+when the value drives security, moderation, policy, ranking, lifecycle, or a stable cross-feature
+contract.
 
-## Current Limits (Non-Obvious)
+## Translation Provider Abstraction
 
-1. Strategy infrastructure exists (`IEventStrategy`, `StrategyResolver`), but event create/update handlers do not currently call it.
-2. `TechEventStrategy.IsApplicable` currently returns `false`, so strategy-based tech logic is not active in create flow.
-3. `WizardSchemaUrl` and `/api/module/{moduleKey}/schema` exist, but there is no full schema-driven dynamic form pipeline wired in the current Blazor app.
-4. Modules are compile-time application modules, not runtime plugin loading.
-5. Layer 3 custom properties are now modeled strongly enough that they need explicit governance: reserved namespaces, collision rules, projection lifecycle, and provenance/version support are part of the architecture.
+`RuntimeTranslationProvider` routes `ITranslationManagementProvider` calls to:
 
-## Layer Boundary
+- `TolgeeTranslationProvider`;
+- `WeblateTranslationProvider`;
+- `OfflineTranslationProvider` (default and error fallback); or
+- `NullTranslationProvider` where explicitly injected by internal flows/tests.
 
-The platform uses three layers for event and session semantics:
+`ForceOfflineMode` bypasses the configured remote provider. Connection, language, and export
+failures fall back to offline bundles; import failures are recorded and do not invent a successful
+remote write.
 
-1. Layer 1 universal core fields on `Event` and `EventSession`.
-2. Layer 2 typed sector schema (`EventIslamicAspect`, `EventTechAspect`, `EventSessionIslamicAspect`).
-3. Layer 3 custom properties for local long-tail extension at event scope or session scope.
+Adding another provider is a source change: implement the interface, add the enum/config resolver
+case, register the provider/HTTP client, preserve secret handling and bounded telemetry, and add
+focused provider/fallback checks. This is not runtime plugin loading.
 
-Layer 3 must not redefine Layer 2 meaning. If a field is standard across a sector or is required for filtering, moderation, policy, ranking, publication, or export, it must not live only in Layer 3.
+## External API Keys
 
-Parent/child rule:
+Machine-to-machine access is implemented, not planned. `ExternalApiKeyController` supports
+visible-key listing/detail, one-time issuance, policy update, revocation, and bounded usage reports.
+Keys are hashed at rest, rate-limited, tenant-bound except for the nullable
+`InstanceAdmin` credential form, and constrained by owner-type scope ceilings.
 
-- `Event` stays the program/container aggregate
-- `EventSession` stays the scheduled child aggregate
-- merged event-with-sessions views are read models, not canonical write models
+API keys extend access only to existing authorized endpoints. They do not create new routes,
+override tenant resolution, or bypass local/Cerbos authorization. See
+[ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md).
 
-## Projection Lifecycle
+## Deliberate Non-Contracts
 
-`EventCustomPropertyProjection` and future `EventSessionCustomPropertyProjection` rows exist only as derived read models.
-
-- source of truth remains event-local and session-local custom-property rows plus Layer 1/Layer 2 typed schema
-- projection rows are atomic per projected value, not one merged row per property
-- only projection-relevant properties are copied into projection rows
-- projection rows are rebuildable and invalidated when source definitions, flags, options, or values change
-- projections optimize discovery/filter/export/moderation reads; they do not replace typed policy truth
-
-Aggregate event-with-sessions views may embed session summaries and selected session projections for UX/discovery.
+- no runtime assembly/package loading;
+- no remote MCP tool import or execution;
+- no Event compatibility aliases or deleted Event routes;
+- no pricing-tier or quota product promise; and
+- no guarantee that dormant constants, schema URLs, or UI flags have an implemented consumer.
 
 ## Related
 
-- [MODULAR_EVENTS.md](MODULAR_EVENTS.md)
 - [CUSTOM_PROPERTIES.md](CUSTOM_PROPERTIES.md)
-- [DOMAIN.md](DOMAIN.md)
 - [MULTI_TENANCY.md](MULTI_TENANCY.md)
-
-## Translation Management System (TMS) Provider Abstraction
-
-**Status:** Implemented.
-
-The localization system uses the same pluggable provider pattern as analytics:
-
-```
-ITranslationManagementProvider
-  ├── TolgeeTranslationProvider
-  ├── WeblateTranslationProvider
-  ├── OfflineTranslationProvider (default — reads bundled .json files)
-  └── NullTranslationProvider (safe no-op)
-```
-
-`RuntimeTranslationProvider` wraps all concrete providers and delegates based on the `localization.tms_provider` governance setting. Falls back to `OfflineTranslationProvider` on errors.
-
-Adding a new TMS provider:
-1. Create `{Provider}TranslationProvider : ITranslationManagementProvider` in `Explore.Infrastructure/Localization/`
-2. Add enum value to `TranslationManagementProviderEnum`
-3. Register in `InfrastructureServicesRegistration.cs` with named HttpClient
-4. Add routing case in `RuntimeTranslationProvider.ResolveProviderAsync()`
-
-See [LOCALIZATION.md](LOCALIZATION.md) for full details.
-
-## API Keys / Service Accounts — Planned
-
-**Status:** Not yet implemented. Strategy documented for post-v1.0.
-
-**Current auth model:** User-centric via OIDC (Keycloak) through BFF pattern. All API access requires a user session.
-
-**Why machine-to-machine (M2M) is needed:**
-- Enterprise consumers integrating event data into CRM, LMS, or campus systems.
-- Automated event publishing from CI/CD or content pipelines.
-- Partner organizations syncing events bidirectionally.
-
-**Planned entities:**
-- `ApiKey`: id (uuid v7), tenant_id, name, hashed_key (sha256), prefix (first 8 chars for identification), scopes (jsonb — list of permitted operations), expires_at, created_by, is_revoked, last_used_at.
-- `ApiKeyAuditLog`: id, api_key_id, action, ip_address, timestamp.
-
-**Design decisions:**
-- Keys are tenant-scoped (no cross-tenant API keys).
-- Scopes map to existing permission codes (read:events, write:events, etc.).
-- Keys are hashed at rest (only shown once on creation).
-- Rate limiting per key via middleware.
-- Admin UI for key management (create, revoke, rotate, view usage).
-
-## Tenant Quotas / Usage Tracking — Planned
-
-**Status:** Not yet implemented. Strategy documented for post-v1.0.
-
-**Why quotas matter for multi-tenant SaaS:**
-- Prevent noisy-neighbor resource exhaustion.
-- Enable tiered pricing (free/pro/enterprise).
-- Provide usage visibility for tenant admins.
-
-**Planned entities:**
-- `TenantQuota`: id, tenant_id, resource_type (enum: events, storage_bytes, members, organizations, api_calls_per_day), max_allowed, current_usage, reset_period (monthly/none).
-- `TenantUsageLog`: id, tenant_id, resource_type, delta, recorded_at (for historical tracking and billing).
-
-**Enforcement approach:**
-- MediatR pipeline behavior checks quotas before write commands.
-- Soft limits: warn at 80%, block at 100%.
-- Storage quota enforced at upload handler level.
-- Usage counters updated via domain events (eventually consistent).
-- Admin override capability for emergency situations.
+- [LOCALIZATION.md](LOCALIZATION.md)
+- [ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md)

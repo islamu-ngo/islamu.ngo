@@ -6,7 +6,7 @@ ABOUTME: Separates repository settings from workflow YAML so required gates stay
 > **Audience:** Maintainers | Release operators | Contributors | AI agents
 > **Status:** Implemented + repository-settings required
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-16
+> **Last Verified:** 2026-07-18
 > **Source Anchors:** `.ci/`, `.github/workflows/`, `.github/dependabot.yml`, `docs/TESTING.md`, `docs/GOVERNANCE.md`, `docs/OPERATIONS.md`, `docs/RELEASE_CHECKLIST.md`
 
 This page is the source of truth for CI/CD governance. `.ci/` owns shared CI/CD implementation such as reusable scripts, policy validators, evidence writers, the OpenAPI Spectral ruleset, local composite actions, and mirror-provider CI/CD definitions. GitHub-native workflow discovery files stay in `.github/workflows/` because GitHub Actions requires that path.
@@ -38,11 +38,10 @@ Recommended checks after the PR1-PR8 governance baseline stabilizes:
 | Release impact metadata | `Release Impact Check` (`.github/workflows/release-impact.yml`) | `Release Impact Check` | Ready after repository-side check-name verification | Metadata-only `pull_request_target` check that requires security, migration, configuration, OpenAPI, and operator-impact PR evidence for matching path changes. |
 | Security integration | `Security Integration Tests` | `Security Integration Tests` | Ready after repository-side check-name verification | Always-present wrapper detects security-relevant paths, runs on schedule/manual dispatch, supports merge queue, and intentionally no-ops for unrelated changes. |
 | Cerbos policy | `Cerbos Policy Validation` | `Cerbos Policy Validation` | Ready after repository-side check-name verification | Always-present wrapper detects authorization-policy/code paths, runs on schedule/manual dispatch, supports merge queue, and intentionally no-ops for unrelated changes. |
-| Agent context | `agent-context` | `Validate AI-Context Contract` | Ready after repository-side check-name verification | Always-present wrapper detects AI context/docs/rule paths, supports merge queue/manual dispatch, and intentionally no-ops for unrelated changes. |
 
-Do **not** require workflows that are skipped by `paths` filters unless the workflow contains an always-running no-op job. GitHub can leave skipped required checks pending, which blocks merges without useful feedback. `Build & Test`, `CodeQL Advanced`, `Security Integration Tests`, `Cerbos Policy Validation`, and `agent-context` now use workflow-internal change detection instead of trigger-level path skips, so their checks remain present while avoiding unnecessary work for unrelated paths.
+Do **not** require workflows that are skipped by `paths` filters unless the workflow contains an always-running no-op job. GitHub can leave skipped required checks pending, which blocks merges without useful feedback. `Build & Test`, `CodeQL Advanced`, `Security Integration Tests`, and `Cerbos Policy Validation` use workflow-internal change detection instead of trigger-level path skips, so their checks remain present while avoiding unnecessary work for unrelated paths.
 
-If merge queue is enabled, ensure required workflows that gate merges include `merge_group`. `Build & Test`, `OpenAPI Contract Guard`, `CodeQL Advanced`, `Security Integration Tests`, `Cerbos Policy Validation`, and `agent-context` include merge-queue triggers; add the same event to any newly required workflow before marking it merge-queue-required.
+If merge queue is enabled, ensure required workflows that gate merges include `merge_group`. `Build & Test`, `OpenAPI Contract Guard`, `CodeQL Advanced`, `Security Integration Tests`, and `Cerbos Policy Validation` include merge-queue triggers; add the same event to any newly required workflow before marking it merge-queue-required.
 
 ### Repository Settings Evidence Checklist
 
@@ -203,13 +202,21 @@ Do not promote E2E, stress, security, or runtime lanes to required status while 
 
 ### OpenAPI Breaking-Change Evidence
 
-`OpenAPI Contract Guard` blocks stale generated contract artifacts and verifies deterministic second-run regeneration for `schemas/openapi.json`, `docs/API_CONTRACT_INVENTORY.md`, and `Explore.Blazor.Client/Clients/EventApiClient.g.cs`.
+`OpenAPI Contract Guard` blocks stale generated contract artifacts and verifies deterministic second-run regeneration for the generator-owned contract set:
+
+- `schemas/openapi_islamu.json`, emitted by the Release build of `src/Explore.API/Explore.API.csproj`;
+- `docs/API_CONTRACT_INVENTORY.md`, written from that schema by `ApiContractInventoryGeneratorTests`; and
+- `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, emitted by the `GenerateIslamuApiClient` NSwag target.
+
+The generated set is currently incomplete until build generation runs: the schema and NSwag client are absent, while the checked-in inventory remains generator-owned output and must be refreshed from the generated schema. Do not create placeholders or hand-edit the inventory to substitute for generation.
 
 The guard also runs `.ci/scripts/validate-api-contract-skip-inventory.cs` against [API_CONTRACT_TEST_DEBT.md](API_CONTRACT_TEST_DEBT.md). Any skipped integration test whose code skip reason includes `Category: API contract` must be listed in that inventory with a source file, owner, and removal condition. This keeps deferred route-name/HATEOAS contract enforcement visible while the owning `api-contract-stabilization` work finishes.
 
 Intentional breaking API changes must also update [API_CHANGELOG.md](API_CHANGELOG.md#breaking-change-evidence) in the same pull request. The changelog entry must identify the affected route, operation, schema, or generated client method; explain old and new behavior; identify affected clients or operator workflows; provide migration guidance or a compatibility window; name the release or target milestone; and link retained `openapi-contract-guard` evidence when available.
 
 `OpenAPI Contract Guard` also emits `oasdiff` markdown and JSON breaking-change reports against the base branch when OpenAPI-relevant paths change. For PR, push, and merge-queue runs, detected breaking changes fail the workflow unless `docs/API_CHANGELOG.md` changed in the same diff. Weekly scheduled and manual runs still execute the full guard as evidence-only runs so maintainers get recurring contract drift and breaking-change evidence even when no PR touched OpenAPI paths.
+
+For prior-branch comparison only, the workflow falls back from a missing base `schemas/openapi_islamu.json` to `schemas/openapi_islamu-event.json`, then `schemas/openapi.json`. Those legacy paths are comparison inputs only, not current governed artifacts.
 
 OpenAPI linting uses the project-owned `.ci/spectral.yaml` ruleset, not the full built-in Spectral OpenAPI ruleset. The current low-noise advisory rules cover invariants already expected by generated-client and inventory tooling: API title, API version, operation IDs, operation tags, and response descriptions. `OpenAPI Contract Guard` runs checksum-independent version-pinned `@stoplight/spectral-cli@6.16.0` through `npx`, retains JSON and Markdown reports in `openapi-contract-guard`, and keeps findings advisory until the ruleset has stable signal over multiple PRs.
 
@@ -267,8 +274,9 @@ Generated files are reviewed product artifacts, not disposable output.
 
 | Artifact | Generated by | Review focus |
 |---|---|---|
-| `schemas/openapi.json` | `OpenAPI Contract Guard` / `Explore.API` build-time OpenAPI generation | Routes, verbs, response types, auth metadata, endpoint classification, schema shape. |
-| `Explore.Blazor.Client/Clients/EventApiClient.g.cs` | NSwag target in `Explore.Blazor.Client.csproj` | Method names, renamed/removed operations, optional API-version parameters, generated client ergonomics. |
+| `schemas/openapi_islamu.json` | Release build of `src/Explore.API/Explore.API.csproj` | Routes, verbs, response types, auth metadata, endpoint classification, schema shape. |
+| `docs/API_CONTRACT_INVENTORY.md` | `ApiContractInventoryGeneratorTests` in `Event.API.IntegrationTests` | Operation inventory, route names, classifications, auth, tenant, rate-limit, and cache metadata. |
+| `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` | `GenerateIslamuApiClient` NSwag target in `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj` | Method names, renamed/removed operations, optional API-version parameters, generated client ergonomics. |
 | Container digest JSON | `_container-build.yml` via `.ci/scripts/write-container-digest-evidence.cs` | Image name, digest, commit SHA, tags, workflow run, scan evidence. |
 | Docker base image pins | `Workflow Security` via `.ci/scripts/validate-dockerfile-base-images.cs` | Deployable Dockerfiles keep explicit tag-plus-digest base references and Dependabot Docker update coverage. |
 | Container OCI inspect/index evidence | `_container-build.yml` via `docker buildx imagetools inspect` | Downloadable registry evidence for the digest that carries Buildx SBOM/provenance attestations. |
@@ -278,7 +286,7 @@ Generated files are reviewed product artifacts, not disposable output.
 | Container evidence checksum manifest | `_container-build.yml` via `.ci/scripts/write-artifact-checksums.cs` | SHA-256 integrity manifest for retained digest, OCI, Trivy, and related container evidence artifacts. |
 | Deployment summaries | `.ci/actions/deploy-coolify` via Coolify deploy jobs | Environment, component, commit SHA, expected immutable image tag, expected image digest, promotion evidence path, webhook result, smoke-check result, whether smoke was required, deployment-freeze state, override reason, workflow run, rollback note. |
 
-Never hand-edit OpenAPI or NSwag generated client artifacts. Regenerate them through the workflow-compatible commands in [TROUBLESHOOTING.md](TROUBLESHOOTING.md#openapi--nswag-drift).
+Never hand-edit the governed OpenAPI schema, API contract inventory, or NSwag client. Regenerate them through the workflow-compatible commands in [TROUBLESHOOTING.md](TROUBLESHOOTING.md#openapi--nswag-drift).
 
 ## Artifact Retention Policy
 
@@ -316,7 +324,7 @@ Use [CI_CD_RUNBOOKS.md](CI_CD_RUNBOOKS.md) for the approved rerun and emergency 
 | Evidence | First triage question | Expected maintainer action |
 |---|---|---|
 | Fast/integration TRX, build/analyzer warning logs, and NuGet vulnerability summaries | Which project/test failed, and did the failure occur before or after build? Are new analyzer/compiler warnings visible in the retained build log? Did the NuGet audit classify any direct/transitive advisory by severity? | Open the TRX/build/dependency artifact first, then the job summary. Assign test failures to the owning project area, warning regressions to the project that introduced the new warning output, and dependency advisories by direct/transitive relationship plus severity. |
-| OpenAPI drift, skipped contract inventory, `oasdiff`, and advisory Spectral artifacts | Did `schemas/openapi.json`, API inventory, or generated NSwag client change intentionally? Are skipped API contract tests still listed in `docs/API_CONTRACT_TEST_DEBT.md` with owner/removal criteria? Did `oasdiff` detect breaking changes, and did the same diff update `docs/API_CHANGELOG.md`? Did low-noise Spectral report API metadata or operation-shape drift? | If intentional, require API changelog/release evidence; if accidental, regenerate through the documented OpenAPI workflow commands. Treat `oasdiff` findings with changelog evidence and all Spectral findings as reviewer evidence until stricter rules are promoted. |
+| OpenAPI drift, skipped contract inventory, `oasdiff`, and advisory Spectral artifacts | Did `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, or `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` change intentionally? Are skipped API contract tests still listed in `docs/API_CONTRACT_TEST_DEBT.md` with owner/removal criteria? Did `oasdiff` detect breaking changes, and did the same diff update `docs/API_CHANGELOG.md`? Did low-noise Spectral report API metadata or operation-shape drift? | If intentional, require API changelog/release evidence; if accidental, regenerate through the documented OpenAPI workflow commands. Treat `oasdiff` findings with changelog evidence and all Spectral findings as reviewer evidence until stricter rules are promoted. |
 | Workflow security evidence | Did action pins, Dependabot policy, cache policy, actionlint, or zizmor fail? | Treat as a CI/CD security defect. Fix workflow YAML or document a time-bounded exception with owner/date/removal condition. |
 | OpenSSF Scorecard SARIF | Is the finding actionable for this repository, or informational posture drift? | Keep advisory unless a repeated high-signal finding is accepted into the required baseline. Record false positives before promotion. |
 | Secret-scanning SARIF/text | Is this a newly introduced secret or a legacy history finding? | Newly introduced findings block and require secret rotation/removal. Legacy scheduled/manual findings need triage or baseline before history-wide blocking. |

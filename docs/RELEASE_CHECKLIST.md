@@ -7,7 +7,7 @@
 > **Status:** Implemented
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-07-16
-> **Source Anchors:** `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONTRIBUTING.md`, `docs/TESTING.md`, `.github/workflows/test.yml`, `.github/workflows/agent-context.yml`
+> **Source Anchors:** `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONTRIBUTING.md`, `docs/TESTING.md`, `.github/workflows/test.yml`
 
 Use this checklist before tagging or publishing a release. A release is not ready until maintainers and first-party operators can understand what changed, how to deploy it, how to verify it, and how to roll it back.
 

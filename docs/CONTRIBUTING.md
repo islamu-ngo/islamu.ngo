@@ -153,11 +153,8 @@ Every non-trivial PR must record one documentation impact outcome:
 | Not needed | The change is internal and does not alter documented behavior. |
 | Deferred | Docs impact exists but is intentionally split; include owner, follow-up path, and reason. |
 
-Run documentation quality checks through the architecture test project:
-
-```bash
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
-```
+For documentation changes, run `/docs-lint` and record the reviewed links, source anchors, and
+truth-state impact in the pull request.
 
 ## Code Standards
 

@@ -1,82 +1,100 @@
 <!-- ABOUTME: Canonical product definition for the first-party ISLAMU website and web application. -->
-<!-- ABOUTME: Separates committed capabilities from future discovery and unsupported product promises. -->
+<!-- ABOUTME: Records implemented public capabilities, deliberate platform retention, and future boundaries. -->
 
 # ISLAMU Website Product Definition
 
 > **Audience:** Product contributors | Maintainers | Designers | Operators | AI agents
 > **Status:** Active
 > **Owner:** Product | Platform/Ops
-> **Last Verified:** 2026-07-15
-> **Source Anchors:** `README.md`, `dev/active/init-import-islamu-event/`, `dev/active/islamu-website-non-code-refactor/`, `src/Explore.Blazor/`, `src/Explore.Blazor.Client/`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `dev/report/EVENT_REFERENCE_ALIGNMENT.md`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`
 
 ## Product
 
-ISLAMU is a first-party website and web application operated for the ISLAMU organization.
-It is the public digital front door for explaining ISLAMU's purpose, publishing trustworthy
-content, helping people participate, and adding future services through explicit, owned
-workstreams.
+ISLAMU is one first-party website and web application operated for the ISLAMU organization. It is
+the public digital front door for explaining ISLAMU, publishing owned content, and giving visitors
+real, implemented destinations.
 
-The repository is not a supported self-hostable, white-label, multi-tenant product. Imported
-platform capabilities survive only when the application still calls them and ISLAMU owns an
-operational use for them.
+The repository is public under AGPL-3.0-or-later, but it is not a supported white-label,
+third-party-operated, or self-hosting product. Legacy `Explore.*` and `Event.*` project names are
+source identifiers, not product branding.
 
-## Experience Contract
+## Implemented Public Capabilities
 
-1. **Purpose before promotion:** every page helps a visitor understand, learn, or take a real next step.
-2. **Truth before breadth:** implemented behavior is stated as implemented; planned behavior is labelled and is not exposed as a working destination.
-3. **Editorial depth:** the Blog is the first new product vertical and the foundation for durable publishing.
-4. **Multilingual parity:** English, French, and Arabic are first-class; Arabic uses end-to-end right-to-left layout and content review.
-5. **Accessible interaction:** WCAG 2.2 AA, keyboard/touch parity, visible focus, 200% zoom, reduced motion, and semantic structure are launch constraints.
-6. **Privacy-respecting engagement:** analytics, forms, email capture, and personalization require explicit consent, retention, ownership, and deletion decisions.
-7. **Fast and resilient:** public content remains useful when optional analytics, email, or third-party integrations fail.
+### Foundation
 
-## Capability Horizons
+- Public Home, About, Contact, Community Guidelines, Privacy, and Terms destinations.
+- Keycloak-backed authentication through the server-side Blazor BFF.
+- English, French, and Arabic/RTL infrastructure, accessibility guardrails, and a responsive shell.
+- PostgreSQL persistence, HAL APIs, authorization, storage, observability, and durable outbox
+  infrastructure retained where current callers still exist.
 
-| Horizon | Commitment | Public Contract |
-|---|---|---|
-| Foundation | Committed | Event-free ISLAMU identity, truthful public shell, accessibility, localization, security, and operations. |
-| Publish | Committed, implementation in progress | Blog, purposeful navigation, metadata, sitemap/robots, and content governance appear only after their implementation gates pass. |
-| Engage | Direction approved, separate workstreams required | Waitlists, newsletters, contact, and transactional email require complete consent and operational flows before publication. |
-| Expand | Discovery only | Programs, community services, donations, tools, and personalization are not product commitments or dependency-retention reasons. |
+### Blog
 
-## Public Truth Model
+The Blog is an implemented vertical across all application layers:
 
-Every proposed route, navigation item, call to action, locale, analytics event, form, and email
-capture must record:
+- anonymous index and article routes at `/blog` and `/blog/{slug}`;
+- authenticated editorial routes at `/blog/manage`, `/blog/manage/new`, and
+  `/blog/manage/{id}`;
+- draft, update, publish, unpublish, and soft-delete lifecycle;
+- category/tag filtering, title search, pagination, optional storage-backed thumbnails, and
+  sanitized Markdown rendering through Markdig and HtmlSanitizer;
+- HAL-gated editorial affordances; and
+- sitemap entries for currently published articles.
 
-- owner;
-- state: `Implemented`, `Planned`, or `Deferred`;
-- implemented destination or source evidence;
-- content owner and review date;
-- localization readiness;
-- accessibility acceptance;
-- privacy/consent impact; and
-- operational dependency.
+Source presence proves the implementation shape. This documentation lane did not run the app,
+build, migrations, or tests, so it does not claim runtime acceptance.
 
-Only `Implemented` entries may be clickable or described as available. `Planned` and `Deferred`
-entries remain internal planning data.
+### Navigation
 
-## Retained Platform Capabilities
+`SiteMegaMenu` is the implemented public navigation model. It exposes only real routes, grouped as
+Discover, About ISLAMU, Community, and Policies. Desktop uses accessible disclosure panels; mobile
+uses a temporary drawer with native `details` groups. Escape handling, route dismissal, viewport
+switching, focus save/restore, and reduced-motion CSS are part of the implementation.
 
-- Clean Architecture boundaries and CQRS/MediatR application flow where they remain useful.
-- ASP.NET Core, Blazor, MudBlazor, YARP BFF, PostgreSQL, Keycloak, and authorization boundaries used by surviving features.
-- Weblate-backed localization and checked-in fallback resources.
-- External/configurable PostHog analytics with consent and non-blocking failure behavior.
-- Mailpit for local email testing only.
-- Durable email/outbox and Listmonk integration only while verified callers or approved engagement workstreams exist.
+The menu is intentionally static and typed. Dynamic product discovery and placeholder
+destinations are not implemented.
 
-Retention is end-to-end: source, configuration, policy, tests, operations, and ownership must agree.
+## Retained Platform Chassis
+
+The first-party website still uses Organizations, Groups, notifications, email/outbox, storage,
+support access, webhook infrastructure, and generic federation/PDS hooks. Coop and Osprey
+integration source also remains. Retention means these capabilities may be documented as technical
+infrastructure, not advertised as new public products.
+
+See [`dev/report/EVENT_REFERENCE_ALIGNMENT.md`](../dev/report/EVENT_REFERENCE_ALIGNMENT.md) for the
+current retain/adapt/delete decisions.
+
+## Contract Generation Status
+
+The API and Blazor projects contain OpenAPI/NSwag generation configuration for
+`schemas/openapi_islamu.json` and `Clients/IslamuApiClient.g.cs`. Neither generated file was present
+in the inspected worktree on 2026-07-18. Do not claim a checked-in schema or generated client exists
+until the owning build/generation lane creates and verifies it.
+
+## Planned, Not Publicly Available
+
+- Newsletter, waitlist, campaign, preference-center, and other engagement journeys.
+- Product/service catalog expansion, donations, community tools, or personalization.
+- Public federation/PDS experiences and product-domain webhook publications without a named owner.
+- Dynamic navigation or placeholder routes for future services.
+
+Planned work requires its own approved implementation, content owner, privacy decision, and
+observable destination before it appears in public navigation or calls to action.
+
+## Product Rules
+
+1. Only implemented destinations are linked or described as available.
+2. Public claims need an accountable content owner and source evidence.
+3. English, French, Arabic/RTL, WCAG 2.2 AA, keyboard/touch use, zoom, reduced motion, and safe
+   failure behavior are launch gates.
+4. Analytics and email engagement require explicit consent, retention, withdrawal, and operational
+   ownership.
+5. Event product routes, data models, APIs, policies, UI, and compatibility aliases remain deleted.
 
 ## Explicit Non-Goals
 
-- Supporting third-party self-hosting, white-label deployments, or deployment tiers.
-- Preserving Event product APIs, data, routes, policies, or compatibility aliases.
-- Publishing placeholder routes, dead calls to action, invented impact metrics, unverified testimonials, or unapproved legal/privacy claims.
-- Retaining speculative providers or abstractions for possible future features.
-
-## Delivery Ownership
-
-The code-led import workstream at `dev/active/init-import-islamu-event/` owns runtime changes,
-Event deletion, Blog implementation, navigation implementation, migrations, and generated
-contracts. The non-code workstream at `dev/active/islamu-website-non-code-refactor/` owns public
-positioning, content truth, artifact disposition, contributor contracts, and final documentation.
+- Restoring the Event product.
+- Supporting third-party self-hosting, white-label deployments, or product tiers.
+- Inventing impact metrics, testimonials, legal commitments, or dead calls to action.
+- Retaining speculative abstractions or providers for unapproved future features.

@@ -1,101 +1,130 @@
-ABOUTME: Documents guarded AI agent experience hardening for context summaries, plan previews, and replay reports.
-ABOUTME: Defines proposal-first, HAL-gated, redacted boundaries for Phase 10 assistant and MCP workflows.
+<!-- ABOUTME: Documents current fail-closed AI assistant, plan-preview, replay, and MCP guardrails. -->
+<!-- ABOUTME: Distinguishes surviving generic safety infrastructure from deleted Event action contracts. -->
 
 # AI Agent Experience Hardening
 
-> Status: implemented guardrail contracts and deterministic fake/replay diagnostics.
-> Last Updated: 2026-06-25
+> **Audience:** Contributors | Security reviewers | AI agents
+> **Status:** Active
+> **Owner:** AI Platform/Security
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Application/Features/AiAssistant/`, `src/Explore.Domain/Ai/AiProposedActionKind.cs`, `src/Explore.API/Controllers/AiAssistantController.cs`, `src/Explore.API/Mcp/`, `src/Explore.Diagnostic/AiReplay/AiReplayReportGenerator.cs`
 
-## Boundary
+## Current Truth
 
-Agent-experience hardening remains additive over the AI Tool Contract Registry (ATCR). It does not add reflection execution, direct Blazor service calls, arbitrary EF/SQL/LINQ access, remote MCP command execution, or model-granted authorization.
+The generic AI assistant, tenant-scoped conversations, bounded actor/organization reference search,
+context disclosure/redaction services, plan validator, replay diagnostics, and API-hosted MCP
+adapter remain in source.
 
-The allowed control flow is:
+The default AI tool registry is deliberately empty:
 
-1. Application contracts describe safe context, tool metadata, and proposal previews.
-2. API/HAL responses decide mutating affordance availability.
-3. The assistant or MCP adapter may request a proposed action only when registry validation passes.
-4. Existing confirmation endpoints dispatch CQRS/MediatR commands after user confirmation, idempotency, tenant checks, and authorization checks.
+- `AiProposedActionKind` has no values;
+- `AiToolContractRegistry.CreateDefault()` has no definitions;
+- the assistant catalog exposes no mutating proposal affordance;
+- MCP projects no `propose_*` tools; and
+- a generic proposal request fails as an unsupported action kind.
 
-Plan previews and catalog visibility never execute commands and never grant execution authority.
+Deleted Event action kinds, Event context summaries, Event HAL rels, Event MCP tools/resources,
+prompts, and confirmation executors are not current contracts. The remaining infrastructure is an
+internal platform boundary for future source-backed tools, not a promise that mutations are
+available now.
 
-## Schema-Only Context Summaries
+## Allowed Control Flow
 
-`AiSafeDataContextRegistry` exposes an explicit allow-list for future prompt grounding. The current default context kind is `event-reference-summary`, backed by the existing `AiReferenceSearchResultDto` projection. Allowed fields are limited to public reference metadata such as `kind`, `referenceId`, `displayName`, `summary`, public session dates, `visibility`, and `format`.
+1. Tenant/user-authorized queries load conversation or reference data.
+2. `SearchAiReferencesQueryHandler` returns a bounded list of tenant-filtered Actor and
+   Organization DTOs; it does not expose EF entities or arbitrary repository access.
+3. `AiReferencePromptPacker` caps reference count, per-reference/total characters and tokens, and
+   XML-escapes selected Actor/Organization reference fields before prompt inclusion.
+4. Provider output is parsed only against the current registry.
+5. A plan preview or tool catalog never grants execution authority.
+6. A future registered mutation must still require current HAL affordances, payload validation,
+   tenant/user authorization, idempotency, and an explicit confirmation path before CQRS/MediatR
+   dispatch.
 
-Rules:
+Direct Blazor-to-repository calls, arbitrary EF/SQL/LINQ access, reflection execution, remote MCP
+command import, and model-granted authorization remain forbidden.
 
-- No EF entity, `DbContext`, repository, SQL, LINQ, private note, attendee, registration, prompt, response, or raw content access.
-- Unknown context kinds and model-selected fields fail closed through `AiSafeDataContextSummaryPolicy`.
-- Empty field requests use the platform default allow-list; explicit field requests must match the allow-list exactly.
-- Failure messages are stable and do not echo rejected field names.
+## Plan Preview Guardrail
 
-## Multi-Step Plan Previews
+`AiProposedPlanValidator` enforces tenant/conversation context, a ten-step limit, unique proposed
+steps, context freshness, registered tool metadata, required HAL relations, and schema validation.
+Every result sets `ExecutionAuthorityGranted = false`.
 
-`AiProposedPlanValidator` validates proposal-only multi-step plans before any proposed actions are persisted or confirmed. It uses registry metadata, payload schemas, HAL rels, context freshness, step status, and recovery metadata.
+With the current empty registry, every non-empty tool step is unsupported and cannot become
+confirmation-ready. This fail-closed state is intentional; adding a tool requires a real
+`AiProposedActionKind`, registry definition, authorization/HAL contract, handler/executor,
+confirmation behavior, and focused evidence in the same change.
 
-A plan can be confirmation-ready only when all steps satisfy:
+The remaining `AiSafeDataContextDefinition` and `AiSafeDataContextField` types are schema
+building blocks only. There is no current `AiSafeDataContextRegistry` or
+`event-reference-summary` default context.
 
-- Tenant and conversation context are present and match the validation context.
-- Step count is bounded.
-- Each step is unique and still in the `Proposed` state.
-- Referenced tools are registered and exposed through ATCR.
-- Required HAL rels, including tool metadata rels such as `create-event`, are present.
-- Captured context is fresh.
-- Payload JSON passes the same registry/schema guard used by provider and MCP paths.
-- No step requires clarification, is failed, or was already confirmed/executed.
+## Disclosure And Artifact Safety
 
-The validator always returns `ExecutionAuthorityGranted = false`. A ready preview only means the UI/API may create proposed actions and then route confirmation through existing command handlers.
+`AiContextGateway` remains the registered allow-list/trust boundary for PII entity disclosure, and
+the hygiene service redacts affected conversation data when consent is revoked. The bounded
+Actor/Organization reference DTO path is separate and uses the prompt packer's size/token limits
+and escaping. Do not give provider or MCP paths direct access to PII entities, repositories, or
+raw persistence models.
 
-## Fake/Replay Usability Reports
+Replay/manual evidence must omit:
 
-Normal CI can run deterministic fake/replay usability scenarios without live provider credentials:
+- prompts and assistant/provider response text;
+- selected-reference content and raw proposed-action payloads;
+- tenant/user identifiers and private resource ids;
+- endpoint URLs, bearer tokens, API keys, and model secrets;
+- screenshots or protocol exports containing user content; and
+- raw exceptions or provider response bodies.
+
+Keep only scenario code, pass/fail, bounded failure category, and redacted execution posture.
+
+## Deterministic Replay
+
+`AiReplayReportGenerator` is source-grounded to the empty registry. Its expected results are:
+
+- no concrete assistant proposal preview;
+- MCP discovery limited to `list_ai_tool_contracts`, authenticated conversation resources, and
+  zero projected proposal tools;
+- no executor, repository, or command invocation from the replay harness;
+- no confirmation-ready mutation; and
+- stable `unknown_action_kind` recovery for unsupported payloads.
+
+The replay command remains:
 
 ```bash
-dotnet run --project Explore.Diagnostic/Explore.Diagnostic.csproj --configuration Release --no-restore -- ai-replay-report --output artifacts/ai-replay
+dotnet run --project src/Explore.Diagnostic/Explore.Diagnostic.csproj \
+  --configuration Release --no-restore -- \
+  ai-replay-report --output /tmp/explore-ai-replay-check
 ```
 
-The replay report exercises:
+This command is documented for maintainers; it was not run during this documentation-only audit.
 
-- assistant rail catalog + proposal preview readiness;
-- MCP Inspector discovery checklist coverage for tools/resources/resource templates/prompts;
-- MCP projected-tool selection and proposal-first/confirmation-required validation;
-- missing HAL affordance blocking;
-- invalid payload recovery and clarification metadata.
+## MCP Manual Smoke
 
-Artifacts are written as JSON and Markdown and intentionally omit prompts, provider responses, selected-reference content, raw tool payloads, tenant/user identifiers, endpoint URLs, API keys, model secrets, screenshots with user content, and raw exception bodies. Live-provider usability runs remain manual/nightly only and require separately governed artifact retention.
+Use [MCP_DEBUGGING.md](MCP_DEBUGGING.md). Current smoke must verify:
 
-## MCP Inspector Redacted Smoke Runbook
+1. anonymous discovery lists only `list_ai_tool_contracts`;
+2. the returned registry list is empty;
+3. authenticated MCP read authority can discover `ai_conversations` and conversation detail;
+4. no Event tool/resource/prompt or registry-projected proposal tool appears; and
+5. no proposal or confirmation endpoint is called as a success scenario.
 
-Use the Inspector only after the deterministic replay report is green. The normal CI-safe command is still the fake/replay report above; Inspector is a manual smoke tool for an operator-owned local/staging environment with fake or disposable data. See [MCP_DEBUGGING.md](MCP_DEBUGGING.md) for Debug-build startup, redacted client config templates, GitHub Copilot Agent Mode smoke, JSON-RPC fallback, and the compatibility matrix.
+## Review Gate For A Future Tool
 
-Manual smoke scope:
+A future action is incomplete unless the same change provides:
 
-1. Use the target API instance's default MCP startup posture (`Mcp:Enabled=true`, `Mcp:EndpointPath=/mcp`, `Mcp:Stateless=true`, and `Mcp:EnableLegacySse=true`) unless the deployment explicitly disables MCP.
-2. Connect MCP Inspector to the Streamable HTTP endpoint configured by `Mcp:EndpointPath` (usually `/mcp`) using one authenticated context only: either `Authorization: Bearer <redacted-token>` or `X-API-Key: <redacted-api-key>`. For multi-tenant routes, include the same tenant binding used by the API edge, such as trusted host routing or `X-Tenant-Slug: <redacted-tenant-slug>`, but never persist the real value in artifacts.
-3. List tools, resources, resource templates, and prompts. Expected bounded surface: anonymous-safe `list_ai_tool_contracts` and public event reads; scoped AI resources such as `ai_conversations`; scoped event-management reads/resources such as `list_my_events`, `get_event_creation_context`, `get_event_publish_readiness`, and `event_management_context`; prompt guidance such as `create_event_draft_with_confirmation` and `manage_event_with_confirmation`; and registry-projected `propose_*` event-management tools such as `propose_create_event_draft`, `propose_update_event_draft`, `propose_publish_event`, `propose_delete_event`, and Phase 5 sub-resource proposals.
-4. Call `list_ai_tool_contracts` and verify the registry advertises proposal/confirmation semantics. Do not save raw response bodies if they contain fixture labels or private metadata.
-5. Optional proposal-only smoke: call one low-risk projected proposal tool, preferably `propose_create_event_draft` or `propose_update_event_draft`, only against a disposable test conversation and fixture tenant. Stop after the proposed action is persisted; do not call product confirmation endpoints, do not mutate repositories, and do not claim an event was created or changed.
-6. Rebuild and restart the API/client before treating missing tools as a product bug; stale Debug builds and stale MCP client registrations are the common failure mode.
-7. Redact or discard Inspector screenshots, exports, browser storage, proxy logs, Copilot transcripts, and copied JSON. Retain only scenario codes, pass/fail status, redacted endpoint path, redacted auth mode, and bounded failure categories.
+- a typed action kind and one registry definition;
+- an allow-listed JSON schema with forbidden fields;
+- server authorization metadata and a current HAL affordance;
+- proposal-only persistence separated from confirmed execution;
+- idempotent confirmation and tenant-scoped lookup;
+- redacted telemetry and recovery errors; and
+- focused Application/API/MCP checks.
 
-Forbidden Inspector/Copilot artifacts: prompt transcripts, selected-reference content, raw tool payload JSON, provider responses, tenant/user identifiers, endpoint URLs, bearer/API-key values, model IDs, screenshots with user content, raw MCP request/response bodies, and raw exceptions.
+Until then, the shortest safe contract is the empty registry.
 
-The automated contract harness in `Event.API.IntegrationTests/Features/McpProtocolContractTests.cs`, `EventManagementMcpPublicReadTests.cs`, `EventManagementMcpAuthenticatedReadTests.cs`, `EventManagementMcpRedactionTests.cs`, and `McpAuthorizationTests.cs` covers MCP `initialize`, discovery lists, registry discovery, public event read parity, authenticated event-management reads, generic/projected proposal-only calls, disabled endpoints, malformed requests, unknown tools, hidden fields, rate-limit partitioning, and redaction behavior without live clients or provider credentials. `McpDebugReadinessDoctorCheck` adds a read-only review gate for MCP debug docs/tests/replay/evaluation evidence without starting clients or printing secrets.
+## Related
 
-## Validation
-
-Run:
-
-```bash
-dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet --no-restore
-dotnet test --project Explore.Diagnostic.UnitTests/Explore.Diagnostic.UnitTests.csproj --configuration Release --verbosity quiet --no-restore
-dotnet run --project Explore.Diagnostic/Explore.Diagnostic.csproj --configuration Release --no-restore -- ai-replay-report --output /tmp/explore-ai-replay-check
-```
-
-Relevant tests:
-
-- `AiSafeDataContextSummaryPolicyTests`
-- `AiProposedPlanValidatorTests`
-- `AiReplayReportGeneratorTests`
-- `AiReplayReportWriterTests`
+- [AI_CONTEXT_SECURITY.md](AI_CONTEXT_SECURITY.md)
+- [MCP_DEBUGGING.md](MCP_DEBUGGING.md)
+- [AUTHORIZATION.md](AUTHORIZATION.md)

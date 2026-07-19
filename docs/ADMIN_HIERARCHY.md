@@ -1,319 +1,121 @@
+<!-- ABOUTME: Defines current administrative authority and data-scope boundaries for the first-party ISLAMU website. -->
+<!-- ABOUTME: Covers interactive roles, hierarchical settings, support access, and external API-key ceilings. -->
+
 # Administrative Hierarchy
 
-> **Authority Model and Permission Boundaries**
->
-> This document defines the administrative roles, their authorities, and the governance model
-> for the platform.
-
-**Last Updated**: January 2026
-
----
-
-## Overview
-
-The platform implements a strict hierarchical authority model that separates infrastructure concerns from business operations. This ensures that SaaS providers, self-hosters, and community administrators each have appropriate control without overstepping boundaries.
-
----
-
-## Role Definitions
-
-### Instance Administrator (Super Admin)
-
-**Identity**: The organization or individual who operates the physical/virtual infrastructure.
-
-**Examples**:
-- SaaS platform operator
-- IT department running self-hosted instance
-- DevOps team managing infrastructure
-
-**Authority Scope**:
-
-| Area | Can Do | Cannot Do |
-|------|--------|-----------|
-| **Infrastructure** | Server configuration, scaling, backups | Access tenant business data |
-| **Modules** | Enable/disable globally, set restrictions | Use modules within tenants |
-| **Tenants** | Create, suspend, archive, purge | Make business decisions for tenants |
-| **Policies** | Lock settings, enforce quotas | Override tenant preferences within allowed bounds |
-| **Security** | Authentication providers, encryption | Impersonate tenant users |
-
-### Tenant Administrator (Community Admin)
-
-**Identity**: The organization or individual who manages a specific community/tenant.
-
-**Examples**:
-- Mosque administrator
-- Event organizer for a community
-- Organization leadership
-
-**Authority Scope**:
-
-| Area | Can Do | Cannot Do |
-|------|--------|-----------|
-| **Configuration** | Customize allowed settings | Override locked settings |
-| **Modules** | Enable from allowed set | Enable globally disabled modules |
-| **Users** | Manage membership, roles | Access other tenants' users |
-| **Content** | Moderate, publish, archive | Bypass instance policies |
-| **Branding** | Colors, logos, themes | Change core UI patterns |
-
-### Organization Administrator
-
-**Identity**: A user with elevated privileges within a specific organization entity.
-
-**Authority Scope**:
-- Manage organization members and roles
-- Create and manage events
-- Approve registrations
-- Respond to reviews
-- Configure organization-specific settings
-
-### Group Administrator
-
-**Identity**: A user with elevated privileges within a specific group (sub-unit of an organization or tenant).
-
-**Authority Scope**:
-- Manage group members
-- Create events within the group
-- Configure group-specific settings
-
-### Standard User
-
-**Identity**: Regular platform user within a tenant.
-
-**Authority Scope**:
-- View public content
-- Register for events (if permitted)
-- Manage own profile
-- Create content (if permitted by policies)
-- Manage personal preferences
-
----
-
-## Permission Boundaries
-
-### What Instance Admin CANNOT Do
-
-These are hard boundaries protecting tenant autonomy:
-
-| Restriction | Rationale |
-|-------------|-----------|
-| Access tenant business data | Privacy, data sovereignty |
-| Read individual user records | GDPR, privacy regulations |
-| Modify tenant content | Business autonomy |
-| Override tenant business rules | Operational independence |
-| Access tenant API tokens | Security isolation |
-
-### What Tenant Admin CANNOT Do
-
-These are hard boundaries protecting platform integrity:
-
-| Restriction | Rationale |
-|-------------|-----------|
-| Disable enforced security policies | Platform security |
-| Access other tenants' data | Multi-tenant isolation |
-| Exceed resource quotas | Fair resource usage |
-| Enable unapproved modules | Platform consistency |
-| Modify system tables | Data integrity |
-
-### Event Moderation Boundary
-
-Event moderation is a narrow safety exception to the normal business-ownership boundary. Instance administrators and tenant administrators can receive event `moderate-light`, `moderate-heavy`, `unmoderate`, and `view-management` authority in scope without receiving event `update` or `delete` authority.
-
-| Action | Instance Admin | Tenant Admin | Organizer / Event Team |
-|--------|----------------|--------------|-------------------------|
-| Light moderate published event | Allowed in scope | Allowed in tenant | Not granted by ownership alone |
-| Heavy redact unsafe event content/images | Allowed in scope | Allowed in tenant | Not granted by ownership alone |
-| Unmoderate reversible light violation | Allowed in scope | Allowed in tenant | Not granted by ownership alone |
-| Edit event business content | Not granted by moderation authority | Not granted by moderation authority | Granted only by normal event management policy |
-| View safe moderation history | Allowed through `view-management` | Allowed through `view-management` | Allowed only when normal event management policy grants it |
-
-Light moderation hides the event while preserving content and can be reversed back to `Published`. Heavy moderation is irreversible: event-owned text is redacted, event image references are detached, provider objects are deleted through the storage abstraction, attendee notifications are generic, and audit/observability keep only safe metadata. All moderation affordances must be driven by HAL links, not by client-side role checks.
-
----
-
-## Authority Cascade
-
-### Setting Resolution Order
-
-Resolution follows a 5-tier cascade via `HierarchicalSettingsResolver`:
-
-1. **User Preference** (Highest priority)
-2. **Group Setting**
-3. **Organization Setting**
-4. **Tenant Configuration**
-5. **System Default** (Lowest priority)
-
-### Lock States
-
-Higher tiers can lock settings to prevent lower-tier overrides.
-
-| Tier | Can Override | Can Be Locked By |
-|-------|----------------|--------------|
-| **User** | Yes | Group, Org, Tenant, Instance |
-| **Group** | Yes | Org, Tenant, Instance |
-| **Organization** | Yes | Tenant, Instance |
-| **Tenant** | Yes | Instance |
-| **Instance** | N/A | — |
-
-**Note**: In single-tenant mode, instance-level locks are bypassed for the default tenant.
-
----
-
-## Enforcement Policies
-
-### Policy Types
-
-| Type | Enforced By | Example |
-|------|-------------|---------|
-| **Technical** | System code | Authentication required |
-| **Configuration** | Settings engine | Render mode restrictions |
-| **Resource** | Quota service | Storage limits |
-| **Compliance** | Audit system | Data retention rules |
-
-### Policy Priority
-
-When policies conflict:
-1. Legal/Compliance (highest priority)
-2. Security policies
-3. Instance policies
-4. Tenant policies
-5. User preferences (lowest priority)
-
----
-
-## Delegation Model
-
-### Instance → Tenant Delegation
-
-Instance Admin can delegate specific authorities:
-
-| Delegatable | Default | Rationale |
-|-------------|---------|-----------|
-| Module selection | ✅ Delegated | Business flexibility |
-| Branding | ✅ Delegated | Community identity |
-| User management | ✅ Delegated | Operational need |
-| Security settings | ❌ Locked | Platform protection |
-| Payment processing | ⚙️ Configurable | Business model dependent |
-
-### Tenant → Organization Delegation
-
-Tenant Admin can delegate to Organization Admins:
-
-| Delegatable | Default | Rationale |
-|-------------|---------|-----------|
-| Event management | ✅ Delegated | Core function |
-| Member management | ✅ Delegated | Operational need |
-| Content moderation | ⚙️ Configurable | Trust level dependent |
-| Financial access | ❌ Restricted | Liability |
-
----
-
-## Audit and Accountability
-
-### Audit Requirements
-
-| Role | Actions Audited | Retention |
-|------|-----------------|-----------|
-| Instance Admin | All system changes | Indefinite |
-| Tenant Admin | Configuration, user management | Per policy |
-| Organization Admin | Content, membership changes | Per policy |
-| User | Security-relevant actions | Per policy |
-
-### Accountability Chain
-
-Every administrative action must be:
-1. **Authenticated** - Verified identity
-2. **Authorized** - Proper role/permission
-3. **Logged** - Recorded with context
-4. **Traceable** - Linkable to human actor
-
----
-
-## Special Scenarios
-
-### Emergency Access
-
-Instance Admin may bypass restrictions only when:
-- Security incident response
-- Legal compliance requirement
-- Disaster recovery
-- Explicit tenant consent
-
-**All emergency access is fully audited and reported.**
-
-### Tenant Offboarding
-
-When a tenant leaves:
-1. Data export provided to tenant
-2. Grace period for data retrieval
-3. Anonymization of shared data
-4. Complete deletion after retention period
-
-### Dispute Resolution
-
-When tenant and instance policies conflict:
-1. Instance policies prevail for security/legal
-2. Tenant preferences prevail for business
-3. Escalation path defined in service agreement
-
----
-
-## Machine Principal Authorities (External API Keys)
-
-Non-interactive callers authenticate with long-lived API keys. Each key is bound to an **owner type** that determines the authority ceiling. The ceiling cannot be escalated by granting broader scopes — scopes merely refine the ceiling.
-
-### Owner Type → Authority Mapping
-
-| Owner Type | Tenant Binding | Equivalent Interactive Role | Cross-Tenant? |
-|---|---|---|---|
-| `User` (1) | Required | The owner user's actual memberships (tenant/org/group admin claims) | No — follows owner's memberships |
-| `Organization` (2) | Required | Organization admin for the owning org | No |
-| `Group` (3) | Required | Group admin for the owning group | No |
-| `Tenant` (4) | Required | Tenant admin for the bound tenant | No |
-| `InstanceAdmin` (5) | **Nullable credential; execution tenant required for tenant-scoped API/MCP calls** | Instance admin | Platform authority; tenantless execution only for explicit host-administration API routes |
-
-### Scope Ceilings
-
-Scopes declare intent; owner type declares reachable authority. Effective permission = scope ∩ ceiling.
-
-| Owner Type | Ceiling Scopes |
-|---|---|
-| `User` | `events:*`, `users:*`, `lookups:read`, `registrations:write`, `api-keys:manage` |
-| `Organization` | User scopes + `organizations:*` |
-| `Group` | User scopes + `groups:*` |
-| `Tenant` | All of the above + `admin:tenant` |
-| `InstanceAdmin` | All scopes including `admin:instance` |
-
-A `User`-owned key cannot be granted `admin:tenant` even by a system administrator — the validator refuses the request. To extend authority, the correct path is to create a new key at a higher owner type.
-
-### InstanceAdmin Boundary
-
-`InstanceAdmin` keys are the only keys with `TenantId = NULL`. They are meant for platform operator use:
-
-- Cross-tenant reporting and usage analytics
-- Instance-level configuration (`InstanceSetting`, `AtprotoRecord`, `IndexedDid`, `PlatformNamespace`)
-- Bulk tenant operations
-
-InstanceAdmin keys **cannot** be created through the tenant-admin UI. They are provisioned through the instance-admin settings surface, subject to the same audit logging as interactive instance admin role assignments.
-
-### Authority Resolution in Code
-
-`IMachinePrincipalAccessor.Current` exposes the parsed `ApiKeyPrincipalContext` to both authorization providers:
-
-- `CerbosPrincipalBuilder.BuildMachinePrincipalAsync` synthesizes a Cerbos principal with `is_machine=true`, `api_key_id`, `owner_type`, `scopes`, plus authority attributes (`isInstanceAdmin`, `tenantMemberships`, `orgMemberships`) derived from owner type.
-- `FallbackAuthorizationService.EvaluateMachineCallerAccessAsync` applies the same rules directly (scope gate first, then owner-type-specific authority check).
-
-Both backends produce identical decisions for identical inputs, so the platform can run in Cerbos-enabled or Cerbos-disabled deployments without behavior divergence.
-
----
-
-## Related Documentation
-
-- **[MULTI_TENANCY.md](MULTI_TENANCY.md)** - Tenant isolation model
-- **[SECURITY.md](SECURITY.md)** - Authentication and authorization
-- **[OPERATIONS.md](OPERATIONS.md)** - Operational procedures
-
-## Implementation Reference
-
-For code patterns:
-- **`auth-patterns`** skill - Role-based authorization
-- **`clean-architecture-rules`** skill - Layer boundaries
+> **Audience:** ISLAMU administrators | First-party operators | Contributors
+> **Status:** Active
+> **Owner:** Security/Platform
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Infrastructure/Identity/AdminContext.cs`, `src/Explore.Infrastructure/Services/HierarchicalSettingsResolver.cs`, `src/Explore.API/Controllers/ControlPlaneController.cs`, `src/Explore.Application/Features/ExternalApiKeys/ExternalApiKeyScopeCeiling.cs`, `src/Explore.Infrastructure/SupportAccess/SupportAccessSessionService.cs`
+
+## Scope
+
+This hierarchy is an internal authorization and governance contract for ISLAMU. It separates
+instance, tenant, organization, group, and user scopes without promising a public SaaS,
+self-hosting, or community-operator product.
+
+Authentication identifies a principal. `AdminContext`, Application authorization metadata, the
+configured local/Cerbos authorization provider, tenant binding, and API/HAL policies decide what
+that principal may do. Client-visible roles and route guards are not sufficient authority.
+
+## Interactive Authority
+
+| Scope | Authority source | Current boundary |
+|---|---|---|
+| Instance administrator | Platform admin role, with the documented bootstrap-owner fallback | Instance settings, multi-tenant control plane, tenant lifecycle/plans, support access, and instance-level credentials. Cross-tenant work must use an explicit bounded system/admin path. |
+| Tenant administrator | Active tenant membership and tenant-scoped role grant | Tenant configuration, membership/role grants, public experience, delegated integrations, and tenant-owned credentials. No authority in another tenant. |
+| Organization administrator | Organization membership/role within the resolved tenant | Organization profile, members, and organization credentials for that organization. |
+| Group administrator | Group membership/role within the resolved tenant | Group profile, members, and group credentials for that group. |
+| Standard user | Authenticated identity plus tenant-local participation | Own profile/preferences and only the resource actions exposed by server authorization. |
+
+Instance authority does not disable tenant query filters globally. Any intentional cross-tenant
+repository path must opt into a named bypass reason and still apply a bounded predicate. Missing
+tenant context fails closed for tenant-scoped data.
+
+## Tenant And Data Boundaries
+
+- Multi-tenant requests resolve a tenant from the trusted BFF header, configured host/domain, or
+  subdomain; unresolved requests return `404`.
+- A tenant-bound API key and a conflicting tenant hint return `404`; the runtime does not fall
+  back to either tenant.
+- `ExploreDbContext` applies named `Tenant` and `SoftDelete` filters. Ignoring soft delete
+  must not also remove tenant isolation.
+- `User` is global, while `TenantUser`, `TenantUserProfile`, `TenantUserRoleGrant`, and user
+  `Actor` records carry tenant-local state and authority.
+- UI mutation controls must follow API HAL links. Link presence is an affordance hint; the API
+  reauthorizes every request.
+
+## Hierarchical Settings
+
+`HierarchicalSettingsResolver` loads and resolves five tiers:
+
+1. User
+2. Group
+3. Organization
+4. Tenant
+5. Instance
+
+The most specific available value wins unless a higher authority has locked the setting.
+Instance-level locks block lower-scope overrides in multi-tenant mode. Single-tenant mode bypasses
+instance locks for the default tenant. Each scope has a five-minute cache and mutations invalidate
+the affected scope.
+
+This is a setting-resolution contract, not a general permission inheritance rule. A value resolving
+at a scope does not grant write access to that scope.
+
+## Multi-Tenant Control Plane
+
+`ControlPlaneController` is instance-admin and multi-tenant-only. It exposes bounded operations
+for tenant lifecycle, effective configuration, setting locks, plan assignment/apply/rollback, and
+aggregate operational posture.
+
+`[RequireMultiTenant]` returns `403` in single-tenant mode. Tenant lifecycle actions use HAL
+links so invalid transitions are not offered as client actions, and the command handler validates
+them again. Purge scheduling records lifecycle intent and audit evidence; it does not physically
+delete tenant data inline.
+
+## Support Access
+
+Support access is tenant-context access, not user impersonation:
+
+- the persisted session records the real actor, target tenant, mode, expiry, reason, and ticket
+  reference;
+- the BFF removes browser-supplied support headers and forwards only a server-owned session id;
+- actor mismatch, tenant mismatch, disabled access, invalid mode, and stopped, revoked, or expired
+  sessions fail closed;
+- support access does not change the current user id or create `TenantUserRoleGrant` rows; and
+- audit evidence keeps the real operator identity.
+
+## Machine Principals
+
+External API keys have explicit owner types: `User`, `Organization`, `Group`, `Tenant`, and
+`InstanceAdmin`. Effective authority is the intersection of the requested scopes and the owner
+type ceiling defined by `ExternalApiKeyScopeCeiling`; granting a broader scope cannot promote the
+owner.
+
+User, organization, group, and tenant keys are tenant-bound. `InstanceAdmin` credentials may have
+a nullable stored tenant, but tenant-scoped API and MCP execution still requires an explicit,
+non-conflicting execution tenant (or the default tenant in single-tenant mode). Tenantless
+execution is limited to explicit host-administration routes.
+
+The raw key is revealed once. Persisted keys are hashed, can be revoked, and are rate-limited.
+Local and Cerbos authorization paths both consume the parsed machine-principal context; neither may
+skip tenant binding or scope ceilings.
+
+## Fail-Closed Rules
+
+1. No tenant context means no tenant-scoped query.
+2. A scope mismatch, owner-ceiling violation, revoked key, or conflicting tenant fails without
+   widening authority.
+3. Cerbos mode does not fall back to allow when the provider is unavailable.
+4. Support access preserves the real actor and cannot manufacture tenant membership.
+5. HAL absence hides the client action; server authorization remains mandatory.
+
+## Related
+
+- [ADMIN_GUIDE.md](ADMIN_GUIDE.md)
+- [MULTI_TENANCY.md](MULTI_TENANCY.md)
+- [AUTHORIZATION.md](AUTHORIZATION.md)
+- [SECURITY.md](SECURITY.md)
+- [API_COOKBOOK.md](API_COOKBOOK.md)

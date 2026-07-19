@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** Architecture
 > **Last Verified:** 2026-07-15
-> **Source Anchors:** `AGENTS.md`, `docs/index.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`, `tests/Event.Architecture.Tests/DocumentationQualityTests.cs`
+> **Source Anchors:** `AGENTS.md`, `docs/index.md`, `docs/DOCUMENTATION_STYLE_GUIDE.md`
 
 ## Purpose
 
@@ -62,21 +62,16 @@ edited by hand.
 
 ## Change And Deletion Rules
 
-Before deleting or renaming a document, inspect Markdown links, source anchors, tests, workflows,
-agent context, active dev docs, and generated ownership. Canonical-doc test constants change in
-the same slice as the document disposition; quality gates are updated, not weakened.
+Before deleting or renaming a document, inspect Markdown links, source anchors, workflows, agent
+context, active dev docs, and generated ownership. Repair affected references in the same slice.
 
 Behavior, configuration, security, API, operations, and public claims change with their owning
 documentation. Source-coupled docs are finalized after the corresponding code-led workstream is
 green.
 
-## Quality Gate
+## Review Gate
 
-The authoritative repository-root documentation/context gate is:
-
-```bash
-dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
-```
-
-The suite owns link integrity, required metadata, source anchors, placeholder markers, command
-syntax, ABOUTME coverage, and agent-context structure.
+Documentation owners and reviewers verify relative links, required metadata, source anchors,
+truth-state labels, command syntax, and ABOUTME coverage. Use `/docs-lint` as the repository's
+manual preflight. `Event.Architecture.Tests` remains responsible for executable source-code and
+configuration architecture, not Markdown governance.

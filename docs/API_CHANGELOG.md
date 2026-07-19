@@ -1,11 +1,30 @@
-ABOUTME: API change log aligned with the current repository state and versioning in source.
-ABOUTME: Keeps release notes short and focused on externally observable API behavior.
+ABOUTME: API change log preserving historical Event contracts alongside the current ISLAMU boundary.
+ABOUTME: Routes current generation to the canonical ISLAMU schema and NSwag client identities.
 
 # API Changelog
 
+> **Audience:** Contributors | Integrators | AI agents
+> **Status:** Active
+> **Owner:** API
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `docs/API.md`, `docs/API_CONTRACT_INVENTORY.md`, `src/Explore.API/Explore.API.csproj`, `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj`, `src/Explore.Blazor.Client/nswag.json`, `.github/workflows/openapi-contract.yml`
+
+## Current ISLAMU Contract Boundary
+
+Current generation targets `schemas/openapi_islamu.json` and
+`src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`. They are generated outputs owned by the
+API Release build and the Blazor NSwag target; do not create or edit them manually. See
+[API.md](API.md) for current API behavior and generation status.
+
+Entries below the historical heading preserve pre-removal Event contract history. Paths such as
+`schemas/openapi.json` and `Explore.Blazor.Client/Clients/EventApiClient.g.cs` inside those entries
+are historical evidence identities, not current generation instructions or current source anchors.
+
 ## Breaking Change Evidence
 
-Intentional breaking API changes must add an entry to this file in the same PR that changes `schemas/openapi.json`, `docs/API_CONTRACT_INVENTORY.md`, or `Explore.Blazor.Client/Clients/EventApiClient.g.cs`.
+Intentional breaking API changes must add an entry to this file in the same PR that changes
+`schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, or
+`src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`.
 
 Each breaking-change entry must include:
 
@@ -18,9 +37,11 @@ Each breaking-change entry must include:
 
 Non-breaking additive changes may be summarized in the current-mainline section, but removals, renamed operations, authentication/authorization contract changes, response shape changes, problem type changes, pagination/cursor changes, and generated-client breaking changes need explicit evidence here.
 
-## Current Mainline (API version `0.1`)
+## Historical Event Mainline Snapshot (API version `0.1`)
 
-Key behavior in current code:
+The following entries describe the former Event mainline at the time each contract change was
+recorded. They are retained as version history and must not be read as current ISLAMU routes,
+schemas, generated methods, or product commitments.
 
 - Media-type API versioning (`Accept: application/json;v=0.1` or `application/hal+json;v=0.1`).
 - HAL responses with `Prefer: return=minimal` support.

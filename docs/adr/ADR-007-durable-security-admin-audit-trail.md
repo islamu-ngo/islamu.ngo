@@ -1,11 +1,19 @@
-ABOUTME: Decision gate for durable security and administrative audit trails.
-ABOUTME: Defines semantic audit boundaries and blocks generic HTTP body capture.
+ABOUTME: Historical proposal for a unified durable security and administrative audit trail.
+ABOUTME: Preserves the retired Event scope and no-body-capture rationale without claiming implementation.
 
 # ADR-007: Durable Security and Administrative Audit Trail
 
-- **Status:** Proposed
+- **Status:** Historical — proposal not adopted
 - **Date:** 2026-05
 - **Deciders:** Core team
+
+## Historical Boundary (2026-07-18)
+
+This proposal was not accepted or implemented as a unified audit architecture before the Event
+product, event roles, contact sharing, template sync, and the referenced MVP workstream were
+removed. Narrower entity, configuration, secret, and bootstrap audit mechanisms may still exist,
+but they do not make the proposed model below current architecture. The record is retained to
+preserve its privacy and no-body-capture reasoning.
 
 ## Context
 
@@ -200,4 +208,4 @@ Revisit this ADR if:
 - `Explore.Domain/AuditLog.cs` — existing entity-level audit record.
 - `Explore.Infrastructure/Services/ConfigurationChangeLogService.cs` — existing configuration-change audit service.
 - `Explore.Secrets/Abstractions/ISecretAuditLogger.cs` — existing secret-operation audit contract.
-- `dev/active/mvp-launch/` — MVP audit hardening and launch gating notes.
+- Historical planning source (removed): `dev/active/mvp-launch/`.

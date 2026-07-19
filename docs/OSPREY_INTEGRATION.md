@@ -1,109 +1,69 @@
-<!-- ABOUTME: Architectural exploration and implementation strategy for the Osprey machine-moderation integration. -->
-<!-- ABOUTME: Outlines multi-tenant isolation challenges and the hybrid local + payload-driven policy design. -->
+<!-- ABOUTME: Documents the retained Osprey provider infrastructure in the first-party ISLAMU platform. -->
+<!-- ABOUTME: Distinguishes the provisioned coordinator and protocol contracts from absent application workflows. -->
 
-# Osprey Machine-Moderation Integration
+# Osprey Integration
 
-This document details the architectural integration, multi-tenancy challenges, and final system design for integrating **Osprey** (ROOST's real-time rules engine) into the multi-tenant ISLAMU Event platform.
+> **Audience:** Operators | Integrators | Contributors | AI agents
+> **Status:** Active
+> **Owner:** Platform/Integrations
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.AppHost/AppHost.cs`, `src/Explore.Infrastructure/Protos/osprey/`, `src/Explore.Infrastructure/Explore.Infrastructure.csproj`, `.env.example`
 
----
+## Current Truth
 
-## 1. Overview
+Osprey is an optional, locally provisioned provider foundation. The current application does not expose an Osprey-backed moderation or classification capability.
 
-**Osprey** is an automated, real-time moderation classifier and rule evaluation engine. It processes event payloads and returns safety scores, policy verdicts (e.g. Hate Speech, NSFW, Spambot detection), and recommended actions.
+| Capability | Current source state |
+|---|---|
+| Osprey coordinator container | Provisioned in the FullLocal Aspire topology. |
+| Kafka broker and actions-input topic | Provisioned for the local coordinator. |
+| Coordinator TCP endpoints | Container ports 19950 and 19951, mapped locally to 29950 and 29951. |
+| gRPC protocol contracts | Retained under src/Explore.Infrastructure/Protos/osprey and generated as client contracts by the Infrastructure project. |
+| Application gRPC adapter | Not present. |
+| Compatible HTTP reporting facade | Not present. |
+| Active provider | Disabled by default; .env.example explicitly requires a facade or gRPC adapter first. |
+| Public callback, report, policy-simulation, or moderation route | Not present. |
+| Blazor moderation UI or premium policy controls | Not present. |
 
-Unlike Coop, Osprey was designed for single-tenant internal applications (originally for Discord bot streams). It lacks native SaaS multi-tenancy. This document explains the security and isolation risks this presents and outlines our hybrid architectural solution.
+The coordinator image and generated protocol types prove that a technical integration boundary is retained. They do not prove that platform data is submitted to Osprey or that verdicts affect any first-party resource.
 
----
+## Local Provider Infrastructure
 
-## 2. The Multi-Tenancy Challenges
+FullLocal orchestration starts:
 
-Integrating a single-tenant engine into a strict multi-tenant SaaS environment presented three critical architectural roadblocks:
+1. a single-node Kafka resource;
+2. a bootstrap job that creates the osprey.actions_input topic;
+3. the Osprey coordinator configured for Kafka input;
+4. coordinator bidirectional-stream and synchronous-action TCP endpoints.
 
-### A. Scoped State Isolation in `labels_service` (Local vs. Global Banning)
-Osprey tracks bad actors, offensive IPs, and user reputation metrics via its Postgres `labels_service` backend.
-* **The Problem:** The `labels` table schema inside Osprey has no concept of a `tenant_id` or `namespace` column. All records are stored globally.
-* **The Risk:** If Tenant A (e.g. Mosque A) marks `user_123` as a policy violator, that label is applied globally. As a result, `user_123` is blocked across Tenant B (Mosque B) and Tenant C.
-* **The Solution:** True hierarchical multi-tenancy would require Osprey to support a nullable `tenant_id` column where `NULL` represents global platform rules and a UUID restricts rules/labels to a specific tenant:
-  $$\text{Query} = \text{WHERE target\_id} = X \text{ AND (tenant\_id} = \text{tenant\_A OR tenant\_id IS NULL)}$$
-  Since this is not natively supported by Osprey, stateful reputation tracking cannot be offloaded to Osprey's database without risking cross-tenant data leakage.
+The repository environment template describes this coordinator as different from the HTTP-compatible Reporting:Osprey facade expected by older configuration. Reporting:Osprey:Enabled therefore defaults to false even when the container exists.
 
-### B. Payload Security & Spoofing (Cross-Tenant Contamination)
-If we attempt to run a single, shared Osprey container and pass tenant settings in the request payload:
-* **The Problem:** Osprey does not natively authenticate or verify the contents of the payload JSON.
-* **The Risk:** A compromised tenant credential (or a rogue admin) could send evaluation requests with spoofed tenant identifiers or overridden strictness settings, bypassing the Instance Admin's global lock constraints.
+These are technical self-hosted provider semantics only. They do not make the first-party ISLAMU website a self-hostable product and do not establish production readiness. The default latest image reference must be replaced by a reviewed, pinned version before production use.
 
-### C. Rule Compilation Scaling Limits
-Osprey compiles its rules (written in SML or Rego) from files on the local filesystem into a static memory structure at startup.
-* **The Problem:** If we attempt to write custom rules for hundreds of tenants inside a single Osprey rule file, the engine must compile a massive, complex AST (Abstract Syntax Tree) with a huge combinatorial tree of conditional statements:
-  $$\text{Verdict} = \text{CoreRules} \lor (\text{TenantAToggle} \land \text{RulesA}) \lor (\text{TenantBToggle} \land \text{RulesB}) \dots$$
-* **The Risk:** This leads to significant rule compilation delay, high memory usage, and AST parsing bottlenecks on every request evaluation. Furthermore, a syntax error in a single tenant's rule file could crash the entire shared Osprey engine.
+## Tenant Isolation
 
----
+No current adapter establishes how Osprey state, rules, subjects, or verdicts would be isolated per tenant. Until such an adapter exists:
 
-## 3. The Solution: Hybrid Local + Machine Policy Engine
+- do not send platform payloads to the coordinator;
+- do not assume a request field can establish tenant authority;
+- do not share stateful reputation or policy data across tenants;
+- do not treat provider verdicts as authorization decisions;
+- do not persist or execute provider actions without an application-owned, idempotent CQRS workflow.
 
-To bypass these limitations while preserving the platform promise of low operational footprint and absolute tenant isolation, ISLAMU Event implements a **Hybrid Local + Machine Policy Engine**.
+If Osprey cannot provide hard tenant isolation for a stateful feature, the application must either isolate provider instances or keep the relevant state and policy evaluation inside the platform boundary.
 
-```text
-               Event Published / Reported
-                            │
-                            ▼
-           ┌────────────────────────────────┐
-           │   Local C# Evaluation Engine   │
-           └────────────────┬───────────────┘
-                            │
-               (Passes local checks? Yes)
-                            │
-                            ▼
-           ┌────────────────────────────────┐
-           │ Build Osprey Evaluation Payload│
-           │  - Includes tenant settings    │
-           │  - Injects strictness flags    │
-           └────────────────┬───────────────┘
-                            │
-                            ▼
-           ┌────────────────────────────────┐
-           │     Shared Osprey Instance     │
-           │  - Runs stateless ML models    │
-           │  - Applies global safety gate  │
-           └────────────────┬───────────────┘
-                            │
-                            ▼
-           ┌────────────────────────────────┐
-           │   C# Aggregator & Verdict      │
-           └────────────────────────────────┘
-```
+## Activation Requirements
 
-1. **Local Rules Evaluator (C#):**
-   * All simple, deterministic rules (regex matches, keyword blocklists, character limits, coordinate boundaries) are stored in the ISLAMU Event PostgreSQL database.
-   * These rules are evaluated directly in C# within the application handler, completely bypassing Osprey. This removes rule tree scaling overhead and ensures zero cross-tenant rule bleeding.
+Before Osprey can be documented as implemented end to end, source must add and verify:
 
-2. **Stateless Shared Osprey Instance:**
-   * A single platform-wide Osprey instance is deployed. It is used strictly as a **stateless content classifier** (e.g. evaluating NSFW content, advanced spam probability, or semantic toxicity).
-   * It does not store user history or local tenant state in the database.
+- an owned gRPC adapter or compatible HTTP facade;
+- tenant-bound provider configuration and credentials;
+- a current platform resource and payload contract;
+- timeouts, cancellation, retry classification, and circuit behavior;
+- durable, idempotent recording of requests and verdicts;
+- explicit separation between advisory safety signals and authorization;
+- redaction rules for personal or sensitive content;
+- production version, health, backup, and rollback evidence;
+- cross-tenant and failure-mode integration tests.
 
-3. **Payload-Driven Context Rules:**
-   * When calling Osprey, the C# backend serializes the tenant's specific strictness toggles (configured in their `TenantSetting`) into the `action_data_json` request payload.
-   * Osprey's rules act as stateless logical gates:
-     $$\text{Verdict} = \text{CoreInstanceRules}(\text{content}) \lor (\text{TenantToggles} \land \text{TenantRules}(\text{content}))$$
-
----
-
-## 4. Native Policy Management UI
-
-The platform provides a premium, native policy editing interface developed with **MudBlazor v9** for both Instance and Tenant Admins.
-
-### The Policy Designer Dashboard
-* **The Canvas:** Visual list of active moderation rules in a drag-and-drop workspace to reorder priority.
-* **Affordance Gating:** The ability to edit, create, or toggle a policy card is gated strictly by checking the resource's HAL `_links` (complying with **Rule #6** of `AGENTS.md`).
-* **The Rule Builder:** A declarative sentence composer (e.g., `If [Title] [Contains Keyword] [X] then [LightModerate]`).
-* **Live Sandbox Simulator:** A side drawer where administrators can paste test text or media, click "Simulate", and see in real-time which rules trigger and what the final verdict would be before saving.
-
----
-
-## 5. Implementation Reference
-
-* **Osprey Signal Provider:** [OspreyModerationSignalProvider.cs](file:///home/amir/ISLAMU/Github/Event/Explore.Infrastructure/Services/Moderation/OspreyModerationSignalProvider.cs)
-* **API Simulation Endpoint:** `POST /api/tenant/moderation/policies/simulate`
-* **Domain Model Rule:** `Explore.Domain/Entities/ModerationRule.cs`
-* **Blazor Editor Component:** `Explore.Blazor/Pages/Admin/ModerationPolicies.razor`
+Retired report, moderation-queue, policy-simulation, and automatic-escalation projections are not current capabilities and must not be described as available.

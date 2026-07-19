@@ -1,274 +1,125 @@
-ABOUTME: Operator and integrator guide for outgoing ISLAMU Event webhooks.
-ABOUTME: Covers LocalProvider, SvixProvider, signatures, security, configuration, and rollout behavior.
+<!-- ABOUTME: Operator and integrator guide for first-party ISLAMU platform webhooks. -->
+<!-- ABOUTME: Covers the canonical ledger, provider modes, signatures, tenant safety, and current routes. -->
 
 # Webhooks
 
 > **Audience:** Operators | Integrators | Contributors | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-14
-> **Source Anchors:** `Explore.Application/Webhooks/`, `Explore.Infrastructure/Webhooks/`, `Explore.Infrastructure/HealthChecks/`, `Explore.API/Controllers/WebhookController.cs`, `Explore.API/Controllers/IncomingWebhooksController.cs`, `Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `.env.example`, `docs/API.md`, `docs/SECURITY-MODEL.md`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Application/Webhooks/`, `src/Explore.Infrastructure/Webhooks/`, `src/Explore.Persistence/Services/WebhookDeliveryPlanMaterializer.cs`, `src/Explore.API/Controllers/WebhooksController.cs`, `src/Explore.API/Controllers/WebhookEndpointOperationsController.cs`, `src/Explore.API/Controllers/IncomingWebhooksController.cs`, `src/Explore.Blazor.Client/Components/Webhooks/WebhookManagementPanel.razor`, `src/Explore.AppHost/AppHost.cs`
 
-Webhooks in this document are outgoing product notifications sent by ISLAMU Event to external systems. Incoming provider callbacks are separate API ingestion routes; see [INTEGRATIONS.md](INTEGRATIONS.md).
+The webhook subsystem sends first-party ISLAMU website/platform notifications to configured consumers. Incoming provider callbacks are a separate ingestion boundary.
 
-## Delivery Model
+## Outgoing Delivery Model
 
-Outgoing delivery is provider-based:
+~~~text
+application publication
+  -> canonical WebhookMessage ledger row
+  -> immutable delivery-plan and target snapshots
+  -> provider publication or local delivery work
+  -> auditable attempt/outcome rows
+~~~
 
-```text
-domain/application event
-  -> WebhookEventEnvelope
-  -> webhook_messages canonical ledger row
-  -> IWebhookDeliveryProvider
-  -> Local, Svix, Composite, DryRun, or Disabled
-```
+The application owns the event catalog, tenant-scoped message identity, payload provenance, and durable evidence even when a Svix provider performs endpoint fanout.
 
-ISLAMU owns the canonical event catalog and `webhook_messages` ledger even when Svix performs final delivery. That keeps audit, provider switching, payload retention, and local fallback under the application boundary.
+DefaultWebhookEventPublisher materializes the canonical message; it does not perform the network call inline. Background processors drain durable local-delivery and provider-publication work.
+
+## Current Event Catalog
+
+WebhookEventTypeRegistry currently defines exactly:
+
+| Event name | Purpose |
+|---|---|
+| organization.verified | Catalog descriptor for organization verification payloads. |
+| webhook.test | LocalProvider test delivery scheduled for one endpoint. |
+
+The test-endpoint command publishes webhook.test. organization.verified is a registered public descriptor, but this document does not claim a live organization-verification publisher where no caller is present.
+
+Retired product lifecycle, registration, report, and moderation names are not part of the current catalog.
 
 ## Provider Modes
 
-| Mode | Behavior | Use |
-|---|---|---|
-| `Disabled` | Creates no outgoing delivery work. Incoming callbacks still work. | Minimal installs. |
-| `Local` | Built-in endpoint CRUD, subscription filtering, signed POST, retry attempts, delivery logs, manual retry, and safety checks. | Self-hosters and simple integrations. |
-| `Svix` | API publishes canonical messages to Svix; Svix owns endpoint fanout, delivery history, retries, and App Portal management. | Larger deployments and advanced webhook operations. |
-| `Composite` | Uses canonical local audit plus Svix delivery path. | Advanced installs that need local visibility and Svix delivery. |
-| `DryRun` | Creates canonical messages without outbound delivery. | Development and test validation. |
-
-LocalProvider is intentionally not a Svix clone. It does not include transformations, OAuth or mTLS endpoint auth, a customer-facing advanced portal, FIFO endpoints, polling endpoints, or advanced analytics.
-
-## Typed Provider Capability Authority
-
-Provider features are represented by twelve stable single-bit lookup IDs. Runtime decisions do
-not infer support from a provider name: they resolve the configured mode and exact supported
-version, then intersect provider proof with the verified consumer binding and instance governance.
-Unknown flags, an unsupported tuple, a missing binding, or managed Svix SaaS fail closed.
-
-| ID | Code | Local authority | Self-hosted Svix v1.96.1 proof |
-|---:|---|---|---|
-| 1 | `ENDPOINT_MANAGEMENT` | Yes | Yes |
-| 2 | `PROVIDER_ATTEMPT_VISIBILITY` | No | No |
-| 4 | `REPLAY` | No | No |
-| 8 | `PAYLOAD_INSPECTION` | No | Yes |
-| 16 | `APP_PORTAL` | No | Yes |
-| 32 | `EVENT_CATALOG` | Yes | Yes |
-| 64 | `PROVIDER_RETENTION_CONTROL` | No | No |
-| 128 | `APPLICATION_THROTTLING` | No | No |
-| 256 | `ENDPOINT_THROTTLING` | No | No |
-| 512 | `TRANSFORMATIONS` | No | No |
-| 1024 | `ORDERING` | No | No |
-| 2048 | `OPERATIONAL_CALLBACKS` | No | No |
-
-`Composite` is the union of the Local authority and the governed, verified Svix authority.
-`Disabled` and `DryRun` advertise no provider capabilities. This matrix is deliberately narrower
-than the full set of internal delivery operations: a feature is not advertised as provider
-authority until its control path and version evidence use this contract.
-
-Consumer creation rejects unavailable provider modes before persistence. Local endpoint create,
-update, secret rotation, test, and archive operations require Local endpoint-management authority;
-pure Svix endpoint management stays in the provider portal. Consumer read models expose all twelve
-lookup triples, source codes (`LOCAL` or `SVIX`), the resolution version, and bounded reason codes.
-HAL emits the App Portal relation only when the authoritative DTO capability, verified persisted
-binding, governance ceiling, and authorization all agree. Blazor renders actions only from HAL and
-uses capability metadata solely for safe operator explanations.
-
-## Event Catalog And Payloads
-
-`GET /api/webhooks/event-types` exposes the canonical event catalog with names, groups, schema versions, JSON Schema, and example envelopes. Initial public event types include event lifecycle, registration, report, moderation, and organization verification events.
-
-Payloads use a stable envelope:
-
-```json
-{
-  "id": "018f0000-0000-7000-8000-000000000001",
-  "type": "event.published",
-  "version": 1,
-  "occurredAt": "2026-07-04T10:00:00Z",
-  "tenantId": "018e4e5c-7f00-7000-8000-000000000001",
-  "data": {}
-}
-```
-
-Sensitive moderation payloads are minimized. Heavy-redaction events must not include unsafe event title, slug, URL, image URI, storage path/key, organizer identity, provider endpoint, raw provider error, or free-form unsafe content.
-
-## LocalProvider Delivery
-
-LocalProvider endpoints are managed through `/api/webhooks/endpoints`. Endpoint subscriptions filter by event type. Deliveries are HTTPS/HTTP POST requests with:
-
-- `svix-id`
-- `svix-timestamp`
-- `svix-signature`
-
-The signed content is:
-
-```text
-{svix-id}.{svix-timestamp}.{raw-body}
-```
-
-The signature is Svix-compatible HMAC-SHA256 over the raw body using `whsec_` secret material, so consumers can verify LocalProvider deliveries with Svix-compatible libraries. Verification must use fixed-time comparison and timestamp tolerance.
-
-Retry schedule:
-
-| Attempt | Delay |
-|---:|---|
-| 1 | immediately |
-| 2 | 30 seconds |
-| 3 | 5 minutes |
-| 4 | 30 minutes |
-| 5 | 2 hours |
-| 6 | 6 hours |
-| 7 | 12 hours |
-| 8 | 24 hours |
-
-`2xx` responses are success. Non-`2xx`, redirects, timeouts, and network failures are delivery failures. Attempts store bounded status, duration, HTTP status, safe failure category, and optional response preview only.
-
-## LocalProvider Security Defaults
-
-LocalProvider treats endpoint URLs as untrusted egress targets.
-
-- Private, loopback, link-local, localhost, metadata, and internal DNS destinations are blocked by default.
-- Redirects are disabled.
-- Request and connect timeouts are bounded by `Webhooks:Local:*`.
-- Response previews are bounded and never include full bodies by default.
-- Logs, metrics, health checks, and ProblemDetails must not include payload JSON, endpoint secrets, full endpoint query strings, authorization headers, full responses, or raw exception text.
-
-Operators can opt into specific private CIDRs with `Webhooks:Local:AllowedPrivateCidrs`, but this should stay empty for internet-facing SaaS.
-
-## SvixProvider
-
-SvixProvider uses the official Svix C# SDK. For self-hosted Svix, the SDK is configured with the deployment base URL through `SvixOptions`, while the API token stays server-side behind the ISLAMU secret resolver. Provider selection is guarded by an exact deployment-kind/environment/provider-version/capability-policy tuple backed by executed conformance evidence. Unknown and zero-evidence tuples fail startup validation and readiness before any secret is resolved.
-
-Mapping:
-
-| ISLAMU | Svix |
+| Mode | Current meaning |
 |---|---|
-| webhook consumer / tenant | application UID |
-| event type name | event type |
-| webhook message id | event ID and idempotency key |
-| payload JSON | message payload |
-| payload retention | message retention period |
+| Disabled | No outgoing delivery work for the consumer. |
+| Local | Application-managed endpoint subscriptions, signed HTTP delivery, retries, and audit. |
+| Svix | Provider publication through a configured Svix application/binding. |
+| Composite | Governed combination of canonical application evidence and supported Svix/local behavior. |
+| DryRun | Plans and records work without external delivery. |
 
-`POST /api/webhooks/svix/app-portal` creates a backend-generated, short-lived App Portal access URL. Blazor receives only the short-lived URL/token metadata; the Svix API token is never exposed to the browser.
+Capabilities are resolved from the provider mode, provider binding, conformance profile, and governed configuration. Callers must not assume every mode supports local endpoint management, manual retry, App Portal, or reconciliation. The API and UI use HAL links and capability state as the authority.
 
-## Local-Full Svix
+The repository can provision a self-hosted Svix service for technical local/integration profiles. That describes the provider deployment, not a separately self-hostable ISLAMU product. Managed Svix compatibility must be proven against the configured provider; it is not inferred from the self-hosted profile.
 
-`local-full` starts pinned `svix/svix-server:v1.96.1` through Aspire with PostgreSQL and Redis queue/cache. Both `SVIX_QUEUE_TYPE` and `SVIX_CACHE_TYPE` are `redis`: the queue carries provider work, while the shared cache preserves idempotency semantics across Svix replicas. Do not use the self-hosted in-memory cache in a multi-replica deployment. Aspire injects the current Svix HTTP endpoint and the proven `self-hosted`/`1.96.1`/`svix-self-hosted-1.96.1-v1` tuple into the API; use `aspire describe --format Json` to inspect the actual host port for the running session.
+## Management API
 
-The eleven-case live conformance matrix proves the twelve-hour idempotency behavior, duplicate event identity conflicts, response-loss ambiguity, credential rotation, list/get consistency, endpoint management, App Portal access, event-catalog management, and payload inspection. Self-hosted v1.96.1 does not return message tags from list/get, so request-hash exact lookup is not enabled for that profile. An accepted request followed by response loss therefore remains manual reconciliation rather than being guessed or blindly retried.
+The authenticated /api/webhooks surface currently includes:
 
-## Self-Hosted Svix Authentication
+- the anonymous event-types catalog;
+- tenant-scoped consumer list/read/create and provider-mode update;
+- provider-binding repair;
+- endpoint list/read/create/update/archive, secret rotation, test, and resume;
+- Svix App Portal access when eligible;
+- message and delivery-attempt audit reads;
+- manual local-delivery retry;
+- incoming-message redrive.
 
-The supported Svix profile is self-hosted only. Managed Svix SaaS has no selectable
-conformance profile and is not a release gate. The managed conformance token fields in
-`.env` and `.env.example` remain intentionally empty; neither Infisical nor the Aspire
-container supplies cloud API keys.
+Exact routes are declared by WebhooksController and WebhookEndpointOperationsController. The UI must follow returned HAL links rather than infer actions from roles or provider mode.
 
-Self-hosted authentication uses a JWT signed with the server's `SVIX_JWT_SECRET`.
-The server does not publish a reusable client token during startup. Its bundled CLI can
-generate an organization-scoped bearer token with `svix-server jwt generate`; when the
-server runs in a container, execute that command inside the running container and place
-the resulting token in `WEBHOOKS_SVIX_AUTH_TOKEN`. The token is credential material and
-must not be written to logs, test reports, screenshots, or committed operator evidence.
+Messages deliberately omit raw payload JSON from management responses. Secret references and resolved secrets must never be returned.
 
-Aspire cannot treat command output from an already-running container as an environment
-input for the API resource. The local profile therefore reads a pre-generated matching
-development JWT and signing secret from `.env`; `.env.example` carries the same safe
-development pair. If either value is rotated, generate a new token from the container
-configured with the new signing secret, update both values together, and restart the API.
+## Local Delivery Security
 
-The local AppHost supplies:
+Local delivery:
 
-- `SVIX_JWT_SECRET=local-dev-svix-jwt-secret-change-me` to the Svix container.
-- A matching development JWT in `WEBHOOKS_SVIX_AUTH_TOKEN` for the API.
-- `WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET` for local Svix operational callback verification.
-- `Webhooks:Svix:AuthTokenSecretRef=webhooks.svix.auth_token`.
-- `Webhooks:Svix:OperationalWebhookSecretRef=webhooks.svix.operational_webhook_secret`.
+- signs the exact serialized payload bytes;
+- resolves a tenant-scoped endpoint secret by reference;
+- applies destination safety policy before network access;
+- records attempt outcome and retry schedule;
+- suspends or archives endpoints through explicit state transitions;
+- retains tenant-scoped audit evidence.
 
-Development database seeding creates missing instance-scoped secret bindings for those environment variables when values are configured. Rotate these values outside local development.
+Endpoint validation must prevent server-side request forgery. Production configuration should require HTTPS and reject loopback, link-local, private, metadata-service, and otherwise disallowed destinations unless an explicitly governed environment policy permits a narrow exception.
 
-Docker Compose starts Svix only when the `webhooks` profile is enabled. The same canonical secret refs are documented in `.env.example`.
+Consumers must verify the signature against the raw request body before parsing and should reject replays outside their accepted timestamp/idempotency window.
 
-## Configuration
+## Svix Provider Boundary
 
-| Key | Default | Notes |
-|---|---|---|
-| `Webhooks:Enabled` | `true` | Master switch for outgoing product webhooks. |
-| `Webhooks:Provider` | `Local` | `Disabled`, `Local`, `Svix`, `Composite`, or `DryRun`. |
-| `Webhooks:AllowTenantOverride` | `true` | Allows tenant-level provider posture where supported. |
-| `Webhooks:DefaultPayloadRetentionDays` | `14` | Default canonical payload retention window. |
-| `Webhooks:Local:MaxAttempts` | `8` | Local retry ceiling. |
-| `Webhooks:Local:TimeoutSeconds` | `15` | Total LocalProvider request timeout. |
-| `Webhooks:Local:ConnectTimeoutSeconds` | `3` | LocalProvider connect timeout. |
-| `Webhooks:Local:BlockPrivateNetworks` | `true` | SSRF protection default. |
-| `Webhooks:Svix:BaseUrl` | unset | Set for self-hosted Svix, for example `http://localhost:18071` in Aspire or `http://svix:8071` in Compose. |
-| `Webhooks:Svix:Environment` | `production` | Exact conformance environment identifier; Compose/Aspire use `self-hosted`. |
-| `Webhooks:Svix:ProviderVersion` | `managed-api-v1` | Exact conformance version identifier; Compose/Aspire use pinned `1.96.1`. |
-| `Webhooks:Svix:CapabilityPolicyVersion` | `svix-managed-api-v1` | Exact versioned capability policy; Compose/Aspire use `svix-self-hosted-1.96.1-v1`. |
-| `Webhooks:Svix:AuthTokenSecretRef` | `webhooks.svix.auth_token` | Server-side Svix API token secret binding. |
-| `Webhooks:Svix:OperationalWebhookSecretRef` | `webhooks.svix.operational_webhook_secret` | Secret used to verify incoming Svix operational callbacks. |
-| `Webhooks:Svix:AppPortalEnabled` | `true` | Allows backend App Portal URL generation. |
-| `Webhooks:Svix:SyncEventTypesOnStartup` | `true` | Syncs canonical event types to Svix on API startup in Svix/Composite mode. |
+SvixApplicationMapper maps a platform consumer/tenant to provider application identity. Provider credentials remain server-side. Binding verification state, capability evidence, publication attempts, and reconciliation outcomes are persisted rather than inferred.
 
-Environment variables used by local profiles:
+Opening App Portal is an authorized server command. The browser receives only the short-lived portal result permitted by the API; it never receives the Svix management token.
 
-| Variable | Purpose |
-|---|---|
-| `WEBHOOKS_PROVIDER` | Compose-friendly provider mode. |
-| `WEBHOOKS_SVIX_BASE_URL` | Compose-friendly Svix base URL. |
-| `WEBHOOKS_SVIX_ENVIRONMENT`, `WEBHOOKS_SVIX_PROVIDER_VERSION`, `WEBHOOKS_SVIX_CAPABILITY_POLICY_VERSION` | Exact supported self-hosted conformance tuple. |
-| `WEBHOOKS_SVIX_AUTH_TOKEN_SECRET_REF` | Canonical auth token secret ref. |
-| `WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET_REF` | Canonical operational webhook secret ref. |
-| `WEBHOOKS_SVIX_AUTH_TOKEN` | Dev/deployment source value for the Svix API token binding. |
-| `WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET` | Dev/deployment source value for the Svix operational callback secret binding. |
-| `SVIX_TAG`, `SVIX_DB_DSN`, `SVIX_REDIS_DSN`, `SVIX_QUEUE_TYPE`, `SVIX_CACHE_TYPE`, `SVIX_JWT_SECRET` | Pinned Svix server image and container configuration. Queue and cache must both use shared Redis for the supported profile. |
+Operational callbacks from Svix do not depend on the outgoing provider being enabled. They enter through:
 
-## Health, Metrics, And Retention
+- POST /api/integrations/svix/operational
 
-Readiness checks:
+The route is anonymous at the HTTP-auth layer and instead uses provider signature verification, request-size limits, rate limiting, tenant/provider identity resolution, durable intake, deduplication, settlement evidence, and processing/redrive state.
 
-- `webhook-local-delivery` reports LocalProvider queue backlog, stale sending leases, and processor settings.
-- `webhook-svix-provider` reports the safe conformance tuple, evidence revision/count, exact-lookup availability, bounded capability count/codes, provider selection, App Portal/event-type-sync flags, and whether server-side Svix secrets resolve. It does not expose tokens, secret refs, or provider URLs and does not perform an outbound network probe.
+## Tenant Isolation And Idempotency
 
-Business metrics use bounded labels:
+Every consumer, binding, endpoint, message, plan, attempt, and incoming record is tenant-scoped. A provider identifier or request body alone must not select another tenant.
 
-- `explore.webhooks.messages_created`
-- `explore.webhooks.delivery_attempts`
-- `explore.webhooks.delivery_success`
-- `explore.webhooks.delivery_failure`
-- `explore.webhooks.endpoint_disabled`
-- `explore.webhooks.manual_retries`
-- `explore.webhooks.provider_publish_failure`
+Outgoing publication uses stable message identity and persisted work so retries do not create a new logical event. Incoming processing retains provider message identity, payload evidence, processing generations, effect receipts, and settlement/redrive records so repeated delivery can be handled idempotently.
 
-Payload retention is stored per message as `payload_retention_until`. The repository operation `IWebhookMessageRepository.ClearExpiredPayloadsAsync` clears expired payload bodies in bounded batches while preserving audit rows and hashes. Run cleanup only from trusted scheduler/operator code that keeps tenant scoping and safe logging intact.
+## Configuration And Operations
 
-## Provider Switching
+Required configuration depends on mode:
 
-Switches affect new messages only. Existing local attempts and Svix delivery history remain where they were created.
+- Local: endpoint safety policy, secret resolver, timeout, retry, and worker settings.
+- Svix or Composite: provider base URL, authentication material, conformance profile, binding/application configuration, and operational webhook secret.
+- DryRun or Disabled: explicit governed selection; no provider credential should be required merely to represent the mode.
 
-Local to Svix:
+Health checks report current provider/runtime reachability; they are not proof of end-to-end delivery. Operators should use a tenant-scoped webhook.test action, inspect the canonical message and attempt/publication evidence, and verify the receiving system independently.
 
-1. Configure and health-check Svix.
-2. Ensure `webhooks.svix.auth_token` resolves server-side.
-3. Sync event types.
-4. Create or map Svix applications for consumers.
-5. Move endpoints into Svix App Portal or require consumers to reconfigure there.
-6. Switch `Webhooks:Provider` to `Svix` or `Composite`.
+No public Coop or Osprey callback is part of the current webhook controller surface. Coop verifier services are retained integration foundation only; see [COOP_INTEGRATION.md](COOP_INTEGRATION.md).
 
-Svix to Local:
+## Change Checklist
 
-1. Switch `Webhooks:Provider` to `Local`.
-2. Recreate LocalProvider endpoints and subscriptions.
-3. Keep external Svix delivery history read-only in Svix.
-4. Continue using ISLAMU `webhook_messages` as the canonical audit ledger.
-
-Do not promise perfect migration of Svix-only features such as transformations, OAuth, mTLS, endpoint throttling, or portal-only endpoint configuration.
-
-## Related
-
-- [API.md](API.md#webhook-management)
-- [INTEGRATIONS.md](INTEGRATIONS.md)
-- [CONFIGURATION.md](CONFIGURATION.md)
-- [OPERATIONS.md](OPERATIONS.md)
-- [SECURITY-MODEL.md](SECURITY-MODEL.md)
-- [Svix quickstart](https://docs.svix.com/quickstart)
-- [Svix App Portal](https://docs.svix.com/app-portal)
+- Add or change event types in WebhookEventTypeRegistry and schema/catalog synchronization.
+- Preserve exact-byte signing and payload provenance.
+- Materialize durable state before network delivery.
+- Keep tenant identity in every lookup and provider mapping.
+- Classify failures before retrying; do not retry permanent safety/auth/configuration failures indefinitely.
+- Expose management actions only through authorized HAL links.
+- Never log payloads, signing secrets, provider tokens, or portal credentials.

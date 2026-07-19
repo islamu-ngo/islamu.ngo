@@ -1,148 +1,152 @@
-ABOUTME: First-party operator runbook for backups, restores, upgrades, and rollback decisions.
-ABOUTME: Grounds release operations in Docker Compose, PostgreSQL, Keycloak, object storage, and migration behavior.
+<!-- ABOUTME: Draft operator runbook for first-party ISLAMU backup, restore, upgrade, and rollback. -->
+<!-- ABOUTME: Matches the production Compose topology and its external identity, cache, email, and policy providers. -->
 
 # Backup, Restore, And Upgrade
 
 > **Audience:** Operators
-> **Status:** Implemented
+> **Status:** Draft
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-06-02
-> **Source Anchors:** `docker-compose.yml`, `Event.MigrationService/Worker.cs`, `Explore.API/Program.cs`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `compose.production.yaml`, `docs/PRODUCTION_OPERATIONS.md`, `src/Event.MigrationService/Worker.cs`, `src/Explore.API/Program.cs`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
 
-This runbook covers the first-party deployment using the repository Docker Compose topology. Treat every upgrade as a data operation first and an image rollout second.
+This runbook describes the source-controlled first-party production boundary. It is Draft because no environment-specific backup, restore, or rollback execution evidence is recorded here.
 
-## What Must Be Backed Up
+Do not start a release migration until the target environment has a verified PostgreSQL backup and restore procedure.
 
-| Asset | Compose Anchor | Why It Matters |
+## Production Topology
+
+compose.production.yaml defines six services in dependency order:
+
+1. production-environment-validation
+2. postgres
+3. keycloak-ngo-provisioner
+4. islamu-ngo-migration
+5. islamu-ngo-api
+6. islamu-ngo-ui
+
+Only the UI/BFF publishes the application port. Production Keycloak, Redis-compatible cache, SMTP, Cerbos when selected, TLS/reverse proxy, and provider infrastructure are external. The repository Compose file owns two persistent volumes: postgres_data and local_storage_data.
+
+The Event.MigrationService project name is a retained technical source identifier. The production service and product boundary are islamu-ngo-migration and the first-party ISLAMU website.
+
+## Backup Inventory
+
+| Asset | Production owner | Required evidence |
 |---|---|---|
-| Application PostgreSQL data | `postgres` volume `postgres_data` | Tenants, events, users, settings, outbox, and data-protection keys when stored through EF contexts. |
-| Keycloak PostgreSQL data | `keycloak-db` volume `keycloak_data` | Realms, clients, roles, users, and login configuration. |
-| Object storage | API volume `local_storage_data`; optional `minio` volume `minio_data` or external S3 bucket when selected | Uploaded files, images, and storage-backed assets. |
-| Secrets and environment | `.env`, secret-provider project, Keycloak client secrets | Required to recreate the same runtime identity and storage bindings. |
-| Release manifest | image tags, commit SHA, migration state, docs version | Required for rollback and audit. |
+| Application PostgreSQL | postgres / postgres_data | Consistent database backup, checksum, retention, restore test |
+| Local object storage | local_storage_data | Snapshot/copy matched to database recovery point |
+| External Keycloak | Identity operator | Realm/users/clients/keys backup and restore procedure |
+| External cache | Cache operator | Availability/recovery plan; document session and temporary-state loss behavior |
+| External Cerbos, if selected | Authorization operator | Cerbos PostgreSQL/policy-store backup plus deployed policy commit |
+| SMTP/email provider | Email operator | Configuration/credentials and provider-owned delivery/audit retention as applicable |
+| Svix or other webhook provider | Integration operator | Provider application/binding configuration and provider-owned history as applicable |
+| Secrets | Secret-provider operator | Versioned, access-controlled recovery procedure without plaintext in release artifacts |
+| Release manifest | Release operator | Image digests, commit, configuration version, migration result, external provider versions |
 
-Do not treat Docker image tags alone as a backup. Database schema and secret-provider state must match the application version being restored.
+Application PostgreSQL contains current tenants, organizations, groups, users, settings, Blog data, webhook ledgers, outbox state, provider configuration references, federation foundation records, and other live platform data. Retired product tables are not part of the expected inventory.
 
-## Backup Procedure
+Docker image tags are not backups. Database, object storage, identity, secrets, and matching application/policy versions must be recoverable together.
 
-1. Announce a maintenance window or switch traffic to read-only behavior if available.
-2. Record the current release manifest:
-   - application image tags or local build commit;
-   - `docker compose config --services` output;
-   - current `.env` key names without printing secret values;
-   - active `DEPLOYMENT_MODE` and optional profiles (`storage`, `authz`).
-3. Create PostgreSQL backups for both databases:
+## Pre-Backup Gate
 
-   ```bash
-   docker compose exec postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-explore.sql
-   docker compose exec keycloak-db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-keycloak.sql
-   ```
+1. Record the release commit and immutable image digests.
+2. Record the resolved service list and non-secret configuration keys.
+3. Record the external Keycloak, cache, SMTP, Cerbos, storage, and Svix ownership/versions in use.
+4. Quiesce writes or use database/storage snapshot mechanisms that guarantee a consistent recovery point.
+5. Back up PostgreSQL and local storage.
+6. Trigger the owned external-provider backup procedures.
+7. Encrypt artifacts, calculate checksums, and record retention/restore ownership.
+8. Restore into an isolated environment and validate before declaring the backup usable.
 
-4. Back up object storage:
-   - for local-first Compose, copy the API `local_storage_data` named volume or the deployment-managed `Storage:Local:RootPath`;
-   - for Aspire/local-dev state that must be preserved, copy `storage-data/aspire-local`;
-   - for local MinIO/S3-compatible mode, copy the `minio_data` volume or use an S3-compatible sync tool;
-   - for external S3, use provider-native versioning or bucket replication.
-5. Export secret-provider configuration or capture the exact secret paths and key names used by the release.
-6. Store backups outside the host running Docker Compose.
-7. Verify restore viability in a non-production environment before relying on the backup for an upgrade.
+An illustrative PostgreSQL backup invocation is:
 
-## Restore Procedure
+~~~shell
+docker compose -f compose.production.yaml exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom' \
+  > islamu-platform.dump
+~~~
 
-1. Stop application traffic before restoring:
+Treat this as a template: validate paths, roles, encryption, destination capacity, and error handling in the target environment. Never print database passwords.
 
-   ```bash
-   docker compose down
-   ```
+## Restore
 
-2. Restore PostgreSQL data into clean volumes or clean databases.
-3. Restore Keycloak data before starting Keycloak-dependent application services.
-4. Restore object storage before user-facing traffic resumes. For local-first Compose, restore `local_storage_data` or the configured `Storage:Local:RootPath`; for S3-compatible mode, restore `minio_data` or the external bucket.
-5. Restore the matching `.env` and secret-provider values.
-6. Start dependencies first, then application services:
+1. Declare the recovery point and incident scope.
+2. Stop user traffic and application writes.
+3. Verify artifact checksums, encryption access, release manifest, and target capacity.
+4. Restore application PostgreSQL before starting dependent application services.
+5. Restore local_storage_data to the matching recovery point.
+6. Restore or verify external Keycloak. Re-running the repository provisioner is additive configuration, not a substitute for a Keycloak backup.
+7. Restore or verify external Cerbos and republish the matching policy/schema bundle when Cerbos is selected.
+8. Restore or verify external cache according to the incident. Cache loss may invalidate sessions and temporary state.
+9. Reconcile external webhook/email/provider state according to provider ownership and idempotency rules.
+10. Start the source-controlled chain in order: validation, PostgreSQL, Keycloak provisioner, migration, API, UI.
+11. Validate the restored data and security boundaries before reopening traffic.
 
-   ```bash
-   docker compose up -d postgres redis keycloak-db keycloak
-docker compose up -d islamu-event-api islamu-event-ui
-   ```
+A database restore template for an empty, isolated target is:
 
-7. Check `/alive` and `/health` on the API and Blazor hosts.
-8. Validate login, tenant resolution, event browsing, and file access.
+~~~shell
+docker compose -f compose.production.yaml exec -T postgres \
+  sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
+  < islamu-platform.dump
+~~~
 
-## Upgrade Procedure
+Do not run a destructive restore against an unresolved database target. The exact database reset/ownership sequence belongs in the environment runbook and must be rehearsed.
 
-1. Read `RELEASE_CHECKLIST.md` and the release notes for migration, config, security, and rollback changes.
-2. Take and verify backups before pulling or building new images.
-3. Pull or build the target images.
-4. Start in a non-production environment with production-like secrets and data shape.
-5. Apply migrations through the deployment path:
-   - Aspire/local-dev uses `Event.MigrationService` before API/Blazor start.
-   - Docker Compose does not currently include `Event.MigrationService`; `Explore.API` applies migrations on startup outside `Testing`.
-6. Start the upgraded stack:
+## Post-Restore Validation
 
-   ```bash
-   docker compose up -d
-   ```
+Validate at minimum:
 
-7. Verify health:
-   - API `/alive` returns healthy;
-   - API `/health` is healthy, or degraded only for an optional dependency that is intentionally disabled;
-   - Blazor can reach the API through its configured base URL.
-8. Watch logs for migration failures, Keycloak discovery failures, secret-provider failures, storage readiness/reconciliation drift, and Cerbos readiness failures.
-9. Keep the previous images and backups until smoke tests pass.
+- production-environment-validation completes;
+- Keycloak NGO client provisioning completes without deleting unrelated realm resources;
+- islamu-ngo-migration completes once;
+- API and UI health/readiness match the release;
+- login, logout, and tenant resolution work;
+- anonymous first-party website and Blog reads work;
+- tenant/organization/group writes remain isolated and HAL-authorized;
+- representative storage objects match database records and access rules;
+- application email can enqueue and dispatch without exposing content in logs;
+- webhook consumers, endpoints, message evidence, and retry/redrive state are coherent;
+- Cerbos decisions fail closed if Cerbos is selected;
+- PDS/federation workers do not replay completed effects incorrectly.
 
-### Webhook redesign migration gate
+## Upgrade
 
-For webhook redesign schema slices, use a reviewed EF Core idempotent SQL script and a
-write-maintenance window. Apply the script with `ON_ERROR_STOP`; never allow a failed SQL
-statement to be followed by application startup. The release evidence must record:
+1. Review release notes, schema changes, policy changes, and external-provider compatibility.
+2. Produce and verify the backup set.
+3. Pin the new image digests and matching Cerbos policy commit.
+4. Run production environment validation.
+5. Allow the additive Keycloak provisioner to finish.
+6. Run islamu-ngo-migration as the explicit one-shot migration service.
+7. Start API only after migration succeeds.
+8. Start UI only after API health succeeds.
+9. Run the post-restore/upgrade validation set and monitor outbox, webhook, email, and federation workers.
 
-1. the exact committed migration used as the upgrade starting point;
-2. clean-install and committed-baseline-upgrade semantic schema signatures;
-3. representative legacy-row counts, classification counts, timing, and lock samples;
-4. a custom-format `pg_dump` restored into a clean database;
-5. matching migration history, row count, deterministic data checksum, constraints, and indexes;
-6. a successful idempotent reapply on the restored database.
+Explore.API does not replace the explicit production migration service. If migration fails, stop the rollout; do not let API/UI traffic continue against an uncertain schema.
 
-Use a 15-minute write window plus a 15-minute restore buffer for the currently measured
-10,000-row fixture. Rehearse with production-like volume before release and enlarge the
-window from measured evidence. If the projected run exceeds five minutes or lock sampling
-shows waiting writers, stop the rollout and split resumable data backfill from blocking DDL.
+## Rollback
 
-Before traffic resumes, restore the verified backup on any failed validation. After traffic
-resumes, pause writers and deploy a new additive forward migration. Do not use destructive
-rollback for evidence-bearing webhook rows and do not guess provider success during repair.
+An image rollback is safe only when the database and external contracts remain backward compatible. If the migration ran, assume a database restore is required unless the release evidence proves otherwise.
 
-## Rollback Rules
+Rollback together:
 
-Rollback depends on whether migrations are reversible:
+- application image digests;
+- PostgreSQL and matching local storage recovery point;
+- Cerbos schema/policy bundle when selected;
+- compatible Keycloak client configuration;
+- configuration and secret versions;
+- external-provider compatibility state.
 
-| Situation | Rollback Action |
-|---|---|
-| No schema/data migration ran | Revert images and restart services. |
-| Backward-compatible migration ran | Revert images only if release notes say the old version tolerates the new schema. |
-| Destructive or non-reversible migration ran | Restore database/object-storage backups and then revert images. |
-| Storage reconciliation mutations ran against the wrong object store | Stop write traffic, disable destructive reconciliation flags, restore database and object-storage backups from the same manifest, then restart with dry-run reconciliation. |
-| Secret/key rotation changed runtime identity | Restore matching secret-provider values before restarting old images. |
+After rollback, repeat tenant isolation, HAL authorization, storage, email, webhook idempotency, and health validation.
 
-If release notes do not explicitly state that a rollback is image-only safe, assume a database restore is required.
+## Local Development Is Different
 
-## Verification Checklist
+docker-compose.yml and Aspire local profiles may provision Keycloak, Cerbos, MinIO, Svix, Mailpit, Coop, Osprey, and their databases. Those local technical provider semantics are not the production ownership model. Do not copy a local-volume inventory into a production recovery plan without resolving the actual external owners.
 
-- [ ] Backups exist for application DB, Keycloak DB, object storage, and secrets.
-- [ ] Restore was tested in non-production.
-- [ ] `docker compose ps` shows required services running.
-- [ ] API `/alive` and `/health` return expected status.
-- [ ] Blazor loads and can proxy API requests.
-- [ ] Initial admin login works through Keycloak.
-- [ ] Object uploads/downloads work with local-first storage or the intentionally selected S3-compatible provider.
-- [ ] Storage reconciliation is either dry-run/healthy or intentionally disabled/degraded, and destructive flags match the release plan.
-- [ ] Cerbos readiness is healthy when `authz` profile/provider is enabled.
-- [ ] Release notes and docs impact are complete.
+## Evidence Required To Activate This Runbook
 
-## Related
-
-- [OPERATIONS.md](OPERATIONS.md) — runtime topology and operational behavior.
-- [CONFIGURATION.md](CONFIGURATION.md) — canonical configuration sections.
-- [SECRETS.md](SECRETS.md) — secret-provider behavior.
-- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) — release documentation contract.
+- timestamped PostgreSQL backup and isolated restore result;
+- local-storage recovery result matched to the database point;
+- external Keycloak recovery evidence;
+- selected Cerbos/provider recovery or re-publication evidence;
+- end-to-end post-restore smoke results;
+- upgrade and rollback rehearsal with measured recovery time and data-loss window;
+- named operator ownership and artifact retention location.

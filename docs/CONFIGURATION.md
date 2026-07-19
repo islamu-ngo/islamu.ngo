@@ -1,134 +1,168 @@
-ABOUTME: Documents runtime configuration sources and precedence for API, BFF, and shared infrastructure.
-ABOUTME: Focuses on non-inferable key names, mapping behavior, and settings cascade rules.
+ABOUTME: Configuration authority and runtime profiles for first-party ISLAMU operations.
+ABOUTME: Separates static deployment values, secrets, governance settings, and optional integrations.
 
 # Configuration
 
-> **Audience:** Operators | Contributors | AI agents
-> **Status:** Implemented
+> **Audience:** Contributors | First-party operators | Maintainers | AI agents
+> **Status:** Active
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-12
-> **Source Anchors:** `Explore.API/Extensions/ConfigurationExtensions.cs`, `Explore.API/Controllers/ListmonkIntegrationSettingsController.cs`, `Explore.Application/DTOs/Integrations/ListmonkIntegrationSettingsDto.cs`, `Explore.Infrastructure/Integrations/Listmonk/ListmonkSyncService.cs`, `Explore.Blazor/Extensions/ConfigurationExtension.cs`, `Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `Event.Web.BffHosting/Authentication/EventBffKeycloakAuthenticationOptions.cs`, `Event.Web.BffHosting/Proxy/EventApiBaseAddressResolver.cs`, `Explore.Application/Features/EventReporting/EventReportSubmissionOptions.cs`, `Explore.Application/Services/AccountAuthorityLifecycleEmailOptions.cs`, `Explore.Application/Notifications/AccountAuthorityKind.cs`, `Explore.Application/Notifications/NotificationRoutingOptions.cs`, `Explore.Infrastructure/Configuration/ModerationProviderOptions.cs`, `Explore.Infrastructure/Configuration/OspreyProviderOptions.cs`, `Explore.Infrastructure/Configuration/CoopProviderOptions.cs`, `Explore.API/Services/CoopWebhookSignatureValidator.cs`, `Explore.Infrastructure/Services/HierarchicalSettingsResolver.cs`, `Explore.Infrastructure/Services/Keycloak/KeycloakLifecycleEmailOptions.cs`, `Explore.Infrastructure/Services/Keycloak/KeycloakAccountAuthorityLifecycleEmailService.cs`, `Explore.Infrastructure/Storage/LocalFileStorageProvider.cs`, `Explore.Infrastructure/Storage/S3ConfigResolver.cs`, `Explore.Infrastructure/StorageReconciliationSettings.cs`, `Explore.Infrastructure/Mail/SmtpConfigResolver.cs`, `Explore.Infrastructure/Services/SetupSecretProvider.cs`, `Explore.Domain/Constants/GovernanceSettingKeys.cs`, `Explore.Domain/Constants/InfrastructureSecretSettingKeys.cs`, `Explore.Domain/Secrets/SecretDefinitionRegistry.cs`, `docs/SECRETS.md`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.AppHost/AppHost.cs`, `src/Explore.API/Extensions/ConfigurationExtensions.cs`, `src/Explore.Blazor/Extensions/ConfigurationExtension.cs`, `src/Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `src/Explore.Infrastructure/Services/HierarchicalSettingsResolver.cs`, `src/Explore.Domain/Constants/GovernanceSettingKeys.cs`, `src/Explore.Domain/Secrets/SecretDefinitionRegistry.cs`, `compose.production.yaml`, `.env.example`
 
-## Runtime Configuration Sources
+This document describes the configuration surfaces used to run the first-party ISLAMU website. A
+provider name, endpoint, port, container image, or local fixture is a technical integration value;
+it is not a public product tier or a promise that ISLAMU will operate third-party software for
+other deployments.
 
-The system uses three configuration layers:
+## Authority And Precedence
 
-1. static app settings (`appsettings*.json`, environment variables, user secrets),
-2. secret management (`AddInfisicalCompatibility` / `AddInfisicalBlazorCompatibility` + `AddSecretManagement`),
-3. governance settings in database (`SystemSetting` + `TenantSetting`).
+Keep the three configuration authorities distinct:
 
-Secrets have an additional ownership contract that applies across the platform:
+1. **Static deployment configuration** comes from appsettings, environment variables, and Aspire
+   or Compose wiring. It selects infrastructure, public URLs, BFF/API routing, and bootstrap mode.
+2. **Secrets** come from the selected `SecretProvider` or explicit local development sources. See
+   [SECRETS.md](SECRETS.md); never place secret values in this document.
+3. **Governance settings** are application-managed database values resolved by
+   `HierarchicalSettingsResolver`. Their documented defaults and ownership rules are not
+   replacements for deployment configuration.
 
-- **Application-managed** secrets/settings are saved by ISLAMU Event and editable from setup/admin UI. Saved database/application values are the runtime authority.
-- **Deployment-managed** secrets/settings are controlled by environment variables, appsettings, or a configured secret provider. UI surfaces show read-only ownership badges and changes require provider refresh or redeploy/restart.
-- **Deployment bootstrap** values may prefill onboarding/admin forms when no application-managed value exists. If the operator modifies and saves them, the saved application setting is used from then on.
+Use standard .NET mapping for environment overrides: `Section:Child` becomes
+`Section__Child`. Compatibility aliases in `ConfigurationExtensions` exist for current deployment
+inputs; do not create new aliases in documentation.
 
-Do not treat environment variables as absolute authority forever. In application-managed mode the precedence is: explicit saved application/database setting, then deployment bootstrap value, then default. In deployment-managed mode the selected external source is authoritative and application-managed DB values for that field are ignored.
+When a field is explicitly deployment-managed, the deployment source remains authoritative and
+the UI must present ownership metadata rather than silently overriding it. Application-managed
+secret fields remain write-only after save.
 
-### Keycloak onboarding metadata
+## Runtime Profiles
 
-The API compatibility layer maps `KEYCLOAK_CLIENT_ID` and `KEYCLOAK_BLAZOR_CLIENT_ID` to `Keycloak:ClientId`. It maps the server-only `KEYCLOAK_BLAZOR_CLIENT_SECRET` or `Keycloak:BlazorClientSecret` value to `Keycloak:ClientSecret`. Existing canonical `Keycloak:*` values retain precedence because compatibility aliases only fill missing keys. `Keycloak:Audience` identifies the API audience and is never used as the browser client ID.
+`src/Explore.AppHost/AppHost.cs` is authoritative for Aspire composition.
 
-Onboarding treats Keycloak deployment metadata as usable only when both the effective authority and client ID are nonblank. In application-managed mode, a complete enabled stored tuple wins; otherwise a complete deployment tuple is a bootstrap fallback and is reported as detected and configured. When authority and client ID are explicitly deployment-managed, the deployment tuple is authoritative and stored values for those fields are ignored. Partial deployment metadata fails closed and does not report Keycloak as configured.
+| Launch profile | `ISLAMU_ASPIRE_MODE` | Intended use | Local resources |
+|---|---|---|---|
+| `local-default` | `DefaultLocal` | Normal contributor workflow and the default when the variable is absent | Local data plus the standard local platform set. |
+| `local-full` | `FullLocal` | Integration work needing the complete local stack | Standard resources plus heavy optional services such as Weblate and observability tools. |
+| `https` | `FullLocal` | Compatibility alias for the full local profile | Same mode as `local-full`. |
+| `local-core` | `ExternalInfra` | Maintainer workflow against externally supplied infrastructure | Application projects and always-on local developer resources only. |
+| `local-lite` | `LocalDataExternalPlatform` | Local data with externally supplied platform services | Local data plus application projects. |
 
-Public setup reads, administrator configuration reads, status responses, and control-plane summaries expose only sanitized authority, client ID, enabled/detected state, and secret ownership metadata. They always return an empty `KeycloakClientSecret`. The effective secret is available only to trusted server-side paths such as BFF refresh and realm synchronization.
+Mailpit, migration orchestration, and the application projects are part of the current AppHost
+composition. Aspire may allocate dynamic ports, especially with isolation; use Aspire discovery
+instead of treating local port numbers as stable contracts.
 
-The browser BFF is a confidential OIDC client. A new Keycloak configuration therefore requires a client secret. Blank secret input is accepted only when the server's authoritative ownership metadata says an effective secret is already configured and the browser value is merely redacted; save and update handlers derive that state from `IAuthProviderConfigurationService` and never trust request ownership metadata.
+The contributor start path is documented in [GETTING_STARTED.md](GETTING_STARTED.md). Maintainers
+using external modes must provide every required endpoint and credential explicitly.
 
-## Deployment CI/CD Secrets
+## Core Deployment Configuration
 
-GitHub Actions deployment secrets are workflow secrets, not runtime app settings and not `SecretProvider` keys. Cerbos policy publishing reads repository secrets through the `${{ secrets.* }}` context while the job remains gated by the `production` GitHub Environment. Coolify deploy credentials are environment-scoped secrets so production deployments can require approval before those secrets are released to deploy jobs.
+### PostgreSQL
 
-| Environment | Secret / variable | Purpose |
+Bootstrap configuration uses discrete values, not a documentation-only database URL:
+
+- `POSTGRESQL_HOST`
+- `POSTGRESQL_PORT`
+- `POSTGRESQL_DATABASE`
+- `POSTGRESQL_USERNAME`
+- `POSTGRESQL_PASSWORD`
+
+`BootstrapSecretLoader` composes the application connection string. Keep migration ownership with
+the migration service; application containers must not improvise schema changes at startup.
+
+### Cache
+
+Production uses the externally supplied Redis-compatible `CACHE_CONNECTION_STRING`. Local Aspire
+profiles wire their local cache resource where the selected mode owns local infrastructure.
+
+### Identity And BFF Routing
+
+Keycloak settings cover the authority/realm, server-side clients, service credentials, and public
+redirect/origin values. The browser authenticates through the BFF; do not expose confidential
+client credentials or forward browser-supplied authorization/setup administration headers.
+
+Public URLs and proxy trust must match the deployed HTTPS origins. Production validation checks
+the required first-party API, UI, Keycloak, redirect, CORS, and trusted-proxy names before the
+stateful service chain starts. Use the exact list in
+[PRODUCTION_OPERATIONS.md](PRODUCTION_OPERATIONS.md).
+
+### Authorization
+
+The runtime authorization selector supports the repository's Local and Cerbos implementations:
+
+- Blank intent leaves provider choice to onboarding.
+- Explicit `local` selects the local implementation and performs no Cerbos call.
+- Explicit `cerbos` selects the external PDP path and remains fail-closed until endpoint
+  verification and policy synchronization succeed.
+
+`Cerbos:GrpcEndpoint` and `Cerbos:AdminApi:*` are separate concerns: the first serves runtime policy
+decisions; the second supports controlled package status/synchronization. Admin API credentials
+are secrets and must be redacted. Local Aspire/Compose resources use the repository policy files;
+the production Compose topology does not bundle Cerbos.
+
+HAL links remain the UI authorization authority. Configuration must not cause clients to infer
+edit/delete affordances from local roles or claims.
+
+## Integration Matrix
+
+These integrations remain supported by current source. Their deployment values describe adapters
+and local development fixtures, not an offer to host the provider.
+
+| Integration | Current boundary | Configuration notes |
 |---|---|---|
-| `production` secret | `COOLIFY_DEPLOY_API_WEBHOOK` | Coolify API application deployment webhook. |
-| `production` secret | `COOLIFY_DEPLOY_UI_WEBHOOK` | Coolify UI application deployment webhook. |
-| `production` secret | `COOLIFY_DEPLOY_TOKEN` | Bearer token used when invoking production Coolify webhooks. |
-| `production` variable | `PRODUCTION_URL` | Public environment URL shown on the GitHub deployment environment. |
-| `production` variable | `PRODUCTION_API_URL` | Required API base URL for production `/alive` and `/health` smoke checks. |
-| `production` variable | `PRODUCTION_UI_URL` | Required UI base URL for production `/alive` and `/health` smoke checks. |
-| Repository secret | `CERBOS_SERVER` | Production Cerbos Admin API gRPC address used by the main-branch policy publish job. |
-| Repository secret | `CERBOS_USERNAME` | Production Cerbos Admin API username used by `cerbosctl`. |
-| Repository secret | `CERBOS_PASSWORD` | Production Cerbos Admin API password used by `cerbosctl`. |
-| Repository secret | `CERBOS_CA_CERT_PEM` | Optional private CA certificate PEM for production Cerbos Admin API TLS verification. |
-| `staging` secret | `COOLIFY_DEPLOY_API_STAGING_WEBHOOK` | Coolify staging API application deployment webhook. |
-| `staging` secret | `COOLIFY_DEPLOY_UI_STAGING_WEBHOOK` | Coolify staging UI application deployment webhook. |
-| `staging` secret | `COOLIFY_DEPLOY_TOKEN` | Bearer token used when invoking staging Coolify webhooks. |
-| `staging` variable | `STAGING_URL` | Public environment URL shown on the GitHub deployment environment. |
-| `staging` variable | `STAGING_API_URL` | Optional API base URL for `/alive` and `/health` smoke checks. |
-| `staging` variable | `STAGING_UI_URL` | Optional UI base URL for `/alive` and `/health` smoke checks. |
+| Weblate | Local `FullLocal`/Compose localization resource and configurable TMS provider | `localization.tms_provider=2`; configure the API URL, project/component, and server-side credential for the selected instance. Weblate is not in the production Compose topology. |
+| Tolgee | Source-backed configurable TMS adapter | `localization.tms_provider=1`; configure the API URL/project and server-side credential. No Tolgee service is bundled by AppHost or production Compose. |
+| PostHog | External configurable analytics provider | Select `analytics.provider=posthog`, opt in with `analytics.enabled`, and configure `analytics.endpoint_url` plus required keys. No PostHog service is bundled locally or in production. |
+| Mailpit | Local/test SMTP capture | Local defaults use `MAIL_SMTP_*`; production must use an approved external SMTP route. Mailpit is not a production mail system. |
+| Listmonk | Optional external subscriber synchronization | Disabled unless `LISTMONK_ENABLED` and the corresponding governance settings are intentionally configured. No Listmonk service is bundled. |
+| Cerbos | Local development resource or external production PDP/Admin API | Select explicitly, configure endpoint/admin credentials by ownership, and preserve fail-closed behavior. Cerbos is not in production Compose. |
 
-Keep the existing secret names until the deploy workflows are consolidated. If names are normalized later, update the workflow and this table in the same change.
+### Localization And TMS
 
-## Core Static Sections
-
-Commonly consumed sections in code:
-
-- `Keycloak:*` (authority, metadata, client IDs/secrets)
-- `AccountAuthorityLifecycleEmail:*` (Application-level identity-email delegation switch)
-- `KeycloakLifecycleEmail:*` (Keycloak Admin REST required-action email adapter)
-- `Bff:Authentication:*` (explicit browser-BFF authority, metadata, client ID/secret, callback paths, and cookie policy overrides)
-- `ConnectionStrings:DefaultConnection`
-- `Cors:AllowedOrigins`
-- `ForwardedHeadersTrust:*`
-- `RateLimiting:*`
-- `RequestTimeouts:*`
-- `Cerbos:*`
-- `Authorization:Provider` (deployment-owned `local`/`cerbos` selector; blank means manual onboarding)
-- `Deployment:*`
-- `PublicBaseUrl`, `App:PublicBaseUrl`, or `Application:PublicBaseUrl`
-- `Bff:AdminHosts` and `Bff:AdminHostAllowedIpRanges`
-- `Storage:Local:*` (deployment-managed local filesystem storage)
-- `StorageReconciliation:*` (dry-run-first storage drift worker)
-- `S3Settings:*` (fallback source for storage resolver)
-- `SecretProvider:*`
-- `SecretRefresh:*`
-- `EmailDispatchProcessor:*` (Basic Dispatch Mode background worker)
-- `EmailDispatchRabbitMq:*` (optional RabbitMQ Dispatch Mode transport foundation)
-- `IdempotencyCleanup:*` (expired write-retry replay-cache cleanup)
-- `AiRetentionCleanup:*` (scheduled tenant-scoped AI conversation retention cleanup)
-- `AiProvider:*` (AI provider readiness/egress validation foundation)
-- `Reporting:*` (local event-report submission limits, evidence retention, and provider runtime mode)
-- `Listmonk:*` (deployment bootstrap for subscriber synchronization defaults and credentials)
-- `Webhooks:*` (outgoing webhook provider mode, LocalProvider delivery limits, and Svix server-side integration)
-- `Mcp:*` (optional Model Context Protocol adapter posture)
-- `Persistence:*` (database runtime options)
-
-### Persistence Configuration
-
-| Key | Default | Description |
-|---|---:|---|
-| `Persistence:EnableRlsTenantSession` | `false` | Registers the PostgreSQL tenant-session interceptor that sets `app.current_tenant_id` when EF Core opens a connection. This does not enable RLS policies by itself; keep disabled outside prototype environments until runtime app-role, migration-role, admin/system-path, and table-policy rollout work is complete. |
-
-### Localization Configuration
-
-Localization runtime settings are governance-backed, not static appsettings. The
-important keys are documented in [LOCALIZATION.md](LOCALIZATION.md):
+Canonical governance settings include:
 
 - `localization.default_language`
 - `localization.enabled_languages`
 - `localization.fallback_language`
 - `localization.client_picker_enabled`
 - `localization.force_offline_mode`
-- `localization.tms_provider`
+- `localization.tms_provider` (`0=None`, `1=Tolgee`, `2=Weblate`)
 - `localization.tms_api_url`
 - `localization.tms_project_id`
-- `localization.tms_component`
+- `localization.tms_component` (Weblate)
+- `localization.tms_api_key` (secret binding)
 
-The TMS credential is the shared secret-binding key `localization.tms_api_key`.
-Set or rotate it through the authorized localization admin API so the value is
-stored as a server-side secret binding. Do not put Tolgee/Weblate API keys in
-governance settings, Blazor payloads, generated clients, logs, metrics, or
-OpenAPI examples.
+Offline translation bundles remain the fallback when no TMS is selected or offline mode is
+forced. Never send TMS credentials or translated content in diagnostics. See
+[LOCALIZATION.md](LOCALIZATION.md).
 
-### Listmonk Integration Configuration
+### Analytics And PostHog
 
-Listmonk runtime settings are governance-backed. Static configuration and local
-environment variables are deployment bootstrap values only; once an operator
-saves settings through the admin API, saved application settings are the runtime
-authority.
+The analytics abstraction is disabled by default. Important keys are:
 
-Bootstrap keys accepted by local env/Compose/Infisical compatibility mapping:
+| Key | Safe default or rule |
+|---|---|
+| `analytics.provider` | `none`; `posthog` is one explicit provider choice. |
+| `analytics.enabled` | `false`; enabling is an operator decision. |
+| `analytics.endpoint_url` | Canonical provider base URL; do not invent `analytics.endpoint`. |
+| `analytics.transport_mode` | `direct`, `proxy`, or `relay`; relay keeps the write key server-side. |
+| `analytics.api_key` | Provider public/write key according to transport; secret binding rules still apply. |
+| `analytics.personal_api_key` | Sensitive server-side provider key. |
+| `analytics.consent_mode` | Preserve the privacy mode selected by governance. |
+| `analytics.global_disable_client_tracking` | Browser-side emergency kill switch. |
+| `analytics.posthog_session_replay` | `false` unless explicitly approved with consent handling. |
+| `analytics.posthog_autocapture` | `false` unless explicitly approved with consent handling. |
+| `analytics.posthog_heatmaps` | `false` unless explicitly approved with consent handling. |
+
+PostHog endpoints may point to a hosted or separately operated instance. That endpoint choice is a
+technical provider setting, not a first-party hosting commitment.
+
+### Email, Mailpit, And Listmonk
+
+Product email dispatch resolves the `email.*` governance/secret keys. Local development seeds
+those values from `MAIL_SMTP_*`, then supported compatibility aliases, and finally the active
+Mailpit endpoint when the SMTP host is empty. Aspire isolation can change Mailpit ports; follow
+service discovery.
+
+Listmonk deployment bootstrap names are:
 
 - `LISTMONK_ENABLED`
 - `LISTMONK_INSTANCE_URL`
@@ -138,827 +172,50 @@ Bootstrap keys accepted by local env/Compose/Infisical compatibility mapping:
 - `LISTMONK_API_USERNAME`
 - `LISTMONK_API_KEY`
 
-`LISTMONK_API_USERNAME` and `LISTMONK_API_KEY` are server-side secret bindings.
-Browser/admin DTOs expose only `ApiUsernameConfigured` and `ApiKeyConfigured`
-flags, never raw credential values. Rotate credentials through the authorized
-Listmonk integration API.
+The username/API key are server-side secret bindings. Browser/API reads expose configured status,
+not credentials. Listmonk subscriber synchronization is distinct from SMTP dispatch, and Keycloak
+realm email remains owned by Keycloak. See [EMAIL_NOTIFICATIONS.md](EMAIL_NOTIFICATIONS.md).
 
-Static no-TMS/fallback bundles are written to
-`{ContentRoot}/App_Data/Localization/Bundles/{code}.json`. That path is local
-filesystem storage unless the deployment mounts it to a shared persistent
-volume.
+## Secret Provider
 
-### Public URL Configuration
+`Explore.Secrets` binds `SecretProvider:*`:
 
-`PublicBaseUrl` is the preferred static key for the instance's externally reachable HTTPS origin. The fallback lookup order is `PublicBaseUrl`, then `App:PublicBaseUrl`, then `Application:PublicBaseUrl`.
-
-The value must be an absolute `http` or `https` URL. Public deployments should use `https`. It is used by public URL builders and by the email dispatch drain when creating absolute unsubscribe URLs for `List-Unsubscribe` headers and visible unsubscribe footers. If no valid public base URL is configured, categorized email can still send when preferences allow it, but the dispatch path omits unsubscribe URLs because relative links are not valid in email headers.
-
-### Keycloak Identity Lifecycle Email Configuration
-
-Identity lifecycle email for Keycloak-backed accounts is account-authority owned. The logical ownership settings are:
-
-| Logical setting | Expected value | Meaning |
-|---|---|---|
-| `auth.provider` | `Keycloak` | The account authority for Keycloak-backed credentials is Keycloak. |
-| `auth.identity_email_owner` | `AccountAuthority` | Verification, password reset, email update, MFA, and required-action messages are not ISLAMU product emails. |
-| `auth.account_authority_kind` | `Keycloak` | ISLAMU may request a Keycloak action and record local delegation audit, but Keycloak owns action tokens, templates, SMTP handoff, and message delivery. |
-
-Runtime configuration currently uses the .NET sections below:
-
-| Key | Default | Description |
-|---|---:|---|
-| `AccountAuthorityLifecycleEmail:Enabled` | `false` | Enables ISLAMU-initiated identity lifecycle delegation requests. Disabled paths return safe local outcomes and make no provider call. |
-| `AccountAuthorityLifecycleEmail:ProviderConfigured` | `false` | Declares that the selected account authority is configured. `false` returns a safe provider-not-configured outcome. |
-| `AccountAuthorityLifecycleEmail:AccountAuthorityKind` | `Keycloak` | Account-authority kind used for local delegation decisions. |
-| `KeycloakLifecycleEmail:Enabled` | `false` | Enables the Infrastructure Keycloak Admin REST adapter for required-action email requests. |
-| `KeycloakLifecycleEmail:BaseUrl` | unset | Keycloak base URL. Public deployments should use HTTPS. Loopback/private URLs are rejected unless explicitly allowed for local development. |
-| `KeycloakLifecycleEmail:Realm` | unset | Realm whose users receive required-action emails. |
-| `KeycloakLifecycleEmail:AdminUsername` / `AdminPassword` | unset | Server-side admin credential used only by Infrastructure to obtain an admin token. Never expose in browser payloads, health data, logs, traces, or support bundles. |
-| `KeycloakLifecycleEmail:AdminClientId` | `admin-cli` | Client id used for the admin password grant. |
-| `KeycloakLifecycleEmail:DefaultClientId` | unset | Optional client id passed to Keycloak `execute-actions-email` when a request does not provide one. |
-| `KeycloakLifecycleEmail:DefaultLifespanSeconds` | unset | Optional default required-action link lifetime passed to Keycloak. |
-| `KeycloakLifecycleEmail:AllowLocalUrls` | `false` | Local-development escape hatch for loopback/private Keycloak URLs. Keep `false` in shared and public deployments. |
-
-`keycloak.smtp_mode` is an operational policy label, not an ISLAMU SMTP provider switch. Use `managed` when Keycloak/provider SMTP is managed outside this deployment. Use a self-hosted/shared-SMTP mode only to configure the Keycloak realm SMTP server with deployment-owned credentials. In both modes, Keycloak remains the sender and owner of identity lifecycle emails; shared SMTP credentials do not transfer email decision ownership to ISLAMU Event.
-
-`keycloak.theme_sync_enabled` is a future automation policy for applying ISLAMU-managed Keycloak theme assets. Keycloak email themes live under the Keycloak theme `email` type and customize templates such as password-reset or execute-actions messages. Theme sync changes Keycloak-owned templates only; it does not route identity lifecycle mail through `EmailDispatchOutbox`, `IEmailService`, RabbitMQ, or TickerQ.
-
-Local development may point a self-hosted Keycloak realm SMTP configuration at Mailpit for inspection. That is still Keycloak realm SMTP plumbing. Product Basic Dispatch Mailpit settings under `email.*` remain separate and should not be treated as production defaults for Keycloak.
-
-### ATProto/PDS Identity Lifecycle Email Configuration
-
-ATProto/PDS account lifecycle email follows the same account-authority rule, but the authority is the PDS that hosts the account. ISLAMU Event is currently a relying party/federation foundation, not a public ATProto OAuth login provider or PDS server.
-
-| Logical setting | Expected value | Meaning |
-|---|---|---|
-| `auth.provider` | `ATProto` only when ATProto login is actually implemented | Current source exposes federation foundations and governance settings; it does not ship public ATProto OAuth/login yet. |
-| `auth.identity_email_owner` | `AccountAuthority` | PDS email confirmation, password reset, email change, migration, and security messages are not ISLAMU product emails. |
-| `auth.account_authority_kind` | `AtprotoPds` or `IslamuOperatedPds` | External PDS hosts own their hosted-account lifecycle email. A future ISLAMU-operated PDS cell also owns its own PDS credential lifecycle email because the PDS owns and verifies the credential token. |
-
-Do not add a global `emails.provider = PDS` switch. PDS SMTP is account-authority transport, not a product email provider for `EmailDispatchOutbox` or `IEmailService`. If a future ISLAMU-operated PDS cell uses shared SMTP or local Mailpit, that only configures the PDS cell's account-email delivery path; it does not transfer product notification ownership away from ISLAMU Event.
-
-AT Protocol account email access is private account-hosting data. Product email flows must not assume a verified email claim is available from ATProto login. When `email` or `email_verified` is unavailable or unverified, use a separately verified app-level notification email or in-app notifications instead of reusing PDS credential email semantics.
-
-### Dedicated Admin Host Configuration
-
-`Bff:AdminHosts` is a deployment-managed list of exact hosts or origins that should render the existing Blazor app's control-plane shell instead of the public/tenant shell. Examples: `admin.example.org`, `https://admin.example.org`. Wildcards are rejected because they can overlap tenant subdomains or tenant custom domains.
-
-`Bff:AdminHostAllowedIpRanges` is optional. When set, values must be exact IP addresses or CIDR ranges, for example `203.0.113.10` or `203.0.113.0/24`. The allowlist applies only to configured admin hosts. If a request arrives on an admin host with a missing remote IP or an address outside the allowed ranges, the BFF returns `403`.
-
-Admin-host classification runs after trusted forwarded-header processing. Reverse proxies must forward `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-For` so the BFF sees the browser-facing host, scheme, and client IP.
-
-### Storage Static Configuration
-
-Local-first storage is deployment-managed. The filesystem root is bound from static configuration and is not a tenant/admin database setting.
-
-| Key | Default | Description |
-|---|---|---|
-| `Storage:Local:RootPath` | provider default unless Compose/Aspire overrides | API-owned local storage root. Compose sets `/app/storage-data/local` and mounts it to `local_storage_data`; Aspire sets `storage-data/aspire-local` under the repository root. |
-| `Storage:Local:CreateRootIfMissing` | `true` in Compose/Aspire overrides | Allows startup/health/provider code to create the local root when the deployment grants write permission. |
-
-Optional S3-compatible storage still uses `S3Settings:*` as the runtime fallback source. Persisted `s3.*` and `s3.access_key_id`/`s3.secret_access_key` settings take precedence through `S3ConfigResolver` when S3-compatible storage is selected.
-
-`StorageReconciliation:*` controls the API-hosted drift worker and is validated at startup:
-
-| Key | Default | Description |
-|---|---:|---|
-| `StorageReconciliation:Enabled` | `true` | Enables the hosted worker and reconciliation health check. Disabled reports intentional degraded health. |
-| `StorageReconciliation:DryRun` | `true` | Report-only mode. Mutating flags are ignored while dry-run is true. |
-| `StorageReconciliation:InitialDelaySeconds` | `45` | Initial worker delay after API startup. |
-| `StorageReconciliation:PollingIntervalMinutes` | `360` | Worker interval between passes. |
-| `StorageReconciliation:BatchSize` | `500` | Maximum metadata rows or inventory objects per pass. |
-| `StorageReconciliation:MissingObjectQuarantineGraceHours` | `24` | Age threshold before missing backing objects can quarantine metadata. |
-| `StorageReconciliation:OrphanFileQuarantineGraceHours` | `24` | Age threshold before orphan local files can be moved to quarantine. |
-| `StorageReconciliation:DeleteGraceHours` | `720` | Age threshold before delete-eligible metadata can be physically deleted and soft-deleted. |
-| `StorageReconciliation:QuarantineMissingObjects` | `false` | Enables metadata quarantine for missing backing objects when `DryRun=false`. |
-| `StorageReconciliation:QuarantineOrphanLocalFiles` | `false` | Enables local orphan quarantine when `DryRun=false`. |
-| `StorageReconciliation:DeleteQuarantinedObjects` | `false` | Enables idempotent provider delete plus metadata soft-delete when `DryRun=false`. |
-
-### AI Provider Static Configuration
-
-`AiProvider:*` is the deployment/admin-controlled readiness and egress-validation surface for Infrastructure AI adapters. The governance keys below remain the tenant/runtime source for assistant availability; this static section lets operators validate provider wiring without putting endpoint URLs or credentials in browser-controlled request data.
-
-| Key | Default | Description |
-|---|---:|---|
-| `AiProvider:Enabled` | `false` | Enables provider readiness evaluation. Disabled reports healthy-disabled and performs no provider network call. |
-| `AiProvider:Provider` | `none` | Supported values: `none`, `fake`, `openai`, `openai-compatible`, `anthropic`, `anthropic-compatible`, and `azure-openai`. `openai` uses OpenAI's Responses API; `anthropic` uses Anthropic's Messages API; compatible providers target configured endpoints. |
-| `AiProvider:EndpointUrl` | unset | Admin/deployment-controlled provider base URL. Optional for `openai` (`https://api.openai.com/v1`) and `anthropic` (`https://api.anthropic.com/v1`); required for `openai-compatible`, `anthropic-compatible`, and `azure-openai`. Azure OpenAI must use HTTPS. Must have no embedded credentials, query string, or fragment. Local/private endpoints require explicit opt-in. |
-| `AiProvider:ApiKey` | unset | Sensitive provider credential. Required for `openai` and `anthropic`; optional for local/self-hosted compatible endpoints that do not require authentication. Never expose in browser payloads, health data, logs, metrics, traces, screenshots, or issue templates. |
-| `AiProvider:ModelId` | unset | Default model identifier for the concrete adapter. Required for OpenAI Responses, Anthropic Messages, compatible, and Azure OpenAI providers when enabled. For Azure OpenAI this is the deployment name passed to the Azure SDK. Health/metrics use only boolean presence flags, not the raw model ID. |
-| `AiProvider:AzureCredentialMode` | `api-key` | Azure OpenAI credential mode: `api-key` or `default-azure-credential`. Prefer `default-azure-credential` for Azure-hosted deployments with managed identity. |
-| `AiProvider:AzureTenantId` | unset | Optional tenant ID used to constrain `DefaultAzureCredential` for Azure OpenAI. Leave unset for the SDK default chain. |
-| `AiProvider:AllowLocalProviderEndpoints` | `false` | Allows loopback/link-local/private provider URLs for deliberate self-hosted/local-model deployments. Keep `false` for public SaaS/provider endpoints. |
-| `AiProvider:MaxInputTokens` | `8000` | Provider request input budget seed. Handlers must still enforce prompt/reference bounds. |
-| `AiProvider:MaxOutputTokens` | `1024` | Provider response budget seed. |
-| `AiProvider:Temperature` | `0.2` | Provider sampling temperature. Must be between 0 and 2. |
-| `AiProvider:TimeoutSeconds` | `30` | Provider call timeout budget. Must be between 1 and 300. |
-| `AiProvider:RetentionDays` | `30` | Retention seed; enforcement is separate from provider health. |
-| `AiProvider:DailyMessageLimit` | `50` | Abuse/cost-control seed; enforcement is separate from provider health. |
-
-### Webhook Static Configuration
-
-`Webhooks:*` controls outgoing product webhooks only. Incoming integration callbacks under `/api/integrations/*` remain available independently of the outgoing provider mode.
-
-| Key | Default | Description |
-|---|---:|---|
-| `Webhooks:Enabled` | `true` | Master switch for outgoing product webhooks. |
-| `Webhooks:Provider` | `Local` | Supported values are `Disabled`, `Local`, `Svix`, `Composite`, and `DryRun`. |
-| `Webhooks:DefaultPayloadRetentionDays` | `14` | Default retention window for canonical webhook payload bodies. |
-| `Webhooks:Local:MaxAttempts` | `8` | LocalProvider retry ceiling. |
-| `Webhooks:Local:TimeoutSeconds` | `15` | LocalProvider total request timeout. |
-| `Webhooks:Local:ConnectTimeoutSeconds` | `3` | LocalProvider connect timeout. |
-| `Webhooks:Local:BlockPrivateNetworks` | `true` | Blocks loopback, private, link-local, metadata, localhost, and internal DNS destinations by default. |
-| `Webhooks:Local:AllowedPrivateCidrs` | empty | Operator allow-list for deliberate private-network delivery. Keep empty for public/SaaS deployments. |
-| `Webhooks:Svix:BaseUrl` | unset | Optional absolute HTTP(S) self-hosted Svix base URL. Local-full Aspire injects the current Svix endpoint into the API; Compose uses `http://svix:8071`. |
-| `Webhooks:Svix:AuthTokenSecretRef` | `webhooks.svix.auth_token` | Server-side secret binding for the Svix API token. |
-| `Webhooks:Svix:OperationalWebhookSecretRef` | `webhooks.svix.operational_webhook_secret` | Secret binding for incoming Svix operational callback verification. |
-| `Webhooks:Svix:AppPortalEnabled` | `true` | Enables backend-only App Portal access URL generation. |
-| `Webhooks:Svix:SyncEventTypesOnStartup` | `true` | Syncs the canonical event catalog to Svix when provider mode is `Svix` or `Composite`. |
-
-Local development can source Svix secrets from `WEBHOOKS_SVIX_AUTH_TOKEN` and `WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET`; Development seeding creates missing instance secret bindings for those variables when values are configured. Rotate the checked-in local defaults outside disposable development. See [WEBHOOKS.md](WEBHOOKS.md) for provider behavior and runbooks.
-
-### Reporting Static Configuration
-
-`Reporting:*` controls local event-report intake and the moderation-provider runtime mode introduced by the event-reporting bounded context. Submission remains local-first: it creates the canonical report, event target, encrypted reporter-text evidence, local case, and provider-sync outbox intent before any external integration can run.
-
-Provider runtime keys are infrastructure-only switches. They control `RuntimeModerationProviderResolver` and do not disable local report submission:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Reporting:Enabled` | `true` | Enables provider synchronization contracts. `false` returns provider-disabled results for external sync/evaluation paths while local intake and queue management remain available. |
-| `Reporting:Mode` | `LocalOnly` | Active provider mode. Supported values: `Disabled`, `LocalOnly`, `Osprey`, `Coop`, and `Composite`. `LocalOnly` performs no network calls. |
-| `Reporting:SyncReports` | `true` | Allows report-sync contract execution when provider mode is not disabled. Set `false` to keep outbox dispatch from attempting provider sync work. |
-| `Reporting:EvaluateSignals` | `false` | Enables safety-signal evaluation only for `Osprey` or `Composite` modes. When enabled with a configured Osprey endpoint, the runtime resolver calls the Osprey signal adapter after local report sync. |
-| `Reporting:MirrorReviewQueue` | `false` | Enables external review-case mirroring only for `Coop` or `Composite` modes. When enabled with a configured Coop endpoint, the runtime resolver mirrors local report cases after local report sync. |
-| `Reporting:ExecuteDecisions` | `true` | Allows provider decision execution to delegate to the local decision executor. Set `false` to fail decision execution contracts with a non-retryable disabled result. |
-| `Reporting:EvidenceMode` | `MetadataOnly` | Evidence-sharing posture for provider envelopes. Supported values are `MetadataOnly`, `SafeSummaryOnly`, and `ReporterText`; `ReporterText` is rejected for `Disabled` and `LocalOnly` modes. |
-
-Control-plane health uses additional static reporting keys. These affect only aggregate operations dashboards and do not change report intake, routing, or provider dispatch behavior:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Reporting:Health:StuckProviderSyncMinutes` | `120` | Pending provider-sync links older than this window are counted as stuck in the control-plane `moderation-reporting` operations card. |
-| `Reporting:Health:FailedProviderSyncWarningThreshold` | `1` | Failed provider-sync links at or above this count produce the `moderation_reporting_provider_sync_failures` warning. |
-
-Hierarchical reporting settings add tenant provider targets on top of the instance baseline. Static `Reporting:*`, `Reporting:Osprey:*`, and `Reporting:Coop:*` remain the instance-level runtime authority, and local canonical reporting is always required before any external provider sync. Tenant settings are additive only: they can enable tenant-owned Osprey or Coop targets when instance administrators unlock them, but they cannot weaken an enabled instance Osprey or Coop baseline.
-
-| Hierarchical key | Default | Scope | Description |
-|---|---:|---|---|
-| `governance.lock_tenant_reporting_providers` | `true` | Instance | Broad lock for all tenant-owned reporting providers. Keep locked unless tenant admins may configure their own moderation providers. |
-| `governance.lock_tenant_osprey_provider` | `true` | Instance | Provider-specific lock for tenant Osprey targets. |
-| `governance.lock_tenant_coop_provider` | `true` | Instance | Provider-specific lock for tenant Coop targets. |
-| `reporting.tenant_external_sync_enabled` | `true` | Tenant | Gates tenant-added external targets only. It does not disable local intake or instance baseline providers. |
-| `reporting.enable_tenant_osprey_provider` | `false` | Tenant | Enables a tenant-owned Osprey target when the broad and Osprey-specific locks are open and endpoint credentials are configured. |
-| `reporting.enable_tenant_coop_provider` | `false` | Tenant | Enables a tenant-owned Coop target when the broad and Coop-specific locks are open and endpoint credentials are configured. |
-| `reporting.osprey_routing_mode` | `both` | Tenant | Requested Osprey routing posture: `instance`, `tenant`, or `both`. Dispatch must still preserve instance-first/additive behavior. |
-| `reporting.coop_routing_mode` | `both` | Tenant | Requested Coop routing posture: `instance`, `tenant`, or `both`. Dispatch must still preserve local-first provider sync semantics. |
-| `reporting.evidence_mode` | `MetadataOnly` | Tenant | Tenant evidence posture for reporting provider envelopes. Supported values are `MetadataOnly`, `SafeSummaryOnly`, and `ReporterText`; runtime safety gates still apply. |
-| `reporting.osprey_endpoint_url` | unset | Tenant | Tenant-owned Osprey-compatible endpoint URL. |
-| `reporting.coop_endpoint_url` | unset | Tenant | Tenant-owned Coop-compatible endpoint URL. |
-| `reporting.osprey_api_key` | unset | Tenant secret | Sensitive tenant Osprey credential. Never expose in browser DTOs, HAL links, logs, metrics, traces, screenshots, or support bundles. |
-| `reporting.osprey_webhook_secret` | unset | Tenant secret | Sensitive tenant Osprey callback/signing secret for deployments that use one. |
-| `reporting.coop_api_key` | unset | Tenant secret | Sensitive tenant Coop credential. Never expose in browser DTOs, HAL links, logs, metrics, traces, screenshots, or support bundles. |
-| `reporting.coop_webhook_secret` | unset | Tenant secret | Sensitive tenant Coop callback HMAC secret. |
-
-Tenant routing updates accept endpoint and secret fields only at the write boundary. Omitted or blank API-key/webhook-secret fields preserve the existing tenant secret; there is no implicit clear-secret behavior. Rotate by writing a new value through an authorized tenant settings action or by rotating the backing deployment secret, and verify through configured/readiness flags rather than secret readback.
-
-Tenant provider test actions are readiness checks over effective routing state. They validate lock state, provider enablement, tenant target presence, and configured endpoint/API-key flags without making external HTTP calls and without returning endpoint URLs, API keys, webhook secrets, provider payloads, or raw provider errors.
-
-Osprey adapter keys live under `Reporting:Osprey:*`. The adapter is Infrastructure-only and posts a safe JSON evaluation request to the configured endpoint; the request contains tenant/report/event/case IDs, normalized report/case/priority codes, timestamps, idempotency/correlation IDs, and evidence mode only. It does not send reporter text, reporter IP hashes, user-agent hashes, raw provider payloads, event titles, slugs, or URLs. Public research did not identify an official .NET Osprey SDK or stable public REST contract, so the current adapter targets a configurable Osprey-compatible HTTP JSON/RPC facade and can be swapped to generated gRPC/proto wiring once a deployment supplies that contract. The local `osprey` Compose/Aspire resource uses the Roost coordinator image and exposes coordinator ports; do not set `Reporting:Osprey:EndpointUrl` to that coordinator port unless a compatible HTTP facade is in front of it.
-
-| Key | Default | Description |
-|---|---:|---|
-| `Reporting:Osprey:Enabled` | `false` | Enables the concrete Osprey signal adapter. `Reporting:Mode` must still be `Osprey` or `Composite`, and `Reporting:EvaluateSignals` must be `true` before runtime signal evaluation happens. |
-| `Reporting:Osprey:EndpointUrl` | unset | Deployment-controlled Osprey-compatible base URL. Required when the adapter is enabled. Must be HTTP/HTTPS, absolute, and must not include embedded credentials, query string, or fragment. Local/private endpoints require explicit opt-in. |
-| `Reporting:Osprey:EvaluatePath` | `/api/v1/evaluate` | Relative evaluation path appended to `EndpointUrl` unless the endpoint already ends with the same path. Must start with `/`. |
-| `Reporting:Osprey:ApiKey` | unset | Optional sensitive credential. If configured with the default header name, it is sent as `Authorization: Bearer <token>`. Never expose this value in browser payloads, health data, logs, metrics, traces, screenshots, or issue templates. |
-| `Reporting:Osprey:ApiKeyHeaderName` | `Authorization` | Header used for `ApiKey`. Custom names are allowed only when they are valid HTTP header names. |
-| `Reporting:Osprey:EventType` | `event_report` | Stable event type sent in the evaluation body so an Osprey-compatible facade can route rules. |
-| `Reporting:Osprey:TimeoutSeconds` | `10` | Per-request timeout budget. Must be between 1 and 300. Timeouts are treated as retryable provider failures. |
-| `Reporting:Osprey:AllowLocalProviderEndpoints` | `false` | Allows loopback/link-local/private provider URLs for deliberate self-hosted deployments. Keep `false` for public/provider-hosted endpoints. |
-
-Asynchronous Osprey signal callbacks are accepted at `POST /api/integrations/moderation/osprey/callback`. This endpoint does not use the outbound `Reporting:Osprey:ApiKey`; it uses the platform API-key authentication scheme (`X-API-Key`) plus the `ModerationIntegration.OspreyCallback` authorization policy. Provision a tenant-scoped API key with event moderation authority, such as `events:write`, tenant admin, or instance admin equivalent scope, for the external Osprey-compatible callback worker. Callback payloads must include tenant, report, and event identifiers; the Application layer rechecks that they match the ambient API-key tenant before recording signals. The endpoint stores bounded signal metadata and external sync markers only; it must not receive or log raw provider payloads, reporter text, event titles, slugs, URLs, IP hashes, user-agent hashes, or provider secrets.
-
-Coop adapter keys live under `Reporting:Coop:*`. The adapter is Infrastructure-only and posts local report-case metadata to a configurable Coop-compatible review queue ingest endpoint. Public ROOST Coop sources describe REST-style ingest and decision webhooks but do not publish a stable OpenAPI/GraphQL contract, authentication scheme, error catalog, or rate-limit policy; this implementation therefore uses a conservative JSON envelope and flexible response mapping until a deployment supplies a stricter contract. The mirror request contains tenant/report/event/case IDs, queue/status/priority/reason codes, timestamps, idempotency/correlation IDs, and an evidence descriptor. It does not send reporter text, reporter IP hashes, user-agent hashes, raw provider payloads, event titles, slugs, or URLs.
-
-| Key | Default | Description |
-|---|---:|---|
-| `Reporting:Coop:Enabled` | `false` | Enables the concrete Coop review queue adapter. `Reporting:Mode` must still be `Coop` or `Composite`, and `Reporting:MirrorReviewQueue` must be `true` before runtime mirroring happens. |
-| `Reporting:Coop:EndpointUrl` | unset | Deployment-controlled Coop-compatible base URL. Required when the adapter is enabled. Must be HTTP/HTTPS, absolute, and must not include embedded credentials, query string, or fragment. Local/private endpoints require explicit opt-in. |
-| `Reporting:Coop:MirrorPath` | `/api/v1/items` | Relative review-case ingest path appended to `EndpointUrl` unless the endpoint already ends with the same path. Must start with `/`. |
-| `Reporting:Coop:ApiKey` | unset | Optional sensitive credential. If configured with the default header name, it is sent as `Authorization: Bearer <token>`. Never expose this value in browser payloads, health data, logs, metrics, traces, screenshots, or issue templates. |
-| `Reporting:Coop:ApiKeyHeaderName` | `Authorization` | Header used for `ApiKey`. Custom names are allowed only when they are valid HTTP header names. |
-| `Reporting:Coop:ItemType` | `event_report` | Stable item type sent in the mirror body so a Coop-compatible facade can route report cases. |
-| `Reporting:Coop:TimeoutSeconds` | `10` | Per-request timeout budget. Must be between 1 and 300. Timeouts are treated as retryable provider failures. |
-| `Reporting:Coop:AllowLocalProviderEndpoints` | `false` | Allows loopback/link-local/private provider URLs for deliberate self-hosted deployments. Keep `false` for public/provider-hosted endpoints. |
-| `Reporting:Coop:WebhookSecret` | unset | Required for inbound Coop decision callbacks. The API rejects callbacks with `503` until this shared secret is configured. Treat it as a deployment secret; never expose it to browsers, logs, health checks, traces, screenshots, or issue templates. |
-| `Reporting:Coop:WebhookSignatureHeaderName` | `X-Coop-Signature` | Header containing the HMAC-SHA256 signature. Valid values are raw hex/base64, `sha256=<signature>`, or `v1=<signature>`; multiple comma-separated candidates are supported for rotation windows. |
-| `Reporting:Coop:WebhookTimestampHeaderName` | `X-Coop-Timestamp` | Header containing the signed timestamp. Unix seconds and invariant-culture date/time values are accepted. |
-| `Reporting:Coop:WebhookToleranceSeconds` | `300` | Maximum absolute clock skew for signed callbacks. Must be between 30 and 86400. |
-| `Reporting:Coop:WebhookMaxBodyBytes` | `65536` | Raw callback body size limit before JSON parsing. Must be between 1024 and 1048576. |
-
-Coop decisions are accepted at `POST /api/integrations/moderation/coop/callback`. The endpoint requires both platform API-key authentication (`X-API-Key`) through `ModerationIntegration.CoopCallback` and timestamped HMAC-SHA256 verification over `timestamp + "." + rawBody`. The HMAC check uses fixed-time comparison and validates the raw body before JSON parsing. A valid callback records an `EventReportDecision` with source `CoopReviewer`, marks the report case decision-ready, then dispatches `ExecuteReportDecisionCommand` so local light moderation/heavy redaction keep using the existing audit, outbox, cache, and storage-deletion paths. Provider-backed enforcement creates `EventModerationRecord` rows with nullable `ModeratorUserId` and non-null source report/decision links. The callback body must include tenant, report, event, case, and action metadata and may use the public Coop-style `item`/`action`/`policies`/`rules` shape plus ISLAMU local identifiers.
-
-Local report-intake keys are application-layer submission controls:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Reporting:RequireAuthenticatedReporter` | `true` | Requires a resolved authenticated user before accepting a report. Keep enabled for the initial user-facing flow. |
-| `Reporting:MaxReportsPerUserPerHour` | `10` | Per-reporter hourly ceiling across event reports. `0` disables this pre-write quota. |
-| `Reporting:MaxReportsPerEventPerUserPerDay` | `3` | Per-reporter, per-event daily ceiling. `0` disables this pre-write quota. |
-| `Reporting:DuplicateWindowHours` | `24` | Window for rejecting duplicate reports with the same reporter identity, event, and reason code. Values below `1` are normalized to `1`. |
-| `Reporting:ReporterTextRetentionDays` | `180` | Retention horizon stamped on reporter-text evidence. Values below `1` are normalized to `1`. |
-| `Reporting:MaxReporterTextLength` | `4000` | Maximum reporter text length accepted by the command validator. Values below `1` are normalized to `1`. |
-| `Reporting:DefaultQueueCode` | `default` | Local report-case queue assigned at intake. Blank values normalize to `default`. |
-| `Reporting:CaseSlaHours` | `48` | Initial SLA due timestamp offset for the local report case. Values below `1` are normalized to `1`. |
-| `Reporting:ReporterFingerprintPepper` | empty | Optional deployment secret used by the API to HMAC tenant-scoped reporter IP and User-Agent fingerprints before they reach the Application layer. Set this in production/self-hosted deployments. |
-
-Reporter text is protected through ASP.NET Core Data Protection before persistence and stored only in `EventReportEvidence.TextBodyEncrypted`. The outbox payload intentionally excludes reporter text, reporter IP hash, and user-agent hash. Reporting metrics use bounded outcome/failure tags and must not include reporter content, event titles, slugs, URLs, provider payloads, or raw errors.
-
-Event-report observability uses `Explore.Business` counters with bounded labels only: `explore.event_reports.submissions` (`tenant_id`, `outcome`, `failure_category`), `explore.event_reports.workflow_actions` (`tenant_id`, `action`, `outcome`, `failure_category`), `explore.event_reports.provider_syncs` (`tenant_id`, `provider`, `outcome`, `failure_category`), and `explore.event_reports.provider_callbacks` (`tenant_id`, `provider`, `outcome`, `failure_category`). Controller and dispatcher logs may include tenant/report/event/case IDs, action/provider/outcome/failure codes, and retryability flags, but must not log reporter text, IP/User-Agent values or hashes, event titles, slugs, URLs, provider payload bodies, provider credentials, raw callback signatures, or raw exception text.
-
-### MCP Adapter Static Configuration
-
-The Model Context Protocol adapter is enabled by default in development and self-hosted startup configuration, unless `Mcp:Enabled=false`/`MCP_ENABLED=false` is set. The API composes the official MCP SDK services and maps the Streamable HTTP endpoint at `/mcp` by default. Use [MCP_DEBUGGING.md](MCP_DEBUGGING.md) for redacted local client templates and smoke guidance. It remains an adapter over the AI Tool Contract Registry rather than a second tool authority. The implementation wires configuration, health, endpoint registration, read-only registry discovery, anonymous-safe public event reads, authenticated event-management reads/resources, first-class registry-projected proposal tools, safe AI conversation resources, event-management confirmation prompts, and proposal-first tool mutation through the normal MediatR/API confirmation path.
-
-| Key | Default | Description |
-|---|---:|---|
-| `Mcp:Enabled` | `true` | Enables the API-hosted MCP endpoint. Set `false` only when the endpoint must be unmapped at startup. |
-| `Mcp:EndpointPath` | `/mcp` | Route prefix for the Streamable HTTP MCP endpoint. Bare values such as `mcp` are normalized to `/mcp` before validation and endpoint mapping. |
-| `Mcp:Stateless` | `true` | Uses stateless Streamable HTTP so API replicas do not require MCP session affinity. Startup validation rejects `false`. |
-| `Mcp:EnableLegacySse` | `true` | Startup ceiling for future legacy-SSE governance only. Runtime legacy SSE remains unavailable and the health check reports `legacySseRuntimeEnabled=false`. |
-
-Runtime MCP governance is stored in the hierarchical settings cascade. These values can disable an already mapped startup endpoint without restarting the API, but they cannot map a new endpoint when `Mcp:Enabled=false` at startup and cannot make endpoint path/stateless mode runtime-editable.
-
-| Setting key | Default | Scope | Description |
-|---|---:|---|---|
-| `mcp.enabled` | `true` | Instance/Tenant | Runtime adapter switch. Effective MCP exposure is `Mcp:Enabled && resolved(mcp.enabled)`. Instance administrators can disable the adapter without changing route shape. |
-| `mcp.enable_legacy_sse` | `false` | Instance/Tenant | Records legacy-SSE governance intent only. Current runtime keeps `legacySseRuntimeEnabled=false` even when startup and DB values are true. |
-| `governance.lock_tenant_mcp` | `true` | Instance | Prevents tenant administrators in multi-tenant mode from overriding `mcp.enabled`. |
-| `governance.lock_tenant_mcp_legacy_sse` | `true` | Instance | Prevents tenant administrators in multi-tenant mode from overriding `mcp.enable_legacy_sse`. |
-
-MCP must not expose provider credentials, endpoint URLs, model IDs, prompts, provider responses, tool payloads, tenant IDs, or raw provider errors in configuration diagnostics, health data, logs, metrics, or browser responses. Mutating MCP tools must keep using the proposal/confirmation workflow and must never write repositories directly.
-
-Operational expectations:
-
-- Keep `Mcp:Enabled=true` or unset for the default local/self-hosted endpoint at `/mcp`. Use `mcp.enabled=false` for runtime rollback without restart, or set startup `Mcp:Enabled=false` only when the endpoint must be unmapped.
-- Keep `Mcp:EndpointPath` and `Mcp:Stateless` startup-only. Runtime/admin settings must not change route shape or session posture after startup.
-- Keep `Mcp:Stateless=true`; the initial adapter is designed for stateless Streamable HTTP and API replicas without MCP session affinity. Startup validation rejects `false`.
-- `Mcp:EnableLegacySse` defaults to `true` as a startup ceiling for future governance, but the current runtime does not enable legacy SSE because the SDK's legacy mode requires stateful in-memory sessions and weaker backpressure than Streamable HTTP.
-- Do not add a product `stdio` MCP host to the API deployment. `stdio` remains deferred by [ADR-011](adr/ADR-011-local-mcp-stdio-diagnostic-host.md) unless a future local-only diagnostic host is separately approved and verified.
-- Treat MCP as API-key-first for external clients. The endpoint is mapped anonymously so SDK authorization filters can expose explicitly anonymous-safe registry discovery, while scope-aware MCP authorization policies and normal MediatR authorization still gate scoped operations. Valid `X-API-Key` requests with `mcp:read` can use generic MCP read resources; protected event-management reads require `mcp:read` plus event read-equivalent scope authority. `mcp:propose` is required to discover/call proposal tools or proposal prompts, and no key, invalid keys, or revoked keys can use only anonymous-safe capabilities. Valid MCP API-key traffic is rate-limited per key ID; no-key, invalid-key, and revoked-key traffic remains rate-limited per remote IP and must not echo credentials in `429` bodies.
-- Keep SDK registration explicit. The API host uses `WithTools<T>()`, `WithResources<T>()`, `WithPrompts<T>()`, and registry-projected tool options instead of assembly-wide discovery so transport/startup behavior remains reviewable and avoids avoidable reflection pressure. Native AOT compatibility is not promised until a dedicated publish profile is added and tested.
-- For production, expose MCP only through the same trusted HTTPS boundary as the API. Do not rely on local certificate bypasses or `curl -k` in production client instructions.
-- Treat projected `propose_*` MCP tools as ergonomic wrappers only. Their payload fields come from ATCR JSON schemas, SDK annotations are hints, and execution still persists a proposed action for API/HAL confirmation.
-- Treat MCP protocol evolution as ADR-gated. There is no configuration-only switch for stateful sessions, resource subscriptions, sampling, elicitation, roots, progress notifications, list-changed notifications, or client-specific compatibility shims.
-- Verify `/health` includes `mcp-adapter` before exposing MCP. Disabled MCP reports intentional degraded readiness posture; enabled MCP reports healthy configuration posture with `enabled`, `startupEnabled`, `runtimeEnabled`, `legacySseStartupCeiling`, `legacySseRuntimeRequested`, and `legacySseRuntimeEnabled` safe booleans, not tenant IDs or secrets.
-
-The `ai-provider` readiness check reports safe booleans such as `endpointConfigured`, `apiKeyConfigured`, and `modelConfigured`; it never reports raw endpoint URLs, API keys, prompts, responses, model IDs, provider request IDs, or provider exception bodies.
-
-### Cerbos Authorization Configuration
-
-Cerbos runtime settings are the first implemented consumer of the shared secrets ownership metadata:
-
-- `Authorization:Provider` is the authoritative deployment selector. `AUTHORIZATION_PROVIDER` maps to it without overriding an existing canonical value. Accepted values are blank, `local`, and `cerbos`; any other explicit value fails startup validation.
-- Blank/unset provider intent does not infer Cerbos from endpoint or credential presence. The onboarding page selects Local RBAC by default and keeps Cerbos behind the native **Advanced: use Cerbos PDP** disclosure.
-- Explicit `local` is deployment-managed, reports authorization ready, skips the provider-choice page, and performs no Cerbos endpoint or policy call.
-- Explicit `cerbos` is deployment-managed and selected by runtime authorization immediately, so failures deny rather than falling back to Local. The API background worker verifies the instance PDP gRPC health service and then publishes the bundled policy package specifically to the instance Admin API, never an ambient tenant BYO target. It retries transient startup failures within the configured bound. Configured status becomes ready only after both operations succeed; automatic navigation skips the choice page while reconciliation is pending or ready, and a final failure is exposed as locked remediation from the instance setup task.
-- `Cerbos:GrpcEndpoint` can prefill onboarding/admin forms as deployment bootstrap. Once an operator saves an application-managed endpoint, the saved setting takes precedence unless the key is explicitly deployment-managed.
-- `Cerbos:UsePolicyScope` defaults to `false`. Keep it false for bundled root policies; enable it only when the PDP has tenant-scoped policy files and `engine.lenientScopeSearch=true`.
-- `Cerbos:AdminApi:*` configures policy package sync/status operations, not runtime authorization checks. Admin API credentials are secret-bearing and must be treated as write-only/redacted in UI and API responses.
-- `Secrets:Ownership:DeploymentManagedKeys` can mark `cerbos.grpc_endpoint`, `Cerbos:AdminApi:AdminUsername`, `Cerbos:AdminApi:AdminPassword`, or `*` as deployment-managed. Deployment-managed fields are read-only in UI and ignore application-managed DB values for that field.
-- Setup and post-onboarding administration reuse the existing endpoint verification, package download/sync, and local-fallback capabilities. They do not add a Cerbos resource inventory or an arbitrary policy-decision test API.
-
-Background reconciliation binds from `Cerbos:PolicyBootSync`:
-
-| Key | Default | Description |
-|---|---:|---|
-| `InitialDelaySeconds` | `5` | Delay after API startup before deployment-provider reconciliation begins. |
-| `RetryDelaySeconds` | `3` | Delay between failed automatic reconciliation attempts. |
-| `MaxAttempts` | `5` | Maximum automatic attempts per process start. |
-| `TimeoutSeconds` | `60` | Maximum time for each verification-and-publish attempt. |
-
-For a Coolify-managed external Cerbos PDP, use [CERBOS_COOLIFY.md](CERBOS_COOLIFY.md) for the Docker Image tag, PostgreSQL schema bootstrap, Admin API password hash, gRPC routing, and `cerbosctl` upload flow. Compose and Aspire local infrastructure use the repository `cerbos/` folder directly.
-- When `Authorization:Provider` is blank, governance settings select the active provider (`AuthorizationProvider`). Explicit deployment intent takes precedence. Governance still owns whether tenant customization is enabled and per-tenant BYO values such as `cerbos.mode`, `cerbos.custom_endpoint`, `cerbos.failure_mode`, custom Admin API endpoint, and custom Admin API credentials.
-
-Endpoint and secret safety rules:
-
-- Non-local PDP/Admin API endpoints must use safe TLS-capable URLs. Unsafe endpoint changes are rejected before provider settings are persisted or sync/cache invalidation runs.
-- Runtime failure logs must not include raw PDP/Admin API endpoints, Admin API credentials, JWTs/tokens, response bodies, or exception objects/messages.
-- A tenant with `cerbos.mode=custom_endpoint` and a blank PDP endpoint remains in BYO mode. Runtime authorization applies the tenant `failure_mode` instead of falling back to the instance PDP, while any explicit BYO Admin API configuration is still preserved for package operations.
-- `failure_mode=closed` activates provider-instance safe mode for local fallback decisions; `failure_mode=open` uses standard local RBAC fallback only for that tenant BYO failure path.
-
-### Email Dispatch Scheduler Configuration
-
-Basic Dispatch Mode uses PostgreSQL as the durable source of truth and the existing SMTP abstraction as the transport. It does **not** require RabbitMQ. Registration confirmation currently creates an `EmailDispatchOutbox` row in the registration transaction; the default TickerQ `email-dispatch-drain` cron job triggers the drain service, which claims due rows, rebinds tenant context, calls `IEmailService`, records attempts/receipts, and advances final delivery state.
-
-Static dispatch settings bind from `EmailDispatchProcessor` and are validated at startup with `ValidateOnStart`:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Enabled` | `true` | Enables Basic Dispatch Mode. When disabled, the `email-dispatch` readiness check reports `Degraded` intentionally. |
-| `Mode` | `TickerQ` | Selects the trigger mechanism: `TickerQ`, `HostedService`, or `Disabled`. `TickerQ` is the default scheduler; `HostedService` is a fallback timer wrapper over the same drain service. |
-| `PollingIntervalSeconds` | `5` | Delay between polling loops. Must be greater than zero. |
-| `BatchSize` | `50` | Maximum due outbox rows loaded per loop. Must be greater than zero. |
-| `MaxAttemptCount` | `5` | Worker-level cap used with per-row `MaxAttempts` before dead-lettering. Must be greater than zero. |
-| `InitialRetryDelaySeconds` | `5` | Base retry delay for failed SMTP dispatch. Must be greater than zero. |
-| `MaxRetryDelaySeconds` | `3600` | Maximum retry delay cap. Must be greater than or equal to `InitialRetryDelaySeconds`. |
-| `ProcessingLeaseTimeoutSeconds` | `900` | Maximum age for a `Processing` row before the recovery scan marks it `Unknown` for operator review. Must be greater than zero. |
-| `HealthDueDispatchWarningThreshold` | `1000` | Degrades `email-dispatch` readiness when due `Pending`/`RetryScheduled` outbox rows reach this count. Must be between 1 and 100000. |
-| `HealthStaleProcessingWarningThreshold` | `1` | Degrades `email-dispatch` readiness when stale `Processing` rows reach this count. Must be between 1 and 10000. |
-| `HealthDeadLetterWarningThreshold` | `1` | Degrades `email-dispatch` readiness when `DeadLettered` rows reach this count. Must be between 1 and 10000. |
-| `ConsumerId` | machine name | Drain identity recorded in receipts and logs. Must not be blank. |
-| `VerboseLogging` | `false` | Enables additional drain logs when troubleshooting. Logs must remain free of bodies, recipients, and secrets. |
-
-SMTP settings still come from the `email.*` governance/secret keys resolved by `SmtpConfigResolver`; the dispatch processor does not introduce new SMTP credential keys. Local development defaults are seeded from `MAIL_SMTP_*`, then `SMTP_*` aliases, then local Mailpit values when the instance SMTP host is empty. In Aspire `FullLocal` mode, Development seeding refreshes those SMTP rows on each run so persistent local database volumes follow the current `--isolated` Mailpit SMTP port. RabbitMQ Dispatch Mode is not part of Basic mode.
-
-The `email-dispatch` readiness payload reports `dueDispatchCount`, `retryScheduledCount`, `staleProcessingCount`, and `deadLetteredCount`. Future `RetryScheduled` rows are visible for operator context, but only due rows count toward `HealthDueDispatchWarningThreshold`; scheduled future retries are normal backoff state.
-
-TickerQ host settings bind from `Scheduler:TickerQ`:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Enabled` | `true` | Enables the TickerQ scheduler host when `EmailDispatchProcessor:Mode=TickerQ`. If this is `false` while EmailDispatch is in `TickerQ` mode, `email-dispatch` readiness is unhealthy. |
-| `Schema` | `ticker` | PostgreSQL schema for TickerQ operational tables. This is migration-backed and currently must remain `ticker`; changing it requires a matching scheduler migration strategy. |
-| `MaxConcurrency` | processor count | Maximum TickerQ scheduler concurrency. Must be greater than zero. |
-| `NodeIdentifier` | machine name | Scheduler node identity for multi-node diagnostics. Must not be blank. |
-| `DashboardEnabled` | `false` | Enables the TickerQ dashboard. Keep disabled unless instance operators explicitly need scheduler internals. |
-| `DashboardPath` | `/admin/scheduler` | Absolute non-root dashboard path when enabled. |
-| `DashboardAuthorizationPolicy` | `tickerq_instance_admin` | Host authorization policy for the dashboard. Must not be blank or anonymous when dashboard is enabled. The API enforces this policy on the dashboard path before TickerQ serves dashboard content. |
-| `DashboardSessionTimeoutMinutes` | `30` | Dashboard session timeout. Must be greater than zero when dashboard is enabled. |
-
-TickerQ is scheduler state only. It must not contain email bodies, recipients, subjects, SMTP credentials, provider message IDs, raw exceptions, tenant secrets, or access tokens. The product/operator source of truth remains `EmailDispatchOutbox` and the HAL-gated EmailDispatch admin API, not the TickerQ dashboard.
-
-### Email Dispatch RabbitMQ Configuration
-
-RabbitMQ Dispatch Mode is optional transport infrastructure over the same PostgreSQL `EmailDispatchOutbox` state machine. The implemented path declares topology, publishes pointer-only dispatch messages with mandatory routing and publisher confirms, consumes with manual ACK after durable drain outcomes, exposes a readiness check, and wires Aspire local development. It does **not** replace the Basic SMTP worker and does not make RabbitMQ required for non-Aspire/basic deployments.
-
-Static RabbitMQ transport settings bind from `EmailDispatchRabbitMq` and are validated at startup with `ValidateOnStart`:
-
-| Key | Default | Description |
-|---|---|---|
-| `Enabled` | `false` | Enables optional RabbitMQ Dispatch Mode transport checks/publishing. Disabled mode is health-safe and leaves Basic Dispatch Mode independent. |
-| `ConnectionStringName` | `messaging` | Named connection string/resource used to resolve RabbitMQ, including Aspire `ConnectionStrings:messaging` or `MESSAGING_URI`. Must not be blank. |
-| `ConnectionString` | unset | Optional direct AMQP URI override. Do not log or expose raw values. |
-| `ExchangeName` | `explore.email-dispatch` | Durable direct exchange for pointer-only dispatch messages. |
-| `DispatchQueueName` | `explore.email-dispatch.dispatch` | Durable dispatch queue bound to the exchange. |
-| `DispatchRoutingKey` | `email-dispatch.dispatch` | Routing key used for mandatory pointer publishes. |
-| `DeadLetterExchangeName` | `explore.email-dispatch.dlx` | Durable direct DLX for rejected/poison messages in later consumer slices. |
-| `DeadLetterQueueName` | `explore.email-dispatch.dead-letter` | Durable DLQ bound to the DLX. |
-| `DeadLetterRoutingKey` | `email-dispatch.dead-letter` | DLQ routing key configured on the dispatch queue. |
-| `ParkingQueueName` | `explore.email-dispatch.parking` | Durable parking queue for future operator replay/parking tooling. |
-| `ParkingRoutingKey` | `email-dispatch.parking` | Parking queue routing key. |
-| `ClientProvidedName` | `explore-email-dispatch-rabbitmq` | RabbitMQ client identity for broker/operator diagnostics. |
-| `ConsumerId` | `explore-email-dispatch-rabbitmq-consumer` | Stable consumer identity that manual-ack RabbitMQ deliveries record in `EmailDispatchReceipt`. Must not be blank. |
-| `PrefetchCount` | `10` | Bounded unacknowledged delivery window for the manual-ack consumer. Must be greater than zero; `0` is not allowed because RabbitMQ treats it as unbounded. |
-| `DeadLetterReplayEnabled` | `false` | Enables the optional DLQ replay worker. Keep disabled until operators intentionally want RabbitMQ DLQ redrive/parking. |
-| `DeadLetterReplayConsumerId` | `explore-email-dispatch-dlq-replay` | Stable consumer tag for the DLQ replay worker. Must not be blank. |
-| `DeadLetterReplayPrefetchCount` | `5` | Bounded unacknowledged delivery window for DLQ replay. Must be greater than zero. |
-| `PublishTimeoutSeconds` | `15` | Timeout around topology/publish confirm work. Must be greater than zero. |
-| `PublisherPollingIntervalSeconds` | `5` | Delay between pointer-publisher scans for due `EmailDispatchOutbox` rows. Must be greater than zero. |
-| `PublisherBatchSize` | `100` | Maximum due rows the pointer publisher reads per pass. Must be greater than zero. |
-| `PublisherRetryDelaySeconds` | `30` | Minimum delay before retrying RabbitMQ pointer publish attempts for still-pending rows. Must be greater than zero. |
-
-The RabbitMQ payload is `EmailDispatchPointer`: tenant ID, stable `PublishEventId`, kind, source IDs, and optional event/registration/user IDs only. It intentionally excludes recipient email, subject, plain text body, HTML body, reply-to, provider message IDs, raw provider errors, and SMTP credentials. The pointer publisher records producer metadata on `EmailDispatchOutbox` (`RabbitMqLastPublishedAt`, `RabbitMqLastPublishAttemptAt`, `RabbitMqPublishAttemptCount`, and `RabbitMqLastPublishFailureCategory`) without changing SMTP delivery state. The DLQ replay worker validates pointer metadata against the PostgreSQL row before redriving; unsafe payloads are routed to the parking queue instead of being blindly replayed.
-
-### Idempotency Cleanup Configuration
-
-Write-operation idempotency uses PostgreSQL `idempotency_records` as a short-lived replay cache keyed by `(Idempotency-Key, TenantId)`. Expired records are not eligible for replay reads. The cleanup processor is an API-hosted background service that physically deletes only records whose `ExpiresAt` is older than the configured grace window.
-
-Static cleanup settings bind from `IdempotencyCleanup` and are validated at startup with `ValidateOnStart`:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Enabled` | `true` | Enables the hosted cleanup loop. When disabled, the `idempotency-cleanup` readiness check reports `Degraded` intentionally. |
-| `DryRun` | `false` | Counts eligible rows and emits metrics/logs without deleting. Use this before enabling destructive cleanup in a new environment. |
-| `InitialDelaySeconds` | `30` | Delay before the first cleanup pass after API startup. Must be zero or greater. |
-| `PollingIntervalMinutes` | `60` | Delay between cleanup passes. Must be greater than zero. |
-| `BatchSize` | `500` | Maximum expired rows counted/deleted per pass. Must be greater than zero. |
-| `ExpirationGraceHours` | `24` | Safety buffer after `ExpiresAt` before a row is eligible for physical delete. Must be zero or greater. |
-
-Cleanup is instance/system-scoped because idempotency rows are ephemeral replay-cache entries, not tenant-owned source-of-truth or compliance evidence. Logs, health data, and metrics expose only bounded settings/counts; they must not include raw idempotency keys, request paths, response bodies, or tenant IDs.
-
-### AI Retention Cleanup Configuration
-
-AI assistant history retention is tenant-owned source-of-truth data, so the hosted cleanup worker iterates active tenants, binds tenant context per tenant, resolves each tenant's `ai_assistant.retention_days`, and then invokes the tenant-filtered redaction cleanup path. The worker does not bypass tenant filters and must not log prompts, provider responses, tool payloads, selected reference content, tenant IDs, or provider secrets.
-
-Static scheduler settings bind from `AiRetentionCleanup` and are validated at startup with `ValidateOnStart`:
-
-| Key | Default | Description |
-|---|---:|---|
-| `Enabled` | `true` | Enables the API-hosted AI retention cleanup loop. When disabled, the `ai-retention-cleanup` readiness check reports `Degraded` intentionally. |
-| `DryRun` | `false` | Counts eligible expired AI conversations across active tenants without redacting or soft-deleting rows. Use this before destructive cleanup in a new environment. |
-| `InitialDelaySeconds` | `30` | Delay before the first cleanup pass after API startup. Must be zero or greater. |
-| `PollingIntervalMinutes` | `60` | Delay between cleanup passes. Must be greater than zero. |
-| `MaxTenantsPerPass` | `100` | Maximum active tenant lookups processed per cleanup pass. Must be greater than zero. |
-
-The per-tenant retention window still comes from the governance setting `ai_assistant.retention_days` (default 30 days). Static `AiRetentionCleanup:*` settings only control the scheduler posture, dry-run mode, and pass bounds.
-
-## Secret Provider Configuration
-
-`Explore.Secrets` binds provider config from `SecretProvider`:
-
-- `SecretProvider:Provider` (default `None`)
+- `SecretProvider:Provider` (`None` or implemented `Infisical`)
 - `SecretProvider:FailFast`
-- `SecretProvider:Infisical:*` (project/client credentials, paths, environment)
-
-Refresh behavior binds from `SecretRefresh` and runs via hosted `SecretRefreshService`.
-
-## Setup Secret And Managed Provisioning Bootstrap
-
-`SetupSecretProvider` reads setup and managed-provisioning bootstrap keys directly from configuration at API startup.
-
-| Key | Default | Purpose |
-|---|---|---|
-| `SETUP_SECRET` | generated 32-character startup secret | Env-only startup secret for interactive first-run onboarding. It cannot be configured from instance administration because setup needs it before the app is initialized. When omitted and setup mode is active, API generates a temporary secret and logs it for the operator. |
-| `SETUP_SECRET_REQUIRED` | `true` | Controls whether interactive setup endpoints can validate a setup secret. `false` is effective only when trusted managed provisioning is explicitly configured; otherwise the provider fails closed and still requires a setup secret. |
-| `PROVISIONING_TRUSTED` | `false` | Must be `true` before managed-provider provisioning can disable interactive setup-secret validation. |
-| `PROVISIONING_MODE` | unset | Trusted values are managed-provider modes such as `managed-provider`, `managed_provider`, `managed-hosting`, or `managed`. Other values do not disable setup-secret validation. |
-| `MANAGED_CLIENT_EXTERNAL_PROVIDER` | unset | Stable external provider key for the managed provisioning operator, for example an ERP or hosting-provider key. Required when `SETUP_SECRET_REQUIRED=false`. |
-| `PHYSICAL_TENANCY_MODE` | unset | Deployment posture such as shared database or dedicated deployment. Required when `SETUP_SECRET_REQUIRED=false` so the operator has declared the physical tenancy model. |
-
-Important safety behavior:
-
-- Omitted `SETUP_SECRET_REQUIRED` defaults to `true`.
-- `SETUP_SECRET_REQUIRED=false` without all trusted managed-provisioning keys is ignored and the API still requires a setup secret.
-- `SETUP_SECRET_REQUIRED=false` with trusted managed provisioning does **not** make setup-secret-protected endpoints public. `ValidateSecret` returns false and those endpoints reject anonymous/no-secret calls; managed provider automation must use the authorized provisioning endpoint instead.
-- Raw setup secrets are not logged when interactive setup-secret validation is disabled.
-
-`/setup` is a separate pre-authentication operator gateway. Browser-provided privileged headers are always removed; the BFF and API accept setup authority only from their trusted server-owned setup-secret sources. Access tokens, setup secrets, provider administrator credentials, and raw provider responses must not enter browser storage, browser-facing DTOs, logs, traces, screenshots, or support artifacts.
-
-After authentication, onboarding is presented as one server-derived task overview. It composes the existing onboarding status, provider verification/sync, and preflight endpoints rather than persisting a second client-side workflow model. A configured authentication-provider task keeps a HAL-authorized management action: before launch it opens `/onboarding/auth-provider`; after launch it opens `/admin/instance/settings?section=auth-providers`, where an instance administrator can run Keycloak doctor, preview synchronization, apply additive repairs, and rotate the managed client secret. Configured credential metadata must not hide that management affordance; missing or errored authoritative provider state fails closed and must not be converted into client-inferred readiness. `Deployment:Mode` and `Bff:AdminHosts` remain operator/deployment configuration and are display-only in onboarding; the UI must not offer them as setup choices.
-
-## API Compatibility Mapping (Infisical -> .NET keys)
-
-`Explore.API.Extensions.ConfigurationExtensions` maps compatibility names into canonical .NET keys. Most mappings use `TrySet`, so existing canonical keys are not overwritten; `CERBOS_GRPC_ENDPOINT` explicitly assigns `Cerbos:GrpcEndpoint` when present.
-
-- `DEPLOYMENT_MODE` (Infisical `/api`) -> `Deployment:Mode` (`single_tenant`/`multi_tenant` normalized to `SingleTenant`/`MultiTenant`)
-- `MCP_ENABLED`, `MCP_ENDPOINT_PATH`, `MCP_STATELESS`, `MCP_ENABLE_LEGACY_SSE` (Infisical `/api` or `/mcp`) -> `Mcp:Enabled`, `Mcp:EndpointPath`, `Mcp:Stateless`, `Mcp:EnableLegacySse`; when absent, defaults are `true`, `/mcp`, `true`, and `true`; bare endpoint paths such as `mcp` normalize to `/mcp`, and `MCP_ENABLE_LEGACY_SSE` is a startup ceiling only
-- `KEYCLOAK_ENDPOINT` + `KEYCLOAK_REALM` (Infisical `/keycloak`) -> `Keycloak:Authority`, `Keycloak:MetadataAddress`, `Keycloak:AuthorizationUrl`
-- Keycloak mapper defaults -> `Keycloak:Audience=islamu-event-api`, `Keycloak:RequireHttpsMetadata=true`
-- `AUTHORIZATION_PROVIDER` (Infisical `/api` or `/cerbos`) -> `Authorization:Provider` (blank, `local`, or `cerbos`)
-- `CERBOS_GRPC_ENDPOINT` (Infisical `/cerbos`) -> `Cerbos:GrpcEndpoint`
-- `CERBOS_USE_POLICY_SCOPE` (Infisical `/cerbos`) -> `Cerbos:UsePolicyScope` (`true`/`false`, also accepts `1`/`0`, `yes`/`no`, `on`/`off`)
-- S3 runtime values:
-  - `ISLAMU_EVENT_REGION` -> `S3Settings:Region`
-  - `ISLAMU_EVENT_PRIVATE_BUCKET_NAME` -> `S3Settings:BucketName`
-  - `ISLAMU_EVENT_PRIVATE_ACCESS_KEY_ID` -> `S3Settings:AccessKeyId`
-  - `ISLAMU_EVENT_PRIVATE_SECRET_ACCESS_KEY_ID` -> `S3Settings:SecretAccessKey`
-  - `ISLAMU_EVENT_S3_ENDPOINT` -> `S3Settings:Endpoint`
-  - `ISLAMU_EVENT_S3_PUBLIC_ENDPOINT` -> `S3Settings:PublicEndpoint`
-
-Keycloak base URL: `KEYCLOAK_ENDPOINT` (Infisical `/keycloak`). No hardcoded fallback — if not set, Keycloak mapping is skipped.
-
-Storage naming rules:
-
-- local filesystem runtime settings use `Storage:Local:*`;
-- local filesystem Compose/environment overrides use `Storage__Local__*`;
-- optional S3-compatible runtime settings use `S3Settings:*`;
-- optional S3-compatible Compose/environment overrides use `S3Settings__*`;
-- reconciliation worker settings use `StorageReconciliation:*` or `StorageReconciliation__*`;
-- Infisical/domain secret definitions use the `STORAGE_S3_*` key family under storage paths;
-- do not expose or persist deployment-managed local filesystem paths through tenant/admin setting keys.
-
-## Blazor Server Compatibility Mapping
-
-`Explore.Blazor.Extensions.ConfigurationExtensions` maps Keycloak, Google, and API base URL keys for the BFF host.
-
-API base URL: `API_ENDPOINT` (Infisical `/blazor`) maps into `ExploreApi:BaseUrl`. Runtime YARP resolution checks `ExploreApi:BaseUrl`, then Aspire service discovery keys `services__explore-api__https__0` and `services__explore-api__http__0`, then falls back to `https://localhost:17039/` when no value is configured at all.
-
-Important behavior:
-
-- `KEYCLOAK_CLIENT_ID` maps to `Keycloak:ClientId`; when a Keycloak authority is resolved and no client id is provided, the BFF defaults to `islamu-event-blazor`.
-- `Keycloak:ClientSecret` is explicitly overridden when `KEYCLOAK_BLAZOR_CLIENT_SECRET` (Infisical) is present.
-- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` map to `Google:ClientId` and `Google:ClientSecret`.
-
-Compose-managed Keycloak adds one bootstrap-specific rule: `docker/keycloak/keycloak-init.sh` writes `KEYCLOAK_BLAZOR_CLIENT_SECRET` into the imported `islamu-event-blazor` client before API/Blazor startup is allowed to complete. `KEYCLOAK_API_CLIENT_SECRET` is a legacy/future optional sync input only; the checked-in realm export treats `islamu-event-api` as a bearer-only audience target with no static client secret, and the current API bearer-token validation path does not consume an API client secret. The Keycloak admin username/password are used only by the one-shot Compose init job and must not be stored as runtime application settings.
-- `Keycloak:RequireHttpsMetadata` is set to `true` when Keycloak input is mapped.
-
-External-Keycloak onboarding uses a different secret boundary. The setup UI can send a one-time Keycloak bootstrap username/password to `POST /api/InstanceOnboarding/auth-provider-configuration/keycloak-bootstrap` through the BFF. That credential is request-scoped input for the Infrastructure Keycloak Admin API adapter; it is not a configuration key, not a governance setting, not a secret-provider key, and not persisted by ISLAMU. Successful bootstrap persists only the normal runtime Keycloak auth-provider configuration: authority, Blazor client ID, and Blazor client secret.
-
-External bootstrap URL safety is enforced before network calls. Keycloak base URLs must be absolute HTTP/HTTPS URLs without embedded user info, query string, or fragment. Literal localhost, loopback, link-local, unspecified, and multicast IP hosts are rejected by the Infrastructure adapter; self-hosted/internal DNS hostnames remain allowed so operators can use private Keycloak service names intentionally.
-
-## Embedded Control Plane Configuration
-
-The control-plane shell uses the existing `Explore.Blazor` BFF authentication, API service discovery, cookie, and proxy configuration. `Bff:AdminHosts` selects dedicated hostnames that render the embedded operator shell; `Bff:AdminHostAllowedIpRanges` can further restrict those hosts. There is no separate control-plane client secret, Infisical path, API endpoint, or application project.
-
-The embedded control-plane shell uses the same server-side BFF session as the public host and never serializes access tokens, refresh tokens, client secrets, or instance-admin authority claims into browser-visible authentication state. Browser-visible control-plane actions must still come from API/HAL/status endpoints, not local role inspection.
-
-## Governance Settings (Database)
-
-Governance keys are centralized in `Explore.Domain.Constants.GovernanceSettingKeys`.
-
-Major groups:
-
-- `deployment.*`
-- `tenants.*`
-- `routing.*` and `routing.render_policy.*`
-- `events.*`
-- `organizations.*`
-- `modules.*`
-- `branding.*`
-- `domains.*`
-- `email.*`
-- `s3.*`
-- `authorization.*`
-- `support_access.*`
-- `cerbos.*`
-- `analytics.*`
-- `ai_assistant.*`
-- `auth.*`
-- `federation.*`
-- `localization.*`
-
-Values are stored as JSON-serialized strings in `SystemSetting.Value` and `TenantSetting.Value`.
-
-Sensitive runtime credentials use a separate secret-setting key space. Do not expose actual values in documentation, logs, screenshots, or issue templates.
-
-| Concern | Governance key family | Secret-bearing key family |
-|---|---|---|
-| SMTP | `email.*` | `email.smtp_username`, `email.smtp_password` |
-| Optional S3-compatible storage | `s3.*` | `s3.access_key_id`, `s3.secret_access_key` |
-| Authentication | `auth.*` | `auth.keycloak_client_secret`, `auth.google_client_secret` |
-| Cerbos admin credentials | `cerbos.*` | `cerbos.custom_admin_username`, `cerbos.custom_admin_password` |
-| AI assistant | `ai_assistant.*` | `ai_assistant.api_key` |
-| Support access | `support_access.*` | none |
-
-`SecretDefinitionRegistry` recognizes provider folders for `/api`, `/storage`, `/keycloak`, `/cerbos`, `/postgresql`, `/smtp`, `/analytics`, and `/ai`. The `/smtp` folder uses `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT`, `MAIL_SMTP_USERNAME`, `MAIL_SMTP_PASSWORD`, `MAIL_SMTP_FROM_ADDRESS`, and `MAIL_SMTP_FROM_NAME`. Blazor maps Google client values from `/blazor`; do not claim Google is part of the current secret-catalog folder list unless the registry changes.
-
-## AI Assistant Settings (Governance)
-
-AI assistant configuration is governed through `ai_assistant.*` keys. The Application layer resolves these into `AiAssistantSettingGroup`; provider SDKs and concrete network clients stay behind Infrastructure adapters and must not leak into Domain, Application DTOs, browser responses, logs, or tests.
-
-Canonical keys:
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `ai_assistant.enabled` | bool | `false` | Master enable switch. Disabled remains the safe default until provider health, egress validation, auth, quotas, and retention gates are implemented. |
-| `ai_assistant.provider` | string | `"none"` | Tenant/runtime provider intent. Static `AiProvider:*` controls concrete Infrastructure wiring and currently supports `none`, `fake`, `openai`, `openai-compatible`, `anthropic`, `anthropic-compatible`, and `azure-openai`. `fake` is for deterministic tests/dev flows; real providers require model configuration, while API keys are optional only for compatible endpoints that do not enforce authentication. |
-| `ai_assistant.endpoint_url` | string | `""` | Provider base URL for self-hosted, OpenAI-compatible, Anthropic-compatible, or Azure OpenAI adapters. First-class `openai` and `anthropic` providers use their official API defaults when this is empty. This is deployment/admin-controlled; browser or request payloads must never choose outbound provider hosts. |
-| `ai_assistant.api_key` | string | `""` | Sensitive provider credential. Required for first-class OpenAI Responses API and Anthropic Messages API calls; optional for local/self-hosted compatible endpoints that do not require authentication. Treat as write-only/redacted; never expose to Blazor, API responses, logs, screenshots, traces, or issue templates. |
-| `ai_assistant.model_id` | string | `""` | Default model ID. Real providers are not considered configured unless a model ID is present; compatible endpoints may leave API key empty when the provider accepts unauthenticated requests. |
-| `ai_assistant.allowed_model_ids` | JSON array | `[]` | Optional model picker allow-list. The default model is always included in the effective allow-list; duplicate and blank entries are ignored by availability resolution. |
-| `ai_assistant.max_input_tokens` | int | `8000` | Prompt/context budget used before provider calls. Handlers must still enforce bounded context and prompt length. |
-| `ai_assistant.max_output_tokens` | int | `1024` | Maximum requested provider completion size. |
-| `ai_assistant.temperature` | decimal | `0.2` | Provider sampling temperature. Keep low for structured assistant workflows. |
-| `ai_assistant.timeout_seconds` | int | `30` | Provider call timeout budget. Cancellation tokens must still flow through all calls. |
-| `ai_assistant.retention_days` | int | `30` | Default persisted conversation retention window. The Phase 8 retention cleanup operation uses this tenant-resolved value to select expired conversations, supports dry-run, redacts prompt/action/reference/failure content, and soft-deletes expired conversation shells. Scheduling/operator automation is tracked separately from the cleanup primitive. |
-| `ai_assistant.daily_message_limit` | int | `50` | Per-user daily assistant message limit enforced before provider calls. |
-| `ai_assistant.daily_tenant_message_limit` | int | `1000` | Per-tenant daily assistant user-message limit enforced before provider calls. |
-| `ai_assistant.concurrent_run_limit` | int | `1` | Per-user concurrent assistant run limit. Existing idempotency replays are allowed before this quota check. |
-| `ai_assistant.selected_reference_limit` | int | `8` | Maximum selected references that future reference-aware prompts may pack into one request. |
-| `ai_assistant.tool_proposals_enabled` | bool | `false` | Allows provider output to become persisted proposed actions only. Mutating tools still require server validation, HAL affordance checks, user confirmation, idempotency, and audit before execution. |
-| `ai_assistant.streaming_enabled` | bool | `false` | Reserved for a future streaming transport. Current AI assistant run progress uses authenticated polling through `GET /api/ai/assistant/conversations/{conversationId}/runs/{runId}`; keep this disabled until streaming transport buffering, cancellation, timeout, authentication, logging safety, and polling fallback are explicitly implemented and verified. |
-| `ai_assistant.allow_anonymous_access` | bool | `false` | Legacy/public-availability flag for safe bootstrap surfaces only. Private conversation/history/send/action endpoints must remain authenticated. |
-
-Important notes:
-
-- `AiAssistantSettingGroup.IsConfigured` treats `fake` as configured for deterministic tests. `openai-compatible` requires `ai_assistant.endpoint_url` and `ai_assistant.model_id`; `ai_assistant.api_key` is optional and sent only when configured.
-- Provider output is untrusted data. It may produce structured action candidates, but those candidates must be persisted as proposals and require explicit confirmation before any write command runs.
-- Do not log raw prompts, model responses, selected reference content, provider request IDs tied to content, endpoint credentials, or provider exception bodies.
-- Provider endpoint URLs are deployment/admin-controlled. Browser payloads and per-request DTOs must never choose outbound provider hosts.
-- Assistant send requests are also protected by API rate limiting under `RateLimiting:AiAssistant` and by Application-level per-user daily, per-tenant daily, and per-user concurrent-run quotas. Quota failures return safe ProblemDetails and do not call the provider.
-- Tenant delegation/admin editing for the expanded provider/model/limit settings is intentionally separate from defining the keys. Do not assume a key is tenant-admin editable until the tenant policy service and UI explicitly expose it.
-
-## Support Access Settings (Governance)
-
-Admin support access is governed through instance-only `support_access.*` keys. Defaults are fail-closed: support access is disabled, write mode is disabled, ticket/reference capture is required, and each actor is restricted to one active session.
-
-Canonical keys:
-
-| Key | Type | Default | Scope | Description |
-|---|---|---|---|---|
-| `support_access.enabled` | bool | `false` | Instance | Global kill switch for support-access session validation and new session creation. |
-| `support_access.max_read_only_minutes` | int | `30` | Instance | Maximum duration for read-only support-access sessions. |
-| `support_access.max_write_minutes` | int | `10` | Instance | Maximum duration for write-capable support-access sessions. |
-| `support_access.allow_write_mode` | bool | `false` | Instance | Allows write-capable support-access sessions only when explicit runtime authorization also permits them. |
-| `support_access.require_ticket_reference` | bool | `true` | Instance | Requires a bounded ticket/reference value before a session can be started. |
-| `support_access.one_active_session_per_actor` | bool | `true` | Instance | Matches the database invariant that allows one active support-access session per actor. |
-
-Support-access sessions are persisted in the application database, actor-bound, target-tenant-bound, mode-bound, time-boxed, and audited. They must not create `TenantUserRoleGrant` rows and must not replace `ICurrentUserService.UserId`; the real actor remains the current user for audit.
-
-The BFF stores only an opaque active-session reference and forwards `X-Support-Access-Session-Id` from server-owned state. Browser-supplied `X-Support-Access-*` headers are ignored. Changing `support_access.enabled` to `false` is the operational kill switch for new starts and runtime validation of forwarded sessions.
-
-## Analytics Settings (Governance)
-
-Analytics configuration is governed entirely through `analytics.*` keys.
-The runtime abstraction is optional by design: instance admins can lock a shared provider,
-leave settings unlocked so tenants can bring their own provider, or disable analytics entirely.
-
-Canonical keys:
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `analytics.provider` | string | `"none"` | Active provider: `none`, `posthog`, `plausible`, `rybbit`, `rudderstack` |
-| `analytics.enabled` | bool | `false` | Master enable switch for analytics emission |
-| `analytics.consent_mode` | string | `"pseudonymous"` | Privacy mode: `anonymous`, `pseudonymous`, `identified` |
-| `analytics.transport_mode` | string | `"direct"` | Browser transport: `direct`, `proxy`, `relay` |
-| `analytics.api_key` | string | `""` | Public or write key used by the active provider |
-| `analytics.endpoint_url` | string | `""` | Provider base URL, especially important for self-hosted deployments |
-| `analytics.personal_api_key` | string | `""` | Sensitive key used for advanced provider features such as PostHog feature flags |
-
-Important notes:
-
-- `analytics.endpoint_url` is the canonical endpoint key. Do not introduce `analytics.endpoint`.
-- There is no canonical `analytics.site_id` governance key in the current abstraction.
-- The analytics settings follow the standard settings cascade: system setting -> tenant override -> system default.
-- Sensitive keys should still be treated carefully in UI and operational workflows even when stored as governance values.
-- `analytics.transport_mode=relay` is the only mode that does not require a browser-exposed `analytics.api_key`; the browser posts first-party events to `/api/a/t` and the server uses the resolved provider settings.
-- `analytics.transport_mode=proxy` still uses the provider script/client in the browser, but the script host and ingest host should usually point at a first-party reverse-proxy path through `analytics.endpoint_url`.
-- `analytics.consent_mode=identified` only enables identify semantics for providers that explicitly support them today (`posthog`, `rudderstack`).
-
-Cookie consent and privacy governance keys:
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `analytics.global_disable_client_tracking` | bool | `false` | Emergency kill switch — disables all **browser-side** analytics immediately. Server-side relay endpoints and server analytics continue normally. Scope: browser SDK initialization only. |
-| `analytics.cookie_consent_enabled` | bool | `false` | Whether the cookie consent banner is shown to end users |
-| `analytics.decline_behavior` | enum | `"cookieless"` | What happens when a user declines consent: `disable` (no analytics) or `cookieless` (privacy-preserving analytics) |
-| `analytics.consent_cookie_lifetime_days` | int | `180` | How long the consent preference cookie persists (ICO recommends 6 months) |
-| `analytics.posthog_cookieless_mode` | enum | `"on_reject"` | PostHog cookieless mode: `off`, `always` (never stores on device), `on_reject` (cookieless after decline) |
-| `analytics.posthog_person_profiles` | enum | `"identified_only"` | PostHog person profile creation: `always`, `identified_only`, `never` |
-| `analytics.posthog_session_replay` | bool | `false` | PostHog session recording (non-essential, requires consent) |
-| `analytics.posthog_autocapture` | bool | `false` | PostHog autocapture of clicks/inputs (non-essential) |
-| `analytics.posthog_heatmaps` | bool | `false` | PostHog heatmap data collection (non-essential) |
-| `analytics.posthog_toolbar` | bool | `false` | PostHog toolbar for on-page debugging |
-
-Storage-mode-driven consent rules:
-
-- The cookie banner requirement is **not** determined by provider name alone. It is determined by whether the provider's configured runtime mode stores or accesses non-essential data on the user's device.
-- `plausible` and `rybbit`: cookieless by design, no banner required by default.
-- `posthog` with `cookieless_mode=always`: no banner required (no device storage).
-- `posthog` with `cookieless_mode=on_reject`: banner required; decline switches to cookieless analytics instead of total silence.
-- `posthog` with `cookieless_mode=off` and any non-essential feature enabled: banner required.
-- `rudderstack`: treated as "full consent required" for v1.
-- The computed storage profile (`Cookieless`, `ConsentManaged`, `FullConsent`) drives all runtime behavior through `IAnalyticsRuntimeProfileResolver`.
-
-Consent cookie design:
-
-- Cookie name is tenant-scoped: `explore_cc_{stableShortKey}` where the stable key is derived from the first 8 hex characters of the tenant's immutable GUID (not the mutable subdomain slug). This prevents cookie orphaning when a tenant renames their subdomain.
-- Cookie value is minimal: `accepted` or `declined` only. No timestamps, user IDs, or tracking data.
-- Cookie scope: per effective public host/tenant experience. `SameSite=Lax`, `Secure`, `path=/`. Consent is not shared across subdomains or tenants.
-- The consent cookie itself is classified as strictly necessary (remembering the user's choice).
-
-Post-onboarding management note:
-
-- Instance admins can update analytics governance values through `PUT /api/InstanceOnboarding/analytics-governance`.
-- Instance admins can update authentication provider governance values through `PUT /api/instance/settings/auth-provider`.
-- Instance admins can update the active authorization provider through `PUT /api/instance/settings/authz-provider`.
-- Secret values (`keycloak`/`google` client secrets) continue to use secret-setting storage, not plain governance values.
-
-## Settings Cascade Rules
-
-`HierarchicalSettingsResolver` resolves settings through the current scope hierarchy:
-
-1. instance/system setting,
-2. tenant setting when a tenant scope is present and the instance setting is not locked,
-3. organization setting when an organization scope is present and upstream settings allow delegation,
-4. group setting when a group scope is present and upstream settings allow delegation,
-5. user setting when a user scope is present and upstream settings allow delegation,
-6. default setting definition value.
-
-Cache behavior uses hierarchical cache keys such as `HierSettings:System` and scope-specific keys for tenant, organization, group, and user settings. The resolver honors lock flags so a higher-scope locked value prevents lower-scope overrides.
-
-Runtime resolvers may add more specific precedence. For local storage, the deployment-managed `Storage:Local:*` section is the root authority. For S3, `S3ConfigResolver` reads database settings first (`s3.*` and `s3.access_key_id`/`s3.secret_access_key`) and falls back to `IConfiguration` (`S3Settings:*`). For SMTP, `SmtpConfigResolver` reads through the hierarchical settings resolver for governance and secret-bearing email keys.
-
-## Deployment Mode Configuration
-
-Static deployment config is bound from `Deployment` section (`DeploymentSettings`):
-
-- `Mode`: `SingleTenant` or `MultiTenant` (default `SingleTenant`)
-- `DefaultTenantId`
-- `HidePlatformAdminInSingleTenant` (default `true`)
-- `DefaultTenantSubdomain`
-
-First-run onboarding mode is controlled only by API configuration. Set `DEPLOYMENT_MODE=multi_tenant` in the Infisical `/api` folder before setup for a multi-tenant deployment. If `DEPLOYMENT_MODE` is absent, onboarding is single-tenant only. Invalid deployment-mode values fail safely to single-tenant setup.
-
-Deployment mode and dedicated BFF admin hosts are read-only operator configuration in the onboarding UI, not onboarding choices. Normal admin UI does not switch deployment mode after launch. Choose multi-tenant mode before first launch; otherwise the convention-first path launches a single-tenant site and provisions the configured default-tenant state.
-
-## Reverse Proxy Trust Configuration
-
-`Explore.API` binds trusted forwarded-header settings from `ForwardedHeadersTrust`:
-
-- `ForwardLimit` (default `1`)
-- `TrustLoopbackProxy` (useful for local/test proxy chains)
-- `KnownProxies` (IP list)
-- `KnownNetworks` (CIDR list)
-
-Important behavior:
-
-- if no trusted proxy boundary is configured, forwarded host/IP processing is disabled in the API host;
-- host-derived tenant resolution and proxy-aware rate limiting rely on normalized request values after trusted forwarded-header processing, not on raw `X-Forwarded-*` headers.
-
-Runtime nuance:
-
-- Before onboarding completes, tenant resolution uses a single-tenant fallback so setup endpoints remain reachable.
-- Onboarding persists the configured API deployment mode into the database.
-- After onboarding, deployment mode is operator-controlled. Runtime admin switching is disabled in the normal governance UI; change mode only through an explicit operator migration path.
-
-## Localization / TMS Settings (Governance)
-
-Keys in `GovernanceSettingKeys.Localization`:
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `localization.default_language` | string | `"en"` | Default language code (ISO 639-1) |
-| `localization.tms_provider` | int | `0` | TMS provider: 0=None (offline), 1=Tolgee, 2=Weblate |
-| `localization.tms_api_url` | string | `null` | Base URL for the TMS REST API |
-| `localization.tms_project_id` | string | `null` | TMS project identifier |
-| `localization.tms_component` | string | `null` | Weblate component slug (Weblate only) |
-
-Current localization/TMS settings are governance settings. Do not document TMS API keys or tokens as `SecretProvider`-backed until secret definitions or resolver support exist in source.
-
-See [LOCALIZATION.md](LOCALIZATION.md) for full architecture.
-
-## Custom Property Quotas (Governance)
-
-Hard-limit quota definitions for Layer 3 custom properties (Rule 16). Each has a tenant-overridable default and a platform maximum.
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `custom_properties.max_definitions_per_tenant_per_entity_scope` | int | `500` | Max definitions per (Org/Group/Event). Max: 5000. |
-| `custom_properties.max_definitions_per_event` | int | `100` | Max runtime definitions per Event. Max: 1000. |
-| `custom_properties.max_definitions_per_event_session` | int | `50` | Max runtime definitions per Session. Max: 500. |
-| `custom_properties.max_options_per_definition` | int | `200` | Max option rows per definition. Max: 2000. |
-| `custom_properties.max_multi_value_rows_per_value` | int | `20` | Max rows for multi-valued property. Max: 200. |
-| `custom_properties.projection_rebuild_batch_size` | int | `500` | Batch size for projection worker. Max: 5000. |
-| `custom_properties.projection_discovery_enabled` | bool | `false` | Tenant feature flag for projection-backed search/filter. |
-
-## Tenant Delegation & Locking (Governance)
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `governance.lock_tenant_smtp` | bool | `false` | Prevent tenant from overriding instance SMTP |
-| `governance.lock_tenant_storage` | bool | `false` | Prevent tenant from overriding instance storage policy |
-| `governance.lock_tenant_analytics` | bool | `false` | Prevent tenant from overriding instance analytics |
-| `governance.lock_tenant_ai_assistant` | bool | `false` | Prevent tenant from overriding instance AI assistant |
-
-## Event List Visibility (Governance)
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `event_list.browse_mode` | string | `"Standard"` | Default browse experience |
-| `event_list.page_size` | int | `20` | Default items per page |
-| `event_list.card.show_organizer` | bool | `true` | Show organization in cards |
-| `event_list.card.show_price` | bool | `true` | Show price in cards |
-| `event_list.card.show_tags` | bool | `true` | Show tags in cards |
-
-## External API Key Defaults
-
-Non-interactive callers use long-lived `{keyId}.{secret}` credentials. Per-key policy defaults are applied at create time by `ExternalApiKeyQuotaDefaults` and `ExternalApiKeyScopeCeiling`.
-
-### Quota Defaults by Owner Type
-
-| Owner Type | Default Period | Default Request Limit | Rationale |
-|---|---|---|---|
-| `User` (`1`) | `Daily` | `1,000` | Per-user automation, usually tied to a single developer |
-| `Organization` (`2`) | `Monthly` | `10,000` | Team-scale automations and integrations |
-| `Group` (`3`) | `Monthly` | `5,000` | Smaller scope than an org but shared by multiple members |
-| `Tenant` (`4`) | `Monthly` | `50,000` | Tenant-wide admin automation |
-| `InstanceAdmin` (`5`) | `None` | unlimited | Platform operator usage, rate-limited only by node-local policies |
-
-All defaults are overridable per key via `PUT /api/ExternalApiKey/{id}`.
-
-### Scope Ceilings by Owner Type
-
-- `User`: `events:read`, `events:write`, `users:read`, `users:write`, `lookups:read`, `registrations:write`, `api-keys:manage`
-- `Organization`: User scopes plus `organizations:read`, `organizations:write`
-- `Group`: User scopes plus `groups:read`, `groups:write`
-- `Tenant`: All of the above plus `admin:tenant`
-- `InstanceAdmin`: All scopes including `admin:instance`
-
-Validators (`CreateExternalApiKeyDtoValidator`, `UpdateExternalApiKeyPolicyDtoValidator`) reject requests containing scopes above the owner ceiling.
-
-### Forwarded Headers Interaction
-
-External API keys are often presented by callers behind reverse proxies. The `ForwardedHeadersTrust` settings (see above) determine which proxies are trusted to forward `X-Forwarded-For`/`X-Forwarded-Host`. When an API-key caller comes through a trusted proxy, the rate-limit partition key remains `api-key:{keyId}` only after the key authenticates successfully. Empty, malformed, invalid, revoked, or inactive API-key attempts use the anonymous/IP partition; the forwarded IP is also used for `LastUsedIp` telemetry and logging when trusted.
-
-When `TrustLoopbackProxy=true` (Aspire-style local development), loopback proxies are trusted for forwarded headers but untrusted proxies still have their `X-Forwarded-*` headers dropped before middleware sees them.
-
-## Browser Web Push
-
-Web Push is configured under `WebPush`. The API compatibility loader maps `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` from Infisical `/api` or process environment. When all three are present, Web Push is enabled unless `WEB_PUSH_ENABLED=false` explicitly disables it.
-
-Aspire forwards the same optional variable names to the API. When configured, `VAPID_PRIVATE_KEY` is modeled as a secret parameter so its value is not rendered as ordinary resource configuration; absent VAPID values do not create unresolved parameter prompts.
-
-| Environment variable | .NET key | Required when enabled | Exposure |
-|---|---|---|---|
-| `WEB_PUSH_ENABLED` | `WebPush:Enabled` | optional kill switch | server only |
-| `VAPID_SUBJECT` | `WebPush:VapidSubject` | yes | server only; `mailto:` or HTTPS URI |
-| `VAPID_PUBLIC_KEY` | `WebPush:VapidPublicKey` | yes | intentionally returned by `/vapid-public-key` and the public configuration endpoint |
-| `VAPID_PRIVATE_KEY` | `WebPush:VapidPrivateKey` | yes | secret; never returned to browsers |
-
-Generate one P-256 VAPID key pair with a trusted Web Push tool, store it in deployment secrets, and reuse it across restarts. Changing the pair invalidates the application-server identity expected by existing browser subscriptions; rotate deliberately and expect users to resubscribe. Startup validation rejects malformed subjects and key lengths before the dispatch worker starts.
-
-Delivery policy is server-owned. Account-security refreshes retain for 5 minutes at high urgency; trust-safety for 1 hour at high urgency; registration/event updates for 6 hours at normal urgency; billing/legal and organization/group/product updates for 24 hours at normal or low urgency; marketing for 6 hours at very-low urgency. Every message sets a category `Topic` so the push service can coalesce pending refreshes, and retries stop at the TTL boundary.
+- `SecretProvider:Infisical:Url`
+- `SecretProvider:Infisical:ProjectId`
+- `SecretProvider:Infisical:ClientId`
+- `SecretProvider:Infisical:ClientSecret`
+- `SecretProvider:Infisical:Environment`
+- `SecretProvider:Infisical:Paths`
+
+Other enum values are placeholders until source implements them. Their presence is not a support
+or operations promise. Local contributor profiles use `None`; external modes may use an approved
+provider. See [SECRETS.md](SECRETS.md) for ownership, redaction, and rotation.
+
+## Production Topology Boundary
+
+`compose.production.yaml` is intentionally narrow: validation, PostgreSQL, Keycloak NGO
+provisioning, migrations, API, and UI/BFF. Cache, identity, SMTP, Cerbos, analytics/TMS providers,
+object storage, telemetry backends, reverse proxy/TLS, and backup automation remain externally
+owned unless a future source-backed production artifact explicitly adds them.
+
+Do not copy local AppHost or `docker-compose.yml` fixtures into production merely because they have
+working technical defaults. Follow [PRODUCTION_OPERATIONS.md](PRODUCTION_OPERATIONS.md).
+
+## Safe Change Procedure
+
+1. Identify whether the setting is static deployment configuration, a secret, or governance data.
+2. Confirm the current source binding and owner before changing a name.
+3. Change only the authoritative source; do not create a second fallback authority.
+4. Redact secret values from logs, screenshots, diffs, and support artifacts.
+5. Use the appropriate local or production runbook to verify readiness and behavior.
+6. Roll back the setting at its owning source if readiness or authentication regresses.
 
 ## Related
 
-- [SECRETS.md](SECRETS.md)
-- [GETTING_STARTED.md](GETTING_STARTED.md)
-- [MULTI_TENANCY.md](MULTI_TENANCY.md)
-- [RENDER_POLICIES.md](RENDER_POLICIES.md)
-- [OPERATIONS.md](OPERATIONS.md)
-- [CUSTOM_PROPERTIES.md](CUSTOM_PROPERTIES.md)
-- [LOCALIZATION.md](LOCALIZATION.md)
+- [GETTING_STARTED.md](GETTING_STARTED.md) — contributor local setup.
+- [OPERATIONS.md](OPERATIONS.md) — shared runtime operation and recovery order.
+- [SECRETS.md](SECRETS.md) — secret providers, ownership, and rotation.
+- [PRODUCTION_OPERATIONS.md](PRODUCTION_OPERATIONS.md) — exact production topology and required names.
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — symptom-driven diagnosis.

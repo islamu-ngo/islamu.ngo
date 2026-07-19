@@ -1,379 +1,155 @@
+<!-- ABOUTME: Placeholder glossary for repository templates and engineering examples. -->
+<!-- ABOUTME: Uses the implemented Blog vertical as the project-specific substitution example. -->
+
 # Template Glossary
 
-> **Project-Agnostic Documentation Placeholder Reference**
->
-> This glossary defines all placeholders used throughout the documentation, skills, and agents.
-> Replace placeholders with your project-specific values when implementing.
+> **Audience:** Contributors | Documentation authors | AI agents
+> **Status:** Active
+> **Owner:** Contributor Experience
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `docs/NAMING_CONVENTIONS.md`, `src/Explore.Application/Features/Blogs/`, `src/Explore.API/Controllers/BlogController.cs`
 
-**Last Updated**: January 2026
+## Purpose
 
----
+Templates use braces for values that must be replaced with source-backed names. Placeholder
+examples are syntax demonstrations, not requirements to create every listed layer or abstraction.
 
-## Table of Contents
+## Core Placeholders
 
-1. [Placeholder Syntax](#1-placeholder-syntax)
-2. [Project Placeholders](#2-project-placeholders)
-3. [Entity Placeholders](#3-entity-placeholders)
-4. [Type Placeholders](#4-type-placeholders)
-5. [Layer Placeholders](#5-layer-placeholders)
-6. [CQRS Placeholders](#6-cqrs-placeholders)
-7. [Substitution Examples](#7-substitution-examples)
-8. [Best Practices](#8-best-practices)
+| Placeholder | Form | Blog substitution |
+|---|---|---|
+| `{Entity}` | PascalCase singular | `Blog` |
+| `{Entities}` | PascalCase plural | `Blogs` |
+| `{entity}` | camelCase singular | `blog` |
+| `{entities}` | camelCase plural | `blogs` |
+| `{entityId}` | camelCase identifier | `blogId` |
+| `{Feature}` | PascalCase feature folder | `Blogs` |
+| `{Route}` | lowercase public/API route | `blog` |
+| `{Dto}` | concrete transport type | `BlogDetailDto` |
+| `{Command}` | concrete write request | `PublishBlogCommand` |
+| `{Query}` | concrete read request | `GetPublishedBlogsQuery` |
 
----
+Pluralization is semantic. Do not mechanically append `s` when the source language requires a
+different form.
 
-## 1. Placeholder Syntax
+## Project And Layer Placeholders
 
-All placeholders use **curly braces** `{PlaceholderName}` for consistency with common templating systems.
+| Placeholder | Current value |
+|---|---|
+| `{Solution}` | `Explore.slnx` |
+| `{DomainProject}` | `Explore.Domain` |
+| `{ApplicationProject}` | `Explore.Application` |
+| `{PersistenceProject}` | `Explore.Persistence` |
+| `{InfrastructureProject}` | `Explore.Infrastructure` |
+| `{ApiProject}` | `Explore.API` |
+| `{BffProject}` | `Explore.Blazor` |
+| `{ClientProject}` | `Explore.Blazor.Client` |
+| `{AppHostProject}` | `Explore.AppHost` |
 
-### Conventions
+Legacy `Event.*` test/support project names are literal source identifiers, not placeholders for
+the product name.
 
-| Format | Meaning | Example |
-|--------|---------|---------|
-| `{Entity}` | PascalCase singular | `Event`, `Order`, `Customer` |
-| `{Entities}` | PascalCase plural | `Events`, `Orders`, `Customers` |
-| `{entity}` | camelCase singular | `event`, `order`, `customer` |
-| `{entities}` | camelCase plural | `events`, `orders`, `customers` |
-| `{ENTITY}` | UPPERCASE | `EVENT`, `ORDER`, `CUSTOMER` |
-| `_{entity}` | Private field | `_event`, `_order`, `_customer` |
+## Common Type Placeholders
 
----
+| Placeholder | Meaning | Typical value |
+|---|---|---|
+| `{IdType}` | Aggregate identifier type | `Guid` |
+| `{LookupIdType}` | Lookup identifier type | existing lookup type, usually `int` |
+| `{ResponseType}` | Command response | `BaseCommandResponse<Guid>` |
+| `{CollectionType}` | Paginated query response | `PaginatedResult<BlogSummaryDto>` |
+| `{CancellationToken}` | Cooperative cancellation | `CancellationToken cancellationToken` |
 
-## 2. Project Placeholders
+Choose the type from the owning source contract; do not substitute a preferred type blindly.
 
-### Solution & Project Names
+## File Path Patterns
 
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{Project}` | Solution/project root name | `Explore`, `OrderSystem`, `MyApp` |
-| `{Project.Domain}` | Domain layer project | `Explore.Domain` |
-| `{Project.Application}` | Application layer project | `Explore.Application` |
-| `{Project.Persistence}` | Persistence layer project | `Explore.Persistence` |
-| `{Project.Infrastructure}` | Infrastructure layer project | `Explore.Infrastructure` |
-| `{Project.API}` | API project | `Explore.API` |
-| `{Project.Blazor}` | Blazor Server project | `Explore.Blazor` |
-| `{Project.Blazor.Client}` | Blazor WASM project | `Explore.Blazor.Client` |
-| `{Project.AppHost}` | Aspire AppHost project | `Explore.AppHost` |
+| Concern | Pattern | Blog example |
+|---|---|---|
+| Domain entity | `src/Explore.Domain/{Entity}.cs` | `src/Explore.Domain/Blog.cs` |
+| CQRS feature | `src/Explore.Application/Features/{Feature}/` | `Features/Blogs/` |
+| DTO | `src/Explore.Application/DTOs/{Entity}/` | `DTOs/Blog/` |
+| Repository contract | `Contracts/Persistence/I{Entity}Repository.cs` | `IBlogRepository.cs` |
+| Repository | `src/Explore.Persistence/Repositories/{Entity}Repository.cs` | `BlogRepository.cs` |
+| EF configuration | `Configurations/Entities/{Entity}Configuration.cs` | `BlogConfiguration.cs` |
+| Controller | `src/Explore.API/Controllers/{Entity}Controller.cs` | `BlogController.cs` |
+| Blazor page area | `src/Explore.Blazor.Client/Pages/{Entities}/` | `Pages/Blogs/` |
+| Blazor service | `Services/{Entities}/{Entity}Service.cs` | `Services/Blogs/BlogService.cs` |
 
-### Database & Context
+## CQRS Substitutions
 
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{DbContext}` | EF Core DbContext class | `ExploreDbContext`, `AppDbContext` |
-| `{ConnectionString}` | Database connection string name | `DefaultConnection` |
-| `{DatabaseProvider}` | Database provider | `PostgreSQL`, `SQL Server` |
+| Template | Blog example |
+|---|---|
+| `{Verb}{Entity}Command` | `CreateBlogCommand`, `PublishBlogCommand` |
+| `{Verb}{Entity}CommandHandler` | `PublishBlogCommandHandler` |
+| `Get{Entities}Query` | `GetPublishedBlogsQuery` |
+| `Get{Entity}By{Key}Query` | `GetPublishedBlogBySlugQuery` |
+| `{Query}Handler` | `GetPublishedBlogsQueryHandler` |
+| `I{Entity}Repository` | `IBlogRepository` |
+| `{Entity}QuerySpecification` | `BlogQuerySpecification` |
 
----
+Templates must follow the feature's actual naming. The current Blog feature groups request records
+in `BlogRequests.cs`; a template does not require one file per record.
 
-## 3. Entity Placeholders
+## API And HAL Placeholders
 
-### Primary Entity
+| Placeholder | Blog value |
+|---|---|
+| `{Controller}` | `BlogController` |
+| `{BaseRoute}` | `/api/blog` |
+| `{RouteName}` | `GetPublishedBlogs` |
+| `{ResourceKind}` | current Blog resource kind from `ResourceKinds` |
+| `{Action}` | current Blog action from `AuthorizationActions.Blogs` |
+| `{LinkRel}` | `edit`, `publish`, `unpublish`, `delete` |
 
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{Entity}` | Main entity being worked on (PascalCase) | `Event`, `Order`, `Product` |
-| `{Entities}` | Plural form | `Events`, `Orders`, `Products` |
-| `{entity}` | camelCase for variables | `event`, `order`, `product` |
-| `{entities}` | camelCase plural | `events`, `orders`, `products` |
-| `_{entity}` | Private field | `_event`, `_order`, `_product` |
+HAL relation names are server contracts. Copy an existing relation only when it represents the same
+semantics; never invent a client-only permission flag.
 
-### Related Entities
+## Blazor Placeholders
 
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{RelatedEntity}` | Foreign key target entity | `Organization`, `Category` |
-| `{RelatedEntities}` | Plural form | `Organizations`, `Categories` |
-| `{ParentEntity}` | Parent in hierarchy | `Category` (self-referencing) |
-| `{ChildEntity}` | Child in one-to-many | `OrderItem`, `EventSession` |
-| `{ChildEntities}` | Plural form | `OrderItems`, `EventSessions` |
-| `{LinkEntity}` | Many-to-many link table | `EventCategories`, `RolePermission` |
+| Placeholder | Blog/navigation value |
+|---|---|
+| `{PublicIndex}` | `BlogIndex` at `/blog` |
+| `{PublicDetail}` | `BlogArticle` at `/blog/:Slug` |
+| `{ManagementPage}` | `BlogManagement` at `/blog/manage` |
+| `{EditorPage}` | `BlogEditor` |
+| `{NavigationComponent}` | `SiteMegaMenu` |
 
-### Lookup Tables
+Use implemented routes only. Planned and deferred destinations do not become template values for
+public links.
 
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{LookupEntity}` | Lookup/reference table entity | `EventType`, `OrderStatus` |
-| `{LookupEntities}` | Plural form | `EventTypes`, `OrderStatuses` |
+## Substitution Example
 
----
+Starting template:
 
-## 4. Type Placeholders
-
-### ID Types
-
-| Placeholder | Description | Typical Value |
-|-------------|-------------|---------------|
-| `{IdType}` | Primary key type for main entities | `Guid` |
-| `{LookupIdType}` | Primary key type for lookup tables | `int` |
-| `{TenantIdType}` | Tenant identifier type | `Guid` |
-
-### Common Types
-
-| Placeholder | Description | Example Value |
-|-------------|-------------|---------------|
-| `{ResponseType}` | Command response type | `BaseCommandResponse<Guid>` |
-| `{ListDtoType}` | List DTO type | `List<{Entity}ListDto>` |
-| `{PaginatedType}` | Paginated response type | `PaginatedResult<{Entity}ListDto>` |
-
----
-
-## 5. Layer Placeholders
-
-### Namespace Patterns
-
-| Placeholder | Expands To |
-|-------------|------------|
-| `{Project.Domain.Namespace}` | `{Project}.Domain` |
-| `{Project.Application.Namespace}` | `{Project}.Application` |
-| `{Project.Application.Features.Namespace}` | `{Project}.Application.Features.{Entities}` |
-| `{Project.Persistence.Namespace}` | `{Project}.Persistence` |
-| `{Project.API.Namespace}` | `{Project}.API` |
-
-### File Path Patterns
-
-| Placeholder | Example Path |
-|-------------|--------------|
-| `{Entity.Command.Path}` | `{Project}.Application/Features/{Entities}/Requests/Commands/` |
-| `{Entity.Query.Path}` | `{Project}.Application/Features/{Entities}/Requests/Queries/` |
-| `{Entity.Handler.Path}` | `{Project}.Application/Features/{Entities}/Handlers/` |
-| `{Entity.Dto.Path}` | `{Project}.Application/DTOs/{Entity}/` |
-| `{Entity.Validator.Path}` | `{Project}.Application/DTOs/{Entity}/Validators/` |
-| `{Entity.Repository.Path}` | `{Project}.Persistence/Repositories/` |
-| `{Entity.Controller.Path}` | `{Project}.API/Controllers/` |
-
----
-
-## 6. CQRS Placeholders
-
-### Commands
-
-| Placeholder | Expands To | Example |
-|-------------|------------|---------|
-| `Create{Entity}Command` | Create command class | `CreateEventCommand` |
-| `Update{Entity}Command` | Update command class | `UpdateEventCommand` |
-| `Delete{Entity}Command` | Delete command class | `DeleteEventCommand` |
-| `Create{Entity}CommandHandler` | Create handler | `CreateEventCommandHandler` |
-
-### Queries
-
-| Placeholder | Expands To | Example |
-|-------------|------------|---------|
-| `Get{Entity}ListRequest` | List query | `GetEventListRequest` |
-| `Get{Entity}DetailsRequest` | Details query | `GetEventDetailsRequest` |
-| `Get{Entities}By{RelatedEntity}Request` | Filter query | `GetEventsByOrganizationRequest` |
-
-### DTOs
-
-| Placeholder | Expands To | Example |
-|-------------|------------|---------|
-| `{Entity}Dto` | Full details DTO | `EventDto` |
-| `{Entity}ListDto` | List view DTO | `EventListDto` |
-| `Create{Entity}Dto` | Create payload | `CreateEventDto` |
-| `Update{Entity}Dto` | Update payload | `UpdateEventDto` |
-
-### Validators
-
-| Placeholder | Expands To | Example |
-|-------------|------------|---------|
-| `Create{Entity}DtoValidator` | Create validator | `CreateEventDtoValidator` |
-| `Update{Entity}DtoValidator` | Update validator | `UpdateEventDtoValidator` |
-
-### Repositories
-
-| Placeholder | Expands To | Example |
-|-------------|------------|---------|
-| `I{Entity}Repository` | Repository interface | `IEventRepository` |
-| `{Entity}Repository` | Repository implementation | `EventRepository` |
-
----
-
-## 7. Substitution Examples
-
-### Example 1: Event Management System
-
-**Substitutions:**
-```
-{Project}        = Explore
-{Entity}         = Event
-{Entities}       = Events
-{RelatedEntity}  = Organization
-{LookupEntity}   = EventType
-{IdType}         = Guid
-{LookupIdType}   = int
+```text
+{Entity} = Blog
+{Entities} = Blogs
+{IdType} = Guid
+{Controller} = BlogController
+{BaseRoute} = /api/blog
+{Repository} = IBlogRepository / BlogRepository
 ```
 
-**Template Code:**
-```csharp
-namespace {Project}.Application.Features.{Entities}.Handlers.Commands;
+Resulting source flow:
 
-public class Create{Entity}CommandHandler : IRequestHandler<Create{Entity}Command, BaseCommandResponse<{IdType}>>
-{
-    private readonly I{Entity}Repository _{entity}Repository;
-    private readonly I{RelatedEntity}Repository _{relatedEntity}Repository;
-
-    // ...
-}
+```text
+Blog page -> BlogService -> BlogController -> Blog CQRS handler -> BlogRepository -> Blog entity
 ```
 
-**Becomes:**
-```csharp
-namespace Explore.Application.Features.Events.Handlers.Commands;
+Create only the pieces the feature actually needs. Reuse existing repository, CQRS, HAL, BFF, and
+design-system patterns before adding abstractions.
 
-public class CreateEventCommandHandler : IRequestHandler<CreateEventCommand, BaseCommandResponse<Guid>>
-{
-    private readonly IEventRepository _eventRepository;
-    private readonly IOrganizationRepository _organizationRepository;
+## Rules For Template Authors
 
-    // ...
-}
-```
+1. State which placeholders are required and which are optional.
+2. Use one coherent source-backed example.
+3. Keep product names and code identifiers distinct.
+4. Do not preserve removed Event entities as examples.
+5. Do not claim generated files exist merely because a template/config names an output.
+6. Link to canonical conventions instead of duplicating long rule sets.
 
-### Example 2: E-Commerce System
+## Related
 
-**Substitutions:**
-```
-{Project}        = ECommerce
-{Entity}         = Order
-{Entities}       = Orders
-{RelatedEntity}  = Customer
-{ChildEntity}    = OrderItem
-{LookupEntity}   = OrderStatus
-{IdType}         = Guid
-{LookupIdType}   = int
-```
-
-**Template Code:**
-```csharp
-public class {Entity}Repository : GenericRepository<{Entity}, {IdType}>, I{Entity}Repository
-{
-    public async Task<List<{Entity}>> Get{Entities}By{RelatedEntity}({IdType} {relatedEntity}Id)
-    {
-        return await _dbContext.{Entities}
-            .Include(e => e.{ChildEntities})
-            .Include(e => e.{LookupEntity})
-            .Where(e => e.{RelatedEntity}Id == {relatedEntity}Id)
-            .ToListAsync();
-    }
-}
-```
-
-**Becomes:**
-```csharp
-public class OrderRepository : GenericRepository<Order, Guid>, IOrderRepository
-{
-    public async Task<List<Order>> GetOrdersByCustomer(Guid customerId)
-    {
-        return await _dbContext.Orders
-            .Include(e => e.OrderItems)
-            .Include(e => e.OrderStatus)
-            .Where(e => e.CustomerId == customerId)
-            .ToListAsync();
-    }
-}
-```
-
----
-
-## 8. Best Practices
-
-### When Creating New Documentation
-
-1. **Always use placeholders** for entity-specific names
-2. **Provide substitution tables** at the top of each document
-3. **Include concrete examples** in "Implementation Example" sections
-4. **Mark project-specific sections** clearly
-
-### Substitution Table Template
-
-Add this to any document that uses placeholders:
-
-```markdown
-## Placeholder Substitutions
-
-| Placeholder | Replace With |
-|-------------|--------------|
-| `{Project}` | Your solution name |
-| `{Entity}` | Your main entity |
-| `{Entities}` | Plural form |
-| `{RelatedEntity}` | Related entity for FK |
-| `{IdType}` | `Guid` (recommended) or `int` |
-```
-
-### Naming Conventions
-
-| Type | Convention | Example |
-|------|------------|---------|
-| Entity | PascalCase, singular | `Event`, `Order` |
-| DbSet | PascalCase, plural | `Events`, `Orders` |
-| Repository | I{Entity}Repository | `IEventRepository` |
-| Controller | {Entity}Controller | `EventController` |
-| DTO | {Entity}Dto, {Entity}ListDto | `EventDto`, `EventListDto` |
-| Command | {Verb}{Entity}Command | `CreateEventCommand` |
-| Query | Get{Entity}*Request | `GetEventListRequest` |
-| Handler | {Command/Query}Handler | `CreateEventCommandHandler` |
-| Validator | {Dto}Validator | `CreateEventDtoValidator` |
-
----
-
-## Design Principles Reference
-
-These principles guide all documentation and should be followed when implementing:
-
-### SOLID Principles
-
-| Principle | Application |
-|-----------|-------------|
-| **S**ingle Responsibility | Each handler handles one command/query |
-| **O**pen/Closed | Use interfaces for extension |
-| **L**iskov Substitution | Repositories implement interfaces correctly |
-| **I**nterface Segregation | Small, focused repository interfaces |
-| **D**ependency Inversion | Depend on abstractions (interfaces) |
-
-### Clean Architecture
-
-| Rule | Enforcement |
-|------|-------------|
-| Dependencies flow inward | Domain has no dependencies |
-| Entities are framework-agnostic | No EF Core in Domain |
-| Use cases in Application | Business logic in handlers |
-| Controllers are thin | Only HTTP ↔ MediatR |
-
-### Clean Code
-
-| Principle | Example |
-|-----------|---------|
-| **DRY** | Use `GenericRepository<T, TId>` |
-| **KISS** | Simple handlers, one responsibility |
-| **YAGNI** | Don't add unused abstractions |
-| Meaningful names | `GetEventsWithDetails()` not `GetData()` |
-
----
-
-## Related Documentation
-
-- **[GOVERNANCE.md](GOVERNANCE.md)** - Coding conventions (project-agnostic)
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Critical rules summary
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture patterns
-
----
-
-## Implementation Example: ISLAMU Event
-
-This repository (`Explore`) uses the following substitutions:
-
-| Placeholder | ISLAMU Event Value |
-|-------------|-------------------|
-| `{Project}` | `Explore` |
-| `{Project.Domain}` | `Explore.Domain` |
-| `{Project.Application}` | `Explore.Application` |
-| `{Project.Persistence}` | `Explore.Persistence` |
-| `{Project.API}` | `Explore.API` |
-| `{Project.Blazor}` | `Explore.Blazor` |
-| `{DbContext}` | `ExploreDbContext` |
-| `{IdType}` | `Guid` |
-| `{LookupIdType}` | `int` |
-
-**Sample Entities:**
-- `{Entity}` = `Event`, `Organization`, `User`, `EventSession`
-- `{LookupEntity}` = `EventType`, `EventStatus`, `Madhab`, `AudienceAge`
-- `{LinkEntity}` = `EventCategories`, `EventTags`, `OrganizationMembers`
+- [NAMING_CONVENTIONS.md](NAMING_CONVENTIONS.md)
+- [GOVERNANCE.md](GOVERNANCE.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)

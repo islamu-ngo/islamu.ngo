@@ -7,6 +7,13 @@ ABOUTME: Defines durable-intent ownership, dispatch profiles, and side-effect bo
 - **Date:** 2026-05
 - **Deciders:** Core team
 
+## Current Boundary (2026-07-18)
+
+The PostgreSQL-owned email dispatch state machine, background side-effect boundary, and optional
+RabbitMQ pointer transport remain active architecture. Event registration/lifecycle triggers and
+third-party self-hosting profiles below are historical motivation only; they are not current
+ISLAMU product or deployment promises.
+
 ## Context
 
 ISLAMU Event needs reliable event-lifecycle email delivery, starting with registration confirmation. The platform already has PostgreSQL, EF Core, CQRS/MediatR, SMTP abstraction, tenant-scoped configuration, a general transactional outbox, and specialized outbox precedent. It also has an optional RabbitMQ transport workstream for EmailDispatch pointers, but RabbitMQ must not become mandatory for self-hosters.

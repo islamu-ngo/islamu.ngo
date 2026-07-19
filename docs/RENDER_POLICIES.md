@@ -1,145 +1,103 @@
-<!-- ABOUTME: Defines current Blazor render-policy behavior from governance settings to route-level decisions. -->
-<!-- ABOUTME: Separates imported Event-era routing facts from the first-party website target contract. -->
+<!-- ABOUTME: Current Blazor route classification and prerender policy for the first-party ISLAMU website. -->
+<!-- ABOUTME: Distinguishes implemented InteractiveServer behavior from stored governance options and planned changes. -->
 
 # Render Policies
 
-## Where Policy Is Resolved
+> **Audience:** Frontend contributors | Maintainers | AI agents
+> **Status:** Active
+> **Owner:** Frontend
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Blazor.Client/Services/RuntimeRenderPolicyService.cs`, `src/Explore.Blazor.Client/Routes.razor`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Application/DTOs/Instance/RenderPolicySettingsDto.cs`
 
-Client runtime resolver:
+## Current Runtime Rule
 
-- `Explore.Blazor.Client.Services.RuntimeRenderPolicyService`
+`RuntimeRenderPolicyService` resolves a route group and a prerender flag. It currently returns
+`InteractiveServer` for every group, regardless of stored render-mode values. Stored governance
+settings still influence prerender selection.
 
-Data source:
-
-- `PublicExperienceSettingsDto` from API (`GetPublicExperienceSettingsQueryHandler`)
-- values originate from `HierarchicalSettingsResolver.ResolveEffectiveSettingsAsync()` which applies the 5-tier cascade (User → Group → Organization → Tenant → Instance).
-
-This render-policy system is current imported behavior in `Explore.Blazor` and `Explore.Blazor.Client`. It remains authoritative only while those source paths survive the init-import workstream. Event routes and tenant-governance settings below are implementation facts, not target website promises. New website and Blog routes must be added by the code-owning workstream before this document presents them as implemented.
+This is the source-backed runtime contract. Do not describe InteractiveAuto or WebAssembly as
+active route outcomes merely because related enums/settings remain in the codebase.
 
 ## Route Groups
 
-`RuntimeRenderPolicyService.ClassifyRouteGroup` uses:
+The classifier normalizes paths to lowercase and removes a trailing slash.
 
-- `Onboarding`: `/setup`, `/startup`, `/onboarding/*`
-- `Admin`: `/admin/*`
-- `PublicSeo`: `/`, `/events`, `/welcome`, `/home`, `/event/detail/*`
-- `Operational`: all other routes
+| Group | Current path rules |
+|---|---|
+| `Onboarding` | `/setup`, `/startup`, `/onboarding/*` |
+| `Admin` | `/admin/*` |
+| `PublicSeo` | `/`, `/welcome`, `/home` |
+| `Operational` | Every other route |
 
-## Policy Keys
+### Blog
 
-Stored in `SystemSetting` with `routing.render_policy.*` keys:
+`/blog`, `/blog/{slug}`, and `/blog/manage*` currently classify as `Operational`. The Blog Razor
+components explicitly declare `InteractiveServer`; authenticated management routes also use route
+guards/authorization and `noindex,nofollow` metadata.
 
-- `routing.render_policy.version`
-- `routing.render_policy.preset`
-- `routing.render_policy.advanced_enabled`
-- `routing.render_policy.onboarding.disallow_interactive_server`
-- `routing.render_policy.global.render_mode`
-- `routing.render_policy.global.prerender_enabled`
-- `routing.render_policy.public_seo.render_mode`
-- `routing.render_policy.public_seo.prerender_enabled`
-- `routing.render_policy.operational.render_mode`
-- `routing.render_policy.operational.prerender_enabled`
-- `routing.render_policy.admin.render_mode`
-- `routing.render_policy.admin.prerender_enabled`
-- `routing.render_policy.onboarding.render_mode`
-- `routing.render_policy.onboarding.prerender_enabled`
+Blog is implemented, but it is not currently included in the `PublicSeo` render-policy group.
 
-## Presets (Normalization Rules)
+### Navigation
 
-`InstanceGovernanceSettingService` applies preset normalization:
+`SiteMegaMenu` is part of the shared shell and does not make per-destination render decisions. It
+navigates to existing routes; each destination follows its own component and runtime policy.
 
-- `AllInteractiveServer` (**default**):
-  - advanced overrides disabled
-  - global mode = `InteractiveServer`
-  - global prerender = `false`
-  - all route groups inherit global (InteractiveServer, no prerender)
-- `SeoBalanced`:
-  - advanced overrides disabled
-  - global mode = `InteractiveAuto`
-  - global prerender = `false`
-  - public-seo prerender = `true`
-- `AllPrerendered`:
-  - advanced overrides disabled
-  - global prerender = `true`
-- `AllInteractiveAutoNoPrerender`:
-  - advanced overrides disabled
-  - global mode = `InteractiveAuto`
-  - global prerender = `false`
-- `CustomAdvanced`:
-  - advanced overrides enabled
+## Prerender Resolution
 
-When advanced overrides are disabled, route-group mode/prerender values are aligned to global values (with SeoBalanced public-seo prerender exception).
+1. If settings cannot be loaded, `PublicSeo` defaults to prerender enabled and all other groups to
+   prerender disabled.
+2. With settings, global prerender is the base value.
+3. When advanced overrides are enabled, the selected route group's prerender flag wins.
+4. When advanced overrides are disabled and preset is `SeoBalanced`, `PublicSeo` prerender is
+   enabled.
+5. The resulting render mode is still `InteractiveServer`.
 
-## Onboarding Guardrail (Important)
+## Settings Source
 
-Two enforcement behaviors exist:
+`PublicExperienceSettingsDto` is loaded through `IPublicExperienceService`. Effective values are
+produced by the hierarchical settings resolver and current instance/tenant governance rules.
 
-1. governance normalization converts onboarding mode to `InteractiveAuto` when `InteractiveServer` is submitted (prevents storing InteractiveServer as the configured onboarding mode),
-2. runtime resolver forces onboarding routes to `InteractiveServer` for actual rendering regardless of stored value.
+Relevant stored keys remain under `routing.render_policy.*`, including:
 
-The validator does **not** reject `InteractiveServer` for onboarding — normalization handles it silently. This means onboarding always runs `InteractiveServer` at runtime.
+- preset and advanced-enabled flags;
+- global prerender;
+- public SEO, operational, admin, and onboarding prerender flags; and
+- tenant-override/lock settings.
 
-## Runtime Fallback Defaults
+These keys are implementation inputs. They do not prove every legacy selectable render mode is
+currently honored by the runtime resolver.
 
-If settings cannot be loaded, `RuntimeRenderPolicyService` defaults to:
+## Current Public Routes
 
-- `PublicSeo`: `InteractiveServer`, prerender `true`
-- all other groups: `InteractiveServer`, prerender `false`
+`Explore.Blazor.Client/Routes.razor` registers implemented Blog routes:
 
-## Allowed Render Modes
+- `/blog`
+- `/blog/:Slug`
+- `/blog/manage`
+- `/blog/manage/new`
+- `/blog/manage/:Id`
 
-Enum-backed render modes:
+The route table also contains current public/legal, account, organization/group, setup, and admin
+destinations. Product documentation and public navigation should expose only implemented routes.
 
-- `InteractiveAuto`
-- `InteractiveWebAssembly`
-- `InteractiveServer`
+## Safe Authoring Rules
 
-## Per-Tenant Render Policy Delegation
+1. Read `RuntimeRenderPolicyService` and the target Razor component before documenting render mode.
+2. Do not infer runtime behavior from enum values or settings DTOs alone.
+3. Keep onboarding/admin routes out of public SEO claims.
+4. A new public content route needs route registration, title/metadata, indexing decision,
+   accessibility review, and sitemap decision.
+5. If route classification changes, update [SEO.md](SEO.md) in the same slice.
 
-Instance admins can delegate render policy control to tenants via governance settings.
+## Known Gap
 
-### Delegation Keys
-
-Stored in `SystemSetting` with `routing.render_policy.*` keys:
-
-- `routing.render_policy.allow_tenant_override` — master gate (must be `true` for any tenant override)
-- `routing.render_policy.lock_tenant_public_seo` — locks public/SEO route group
-- `routing.render_policy.lock_tenant_operational` — locks operational route group
-- `routing.render_policy.lock_tenant_admin` — locks admin route group
-
-Onboarding is always instance-controlled (no tenant override, hardcoded guardrail).
-
-### Cascade Resolution
-
-`ReadEffectiveSettingsForTenantAsync(tenantId)`:
-
-1. Reads instance settings via `ReadSettingsAsync()`.
-2. If `AllowTenantRenderPolicyOverride` is `false`, returns instance settings unchanged.
-3. Overlays tenant preset, advanced-enabled, global mode, and global prerender overrides.
-4. Runs `NormalizeRenderPolicySettings` (applies preset defaults, aligns non-advanced to global).
-5. Overlays per-route-group tenant overrides only for unlocked groups (after normalization so they aren't clobbered).
-
-### Lock Enforcement
-
-Two enforcement layers:
-
-1. **Service layer**: `TenantPolicySettingService` silently removes tenant overrides for locked groups during write.
-2. **Handler layer**: `UpdateTenantPolicySettingsCommandHandler.EnsureLockedSettingsAreNotModifiedAsync` returns explicit validation failure if locked fields are changed.
-
-### Tenant Admin UI
-
-`TenantRenderPolicySection.razor` shows:
-- Preset selector (all presets including CustomAdvanced)
-- Per-route-group override panels with lock awareness (disabled when locked)
-- `CanOverride*` flags computed from system lock keys
-
-### `GetPublicExperienceSettingsQueryHandler`
-
-Uses `ReadEffectiveSettingsForTenantAsync(tenantId)` — public experience always resolves tenant-specific render policy.
+Blog reader routes have canonical metadata and sitemap entries but are not classified as
+`PublicSeo`. This docs lane records the mismatch; it does not change product source or claim that
+`SeoBalanced` prerenders Blog pages.
 
 ## Related
 
 - [BLAZOR.md](BLAZOR.md)
-- [CONFIGURATION.md](CONFIGURATION.md)
-- [OPERATIONS.md](OPERATIONS.md)
-- [MULTI_TENANCY.md](MULTI_TENANCY.md)
+- [SEO.md](SEO.md)
+- [PROJECT.md](PROJECT.md)
+- [ACCESSIBILITY.md](ACCESSIBILITY.md)

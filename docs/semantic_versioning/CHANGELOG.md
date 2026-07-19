@@ -1,18 +1,29 @@
-ABOUTME: Semantic version index for implemented and planned platform versions.
-ABOUTME: v0.1.0 implemented scope mirrors API WORK ITEMS.md and v1.0.0 planned scope mirrors API WORK ITEMS TODO.md.
+ABOUTME: Historical semantic-version index for the removed ISLAMU Event platform.
+ABOUTME: Preserves the imported beta baseline and roadmap without presenting either as current product truth.
 
-# Changelog — ISLAMU Event Platform
+# Historical Changelog — ISLAMU Event Platform
+
+> **Audience:** Contributors | Maintainers
+> **Status:** Historical
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `docs/PROJECT.md`, `dev/report/EVENT_REFERENCE_ALIGNMENT.md`
 
 > All notable changes are documented in version files.
 > This project follows [Semantic Versioning 2.0.0](https://semver.org/).
 
-**Last Updated:** 2026-03-27
+This directory preserves imported Event release planning. The Event product has been removed, no
+version listed here is the current ISLAMU website release or roadmap, and `TBD` release dates are
+not evidence that a release occurred. Use [PROJECT.md](../PROJECT.md) for current product scope.
+
+- **Historical Snapshot Updated:** 2026-03-27
+- **Boundary Reviewed:** 2026-07-18
 
 ---
 
-## [Unreleased]
+## Historical Unreleased Snapshot
 
-Features merged to `develop` branch, not yet released:
+Features recorded as merged to `develop` in the former Event release plan:
 
 - **Outbox pattern** — transactional outbox with `OutboxProcessor` background service, exponential backoff retry, dead-letter queue, optimistic concurrency. Specialized variants: `PdsSyncOutbox`, `PolicyChangeOutbox`.
 - **Footer management** — tenant-configurable footer with link groups, social links, 4 templates (standard-3-col, standard-2-col, minimal, community), instance governance locking. 11 API endpoints + admin UI.
@@ -29,40 +40,42 @@ Features merged to `develop` branch, not yet released:
 
 | Version | Title | Released | Status |
 |---------|-------|----------|--------|
-| [v0.1.0](v0.1.0.md) | First Public Release (Beta) | TBD | 🚀 **CURRENT** |
-| [v1.0.0](v1.0.0.md) | Planned Stable Release | TBD | ⏳ **PLANNED** |
+| [v0.1.0](v0.1.0.md) | First Public Release (Beta) | TBD | Historical unreleased baseline |
+| [v1.0.0](v1.0.0.md) | Planned Stable Release | TBD | Historical plan; not current roadmap |
 
 ---
 
 ## Versioning Policy
 
-### Current Phase: Pre-1.0 Beta (0.1.0)
+### Historical Phase: Pre-1.0 Beta (0.1.0)
 
 - **Major version zero (0.y.z)** indicates initial development.
 - **Implemented baseline for v0.1.0** is tracked in `v0.1.0.md` under **Implemented (v0.1.0)**.
 - **Planned scope for v1.0.0** is tracked in `v1.0.0.md` under **Planned (v1.0.0)**.
 
-### Progression to 1.0.0
+### Historical Progression to 1.0.0
 
-The project will move to **v1.0.0** after planned backlog completion and release validation.
+The former Event plan intended to move to **v1.0.0** after backlog completion and release
+validation. That intent was not carried forward to the current ISLAMU website.
 
 ---
 
 ## Feature Checklist Mapping
 
-### ✅ Implemented in v0.1.0
+### Historical v0.1.0 Baseline
 
 - Source of truth: [v0.1.0.md](v0.1.0.md)
-- Implemented section mirrors: `API WORK ITEMS.md`
+- Imported source recorded at the time: `API WORK ITEMS.md` (no longer present).
 
-### ⏳ Planned for v1.0.0
+### Historical v1.0.0 Plan
 
 - Source of truth: [v1.0.0.md](v1.0.0.md)
-- Planned section mirrors: `API WORK ITEMS TODO.md`
+- Imported source recorded at the time: `API WORK ITEMS TODO.md` (no longer present).
 
 ---
 
 ## Notes
 
-- All currently implemented baseline work is classified under `v0.1.0`.
-- All enterprise-next backlog items are classified under planned `v1.0.0`.
+- The imported Event baseline classified implemented work under `v0.1.0`.
+- The imported Event plan classified its enterprise backlog under `v1.0.0`; this is not a current
+  ISLAMU commitment.

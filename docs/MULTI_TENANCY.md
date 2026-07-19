@@ -1,7 +1,17 @@
-ABOUTME: Explains tenant resolution, isolation, and override behavior implemented in code.
-ABOUTME: Prioritizes runtime rules from TenantContext, query filters, and governance services.
+<!-- ABOUTME: Explains tenant resolution, isolation, and override behavior implemented in source. -->
+<!-- ABOUTME: Prioritizes fail-closed tenant context, query filters, and governance services. -->
 
 # Multi-Tenancy
+
+> **Audience:** Contributors | Security reviewers | ISLAMU operators
+> **Status:** Active
+> **Owner:** Security/Platform
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.API/Middleware/ApiTenantResolutionMiddleware.cs`, `src/Explore.API/Middleware/ApiTenantPostAuthenticationMiddleware.cs`, `src/Explore.Persistence/ExploreDbContext.cs`, `src/Explore.Infrastructure/Services/HierarchicalSettingsResolver.cs`, `src/Explore.Infrastructure/SupportAccess/SupportAccessSessionService.cs`, `src/Explore.API/Controllers/ManagedProviderProvisioningController.cs`
+
+This document records technical isolation behavior in the first-party ISLAMU website. Multi-tenant
+source remains active even though ISLAMU does not promise a public SaaS, third-party self-hosting,
+or community-operator product.
 
 ## Deployment Modes
 
@@ -102,15 +112,16 @@ Support access is tenant-context support, not user impersonation:
 - Support access never creates `TenantUserRoleGrant` rows and never changes `ICurrentUserService.UserId`; audit records must preserve the real operator identity.
 - Tenant admins can review their tenant's support-access session history and audit evidence from tenant settings. That view uses the current tenant id from tenant onboarding status and still depends on the API/HAL `audit-events` affordance before showing audit drill-in.
 
-## Managed Provider Tenant Provisioning
+## Internal Managed-Provisioning Integration
 
-Trusted managed-provider automation creates tenant boundaries explicitly rather than treating `Organization` as tenancy:
+The source-backed managed-provider endpoint is an internal integration boundary. Trusted
+automation creates tenant boundaries explicitly rather than treating `Organization` as tenancy:
 
 1. Provider/operator authority calls `POST /api/managed-provider-provisioning/clients:ensure` with instance-admin authorization.
 2. The command creates or resolves a `Tenant` for the provider customer and records provider-neutral `ExternalBinding` rows for durable idempotency.
 3. The external administrator is linked to the minimal global `User` account through stable IdP identifiers, then gets tenant-local `TenantUser`, `TenantUserProfile`, user `Actor`, and `TenantUserRoleGrant` tenant-admin authority inside the new tenant.
 4. Optional organizer semantics create an approved `Organization` or `Group` plus actor inside the tenant. These are tenant-scoped organizer entities, not tenancy boundaries.
-5. ERP customer/admin identities receive tenant-admin authority for their tenant, not instance-admin authority. Customer-as-instance-admin is reserved for separate managed-hosting/dedicated-instance product models.
+5. External customer/admin identities receive tenant-admin authority for the created tenant, not instance-admin authority. The endpoint does not define or promise a managed-hosting product model.
 
 ## Hierarchical Settings Model
 

@@ -1,139 +1,99 @@
-ABOUTME: Short runnable onboarding path for contributors and local evaluators.
-ABOUTME: Links deeper docs instead of duplicating self-hosting, testing, and contribution guides.
+ABOUTME: Short runnable onboarding path for contributors to the first-party ISLAMU website.
+ABOUTME: Separates local Aspire and Compose workflows from first-party production operations.
 
 # Getting Started
 
-> **Audience:** Contributors | Evaluators | AI agents
-> **Status:** Implemented
+> **Audience:** Contributors | Maintainers | AI agents
+> **Status:** Active
 > **Owner:** Contributor Experience
-> **Last Verified:** 2026-07-03
-> **Source Anchors:** `global.json`, `Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `docs/SELF_HOSTING.md`, `docs/TESTING.md`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `global.json`, `src/Explore.AppHost/AppHost.cs`, `src/Explore.AppHost/Properties/launchSettings.json`, `docker-compose.yml`, `docs/TESTING.md`
 
-Use this page for the shortest safe local path. For production-style hosting, start with [SELF_HOSTING.md](SELF_HOSTING.md) instead.
+Use this page to run the repository locally. Production deployment belongs to
+[PRODUCTION_OPERATIONS.md](PRODUCTION_OPERATIONS.md); local provider containers are development
+infrastructure, not a supported self-hosting product.
 
 ## Prerequisites
 
-| Tool | Version | Purpose |
+| Tool | Version or posture | Purpose |
 |---|---|---|
-| .NET SDK | `10.0.300` or compatible SDK from `global.json` | Build and run the solution. |
-| Docker / Docker Compose v2 | Current | Local Aspire infrastructure and self-hosting stack. |
-| .NET Aspire CLI | Current compatible CLI | Preferred local development loop; `dotnet run --project Explore.AppHost` remains the fallback/IDE launch path. |
+| .NET SDK | `10.0.300` or the compatible version selected by `global.json` | Build and run the solution. |
+| Docker with Compose v2 | Current | Run local infrastructure. |
+| .NET Aspire CLI | Current compatible CLI | Preferred local orchestration loop. |
 
-Install the Aspire CLI before using `aspire run`:
+Install Aspire when it is not already available:
 
 ```bash
 curl -sSL https://aspire.dev/install.sh | bash
-# Alternative when .NET 10 global tools are available:
-dotnet tool install -g Aspire.Cli
 ```
 
-If your shell cannot find `aspire` after the .NET tool install, add `$HOME/.dotnet/tools` to `PATH`.
-
-## Clone And Run
+## Clone And Build
 
 ```bash
-git clone https://github.com/islamu-ngo/Event.git
-cd Event
-cp .env.example .env
-aspire run --apphost Explore.AppHost/Explore.AppHost.csproj
-```
-
-That command starts the default full-local Aspire topology. Aspire builds the AppHost, starts local infrastructure, runs migrations, starts API and Blazor, and prints the dashboard URL. Press `Ctrl+C` to stop the interactive run.
-
-Run the build separately before opening a PR or when diagnosing compile failures:
-
-```bash
+git clone https://github.com/islamu-ngo/islamu.ngo.git
+cd islamu.ngo
 dotnet build --configuration Release --verbosity quiet
 ```
 
-Build errors must be fixed before continuing. For recurring failures, use [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+Copy `.env.example` to `.env` only when you need to override local defaults. Never commit `.env`.
 
-## Local Secrets & Infrastructure Profiles
+## Recommended Local Run
 
-For local development, the applications share a single .NET User Secrets ID: `event-shared-secrets`.
+The shortest contributor path starts the `DefaultLocal` Aspire graph:
 
-Maintainers using external infrastructure can configure Infisical bootstrap settings in the shared user secrets file:
-- **Linux/macOS:** `/home/{user}/.microsoft/usersecrets/event-shared-secrets/secrets.json`
-- **Windows:** `%APPDATA%\Microsoft\UserSecrets\event-shared-secrets\secrets.json`
-
-### Infisical Configuration (Maintainers Only)
-`local-full` does not require Infisical because Aspire starts local infrastructure and the AppHost sets `SecretProvider:Provider=None` for child projects while clearing Infisical bootstrap identifiers. Use Infisical only for maintainer workflows that intentionally depend on shared external infrastructure.
-
-If using external infrastructure with `local-core` or `local-lite`, configure your local bootstrap credentials inside the `secrets.json` file:
-```json
-{
-  "Infisical:Url": "https://example.com",
-  "Infisical:ProjectId": "",
-  "Infisical:Environment": "dev",
-  "Infisical:ClientId": "",
-  "Infisical:ClientSecret": ""
-}
+```bash
+aspire run --apphost src/Explore.AppHost/Explore.AppHost.csproj
 ```
+
+The AppHost always starts Mailpit, the migration service, API, and Blazor. It waits for migrations
+before application startup and prints the Aspire dashboard URL. Press `Ctrl+C` to stop the run.
+Use the dashboard or `aspire describe`; do not assume Aspire endpoints match Compose ports.
 
 ### Aspire Profiles
 
-| Profile | Use When | Infrastructure Ownership |
+| Launch profile | `ISLAMU_ASPIRE_MODE` | Local ownership |
 |---|---|---|
-| `local-full` | Contributor default, smoke checks, first clone | Aspire starts PostgreSQL, Redis, RabbitMQ, Mailpit, CockroachDB, Phase Two Keycloak, Cerbos, MinIO, Svix, Coop, Osprey, Prometheus, and Grafana locally. |
-| `local-core` | Maintainers debugging data/cache issues | Aspire starts PostgreSQL, Redis, Mailpit, and migrations locally; Keycloak, Cerbos, storage, webhooks, and moderation providers come from Infisical/config. |
-| `local-lite` | Maintainers on the fast daily loop | Aspire starts Mailpit, migrations, API, and Blazor; data and platform infrastructure come from Infisical/config. |
+| `local-default` | `DefaultLocal` | PostgreSQL, Redis, RabbitMQ, Mailpit, Keycloak, Cerbos, MinIO, and Svix, plus migrations/API/Blazor. This is the CLI default when the mode is unset. |
+| `local-full` | `FullLocal` | `local-default` plus heavy development tools and providers, including Weblate, Coop, Osprey, PgAdmin, Prometheus, and Grafana. |
+| `https` | `FullLocal` | IDE compatibility alias for `local-full`. |
+| `local-core` | `LocalDataExternalPlatform` | Local PostgreSQL, Redis, and Mailpit; other platform services come from maintainer configuration. |
+| `local-lite` | `ExternalInfra` | Mailpit remains local; database, cache, identity, authorization, and other platform services come from maintainer configuration. |
 
-`local-full` uses persistent containers and named volumes so repeated runs do not recreate the database, Keycloak, Mailpit messages, MinIO, RabbitMQ, or observability data from scratch. Keycloak keeps stable local ports for OIDC browser cookies and callbacks.
-
-Mailpit starts in every Aspire profile. SMTP uses `localhost:11025`, and the capture UI is `http://localhost:18025`. Development seeding applies those values when `email.smtp_host` is empty, so registration and other email workflows can use the normal SMTP path without sending real email.
-
-Osprey starts in `local-full` with `ghcr.io/roostorg/osprey/osprey-coordinator:latest` plus a local `osprey-kafka` broker and `osprey.actions_input` topic for the coordinator action consumer. It exposes coordinator ports `19950` and `19951`; the application `Reporting:Osprey` HTTP adapter stays disabled unless you provide a compatible facade endpoint.
-
-For more detailed information, see [SECRETS.md](SECRETS.md) and [CONFIGURATION.md](CONFIGURATION.md).
-
-## Option A: Run The Aspire Development Loop
-
-Aspire is the preferred local development loop because `Explore.AppHost` starts infrastructure, runs the migration service before API and Blazor, then wires API discovery into Blazor without hardcoded ports.
+Run an explicit profile through `dotnet run` when an IDE or investigation requires it:
 
 ```bash
-aspire run --apphost Explore.AppHost/Explore.AppHost.csproj
+dotnet run --project src/Explore.AppHost/Explore.AppHost.csproj --launch-profile local-default
+dotnet run --project src/Explore.AppHost/Explore.AppHost.csproj --launch-profile local-full
+dotnet run --project src/Explore.AppHost/Explore.AppHost.csproj --launch-profile local-core
+dotnet run --project src/Explore.AppHost/Explore.AppHost.csproj --launch-profile local-lite
 ```
 
-The default mode is `FullLocal`, so contributors do not need to remember a launch-profile name. Use the Aspire dashboard output to find exact dynamic endpoints. Do not assume the AppHost uses the same ports as Docker Compose.
+Maintainer modes require complete external configuration. The AppHost still runs
+`Event.MigrationService`; `local-lite` is not an application-only mode.
 
-Background run and stop:
+## Local Email Capture
 
-```bash
-aspire start --apphost Explore.AppHost/Explore.AppHost.csproj
-aspire stop --apphost Explore.AppHost/Explore.AppHost.csproj
-```
+Mailpit is local/test infrastructure and starts in every Aspire mode. Non-isolated development uses:
 
-Maintainer-only alternate modes:
+| Endpoint | Address |
+|---|---|
+| SMTP | `localhost:11025` |
+| Capture UI | `http://localhost:18025` |
 
-```bash
-ISLAMU_ASPIRE_MODE=LocalDataExternalPlatform aspire run --apphost Explore.AppHost/Explore.AppHost.csproj
-ISLAMU_ASPIRE_MODE=ExternalInfra aspire run --apphost Explore.AppHost/Explore.AppHost.csproj
-```
+Isolated Aspire runs can assign dynamic ports. Read them from Aspire resource metadata. Mailpit must
+never be documented or configured as the production SMTP provider.
 
-Launch profiles remain available for IDEs or older workflows:
+## Local Compose Alternative
 
-```bash
-dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile https
-dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile local-full
-dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile local-core
-dotnet run --project Explore.AppHost/Explore.AppHost.csproj --launch-profile local-lite
-```
-
-The `https` launch profile is a compatibility alias for the full local topology. Prefer `aspire run --apphost Explore.AppHost/Explore.AppHost.csproj` for the contributor path because it is shorter and works from a clean checkout.
-
-Priority rule: `ConnectionStrings:DefaultConnection` wins first, so Aspire `WithReference` owns the local database connection in `FullLocal` and `LocalDataExternalPlatform`. When no connection string is supplied, the bootstrap chain is Infisical `/postgresql` first, then `POSTGRESQL_*` environment variables, then `Postgresql:*` configuration. If Infisical bootstrap credentials exist and you want env-only local behavior, remove or blank those credentials for that shell/profile.
-
-## Option B: Run The Compose Stack
-
-Use Compose when you want the self-hosting topology locally:
+Use repository Compose when you need to inspect the container topology without Aspire:
 
 ```bash
 cp .env.example .env
 docker compose config
-docker compose up -d postgres redis mailpit keycloak-db keycloak keycloak-init islamu-event-api islamu-event-ui
+docker compose up -d postgres redis mailpit keycloak-db keycloak keycloak-ngo-provisioner islamu-ngo-api islamu-ngo-ui
 ```
 
-Default Compose endpoints:
+Local default endpoints are:
 
 | Service | URL |
 |---|---|
@@ -141,63 +101,48 @@ Default Compose endpoints:
 | API | `http://localhost:17039` |
 | Mailpit | `http://localhost:18025` |
 
-Swagger, Scalar, and OpenAPI JSON endpoints are mapped only for Development/Testing API runs. The Compose stack uses `ASPNETCORE_ENVIRONMENT=Production`; use [API.md](API.md) and [API_COOKBOOK.md](API_COOKBOOK.md) for API guidance unless you intentionally run the API in a development profile.
-
-Optional profiles:
+Optional Compose profiles exist for development and provider verification:
 
 ```bash
 docker compose --profile storage up -d
 docker compose --profile authz up -d
 docker compose --profile webhooks up -d
+docker compose --profile localization up -d
 docker compose --profile moderation up -d
 docker compose --profile osprey up -d
 ```
 
-`moderation` starts Coop. `osprey` starts `ghcr.io/roostorg/osprey/osprey-coordinator:latest` on coordinator ports `19950` and `19951`.
+The `localization` profile runs Weblate. Tolgee remains a configurable translation-provider adapter,
+but this repository does not start a Tolgee service. PostHog and Listmonk are external configurable
+integrations; the local Compose graph does not start either service.
 
-For setup-secret behavior, Keycloak, reverse proxy, migrations, storage, and backups, use [SELF_HOSTING.md](SELF_HOSTING.md).
+## Configuration And Secrets
 
-## First Contribution Path
+- `SecretProvider__Provider=None` is the contributor-local posture; no external secret provider is contacted.
+- The shared technical .NET User Secrets ID remains `event-shared-secrets` while project names are being migrated.
+- `local-core` and `local-lite` may use environment variables, user secrets, appsettings, or Infisical-backed maintainer configuration.
+- `ConnectionStrings:DefaultConnection` wins when Aspire supplies a database reference. Without it, the bootstrap loader resolves discrete `POSTGRESQL_*` values; do not invent a URL-only alias.
+- Keep provider credentials and real endpoints out of docs, logs, screenshots, and committed files.
 
-1. Read [FIRST_CONTRIBUTION.md](FIRST_CONTRIBUTION.md) for the shortest docs-only or small-bug PR path.
-2. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
-3. Read the source-owned doc for your area from [docs/index.md](index.md).
-4. Make the smallest safe change.
-5. Record docs impact: `Updated`, `Not needed`, or `Deferred`.
+See [CONFIGURATION.md](CONFIGURATION.md) and [SECRETS.md](SECRETS.md) for the exact ownership rules.
 
 ## Validation
 
-Run the build and affected test projects individually. Do not run solution-level `dotnet test`.
-
-Minimum documentation/architecture check:
-
-```bash
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
-```
-
-Typical related-project examples:
+Run affected test projects individually from the repository root; never run solution-level
+`dotnet test`.
 
 ```bash
-dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category!=Runtime]" --minimum-expected-tests 1
-dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
 ```
 
-When working on SMTP, EmailDispatch, or optional RabbitMQ dispatch, run the matching Docker/Testcontainers lane:
-
-```bash
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
-```
-
-See [TESTING.md](TESTING.md) for the full per-project validation matrix, TUnit conventions, runtime lane policy, and E2E expectations.
+Use [TESTING.md](TESTING.md) for the full project matrix and TUnit filters. For runtime problems,
+start with [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Related
 
-- [README.md](../README.md) — product overview and role-based docs map.
-- [SELF_HOSTING.md](SELF_HOSTING.md) — production-style Compose topology and operator guidance.
-- [CONFIGURATION.md](CONFIGURATION.md) — runtime settings and secret-provider mappings.
-- [FIRST_CONTRIBUTION.md](FIRST_CONTRIBUTION.md) — first PR path.
-- [CONTRIBUTING.md](CONTRIBUTING.md) — contribution workflow and PR checklist.
-- [TESTING.md](TESTING.md) — test project roles and commands.
+- [OPERATIONS.md](OPERATIONS.md) — local and runtime operating behavior.
+- [PRODUCTION_OPERATIONS.md](PRODUCTION_OPERATIONS.md) — first-party production service chain.
+- [CONFIGURATION.md](CONFIGURATION.md) — supported settings and integration boundaries.
+- [SECRETS.md](SECRETS.md) — secret ownership, redaction, and rotation.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — contribution workflow.
+- [TESTING.md](TESTING.md) — verification commands.

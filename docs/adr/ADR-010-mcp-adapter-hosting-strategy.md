@@ -7,6 +7,13 @@ ABOUTME: Defines transport, auth, tenancy, disable posture, and registry boundar
 - **Date:** 2026-06
 - **Deciders:** Core team
 
+## Current Boundary (2026-07-18)
+
+The API-hosted, stateless Streamable HTTP adapter and registry/CQRS authority boundaries remain
+active. Statements below about a future Phase 7 implementation, Event mutation tools, and a
+third-party self-hosting product are historical context. Current enablement and operating truth
+lives in source and [MCP_DEBUGGING.md](../MCP_DEBUGGING.md).
+
 ## Context
 
 The AI Tool Contract Registry is now the Application-layer source of truth for assistant tool definitions, JSON schema, payload validation, confirmation posture, authorization metadata, and execution routing. Product AI uses that registry to emit provider schemas and to validate untrusted proposed actions before persistence.
@@ -137,4 +144,5 @@ Phase 7.2 may start only after this decision is recorded and reviewed in active 
 - [CONFIGURATION.md](../CONFIGURATION.md) — static configuration surface.
 - [OPERATIONS.md](../OPERATIONS.md) — health, metrics, and runbook posture.
 - [OPERATIONS.md](../OPERATIONS.md) — first-party runtime behavior and optional services.
-- `dev/active/ai-tool-contract-registry/ai-tool-contract-registry-plan.md` — AI Tool Contract Registry implementation plan.
+- `src/Explore.API/Mcp/` — current adapter implementation.
+- `tests/Event.Architecture.Tests/McpArchitectureTests.cs` — current adapter boundary checks.

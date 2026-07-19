@@ -7,6 +7,14 @@ ABOUTME: Rejects using EAV custom properties as a generic runtime schema engine.
 - **Date:** 2026-05
 - **Deciders:** Core team
 
+## Current Boundary (2026-07-18)
+
+The decision to keep surviving custom properties bounded to first-class resources remains active.
+References below to Event/EventSession extension fields, template sync, and projection coordination
+are historical examples from the removed Event product; they are not current ISLAMU capabilities.
+Current source authority is the surviving `CustomPropertyDefinition`, `CustomPropertyOption`, and
+`CustomPropertyValue` model plus its governance/API boundaries.
+
 ## Context
 
 The custom-property system gives tenants governed extension fields for existing platform resources such as events and event sessions. The implementation now supports namespaced machine identity, typed values, options, projections, template instantiation, explicit sync, governance flags, quotas, tenant isolation, and lifecycle controls.

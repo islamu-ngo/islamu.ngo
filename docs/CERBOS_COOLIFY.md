@@ -1,277 +1,126 @@
-ABOUTME: Coolify deployment runbook for the external Cerbos PDP used by ISLAMU Event.
-ABOUTME: Covers image pinning, PostgreSQL schema bootstrap, config mount, gRPC routing, and policy upload.
+<!-- ABOUTME: Draft Coolify runbook for an external Cerbos PDP used by the first-party ISLAMU platform. -->
+<!-- ABOUTME: Covers version alignment, PostgreSQL bootstrap, TLS, secrets, health, and policy publication. -->
 
 # Cerbos On Coolify
 
 > **Audience:** Operators
-> **Status:** Implemented
+> **Status:** Draft
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-03
-> **Source Anchors:** `cerbos/config/.cerbos.yaml`, `cerbos/init/cerbos-schema.sql`, `cerbos/policies/`, `docker-compose.yml`, `docs/OPERATIONS.md`, `docs/AUTHORIZATION.md`
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `cerbos/config/.cerbos.yaml`, `cerbos/init/cerbos-schema.sql`, `cerbos/policies/`, `cerbos/tests/`, `docker-compose.yml`, `src/Explore.AppHost/AppHost.cs`, `.github/workflows/cerbos-policy-check.yml`, `compose.production.yaml`
 
-Use this runbook when Cerbos runs as a separate Coolify Docker Image application instead of the local Compose or Aspire `authz` profile. Local development and self-hosted Compose still use the repository-owned `cerbos/` folder directly:
+Use this runbook when an external Cerbos Policy Decision Point (PDP) is operated through Coolify. The production ISLAMU Compose topology does not bundle Cerbos; selecting the Cerbos authorization provider therefore requires an independently owned PDP and Admin API destination.
 
-- `cerbos/config/.cerbos.yaml` is the local Cerbos server config.
-- `cerbos/init/cerbos-schema.sql` is the local PostgreSQL schema bootstrap.
-- `cerbos/policies/` contains derived roles, resource policies, and `_schemas/`.
-- `cerbos/tests/` contains native Cerbos policy tests.
+This is a static, source-grounded recipe. It remains Draft until an operator records deployment, policy publication, authorization, backup, and rollback evidence for the target environment.
 
-## Image
+## Version And Ownership
 
-Create a Coolify **Docker Image** application:
+Repository local orchestration and CI currently use Cerbos/Cerbosctl 0.53.0. Deploy the same reviewed version:
 
-| Field | Value |
+| Component | Version |
 |---|---|
-| Image | `ghcr.io/cerbos/cerbos` |
-| Tag | `0.51.0` |
+| ghcr.io/cerbos/cerbos | 0.53.0 |
+| ghcr.io/cerbos/cerbosctl | 0.53.0 |
 
-Do not use `latest` for Cerbos. Pin the deployed tag, validate policies against the same Cerbos/Cerbosctl version, and upgrade intentionally.
+Do not use latest. Prefer a digest-pinned image after validating the digest in the deployment environment. Upgrade the server, policy compiler/test job, and publication client intentionally.
 
-## Admin Password Hash
+The first-party platform owns:
 
-Cerbos server config uses a bcrypt password hash, not the plaintext Admin API password. Generate the hash locally:
+- the islamuevent_* resource/action contract;
+- policy and schema source under cerbos/policies;
+- policy tests under cerbos/tests;
+- runtime provider selection and fail-closed behavior.
 
-```bash
-mkpasswd -m bcrypt -R 10 | base64 -w0
-```
+The external Cerbos deployment owns:
 
-Enter the plaintext Admin API password when prompted. Copy only the base64 output into `CERBOS_ADMIN_PASSWORD_HASH`. If your shell prompt is appended because `base64 -w0` prints no trailing newline, remove the prompt character. Keep the base64 text valid; the official Cerbos examples include base64 padding.
+- server availability and TLS;
+- Admin API credentials;
+- PostgreSQL policy-store backup/restore;
+- audit-log handling;
+- network access from the API and CI publication job.
 
-The plaintext password is still needed by operators and CI jobs that run `cerbosctl`. Store that plaintext value only in the deployment secret that performs policy upload, not in the Cerbos server config.
+The islamuevent_* names are technical policy identifiers and must be preserved. Retired product-domain resources are not valid current policies.
 
-## Environment Variables
+## Coolify Resources
 
-Set these Coolify environment variables on the Cerbos application:
+Create:
 
-| Key | Required | Purpose |
-|---|---:|---|
-| `CERBOS_ADMIN_USER` | Yes | Admin API username. |
-| `CERBOS_ADMIN_PASSWORD_HASH` | Yes | Base64 bcrypt hash generated above. |
-| `CERBOS_PG_URL` | Yes | Cerbos PostgreSQL store URL. |
-| `CERBOS_CONFIG` | Yes | Path to mounted config file, normally `/config/conf.yaml`. |
+1. A PostgreSQL database dedicated to Cerbos policy storage.
+2. A Cerbos Docker Image application using version 0.53.0.
+3. A persistent, operator-owned secret set.
+4. Internal HTTP/gRPC connectivity and an externally protected Admin API path only where CI publication requires it.
 
-Use this `CERBOS_PG_URL` shape:
+Initialize the database with cerbos/init/cerbos-schema.sql. The repository configuration expects the cerbos search path and a PostgreSQL storage driver.
 
-```text
-postgres://cerbos_user:{password}@{host}:{port}/{db_name}?sslmode=prefer&search_path=cerbos
-```
+Mount or render cerbos/config/.cerbos.yaml at /config/.cerbos.yaml and start:
 
-Use the real Cerbos database name in `{db_name}`. Do not leave the database name as `postgres`.
+~~~text
+server --config=/config/.cerbos.yaml
+~~~
 
-## Config Mount
+The repository file enables the Admin API, PostgreSQL storage, audit logging, schema enforcement in warn mode, and lenient scope search. Review those settings for production; warn mode is rollout behavior, not strict schema rejection.
 
-Mount one file into the Cerbos container:
+## Required Configuration
 
-| Coolify Field | Value |
+Provide the equivalent of:
+
+| Setting | Purpose |
 |---|---|
-| Source | `/data/coolify/applications/{application-id}/conf.yaml` |
-| Destination | `/config/conf.yaml` |
+| CERBOS_ADMIN_USER | Admin API username |
+| CERBOS_ADMIN_PASSWORD_HASH | Base64 bcrypt hash consumed by the Cerbos server |
+| CERBOS_PG_URL | PostgreSQL URL including the cerbos search path and production TLS mode |
 
-File content:
+The plaintext Admin API password is required only by trusted publication/reconciliation clients. It is not the same value as the bcrypt hash environment variable.
 
-```yaml
-server:
-  httpListenAddr: ":3592"
-  grpcListenAddr: ":3593"
+Generate the bcrypt value in a controlled environment, encode it as required by the repository configuration, and store both server hash and client plaintext in separate Coolify/CI secret boundaries. Never commit either value.
 
-  adminAPI:
-    enabled: true
-    adminCredentials:
-      username: ${CERBOS_ADMIN_USER}
-      passwordHash: ${CERBOS_ADMIN_PASSWORD_HASH}
+## Networking And TLS
 
-engine:
-  lenientScopeSearch: true
+Cerbos listens on HTTP 3592 and gRPC 3593 inside the container.
 
-compile:
-  cacheDuration: 30s
+- The ISLAMU API runtime uses the gRPC endpoint for decisions.
+- Policy publication uses the Admin API.
+- Health monitoring uses /_cerbos/health.
 
-storage:
-  driver: "postgres"
+Production traffic must not use the local plaintext-mode defaults. Prefer private service networking plus TLS/mTLS appropriate to the deployment. If the Admin API is reachable outside the private network, place it behind authenticated, allow-listed ingress and a trusted certificate chain.
 
-  postgres:
-    url: "${CERBOS_PG_URL}"
-    connPool:
-      maxLifeTime: 60m
-      maxIdleTime: 45s
-      maxOpen: 10
-      maxIdle: 3
-```
+Configure the ISLAMU API with the external gRPC endpoint and the matching TLS mode. Configure Admin API endpoints and credentials only where policy synchronization is enabled. A healthy HTTP endpoint does not prove gRPC decisions or correct policies.
 
-## PostgreSQL Bootstrap
+## Policy Validation And Publication
 
-Run this script in the Cerbos database before starting the Cerbos container. Replace only `{{CERBOS_DB_NAME}}` and `{{CERBOS_DB_PASSWORD}}`.
+Before publication:
 
-```sql
-CREATE SCHEMA IF NOT EXISTS cerbos;
+1. Compile cerbos/policies with Cerbos 0.53.0.
+2. Run the native policy tests in cerbos/tests.
+3. Confirm retired product-domain resource names are absent.
+4. Confirm every live ResourceKinds value that requires Cerbos has an owned policy path.
+5. Publish schemas and policies using Cerbosctl 0.53.0.
+6. Reload the store and retain publication evidence without secret output.
 
-SET search_path TO cerbos;
+The repository workflow .github/workflows/cerbos-policy-check.yml implements version-aligned compilation/testing and an authenticated publication job. Repository workflow configuration is not proof that a target Coolify instance was reached.
 
-CREATE TABLE IF NOT EXISTS policy (
-    id bigint NOT NULL PRIMARY KEY,
-    kind VARCHAR(128) NOT NULL,
-    name VARCHAR(1024) NOT NULL,
-    version VARCHAR(128) NOT NULL,
-    scope VARCHAR(512),
-    description TEXT,
-    disabled BOOLEAN DEFAULT FALSE,
-    definition BYTEA
-);
+## Verification
 
-CREATE TABLE IF NOT EXISTS policy_dependency (
-    policy_id BIGINT,
-    dependency_id BIGINT,
-    PRIMARY KEY (policy_id, dependency_id),
-    FOREIGN KEY (policy_id) REFERENCES cerbos.policy(id) ON DELETE CASCADE
-);
+Record all of the following before changing this document to Active:
 
-CREATE TABLE IF NOT EXISTS policy_ancestor (
-    policy_id BIGINT,
-    ancestor_id BIGINT,
-    PRIMARY KEY (policy_id, ancestor_id),
-    FOREIGN KEY (policy_id) REFERENCES cerbos.policy(id) ON DELETE CASCADE
-);
+- server and PostgreSQL health;
+- TLS verification from the API network;
+- successful policy/schema publication;
+- an allowed current resource decision;
+- a denied current resource decision;
+- denial when Cerbos is unavailable;
+- tenant/provider routing behavior;
+- audit output that contains no tokens, credentials, or unnecessary resource attributes;
+- database backup and restore;
+- rollback to the previous server and policy bundle.
 
-CREATE TABLE IF NOT EXISTS policy_revision (
-    revision_id SERIAL PRIMARY KEY,
-    action VARCHAR(64),
-    id BIGINT,
-    kind VARCHAR(128),
-    name VARCHAR(1024),
-    version VARCHAR(128),
-    scope VARCHAR(512),
-    description TEXT,
-    disabled BOOLEAN,
-    definition BYTEA,
-    update_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+## Failure And Rollback
 
-CREATE TABLE IF NOT EXISTS attr_schema_defs (
-    id VARCHAR(255) PRIMARY KEY,
-    definition JSON
-);
+Cerbos unavailability or an invalid decision must fail closed. Do not switch to permissive local rules as an availability workaround.
 
-CREATE OR REPLACE FUNCTION process_policy_audit()
-RETURNS TRIGGER AS $policy_audit$
-BEGIN
-    IF (TG_OP = 'DELETE') THEN
-        INSERT INTO policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
-        VALUES('DELETE', OLD.id, OLD.kind, OLD.name, OLD.version, OLD.scope, OLD.description, OLD.disabled, OLD.definition);
-    ELSIF (TG_OP = 'UPDATE') THEN
-        INSERT INTO policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
-        VALUES('UPDATE', NEW.id, NEW.kind, NEW.name, NEW.version, NEW.scope, NEW.description, NEW.disabled, NEW.definition);
-    ELSIF (TG_OP = 'INSERT') THEN
-        INSERT INTO policy_revision(action, id, kind, name, version, scope, description, disabled, definition)
-        VALUES('INSERT', NEW.id, NEW.kind, NEW.name, NEW.version, NEW.scope, NEW.description, NEW.disabled, NEW.definition);
-    END IF;
+Rollback is two-dimensional:
 
-    RETURN NULL;
-END;
-$policy_audit$ LANGUAGE plpgsql;
+- restore the previously validated Cerbos server image;
+- restore or republish the matching schema/policy bundle.
 
-DROP TRIGGER IF EXISTS policy_audit ON policy;
-
-CREATE TRIGGER policy_audit
-AFTER INSERT OR UPDATE OR DELETE ON policy
-FOR EACH ROW EXECUTE PROCEDURE process_policy_audit();
-
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'cerbos_user') THEN
-        CREATE ROLE cerbos_user WITH LOGIN PASSWORD '{{CERBOS_DB_PASSWORD}}';
-    ELSE
-        ALTER ROLE cerbos_user WITH LOGIN PASSWORD '{{CERBOS_DB_PASSWORD}}';
-    END IF;
-END
-$$;
-
-GRANT CONNECT ON DATABASE "{{CERBOS_DB_NAME}}" TO cerbos_user;
-GRANT USAGE ON SCHEMA cerbos TO cerbos_user;
-GRANT SELECT, INSERT, UPDATE, DELETE ON cerbos.policy, cerbos.policy_dependency, cerbos.policy_ancestor, cerbos.attr_schema_defs TO cerbos_user;
-GRANT SELECT, INSERT, DELETE ON cerbos.policy_revision TO cerbos_user;
-GRANT USAGE, SELECT ON cerbos.policy_revision_revision_id_seq TO cerbos_user;
-```
-
-`{{CERBOS_DB_NAME}}` must be the actual database created for Cerbos. Do not grant against a default maintenance database.
-
-## Domains, Ports, And Traefik gRPC
-
-Expose both Cerbos ports:
-
-```text
-3592,3593
-```
-
-Use separate public hostnames for HTTP/Admin API and gRPC/PDP traffic, for example:
-
-```text
-https://cerbos-api.example.org:3592,https://cerbos-grpc.example.org:3593
-```
-
-For the gRPC route, set Traefik's service scheme to `h2c` on the service generated for the `3593` route:
-
-```text
-traefik.http.services.https-{route-index}-{application-id}.loadbalancer.server.scheme=h2c
-```
-
-Replace `{route-index}` and `{application-id}` with the values Coolify generated for the gRPC route. Do not apply this label to the HTTP/Admin API route unless that route is also serving h2c.
-
-DNS must point both hostnames at the Coolify server. Add an `A` record for IPv4 and an `AAAA` record when IPv6 is available. Keep TLS enabled at the proxy boundary.
-
-## Smoke Test
-
-Install `grpcurl`, then verify the gRPC endpoint:
-
-```bash
-grpcurl cerbos-grpc.example.org:443 list
-```
-
-If this fails with protocol errors, recheck that the gRPC route uses Traefik `h2c` and that the request is reaching Cerbos port `3593`.
-
-## Upload Policies And Schemas
-
-Run these commands from the repository root after the Coolify Cerbos app is healthy. Use the same Cerbosctl version as the deployed Cerbos server tag.
-
-```bash
-docker run --rm -it \
-  -v "$PWD/cerbos/policies/_schemas:/schemas:ro" \
-  ghcr.io/cerbos/cerbosctl:0.51.0 \
-  --server=cerbos-grpc.example.org:443 \
-  --username={admin-user} \
-  --password="{admin-password}" \
-  put schema -R /schemas
-```
-
-```bash
-docker run --rm -it \
-  -v "$PWD/cerbos/policies:/policies:ro" \
-  ghcr.io/cerbos/cerbosctl:0.51.0 \
-  --server=cerbos-grpc.example.org:443 \
-  --username={admin-user} \
-  --password="{admin-password}" \
-  put policy -R /policies
-```
-
-Wrap the password in quotes when it contains spaces. Do not paste real passwords into issue comments, logs, screenshots, or support bundles.
-
-## ISLAMU Event Configuration
-
-Point ISLAMU Event at the Coolify Cerbos PDP only after the PDP is healthy and policies are uploaded:
-
-| Key | Value |
-|---|---|
-| `Cerbos:GrpcEndpoint` / `CERBOS_GRPC_ENDPOINT` | `https://cerbos-grpc.example.org:443` |
-| `Cerbos:UseTls` / `CERBOS_USE_TLS` | `true` |
-| `Cerbos:PlaintextMode` / `CERBOS_PLAINTEXT_MODE` | `false` |
-| `Cerbos:AdminApi:Endpoints:0` | Admin API endpoint for package sync/status when enabled. |
-| `Cerbos:AdminApi:AdminUsername` | Admin API username. |
-| `Cerbos:AdminApi:AdminPassword` | Plaintext Admin API password, secret-bearing. |
-
-If the instance authorization provider is set to Cerbos and the PDP is unreachable, authorization fails closed. Switch back to local authorization only through an explicit operator action.
-
-## Related
-
-- [AUTHORIZATION.md](AUTHORIZATION.md) - provider behavior, fail-closed semantics, and policy upload notes.
-- [OPERATIONS.md](OPERATIONS.md) - local Cerbos package operations and incident triage.
-- [CONFIGURATION.md](CONFIGURATION.md) - required runtime keys and provider settings.
-- [SECRETS.md](SECRETS.md) - secret ownership and redaction rules.
+Keep the PostgreSQL backup, deployed image digest, policy commit, publication evidence, and ISLAMU release manifest together. See [AUTHORIZATION.md](AUTHORIZATION.md) and [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md).

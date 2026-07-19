@@ -1,124 +1,117 @@
-<!-- ABOUTME: Documents source-backed SEO and public-discovery behavior during the website transition. -->
-<!-- ABOUTME: Separates imported Event behavior from implemented first-party website and planned Blog capabilities. -->
+<!-- ABOUTME: Source-backed SEO and public-discovery behavior for the first-party ISLAMU website. -->
+<!-- ABOUTME: Covers current Blog metadata, sitemap, robots, render boundaries, and explicit gaps. -->
 
 # SEO And Public Discovery
 
-> **Audience:** First-party operators | Product and content owners | Contributors
-> **Status:** Mixed
-> **Owner:** Frontend
-> **Last Verified:** 2026-07-15
-> **Source Anchors:** `Explore.API/Controllers/SitemapController.cs`, `Explore.Application/Features/Seo/Handlers/Queries/GetSitemapEventsQueryHandler.cs`, `Explore.Infrastructure/Services/PublicUrlBuilder.cs`, `Explore.Blazor/Controllers/RobotsController.cs`, `Explore.Blazor/Components/App.razor`, `Explore.Blazor/Extensions/BffManifestEndpoints.cs`, `Explore.Blazor.Client/Routes.razor`, `Explore.Blazor.Client/Services/RuntimeRenderPolicyService.cs`, `Explore.Blazor.Client/Pages/Events/EventDetail.razor`, `Explore.Blazor.Client/Pages/Events/EventDetail.razor.cs`, `Explore.Application/Features/PublicExperience/`, `Explore.Application/Services/TenantPolicySettingService.Read.cs`, `Explore.Application/Services/TenantPolicySettingService.Apply.cs`, `docs/RENDER_POLICIES.md`, `docs/ADMIN_GUIDE.md`
+> **Audience:** Product/content owners | Contributors | First-party operators
+> **Status:** Active
+> **Owner:** Frontend | Content
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Infrastructure/Services/PublicUrlBuilder.cs`, `src/Explore.Blazor/Controllers/RobotsController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/BlogIndex.razor`, `src/Explore.Blazor.Client/Pages/Blogs/BlogArticle.razor`, `src/Explore.Blazor.Client/Services/RuntimeRenderPolicyService.cs`
 
-SEO support is implemented as a focused set of imported public-discovery primitives: sitemap generation, robots output, render-policy decisions, and Event-detail metadata. These facts describe the current source, not the target website information architecture. Do not describe them as full site-wide SEO automation or imply that Blog metadata exists before init-import Phase 11 implements and verifies it.
+## Implemented Discovery Contract
 
-## Website Transition Contract
+The current public-discovery surface is website- and Blog-focused. Event URLs and Event structured
+data are removed.
 
-- The canonical public route and content inventory decides which destinations may be indexed or linked.
-- Only implemented, public, owner-approved routes enter the sitemap.
-- Every indexable page needs a stable title, description, canonical URL, language/alternate-language behavior, and an explicit indexing decision.
-- Blog sitemap entries, article metadata, and article structured data remain **Planned** until the Blog implementation is source-backed and green.
-- Removed Event routes, tenant controls, and Event JSON-LD leave this document in the same code-owned deletion slice; no compatibility SEO routes are retained.
-- Analytics and consent behavior must remain privacy-respecting and may not be justified as an SEO requirement.
+Implemented today:
 
-## Sitemap Behavior
+- public `robots.txt` behavior;
+- public `sitemap.xml` with approved static routes and published Blog articles;
+- page titles, descriptions, and canonical links on the Blog index and article pages;
+- noindex metadata on authenticated Blog management/editor pages; and
+- request-aware absolute sitemap URLs through `IPublicUrlBuilder`.
 
-`GET /sitemap.xml` is public XML output. It combines static public routes with published public event URLs.
+## Sitemap
 
-| Sitemap Input | Behavior |
-|---|---|
-| Static routes | Includes public static paths such as `/`, `/events`, `/welcome`, `/about`, `/contact`, `/privacy`, `/terms`, and `/community-guidelines`. |
-| Event routes | Includes published public events returned by the sitemap query handler. |
-| URL base | Uses the public request base URL, including forwarded host/proto and path base handling. |
-| Size boundary | Event projection is clamped for sitemap safety; do not document unlimited event output. |
+`GET /sitemap.xml` publishes these static routes:
 
-Repository-level sitemap coverage verifies that the event set is tenant-filtered and limited to published public events. Controller output still combines those event entries with the static public routes listed above.
+| Route | Change frequency | Priority |
+|---|---:|---:|
+| `/` | daily | 1.0 |
+| `/welcome` | weekly | 0.8 |
+| `/blog` | weekly | 0.8 |
+| `/about` | monthly | 0.5 |
+| `/contact` | monthly | 0.5 |
+| `/privacy` | yearly | 0.3 |
+| `/terms` | yearly | 0.3 |
+| `/community-guidelines` | yearly | 0.3 |
 
-## Robots Behavior
+It also pages through published Blog summaries and emits `/blog/{escaped-slug}` only when the slug
+is non-empty and `PublishedAtUtc` is not in the future. Duplicate paths are removed. Blog article
+entries use weekly frequency and priority 0.7.
 
-`GET /robots.txt` is public from the Blazor host:
+The endpoint is tenant-aware and output-cached. It does not claim every application route is
+indexable.
+
+## Robots
+
+The Blazor host serves `GET /robots.txt`:
 
 | Environment | Behavior |
 |---|---|
-| Production | Allows crawling and advertises `/sitemap.xml`. |
-| Non-production | Returns `Disallow: /`. |
+| Production | Allows crawling and advertises the current host's `/sitemap.xml` |
+| Other environments | `Disallow: /` |
 
-Robots output uses forwarded host/proto context for the sitemap URL. Integration coverage verifies that non-production hosts disallow crawlers and production robots output uses forwarded proto/host for the canonical sitemap URL. Do not document non-production environments as indexable.
+The generated sitemap URL respects forwarded host/protocol processing. Non-production environments
+must not be described as indexable.
 
-## Render Policy And Public Routes
+## Blog Metadata
 
-Runtime render policy groups routes into onboarding, admin, public SEO, and operational buckets. Public SEO route classification influences prerender behavior, especially under the `SeoBalanced` preset.
+### `/blog`
 
-Important boundaries:
+- title: `Blog | ISLAMU`
+- canonical: `/blog` resolved against the current public origin
+- description: an ISLAMU editorial/community summary
 
-- Onboarding routes render as `InteractiveServer` regardless of stored render-mode settings.
-- Public SEO routes default toward prerendering when advanced overrides do not override the preset.
-- Defaults fall back safely when tenant settings are missing.
-- `Explore.Blazor.Client/Routes.razor` registers `/home` and `/welcome`; keep route documentation tied to that router mapping and the runtime classifier instead of inventing separate page-level SEO behavior.
+### `/blog/{slug}`
 
-See [RENDER_POLICIES.md](RENDER_POLICIES.md) for the canonical render-policy model.
+- title derived from the loaded article title;
+- canonical derived from the requested escaped slug; and
+- description derived from the article title, with a safe generic fallback.
 
-## Public Experience And Tenant Controls
+The public article renderer rejects unpublished/future content and renders sanitized Markdown.
+Authenticated `/blog/manage*` pages emit `noindex,nofollow`.
 
-Public discovery settings are tenant-scoped and managed through admin settings rather than a standalone SEO admin page.
+## Navigation And Discoverability
 
-| Area | Implemented Control |
-|---|---|
-| Instance render policy | Instance admin controls presets, advanced overrides, route groups, and tenant delegation locks. |
-| Tenant render policy | Tenant admin can override allowed render-policy settings when not locked by instance governance. |
-| Tenant public experience | Tenant admin controls public-experience mode, catalog labels, primary organization, home blocks JSON, CTA JSON, and event-section presets. |
-| Tenant domains | Tenant admin controls preferred home-page/domain-facing settings through tenant domain/public experience surfaces. |
+The public `SiteMegaMenu` links directly to Home, Blog, About, Contact, Community Guidelines,
+Privacy, and Terms. These are implemented destinations, not placeholders. Dynamic catalog/product
+links are not part of the navigation or SEO contract.
 
-Tenant resolution and public URL generation are domain-aware. See [MULTI_TENANCY.md](MULTI_TENANCY.md) and [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for the broader administration context.
+## Render Policy Boundary
 
-## Event Detail Metadata
+`RuntimeRenderPolicyService` currently classifies only `/`, `/welcome`, and `/home` as `PublicSeo`.
+Blog routes fall into `Operational`, while the Blog components explicitly use
+`InteractiveServer`. The service always returns `InteractiveServer`; route-group settings influence
+prerender only.
 
-Public event detail pages emit crawler and preview metadata from the same canonical event URL helper used by the share and calendar flows.
+Therefore, do not claim Blog prerendering from the `SeoBalanced` preset. If Blog routes need
+`PublicSeo` prerender behavior, that requires a source change and its own verification.
 
-| Metadata | Behavior |
-|---|---|
-| Canonical URL | Built from the public event slug/code through `CanonicalUrlHelper`. |
-| Open Graph and Twitter | Uses event title, normalized description, canonical URL, and featured image/public storage image URL. |
-| Structured data | Emits schema.org `Event` JSON-LD for crawlable public events only. JSON is generated through `System.Text.Json`; no raw HTML rendering helper is used. |
-| Noindex | Emits `robots noindex, nofollow` for non-public visibility or non-crawlable event statuses such as draft, cancelled, or moderated states. |
+## Not Implemented
 
-Do not claim structured data for every route. Current structured data automation is scoped to public event detail pages.
+- Blog `Article` JSON-LD or other Blog structured data.
+- `hreflang`/alternate-language metadata for Blog content.
+- Site-wide dynamic metadata for every route.
+- Search Console integration, keyword tooling, SEO scoring, or automated audits.
+- A standalone SEO administration page.
+- A generated checked-in website OpenAPI/client contract; that is an API generation concern, not
+  SEO evidence.
 
-## Web Manifest
+Do not publish these as available capabilities until source and observable verification exist.
 
-The public Blazor shell links a minimal web app manifest for launch install metadata. The BFF serves the manifest dynamically from public-experience branding, using the configured brand display name, logo URL, and favicon URL when available, with generic fallback values when branding cannot be resolved. No service worker, offline cache, push, or background sync behavior is registered by the manifest work.
+## Content Governance
 
-## Current Imported Behavior Vs Target
+- Only published, owner-approved pages enter navigation and the sitemap.
+- Titles/descriptions must be factual and localized with the page content.
+- A canonical URL must represent the public route actually served.
+- Draft/editor/admin pages remain non-indexable.
+- Analytics and email tracking require their own consent basis; SEO is not a reason to bypass it.
 
-Currently implemented in imported source:
+## Related
 
-- Public sitemap endpoint.
-- Public robots endpoint with environment-sensitive indexing behavior.
-- Public route render-policy classification.
-- Event detail page metadata/canonical behavior in the Blazor client.
-- Event detail schema.org `Event` JSON-LD for crawlable public event pages.
-- Event detail noindex metadata for non-public or non-crawlable event states.
-- Minimal public web app manifest and app-shell manifest link.
-- Error pages with page-level noindex behavior.
-- Tenant public-experience controls for discovery-oriented presentation.
-
-Planned for the first-party website only after code-owned implementation:
-
-- Sitemap coverage for the approved website route inventory.
-- Blog article canonical metadata and sitemap entries.
-- Appropriate article structured data where source and content governance support it.
-- Multilingual alternate-language metadata for fully reviewed locale variants.
-
-Not proven by inspected source:
-
-- Site-wide dynamic metadata on every route.
-- Structured data / JSON-LD automation outside public event detail pages.
-- Canonical URL management for every possible page.
-- SEO score auditing, keyword tools, or search-console integrations.
-- A standalone SEO admin page.
-
-## Related Documentation
-
-- [RENDER_POLICIES.md](RENDER_POLICIES.md) - render-policy governance.
-- [ADMIN_GUIDE.md](ADMIN_GUIDE.md) - public discovery and admin workflow context.
-- [MULTI_TENANCY.md](MULTI_TENANCY.md) - tenant and domain resolution.
-- [BLAZOR.md](BLAZOR.md) - Blazor render-mode architecture.
+- [PROJECT.md](PROJECT.md)
+- [RENDER_POLICIES.md](RENDER_POLICIES.md)
+- [ACCESSIBILITY.md](ACCESSIBILITY.md)
+- [LOCALIZATION.md](LOCALIZATION.md)

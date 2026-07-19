@@ -11,6 +11,14 @@
 | **Supersedes** | None |
 | **Superseded by** | — |
 
+## Current Boundary (2026-07-18)
+
+The disclosure registry, gateway, consent, redaction, and architecture-test boundaries remain
+source-backed, so this ADR is not classified as historical. Its `Proposed` status is preserved
+because no approval or supersession record is present. The Event-reference enrichment bug,
+`EventDto` examples, and removed task-file rollout details below are historical context rather than
+current ISLAMU product scope.
+
 ## Context
 
 The AI Assistant (Blazor rail + `Explore.Application/Features/AiAssistant/**` + `Explore.API/Mcp/AiAssistantMcp*`) currently exposes a **flat, single-context allow-list** to AI prompts:
@@ -35,7 +43,7 @@ Adopt the **AI Context Disclosure Policy** as the authoritative framework for an
 1. **Classification enums** (`Explore.Domain/Enums/`): `AiContextSensitivityEnum`, `AiContextDisclosureRuleEnum`, `AiProviderTrustTierEnum`, `AiAdministrativeContextScopeEnum`.
 2. **Disclosure registry** (`Explore.Application/Features/AiAssistant/Disclosure/`): `AiContextDisclosureRegistry` seeded from `dev/active/ai-context-disclosure-policy/field-classification-matrix.md`, with `AiContextDisclosureEntry` rows per persisted `*Pii` property.
 3. **Canonical policy doc** (`docs/AI_CONTEXT_SECURITY.md`): the human-readable counterpart to this ADR.
-4. **Reflection test** (`Event.Architecture.Tests/AiContextDisclosureSchemaTests.cs`): machine-enforces that every `*Pii` property has a registry entry.
+4. **Reflection test** (`tests/Event.Architecture.Tests/AiContextDisclosureSchemaTests.cs`): machine-enforces that every `*Pii` property has a registry entry.
 5. **AI Context Gateway** (`IAiContextGateway` — Phase 2): the single evaluation point where effective disclosure rules are computed and where sanitized envelopes are emitted. No AI flow may bypass it.
 6. **Consent engine** (Phase 2): `AiContextConsent` domain model capturing per-user, per-tenant consent records.
 7. **Transcript hygiene** (Phase 4): persistence max-sensitivity flag, log redaction, deletion propagation.
@@ -83,7 +91,8 @@ When the AI assistant returns empty context for a referenced entity, check in th
 
 ### Enablement rule
 
-Phased rollout per `dev/active/ai-context-disclosure-policy/ai-context-disclosure-policy-tasks.md`:
+The historical phased rollout was tracked in the now-removed
+`dev/active/ai-context-disclosure-policy/ai-context-disclosure-policy-tasks.md`:
 
 - Phases 1–3 enable `Public`/`Internal` disclosure only.
 - Task 4.4 flips the `PiiDisclosureEnabled` flag after Tasks 4.1–4.3 verify persistence, log, and deletion controls.
@@ -115,8 +124,8 @@ Phased rollout per `dev/active/ai-context-disclosure-policy/ai-context-disclosur
 ## Related
 
 - **Plan:** `dev/active/ai-context-disclosure-policy/ai-context-disclosure-policy-plan.md`
-- **Tasks:** `dev/active/ai-context-disclosure-policy/ai-context-disclosure-policy-tasks.md`
+- **Historical tasks (removed):** `dev/active/ai-context-disclosure-policy/ai-context-disclosure-policy-tasks.md`
 - **Matrix:** `dev/active/ai-context-disclosure-policy/field-classification-matrix.md`
 - **ADRs:** ADR-001 (authorization-provider-architecture), ADR-007 (durable-security-admin-audit-trail), ADR-010 (mcp-adapter-hosting-strategy), ADR-011 (local-mcp-stdio-diagnostic-host).
 - **Docs:** `docs/SECURITY-MODEL.md`, `docs/AUTHORIZATION.md`, `docs/AI_RAG_FOUNDATION.md`, `docs/AI_AGENT_CONTRACT_INVENTORY.md`, `docs/AI_CONTEXT_SECURITY.md`.
-- **Source:** `Explore.Domain/Enums/AiContext*.cs`, `Explore.Application/Features/AiAssistant/Disclosure/AiContextDisclosureRegistry.cs`.
+- **Source:** `src/Explore.Domain/Enums/AiContext*.cs`, `src/Explore.Application/Features/AiAssistant/Disclosure/AiContextDisclosureRegistry.cs`.

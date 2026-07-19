@@ -7,6 +7,13 @@ ABOUTME: Defines activation gates, candidate order, migration requirements, and 
 - **Date:** 2026-05
 - **Deciders:** Core team
 
+## Current Boundary (2026-07-18)
+
+The decision not to introduce PostgreSQL partitioning without measured scale evidence remains
+active. The Event product table inventory, contact-share/projection candidates, deployment tiers,
+and self-hosting rationale below are historical. Any reconsideration must start from current
+first-party tables, operations evidence, and recovery requirements.
+
 ## Context
 
 ISLAMU Event has high-growth operational table families: audit logs, configuration and tenant lifecycle logs, notification inbox state, transactional outboxes, email dispatch state, contact-share exports, idempotency replay cache, custom-property projection coordination, external quota accounting, federation mirrors, and storage metadata.

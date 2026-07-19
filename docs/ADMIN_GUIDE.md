@@ -1,163 +1,128 @@
-ABOUTME: Task-focused administration guide for instance, tenant, organization, and group operators.
-ABOUTME: Maps implemented admin UI surfaces to roles, entry points, dangerous operations, and recovery notes.
+<!-- ABOUTME: Task-focused administration guide for the first-party ISLAMU website. -->
+<!-- ABOUTME: Maps current admin surfaces to authority, tenant boundaries, and recovery-sensitive operations. -->
 
 # Admin Guide
 
-> **Audience:** Admins | Operators | Contributors
-> **Status:** Mixed
-> **Owner:** Product/Admin
-> **Last Verified:** 2026-07-05
-> **Source Anchors:** `Explore.Blazor.Client/Pages/Admin/`, `Explore.Blazor.Client/Pages/Admin/Instance/ControlPlane/`, `Explore.API/Controllers/ControlPlaneController.cs`, `docs/ADMIN_HIERARCHY.md`, `docs/AUTHORIZATION.md`, `docs/AUTHORIZATION_PATTERNS.md`
+> **Audience:** ISLAMU administrators | First-party operators | Contributors
+> **Status:** Active
+> **Owner:** Platform Administration
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Blazor.Client/Routes.razor`, `src/Explore.Blazor.Client/Pages/Admin/`, `src/Explore.Blazor/Components/ControlPlane/EmbeddedControlPlanePage.razor`, `src/Explore.API/Controllers/ControlPlaneController.cs`, `src/Explore.API/Controllers/InstanceSettingsController.cs`, `src/Explore.API/Controllers/TenantStorageSettingsController.cs`
 
 ## Scope
 
-This guide documents implemented administration workflows in the Blazor admin UI. It complements [ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md), which defines authority boundaries, and [AUTHORIZATION_PATTERNS.md](AUTHORIZATION_PATTERNS.md), which defines enforcement patterns.
+This is an internal operating guide for the first-party ISLAMU website. It documents source-backed
+administrative surfaces; it is not a SaaS tier, third-party self-hosting, or community-operator
+product promise.
 
-Each workflow below states the required role, the UI entry point, and the recovery note for risky changes. If a section is labeled planned or backend-pending, do not treat it as an operator contract.
+Admin routes require authentication, but a route guard or visible component is not write
+authorization. API authorization remains authoritative. Where an API response exposes HAL links,
+the UI must render mutation controls from link presence and still allow the server to enforce the
+operation.
 
-## Admin Authority Model
+## Authority And Entry Points
 
-| Scope | Typical role | UI entry point | Boundary |
-|---|---|---|---|
-| Instance | Instance administrator | Multi-tenant: `/admin/instance`, `/admin/instance/tenants`, `/admin/instance/domains`; single-tenant settings: `/admin/instance/settings` | Platform-wide settings, tenant lifecycle, domain/admin-host guidance, platform API keys, global provider settings. |
-| Tenant | Tenant administrator | `/admin/tenant/settings` and tenant admin sub-pages | Tenant policies, public experience, lookup tables, tenant API keys, navigation, footer, templates, custom properties. |
-| Organization | Organization administrator | `/admin/organization/{OrganizationId}/settings` | Organization profile, members, verification state, organization API keys. |
-| Group | Group administrator | `/admin/group/{GroupId}/settings` | Group profile, branding, members, group API keys. |
+| Scope | Entry points | Current responsibility |
+|---|---|---|
+| Instance | `/admin/instance/settings`; multi-tenant console at `/admin/instance`, `/admin/instance/tenants`, `/admin/instance/domains`, `/admin/instance/operations`, and `/admin/instance/plans` | Instance defaults, provider configuration, delegation locks, tenant lifecycle, plans, support access, and instance API keys. |
+| Tenant | `/admin/tenant/settings`, `/admin/tenant/footer`, `/admin/tenant/navigation`, `/admin/tenant/custom-properties`, and `/admin/tenant/custom-property-definitions` | Tenant policy and branding, public experience, lookup data, navigation/footer, delegated provider overrides, support evidence, API keys, and Organization/Group custom-property definitions. |
+| Organization | `/admin/organization/{OrganizationId}/settings` | Organization profile, members, verification view, and organization API keys. |
+| Group | `/admin/group/{GroupId}/settings` | Group profile, members, and group API keys. |
 
-Admin pages require authentication. Editability is still checked at runtime by role helpers and admin-state services, so a visible page does not imply write permission.
+The tenant settings route redirects to instance settings in single-tenant mode. The multi-tenant
+Instance Console is guarded in the client and its API actions use `[RequireMultiTenant]`, which
+returns `403` when the runtime is single-tenant.
 
 ## Instance Administration
 
-**Required role:** Instance administrator.
+Instance settings currently compose governance, domain/branding, authentication providers,
+modules, local or optional S3-compatible storage, SMTP, analytics/privacy, localization, AI, MCP,
+support access, and API-key controls. Some sections vary by deployment mode.
 
-**UI entry points:** `/admin/instance/settings` in single-tenant or legacy settings flows; `/admin/instance`, `/admin/instance/tenants`, and `/admin/instance/domains` for the multi-tenant Instance Console.
+`Bff:AdminHosts` classifies configured hosts for the embedded control-plane shell. Host
+classification does not grant instance-admin authority. Optional
+`Bff:AdminHostAllowedIpRanges` restrictions also fail closed before the shell is treated as an
+admin host.
 
-Instance settings are the platform-control surface for static/default policy. Use them for:
+The multi-tenant console supports tenant listing and detail, effective configuration, setting
+locks, plan assignment/apply/rollback, and lifecycle transitions. Lifecycle buttons are HAL
+affordances. Scheduling purge requires an archived tenant, an operator reason, and exact slug
+confirmation; it records the `Purged` lifecycle state without physically deleting tenant data in
+the request path.
 
-- Governance and render policy defaults.
-- Authentication provider configuration.
-- Module, domain, branding, and localization settings.
-- Provider-neutral storage policy, quotas, delegation, optional S3-compatible settings, and SMTP settings.
-- Analytics and privacy settings.
-- Footer governance and platform API keys.
-- Tenant management in multi-tenant deployments now lives in the Instance Console. The console is suppressed in single-tenant mode and its API endpoints return `403 Multi-tenant required` through `[RequireMultiTenant]`.
+### High-Risk Instance Changes
 
-Configured admin hosts from `Bff:AdminHosts` can render the embedded Instance Console shell in the existing Blazor BFF, while public and tenant hosts keep the public shell. This host classification selects the shell only; instance-admin authorization and API/HAL checks still decide access and action availability.
-
-Tenant lifecycle buttons must be driven by HAL `_links`, not by local role guesses. Destructive purge scheduling requires an operator reason and exact tenant-slug confirmation before an archived tenant can move to `Purged`; no tenant data is physically deleted in the request path. Overview and operations warnings include remediation text so operators can see the next corrective action beside the warning.
-
-### Dangerous Operations
-
-| Operation | Risk | Recovery note |
-|---|---|---|
-| Schedule tenant purge | Moves an archived tenant to the `Purged` lifecycle state after exact slug confirmation and an operator reason. | Confirm backups and export tenant-critical data first. The request records lifecycle audit evidence and does not physically delete tenant data inline; use [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) for restore/rollback planning. |
-| Revoke platform API key | Direct callers using the key fail immediately. | Create and distribute a replacement key before revocation when possible. |
-| Change auth provider settings | Administrators can lock themselves out if authority/client settings are wrong. | Keep a known-good configuration snapshot from [SECRETS.md](SECRETS.md) and [CONFIGURATION.md](CONFIGURATION.md). |
-| Switch Cerbos/local authorization provider | Cerbos mode is fail-closed when the external provider is unavailable. | Switch back to local authorization if Cerbos availability breaks production authorization. |
-
-### Planned Or Backend-Pending Controls
-
-- Webhook administration is planned, not implemented as an operator contract.
-- Tenant-members management under the instance surface has UI scaffolding, but backend completion is pending in the explored admin source.
+| Change | Risk control |
+|---|---|
+| Schedule tenant purge | Confirm backup/export posture first. The request records audited lifecycle intent only; plan physical deletion and recovery separately. |
+| Revoke an instance API key | Issue and distribute a replacement before revoking the old credential when continuity matters. Raw secrets are shown only at creation. |
+| Change authentication settings | Preserve a known-good secret/configuration snapshot and an operator recovery path to avoid lockout. |
+| Select Cerbos authorization | Cerbos mode is fail-closed when its authorization provider is unavailable; restore the known-good local/provider configuration through the approved operator path. |
+| Change tenant delegation locks | Review affected tenant overrides before locking. A locked tenant surface becomes read-only; it does not silently broaden tenant authority. |
 
 ## Tenant Administration
 
-**Required role:** Tenant administrator.
+Tenant settings expose policies, render policy, domain and branding, announcement/public
+experience, themes, organizations, lookup tables, navigation, footer, API keys, community
+guidelines, and support-access evidence. SMTP, storage, analytics, and MCP override sections render
+only when instance delegation permits them.
 
-**UI entry points:** `/admin/tenant/settings`, `/admin/tenant/footer`, `/admin/tenant/navigation`, `/admin/tenant/event-templates`, `/admin/tenant/custom-properties`, and `/admin/tenant/custom-property-definitions`.
+Tenant provider overrides stay within instance policy:
 
-Tenant administration controls tenant-level policy and public experience:
+- storage provider and upload limits must satisfy allowed-provider and ceiling validation;
+- S3-compatible secrets are redacted on reads and preserved unless explicitly replaced;
+- `governance.lock_tenant_storage` makes storage settings read-only;
+- MCP enablement and legacy-SSE intent respect `governance.lock_tenant_mcp` and
+  `governance.lock_tenant_mcp_legacy_sse`; legacy SSE is still unavailable at runtime; and
+- tenant identity always comes from the resolved request context, never a client-supplied body id.
 
-- Tenant policies and render-policy choices.
-- Announcement bar and public-experience settings.
-- Organization approval settings.
-- Lookup tables for categories, tags, and locations.
-- Navigation links and tenant footer.
-- Tenant API keys.
-- Event templates, template details, and custom property definitions.
+There is no current Event-template, Event-session-template, or Event-template-sync admin route.
+Those deleted product surfaces are not an operator contract.
 
-### SEO And Public Discovery
+### High-Risk Tenant Changes
 
-There is no standalone SEO administration page. Public discovery is configured through tenant render-policy settings and public-experience settings, including discovery-centric or organization-centric behavior, home-block JSON, call-to-action JSON, and event-section presets.
+| Change | Risk control |
+|---|---|
+| Delete lookup or custom-property definitions | Confirm current consumers and export required metadata first. Server validation and dependency checks remain authoritative. |
+| Change render/public-experience policy | Verify the affected public routes after saving; planned destinations are not created by a setting. |
+| Revoke a tenant API key | Rotate first where possible, then revoke. Tenant-bound credentials cannot cross a conflicting tenant context. |
+| Change delegated provider settings | Test within the admin surface, keep secrets in the configured secret provider, and retain the previous values for recovery. |
 
-### Dangerous Operations
+## Organization And Group Administration
 
-| Operation | Risk | Recovery note |
-|---|---|---|
-| Delete lookup values | Category, tag, or location deletes can remove operator-facing classification data. | Export or document the value before deleting; prefer disabling/hiding if the UI offers a safer path. |
-| Change public render policy | Public routes may change render mode or visibility. | Verify public pages and crawler-facing routes after the change. |
-| Revoke tenant API key | Integrations for that tenant stop authenticating. | Rotate by creating the replacement key first, then revoke the old key. |
-| Edit templates or custom properties | Event creation and downstream projections can change. | Review template sync conflicts and custom-property promotion reports before applying broad changes. |
+Organization administration covers profile, membership, verification display, and organization
+API keys. Group administration covers profile/branding, membership, and group API keys. The
+authenticated page is only an entry point: server-side organization/group membership and
+authorization checks decide each operation.
 
-### Tenant Storage Overrides
+Custom-property definitions apply to `Organization` and `Group` only in the current source.
+They are tenant-scoped, audited, soft-deletable, and typed; deleted Event-specific definition,
+template, value, and projection families are not part of this guide.
 
-Tenant storage settings are implemented under tenant administration when the instance policy allows delegation. Tenant administrators can select allowed providers and upload-size settings only within the instance ceilings; S3-compatible secrets are redacted on reads and preserved unless explicitly replaced. When `governance.lock_tenant_storage` is enabled, the tenant surface is read-only and clients must gate save affordances from HAL `_links` plus the server-provided read-only state.
+## Support Access
 
-Tenant-specific SMTP and analytics override controls remain future work in the explored UI. Platform-level settings remain the current operational source for those providers.
+Support access changes tenant context; it does not impersonate a tenant user or create tenant role
+grants. The BFF strips browser-supplied support headers and forwards only its server-owned support
+session identifier. The API validates actor, target tenant, mode, expiry, and session status before
+authorization can use the context. Tenant administrators can inspect tenant-scoped support evidence
+only when the API/HAL affordance permits it.
 
-## Organization Administration
+## Storage And Recovery
 
-**Required role:** Organization administrator, or a higher administrator with organization-management permission.
+Storage is local-first with an optional S3-compatible provider. Browser uploads use BFF-issued
+upload sessions and proxy streaming. Instance and delegated tenant storage controls use redacted
+settings, provider tests, usage counters, quotas, and HAL/read-only state.
 
-**UI entry point:** `/admin/organization/{OrganizationId}/settings`.
+Back up database metadata and the selected backing store as one recovery set. Restore backing
+objects before reopening traffic, then verify representative `StorageObject` records resolve.
+See [STORAGE.md](STORAGE.md) and
+[BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md).
 
-Organization administration covers:
+## Related
 
-- Organization profile settings.
-- Organization members.
-- Verification status review.
-- Organization-scoped API keys.
-
-Member changes are gated by runtime role helpers. Verification is exposed as status-oriented administration in the explored UI; do not assume arbitrary verification mutation unless the source path explicitly exposes it.
-
-## Group Administration
-
-**Required role:** Group administrator, or a higher administrator with group-management permission.
-
-**UI entry point:** `/admin/group/{GroupId}/settings`.
-
-Group administration covers:
-
-- Group profile and branding.
-- Group members.
-- Group-scoped API keys.
-
-Member changes are gated by `RoleHelper.CanManageGroup(...)` in the admin UI source.
-
-## Template Administration
-
-**Required role:** Tenant administrator.
-
-**UI entry points:** `/admin/tenant/event-templates`, event-template detail pages, `/admin/events/{eventId}/template-sync`, and `/admin/event-sessions/{sessionId}/template-sync`.
-
-Use template administration to manage event templates and apply template changes to existing events or sessions. Template sync supports diff, apply, and history flows. If the sync base is stale or another update wins the race, reload the diff before applying a new plan.
-
-Dangerous operation: applying a sync plan can update event or session content. Treat the visible diff as the approval record and keep a rollback path through backup/restore procedures for bulk changes.
-
-## Custom Property Administration
-
-**Required role:** Tenant administrator.
-
-**UI entry points:** `/admin/tenant/custom-properties` and `/admin/tenant/custom-property-definitions`.
-
-Custom-property administration includes exposure, search/filter/export governance, moderation/analytics flags, bulk edit, promotion reports, projection rebuild, and definition create/edit/delete flows.
-
-Dangerous operation: deleting or broadly changing a property definition can affect projections and operator-facing forms. Normal delete retires and soft-deletes definitions, options, and values. Permanent purge is a separate admin-only operation for dependency-free definitions; it writes an audit summary and is blocked when historical values, projection rows, audit references, or template-sync provenance exist. Review projection status and drain/rebuild controls before high-volume changes.
-
-## Storage, SMTP, Localization, And Analytics Administration
-
-| Area | Current admin scope | Recovery note |
-|---|---|---|
-| Storage | Provider-neutral instance storage settings manage local default, optional S3-compatible mode, quotas, max upload, provider health, usage recalculation, and tenant delegation. Tenant storage overrides are available only when delegation is unlocked. | Verify `Storage:Local:*`, optional `S3Settings:*`, and secrets against [CONFIGURATION.md](CONFIGURATION.md) and [SECRETS.md](SECRETS.md); confirm database and object-storage backups in [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md). |
-| SMTP | Platform SMTP settings are managed from instance administration. | Keep provider credentials in the configured secret provider; test mail after changes. |
-| Localization | Instance localization supports offline/emergency controls and bundle export. | Use forced offline mode or reset-to-offline behavior if remote localization becomes unsafe. |
-| Analytics/privacy | Instance analytics and privacy settings are platform-level controls. | Verify data sharing and retention expectations before enabling integrations. |
-
-## Related Documentation
-
-- [ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md) — admin scope and authority boundaries.
-- [AUTHORIZATION.md](AUTHORIZATION.md) — authorization model.
-- [AUTHORIZATION_PATTERNS.md](AUTHORIZATION_PATTERNS.md) — implementation enforcement patterns.
-- [API_COOKBOOK.md](API_COOKBOOK.md) — direct caller and API-key integration guidance.
-- [BACKUP_RESTORE_UPGRADE.md](BACKUP_RESTORE_UPGRADE.md) — recovery planning for risky operational changes.
-- [CUSTOM_PROPERTIES.md](CUSTOM_PROPERTIES.md) — custom-property lifecycle, projection, exposure, and purge boundaries.
+- [ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md)
+- [AUTHORIZATION.md](AUTHORIZATION.md)
+- [AUTHORIZATION_PATTERNS.md](AUTHORIZATION_PATTERNS.md)
+- [MULTI_TENANCY.md](MULTI_TENANCY.md)
+- [MCP_DEBUGGING.md](MCP_DEBUGGING.md)
+- [SECRETS.md](SECRETS.md)

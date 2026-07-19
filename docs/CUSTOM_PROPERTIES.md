@@ -391,5 +391,4 @@ Using a Layer 3 custom property for estimated duration ensures the core scheduli
 - `docs/ARCHITECTURE.md`
 - `docs/DOMAIN.md`
 - `docs/EXTENSIBILITY.md`
-- `docs/MODULAR_EVENTS.md`
 - `dev/active/eav-custom-properties/eav-custom-properties-plan.md`

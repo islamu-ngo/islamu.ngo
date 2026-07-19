@@ -1,15 +1,18 @@
-ABOUTME: Documents provider-neutral storage configuration, API boundaries, UI affordances, and operational impact.
-ABOUTME: Covers local-first runtime storage, optional S3-compatible mode, reconciliation, and recovery impact.
+<!-- ABOUTME: Documents provider-neutral storage configuration, API boundaries, UI affordances, and operational impact. -->
+<!-- ABOUTME: Covers local-first runtime storage, optional S3-compatible mode, reconciliation, and recovery impact. -->
 
 # Storage
 
-> **Audience:** Operators | Admins | Contributors
-> **Status:** Mixed
-> **Owner:** Platform/Ops
-> **Last Verified:** 2026-06-23
-> **Source Anchors:** `Explore.Infrastructure/Storage/`, `Explore.Infrastructure/StorageObjectDeletionService.cs`, `Explore.Infrastructure/Services/ObjectStorageService.cs`, `Explore.API/Controllers/StorageObjectController.cs`, `Explore.API/Controllers/TenantStorageSettingsController.cs`, `Explore.Blazor.Client/Services/ImageStorageService.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Audience:** ISLAMU operators | Administrators | Contributors
+> **Status:** Active
+> **Owner:** Platform Operations
+> **Last Verified:** 2026-07-18
+> **Source Anchors:** `src/Explore.Infrastructure/Storage/`, `src/Explore.Infrastructure/StorageReconciliationService.cs`, `src/Explore.Infrastructure/StorageObjectDeletionService.cs`, `src/Explore.API/Controllers/StorageObjectController.cs`, `src/Explore.API/Controllers/TenantStorageSettingsController.cs`, `src/Explore.Blazor/Extensions/BffStorageEndpoints.cs`, `src/Explore.Blazor.Client/Services/ImageStorageService.cs`, `docker-compose.yml`
 
-Storage is moving to a local-first, provider-neutral model. New upload/read flows use metadata-backed `StorageObject` records and the selected `IFileStorageProvider`; S3-compatible storage remains optional for instances that select and configure it.
+ISLAMU storage uses a local-first, provider-neutral model. Upload/read flows use metadata-backed
+`StorageObject` records and the selected `IFileStorageProvider`; S3-compatible storage remains an
+optional deployment choice. This is a first-party operations contract, not a third-party
+self-hosting promise.
 
 ## What Is Implemented
 
@@ -22,9 +25,8 @@ Storage is moving to a local-first, provider-neutral model. New upload/read flow
 | Admin settings | Instance admins can read/update provider policy, quotas, max-upload ceilings, delegation lock, usage, and redacted optional S3 settings through instance settings endpoints. Provider test and usage recalculation actions are API-backed. Tenant admins can read effective tenant policy, usage, lock state, and redacted optional S3 overrides through tenant settings endpoints; writes are accepted only when instance delegation is unlocked and values stay within instance ceilings and allowed providers. |
 | Blazor client boundary | Browser uploads use BFF upload sessions and proxy streaming. Trusted direct provider uploads use a provider-neutral `DirectStorageUpload` client only when the server issued the destination URL. Public image/content display resolves from `StorageObject.Id` or existing `/api/storageobject/...` API paths, not raw provider object keys. |
 | Blazor admin UI | Instance and tenant storage dashboards consume service models mapped from HAL settings resources. Action buttons are driven by `_links` and read-only state, not client-side role checks. |
-| Local self-hosting | Docker Compose mounts a durable `local_storage_data` volume for local-first storage by default. MinIO remains optional through the `storage` profile for instances that select S3-compatible storage. |
+| Local-provider deployment | Docker Compose mounts a durable `local_storage_data` volume for local-first storage by default. MinIO remains optional through the `storage` profile when S3-compatible storage is selected. |
 | Reconciliation | API hosts a dry-run-first reconciliation worker that checks metadata/object drift, reports missing backing objects and local orphan files, and performs quarantine/delete mutations only when explicit policy flags are enabled. |
-| Moderation image deletion | Heavy event redaction marks referenced event image metadata as `delete_requested` with the owning event resource id, commits the redaction, then deletes provider objects through `IFileStorageProvider`. Failures leave metadata retryable and do not log object keys, filenames, paths, endpoints, buckets, or raw provider errors. |
 
 The API delete endpoint exists, but `Explore.Blazor.Client/Services/ImageStorageService.cs` still returns `false` from `DeleteImageAsync`. Do not document a completed Blazor client delete flow until that helper is implemented.
 
@@ -90,8 +92,6 @@ The instance storage dashboard reads `HalResourceOfInstanceStorageSettingsDto` t
 
 The tenant storage dashboard reads `HalResourceOfTenantStorageSettingsDto` through `TenantStorageSettingsAdminService` and maps it into `TenantStorageSettingsModel`. The UI is read-only when the tenant `edit` link is absent, delegation is locked, or the effective policy says the settings are read-only. Tenant overrides stay bounded by the server-provided effective policy and instance ceilings; server validation remains authoritative.
 
-The Phase 5.2-5.4 implementation was verified with Blazor client/host/test Release builds and focused bUnit/service tests. A real authenticated browser smoke for keyboard-only upload/admin paths remains a Phase 5.5 validation item.
-
 ## API Surface
 
 | Endpoint Group | Authentication Boundary |
@@ -127,14 +127,6 @@ The reconciliation worker compares `StorageObject` metadata with provider backin
 - delete-eligible quarantined or delete-requested metadata can be physically deleted from the selected provider and then soft-deleted in metadata.
 
 The local provider intentionally skips temporary files and existing quarantine files during inventory. Metrics, logs, and health data expose only bounded categories/counts; they do not include object keys, filenames, filesystem paths, tenant IDs, user IDs, endpoints, bucket names, access keys, or secrets.
-
-## Heavy Moderation Image Deletion
-
-Heavy event moderation uses the same provider-neutral delete boundary as normal storage cleanup, but it does not wait for the dry-run-first reconciliation schedule. The event redaction transaction clears event/session/day image foreign keys and marks the affected `StorageObject` rows as `delete_requested` with `OwningResourceKind=event` and the redacted event id. After commit, `StorageObjectDeletionService` loads those rows for the tenant/event, calls the selected `IFileStorageProvider.DeleteAsync`, then soft-deletes the storage metadata when the provider delete succeeds or when metadata has no object key.
-
-If a local or S3-compatible delete fails, the redaction remains committed and public APIs cannot use the image metadata, but the command reports a pending retry failure instead of full success. The rows stay in `delete_requested` so a repeated heavy-redaction command or the reconciliation worker can retry idempotently. Local deletion is idempotent for already-missing files, and S3-compatible deletion issues the provider delete request through the AWS SDK adapter.
-
-Operational evidence for this path must remain bounded. Logs and metrics may include provider name, tenant id, owning resource kind/id, storage object id, outcome, and failure category. They must not include object keys, filenames, filesystem paths, S3 endpoints, bucket names, credentials, raw provider response bodies, or raw exception text.
 
 ## Troubleshooting
 

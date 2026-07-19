@@ -7,6 +7,10 @@ ABOUTME: Keeps product MCP hosting API-based while documenting why stdio remains
 
 Deferred / not implemented.
 
+The decision to keep product MCP hosting on the API's HTTP boundary remains active. References
+below to self-hosted product deployments are historical wording and do not create a current
+third-party self-hosting promise.
+
 ## Context
 
 Phase 12 improved MCP debuggability for the existing API-hosted adapter. The supported product adapter is mapped by default at `/mcp` unless startup disables it, API-key-first for scoped external clients, tenant-resolved for tenant/private capabilities, registry-backed, stateless Streamable HTTP through `Explore.API`, and anonymous-safe only for explicit registry discovery.

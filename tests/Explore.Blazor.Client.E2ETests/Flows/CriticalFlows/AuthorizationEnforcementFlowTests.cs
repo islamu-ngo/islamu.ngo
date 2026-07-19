@@ -20,7 +20,7 @@ public class AuthorizationEnforcementFlowTests(
         try
         {
             await BffCookieAuthHelper.AddSetupSecretBypassCookieAsync(page1.Context, appHost.BlazorBaseUrl);
-            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page1, "/events/create");
+            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page1, "/settings");
         }
         finally
         {
@@ -31,7 +31,7 @@ public class AuthorizationEnforcementFlowTests(
         try
         {
             await BffCookieAuthHelper.AddSetupSecretBypassCookieAsync(page2.Context, appHost.BlazorBaseUrl);
-            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page2, "/settings");
+            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page2, "/admin/instance");
         }
         finally
         {
@@ -61,7 +61,7 @@ public class AuthorizationEnforcementFlowTests(
         {
             await BffCookieAuthHelper.AddSetupSecretBypassCookieAsync(page.Context, appHost.BlazorBaseUrl);
 
-            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page, "/events/create");
+            await AssertAnonymousProtectedRouteRedirectsToLoginAsync(page, "/settings");
             await BffCookieAuthHelper.AssertBrowserStorageDoesNotContainTokensAsync(page, appHost.BlazorBaseUrl);
         }
         finally
@@ -97,7 +97,7 @@ public class AuthorizationEnforcementFlowTests(
         await page.Locator("#username").WaitForAsync();
 
         await Assert.That(page.Url).Contains("/protocol/openid-connect/auth");
-        await Assert.That(page.Url).Contains("client_id=islamu-event-blazor");
+        await Assert.That(page.Url).Contains("client_id=islamu-ngo-blazor");
         await Assert.That(page.Url).Contains("redirect_uri=");
     }
 

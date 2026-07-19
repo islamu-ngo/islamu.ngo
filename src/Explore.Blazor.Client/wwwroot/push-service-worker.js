@@ -42,7 +42,7 @@ async function handlePush(event) {
     }
 
     await self.registration.showNotification('New notification', {
-        body: 'Open ISLAMU Event to view it.',
+        body: 'Open the ISLAMU website to view it.',
         tag,
         renotify: false,
         data: { source: 'islamu-event', openPath }

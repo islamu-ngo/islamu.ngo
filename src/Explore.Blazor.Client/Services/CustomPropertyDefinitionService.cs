@@ -1,4 +1,4 @@
-// ABOUTME: Implementation of ICustomPropertyDefinitionService wrapping IEventApiClient.
+// ABOUTME: Implementation of ICustomPropertyDefinitionService wrapping IIslamuApiClient.
 // ABOUTME: Handles HAL unwrap, error catching, and logging for CRUD of layer 3 definitions.
 
 using Explore.Blazor.Client.Clients;
@@ -12,10 +12,10 @@ namespace Explore.Blazor.Client.Services;
 
 public sealed class CustomPropertyDefinitionService : ICustomPropertyDefinitionService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<CustomPropertyDefinitionService> _logger;
 
-    public CustomPropertyDefinitionService(IEventApiClient apiClient, ILogger<CustomPropertyDefinitionService> logger)
+    public CustomPropertyDefinitionService(IIslamuApiClient apiClient, ILogger<CustomPropertyDefinitionService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -14,6 +14,8 @@ public class KeycloakRealmDoctorSourceTests
         await Assert.That(source).Contains("Runs read-only diagnostics against the configured realm");
         await Assert.That(source).Contains("Include temporary admin read-only inspection");
         await Assert.That(source).Contains("OnboardingService.RunKeycloakRealmDoctorAsync");
+        await Assert.That(source).Contains("ApiClientId = \"islamu-ngo-api\"");
+        await Assert.That(source).DoesNotContain("ApiClientId = \"islamu-event-api\"");
     }
 
     [Test]

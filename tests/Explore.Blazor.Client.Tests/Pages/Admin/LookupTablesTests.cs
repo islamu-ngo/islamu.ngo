@@ -48,8 +48,8 @@ public class LookupTablesTests : IDisposable
     public async Task LookupTables_ShowsLoadingIndicator_WhileLookupLoadPending()
     {
         // Arrange
-        var pendingEventTypes = new TaskCompletionSource<ICollection<EventTypeListDto>>();
-        _adminService.GetEventTypesAsync().Returns(pendingEventTypes.Task);
+        var pendingCategories = new TaskCompletionSource<ICollection<CategoryListDto>>();
+        _adminService.GetCategoriesAsync().Returns(pendingCategories.Task);
 
         // Act
         var cut = RenderLookupTables();
@@ -59,20 +59,19 @@ public class LookupTablesTests : IDisposable
         await Assert.That(cut.Markup).Contains("Loading lookup tables");
 
         // Cleanup
-        pendingEventTypes.TrySetResult(new List<EventTypeListDto>());
+        pendingCategories.TrySetResult(new List<CategoryListDto>());
     }
 
     [Test]
     public async Task LookupTables_ShowsLoadedContent_WhenLookupsSucceed()
     {
         // Arrange
-        _adminService.GetEventTypesAsync().Returns(
+        _adminService.GetCategoriesAsync().Returns(
         [
-            new EventTypeListDto
+            new CategoryListDto
             {
-                Id = 1,
-                FullName = "Conference",
-                Description = "Large gathering"
+                Id = Guid.NewGuid(),
+                FullName = "Community"
             }
         ]);
 
@@ -81,7 +80,7 @@ public class LookupTablesTests : IDisposable
         cut.WaitForState(() => cut.Markup.Contains("Lookup Tables", StringComparison.OrdinalIgnoreCase), TimeSpan.FromSeconds(3));
 
         // Assert
-        await Assert.That(cut.Markup).Contains("Event Types");
+        await Assert.That(cut.Markup).Contains("Categories");
         await Assert.That(cut.Markup).Contains("Tags");
     }
 
@@ -89,7 +88,7 @@ public class LookupTablesTests : IDisposable
     public async Task LookupTables_UsesSnackbarError_WhenAnyLookupFails()
     {
         // Arrange
-        _adminService.GetEventFormatsAsync().ThrowsAsync(new InvalidOperationException("boom"));
+        _adminService.GetLanguagesAsync().ThrowsAsync(new InvalidOperationException("boom"));
 
         // Act
         var cut = RenderLookupTables();
@@ -262,13 +261,9 @@ public class LookupTablesTests : IDisposable
 
     private void SetupDefaultLookups()
     {
-        _adminService.GetEventTypesAsync().Returns(new List<EventTypeListDto>());
-        _adminService.GetEventFormatsAsync().Returns(new List<EventFormatListDto>());
-        _adminService.GetEventStatusesAsync().Returns(new List<EventStatusListDto>());
-        _adminService.GetVisibilityTypesAsync().Returns(new List<VisibilityTypeListDto>());
-        _adminService.GetRegistrationModesAsync().Returns(new List<RegistrationModeListDto>());
-        _adminService.GetAudienceGendersAsync().Returns(new List<AudienceGenderListDto>());
-        _adminService.GetAudienceAgesAsync().Returns(new List<AudienceAgeListDto>());
+        _adminService.GetCategoriesAsync().Returns(new List<CategoryListDto>());
+        _adminService.GetTagsAsync().Returns(new List<TagListDto>());
+        _adminService.GetLocationsAsync().Returns(new List<LocationListDto>());
         _adminService.GetMadhabsAsync().Returns(new List<MadhabListDto>());
         _adminService.GetLanguagesAsync().Returns(new List<LanguageListDto>());
         _adminService.GetOrganizationPositionsAsync().Returns(new List<OrganizationPositionListDto>());

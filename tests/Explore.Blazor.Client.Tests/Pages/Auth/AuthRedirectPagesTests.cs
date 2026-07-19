@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Bunit.TestDoubles;
-using Explore.Blazor.Client.Pages.Events;
+using Explore.Blazor.Client.Pages;
 using Explore.Blazor.Client.Tests.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
@@ -35,7 +35,7 @@ public class AuthRedirectPagesTests : IDisposable
 
     private static Type GetPageComponentType(string componentName)
     {
-        var componentType = typeof(EventList).Assembly
+        var componentType = typeof(Home).Assembly
             .GetTypes()
             .FirstOrDefault(t => t.Name == componentName && typeof(IComponent).IsAssignableFrom(t));
 
@@ -91,14 +91,14 @@ public class AuthRedirectPagesTests : IDisposable
         });
 
         var nav = _ctx.Services.GetRequiredService<BunitNavigationManager>();
-        nav.NavigateTo("/login?returnUrl=%2Fevents");
+        nav.NavigateTo("/login?returnUrl=%2Forganizations");
 
         // Act
         var cut = _ctx.Render<DynamicComponent>(parameters =>
             parameters.Add(x => x.Type, GetPageComponentType("LoginRedirect")));
 
         // Assert
-        await Assert.That(nav.Uri).EndsWith("/login?returnUrl=%2Fevents");
+        await Assert.That(nav.Uri).EndsWith("/login?returnUrl=%2Forganizations");
         await Assert.That(cut.Markup).Contains("Continue with Keycloak");
         await Assert.That(cut.Markup).Contains("Continue with Google");
         await Assert.That(cut.Markup).Contains("Continue with ATProto");
@@ -157,7 +157,7 @@ public class AuthRedirectPagesTests : IDisposable
     public async Task LoginRedirect_WithChallengeErrorAndErrorDetail_DoesNotRenderErrorDetail()
     {
         var nav = _ctx.Services.GetRequiredService<BunitNavigationManager>();
-        nav.NavigateTo("/login?returnUrl=%2Fsetup&challengeError=1&provider=keycloak&errorDetail=secretLen%3D24%7CclientId%3Dislamu-event-blazor");
+        nav.NavigateTo("/login?returnUrl=%2Fsetup&challengeError=1&provider=keycloak&errorDetail=secretLen%3D24%7CclientId%3Dislamu-blazor");
 
         var cut = _ctx.Render<DynamicComponent>(parameters =>
             parameters.Add(x => x.Type, GetPageComponentType("LoginRedirect")));
@@ -166,7 +166,7 @@ public class AuthRedirectPagesTests : IDisposable
         await Assert.That(cut.Markup).Contains("Continue with Keycloak");
         await Assert.That(cut.Markup).DoesNotContain("secretLen");
         await Assert.That(cut.Markup).DoesNotContain("clientId");
-        await Assert.That(cut.Markup).DoesNotContain("islamu-event-blazor");
+        await Assert.That(cut.Markup).DoesNotContain("islamu-blazor");
     }
 
     [Test]

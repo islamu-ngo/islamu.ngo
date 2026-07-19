@@ -8,7 +8,8 @@
     <div class="settings-section-header">
         <MudText Typo="Typo.h5" Style="font-weight: 700;">Render Policy</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">
-            Configure how pages are rendered for this tenant. Locked settings are controlled by the instance administrator.
+            Configure each route group's prerender strategy for this tenant. Every route stays fixed to Interactive Server.
+            Locked settings are controlled by the instance administrator.
         </MudText>
     </div>
 
@@ -23,10 +24,10 @@
         <MudStack Spacing="3">
             @* ── Preset Selector ──────────────────────────────────────────── *@
             <MudSelect T="string"
-                       Label="Render Policy Preset"
+                       Label="Prerender Strategy Preset"
                        @bind-Value="Model.RenderPolicyPreset"
                        Variant="Variant.Outlined"
-                       HelperText="Choose a preset to apply default render modes for all route groups.">
+                       HelperText="Choose a preset to apply default prerender settings for all route groups. Render modes are fixed to Interactive Server.">
                 @foreach (var preset in PresetOptions)
                 {
                     <MudSelectItem Value="@preset.Value">@preset.Label</MudSelectItem>
@@ -47,15 +48,9 @@
                     {
                         <MudGrid>
                             <MudItem xs="12" md="6">
-                                <MudSelect T="string"
-                                           Label="Render Mode"
-                                           @bind-Value="Model.PublicSeoRenderMode"
-                                           Variant="Variant.Outlined">
-                                    @foreach (var mode in RenderModeOptions)
-                                    {
-                                        <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudText Typo="Typo.body2" role="status" aria-label="Public SEO render mode">
+                                    Fixed render mode: <strong>Interactive Server</strong>
+                                </MudText>
                             </MudItem>
                             <MudItem xs="12" md="6">
                                 <MudSwitch T="bool?" @bind-Value="Model.PublicSeoPrerenderEnabled" Color="Color.Primary">
@@ -81,15 +76,9 @@
                     {
                         <MudGrid>
                             <MudItem xs="12" md="6">
-                                <MudSelect T="string"
-                                           Label="Render Mode"
-                                           @bind-Value="Model.OperationalRenderMode"
-                                           Variant="Variant.Outlined">
-                                    @foreach (var mode in RenderModeOptions)
-                                    {
-                                        <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudText Typo="Typo.body2" role="status" aria-label="Operational render mode">
+                                    Fixed render mode: <strong>Interactive Server</strong>
+                                </MudText>
                             </MudItem>
                             <MudItem xs="12" md="6">
                                 <MudSwitch T="bool?" @bind-Value="Model.OperationalPrerenderEnabled" Color="Color.Primary">
@@ -115,15 +104,9 @@
                     {
                         <MudGrid>
                             <MudItem xs="12" md="6">
-                                <MudSelect T="string"
-                                           Label="Render Mode"
-                                           @bind-Value="Model.AdminRenderMode"
-                                           Variant="Variant.Outlined">
-                                    @foreach (var mode in RenderModeOptions)
-                                    {
-                                        <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudText Typo="Typo.body2" role="status" aria-label="Admin render mode">
+                                    Fixed render mode: <strong>Interactive Server</strong>
+                                </MudText>
                             </MudItem>
                             <MudItem xs="12" md="6">
                                 <MudSwitch T="bool?" @bind-Value="Model.AdminPrerenderEnabled" Color="Color.Primary">
@@ -145,20 +128,25 @@
 @code {
     private static readonly (string Value, string Label)[] PresetOptions =
     [
-        ("AllInteractiveServer", "All Interactive Server"),
-        ("SeoBalanced", "SEO Balanced"),
-        ("AllPrerendered", "All Prerendered"),
-        ("AllInteractiveAutoNoPrerender", "All Interactive Auto"),
-        ("CustomAdvanced", "Custom Advanced")
-    ];
-
-    private static readonly (string Value, string Label)[] RenderModeOptions =
-    [
-        ("InteractiveAuto", "Interactive Auto"),
-        ("InteractiveWebAssembly", "Interactive WebAssembly"),
-        ("InteractiveServer", "Interactive Server")
+        ("AllInteractiveServer", "Interactive Server, no prerender"),
+        ("SeoBalanced", "SEO balanced prerender"),
+        ("AllPrerendered", "All routes prerendered"),
+        ("CustomAdvanced", "Custom prerender strategy")
     ];
 
     [Parameter, EditorRequired]
     public TenantPolicySettingsDto Model { get; set; } = null!;
+
+    protected override void OnParametersSet()
+    {
+        Model.RenderPolicyPreset = NormalizePreset(Model.RenderPolicyPreset);
+        Model.PublicSeoRenderMode = "InteractiveServer";
+        Model.OperationalRenderMode = "InteractiveServer";
+        Model.AdminRenderMode = "InteractiveServer";
+    }
+
+    private static string NormalizePreset(string? preset) =>
+        PresetOptions.Any(option => string.Equals(option.Value, preset, StringComparison.OrdinalIgnoreCase))
+            ? PresetOptions.First(option => string.Equals(option.Value, preset, StringComparison.OrdinalIgnoreCase)).Value
+            : "AllInteractiveServer";
 }

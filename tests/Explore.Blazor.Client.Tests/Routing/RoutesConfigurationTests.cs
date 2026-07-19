@@ -77,53 +77,30 @@ public class RoutesConfigurationTests
     }
 
     [Test]
-    public async Task EventSessionRoutes_ShouldBeRegistered_BeforeEventDetailCatchAll()
+    public async Task BlogRoutes_ShouldRegister_PublicAndAuthenticatedPages_InSpecificOrder()
     {
         var routesFilePath = FindRoutesFilePath();
         var routesContent = await File.ReadAllTextAsync(routesFilePath);
 
-        const string createSessionRoute = "Path = \"/events/:eventId/sessions/create\", Component = typeof(CreateSession)";
-        const string editSessionRoute = "Path = \"/events/:eventId/sessions/:sessionId/edit\", Component = typeof(EditSession)";
-        const string detailSessionRoute = "Path = \"/events/:eventId/sessions/:sessionId\", Component = typeof(EventSessionDetail)";
-        const string eventDetailRoute = "Path = \"/events/:slugCode\", Component = typeof(EventDetail)";
+        const string blogIndexRoute = "Path = \"/blog\", Component = typeof(BlogIndex), Transition = RouteTransition.Fade }";
+        const string blogNewRoute = "Path = \"/blog/manage/new\", Component = typeof(BlogEditor), Transition = RouteTransition.Fade, Guards = RequireAuthenticated()";
+        const string blogManageRoute = "Path = \"/blog/manage\", Component = typeof(BlogManagement), Transition = RouteTransition.Fade, Guards = RequireAuthenticated()";
+        const string blogEditRoute = "Path = \"/blog/manage/:Id\", Component = typeof(BlogEditor), Transition = RouteTransition.Fade, Guards = RequireAuthenticated()";
+        const string blogArticleRoute = "Path = \"/blog/:Slug\", Component = typeof(BlogArticle), Transition = RouteTransition.Fade }";
 
-        await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Pages.Events.Sessions");
-        await Assert.That(routesContent).Contains(createSessionRoute);
-        await Assert.That(routesContent).Contains(editSessionRoute);
-        await Assert.That(routesContent).Contains(detailSessionRoute);
+        await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Pages.Blogs");
+        await Assert.That(routesContent).Contains(blogIndexRoute);
+        await Assert.That(routesContent).Contains(blogNewRoute);
+        await Assert.That(routesContent).Contains(blogManageRoute);
+        await Assert.That(routesContent).Contains(blogEditRoute);
+        await Assert.That(routesContent).Contains(blogArticleRoute);
 
-        await Assert.That(routesContent.IndexOf(createSessionRoute, StringComparison.Ordinal))
-            .IsLessThan(routesContent.IndexOf(eventDetailRoute, StringComparison.Ordinal));
-        await Assert.That(routesContent.IndexOf(editSessionRoute, StringComparison.Ordinal))
-            .IsLessThan(routesContent.IndexOf(eventDetailRoute, StringComparison.Ordinal));
-        await Assert.That(routesContent.IndexOf(detailSessionRoute, StringComparison.Ordinal))
-            .IsLessThan(routesContent.IndexOf(eventDetailRoute, StringComparison.Ordinal));
-    }
-
-    [Test]
-    public async Task ModerationReportQueueRoute_ShouldBind_EventId_ParameterName()
-    {
-        var routesFilePath = FindRoutesFilePath();
-        var routesContent = await File.ReadAllTextAsync(routesFilePath);
-
-        const string moderationReportsRoute =
-            "Path = \"/events/:EventId/moderation/reports\", Component = typeof(ModerationReportQueuePage)";
-
-        await Assert.That(routesContent).Contains(moderationReportsRoute);
-        await Assert.That(routesContent).DoesNotContain("Path = \"/events/:eventId/moderation/reports\"");
-    }
-
-    [Test]
-    public async Task EventSessionDetail_ShouldNotExpose_EventModerationActions()
-    {
-        var sourcePath = FindClientFilePath("Pages", "Events", "Sessions", "EventSessionDetail.razor");
-        var source = await File.ReadAllTextAsync(sourcePath);
-
-        await Assert.That(source).DoesNotContain("moderate-light");
-        await Assert.That(source).DoesNotContain("moderate-heavy");
-        await Assert.That(source).DoesNotContain("Heavy Redact");
-        await Assert.That(source).Contains("Complete");
-        await Assert.That(source).Contains("Archive");
+        await Assert.That(routesContent.IndexOf(blogNewRoute, StringComparison.Ordinal))
+            .IsLessThan(routesContent.IndexOf(blogEditRoute, StringComparison.Ordinal));
+        await Assert.That(routesContent.IndexOf(blogManageRoute, StringComparison.Ordinal))
+            .IsLessThan(routesContent.IndexOf(blogArticleRoute, StringComparison.Ordinal));
+        await Assert.That(routesContent.IndexOf(blogEditRoute, StringComparison.Ordinal))
+            .IsLessThan(routesContent.IndexOf(blogArticleRoute, StringComparison.Ordinal));
     }
 
     [Test]

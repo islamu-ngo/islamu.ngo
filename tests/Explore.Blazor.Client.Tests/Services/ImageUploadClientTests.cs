@@ -3,13 +3,14 @@
 
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Explore.Blazor.Client.Services.Http;
 
 namespace Explore.Blazor.Client.Tests.Services;
 
 public sealed class ImageUploadClientTests
 {
-    private readonly IEventApiClient _apiClient = Substitute.For<IEventApiClient>();
+    private readonly IIslamuApiClient _apiClient = Substitute.For<IIslamuApiClient>();
     private readonly System.Net.Http.IHttpClientFactory _httpClientFactory = Substitute.For<System.Net.Http.IHttpClientFactory>();
     private readonly ILogger<ImageUploadClient> _logger = Substitute.For<ILogger<ImageUploadClient>>();
 
@@ -69,6 +70,65 @@ public sealed class ImageUploadClientTests
         await Assert.That(result!.UploadSessionId).IsEqualTo("session-1");
         await Assert.That(result.UploadUrl).IsEmpty();
         await Assert.That(result.ObjectKey).IsEmpty();
+        await _apiClient.DidNotReceive().GenerateStorageObjectUploadUrlAsync(Arg.Any<UploadRequestDto>());
+    }
+
+    [Test]
+    public async Task GetUploadUrlAsync_WithSizedDefaultPurpose_PostsLegacyImageToBffUploadSession()
+    {
+        var handler = new RecordingHandler(_ => CreateUploadSessionResponse());
+        _httpClientFactory.CreateClient("BffClient").Returns(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://bff.test")
+        });
+        var client = new ImageUploadClient(
+            _apiClient,
+            _httpClientFactory,
+            _logger,
+            apiClientExecutor: new HttpPassthroughExecutor());
+
+        var result = await client.GetUploadUrlAsync("test.jpg", "image/jpeg", expectedSizeBytes: 3);
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(ReadJsonString(handler.LastRequestBody, "purpose")).IsEqualTo(ImageUploadPurposes.LegacyImage);
+        await Assert.That(ReadJsonString(handler.LastRequestBody, "fileName")).IsEqualTo("test.jpg");
+    }
+
+    [Test]
+    public async Task GetUploadUrlAsync_WithSizedBlogPurpose_PostsBlogImageToBffUploadSession()
+    {
+        var handler = new RecordingHandler(_ => CreateUploadSessionResponse());
+        _httpClientFactory.CreateClient("BffClient").Returns(new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://bff.test")
+        });
+        var client = new ImageUploadClient(
+            _apiClient,
+            _httpClientFactory,
+            _logger,
+            apiClientExecutor: new HttpPassthroughExecutor());
+
+        var result = await client.GetUploadUrlAsync(
+            "test.jpg",
+            "image/jpeg",
+            expectedSizeBytes: 3,
+            purpose: ImageUploadPurposes.BlogImage);
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(ReadJsonString(handler.LastRequestBody, "purpose")).IsEqualTo(ImageUploadPurposes.BlogImage);
+    }
+
+    [Test]
+    public async Task GetUploadUrlAsync_WithUnsizedBlogPurpose_ReturnsNullWithoutDirectFallback()
+    {
+        var client = CreateClient();
+
+        var result = await client.GetUploadUrlAsync(
+            "test.jpg",
+            "image/jpeg",
+            purpose: ImageUploadPurposes.BlogImage);
+
+        await Assert.That(result).IsNull();
         await _apiClient.DidNotReceive().GenerateStorageObjectUploadUrlAsync(Arg.Any<UploadRequestDto>());
     }
 
@@ -218,6 +278,46 @@ public sealed class ImageUploadClientTests
         }
     }
 
+    private sealed class HttpPassthroughExecutor : IApiClientExecutor
+    {
+        public async Task<ApiResult<T>> ReadJsonAsync<T>(
+            Func<CancellationToken, Task<HttpResponseMessage>> sendAsync,
+            string serviceName,
+            CancellationToken cancellationToken = default)
+        {
+            using var response = await sendAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult<T>.Failure(new InvalidOperationException("BFF request failed"));
+            }
+
+            var value = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
+            return value is null
+                ? ApiResult<T>.Failure(new InvalidOperationException("Missing response body"))
+                : ApiResult<T>.Success(value);
+        }
+
+        public Task<ApiResult> SendAsync(
+            Func<CancellationToken, Task<HttpResponseMessage>> sendAsync,
+            string serviceName,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(ApiResult.Failure(new InvalidOperationException("Unexpected executor request")));
+        }
+    }
+
+    private static HttpResponseMessage CreateUploadSessionResponse()
+    {
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new BffStorageUploadSessionResponse
+            {
+                UploadSessionId = "session-1",
+                ExpiresInMinutes = 60
+            })
+        };
+    }
+
     private sealed class RecordingHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory) : HttpMessageHandler
     {
         public HttpRequestMessage? LastRequest { get; private set; }
@@ -235,6 +335,12 @@ public sealed class ImageUploadClientTests
 
     private static bool LogStateContains(object? state, string value)
     {
-        return state.ToString()?.Contains(value, StringComparison.Ordinal) == true;
+        return state?.ToString()?.Contains(value, StringComparison.Ordinal) == true;
+    }
+
+    private static string? ReadJsonString(string? json, string propertyName)
+    {
+        using var document = JsonDocument.Parse(json ?? "{}");
+        return document.RootElement.GetProperty(propertyName).GetString();
     }
 }

@@ -29,10 +29,10 @@ public sealed record OrganizationMembersResult(ICollection<OrganizationMemberDto
 /// </summary>
 public class OrganizationMemberService : IOrganizationMemberService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<OrganizationMemberService> _logger;
 
-    public OrganizationMemberService(IEventApiClient apiClient, ILogger<OrganizationMemberService> logger)
+    public OrganizationMemberService(IIslamuApiClient apiClient, ILogger<OrganizationMemberService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

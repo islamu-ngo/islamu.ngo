@@ -1,0 +1,67 @@
+@* ABOUTME: Public Blog article reader page for anonymous visitors. *@
+@* ABOUTME: Loads one published Blog article by slug and renders sanitized Markdown only. *@
+
+@using Explore.Blazor.Client.Helpers
+@using Explore.Blazor.Client.Services.Blogs
+@inject BlogService BlogService
+@inject BlogMarkdownRenderer MarkdownRenderer
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@ArticlePageTitle</PageTitle>
+<HeadContent>
+    <link rel="canonical" href="@CanonicalUrlHelper.Build(Navigation, CanonicalPath)" />
+    <meta name="description" content="@ArticleDescription" />
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="blog-article">
+    <a class="blog-article__back-link" href="/blog">Back to Blog</a>
+
+    @if (_isLoading)
+    {
+        <section class="blog-article__state" role="status" aria-live="polite" aria-busy="true">
+            <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-article__title">Blog article</MudText>
+            <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+            <span>Loading article...</span>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <section class="blog-article__state blog-article__state--error" role="alert">
+            <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-article__title">Article unavailable</MudText>
+            @_errorMessage
+        </section>
+    }
+    else if (_article is null)
+    {
+        <section class="blog-article__state" role="status" aria-live="polite">
+            <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-article__title">Article not found</MudText>
+            <p>This article is not published or is no longer available.</p>
+        </section>
+    }
+    else
+    {
+        <article class="blog-article__article">
+            <header class="blog-article__header">
+                <time class="blog-article__date" datetime="@FormatMachineDate(_article.PublishedAtUtc)">
+                    @FormatDisplayDate(_article.PublishedAtUtc)
+                </time>
+                <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-article__title">@_article.Title</MudText>
+            </header>
+
+            @if (_article.ThumbnailStorageObjectId is { } thumbnailId && thumbnailId != Guid.Empty)
+            {
+                <figure class="blog-article__figure">
+                    <StorageImage StorageObjectId="thumbnailId"
+                                  Alt="@($"Featured image for {_article.Title}")"
+                                  ObjectFit="cover"
+                                  BorderRadius="var(--isl-radius-xl)" />
+                </figure>
+            }
+
+            <div class="blog-article__body">
+                @((MarkupString)_renderedHtml)
+            </div>
+        </article>
+    }
+</MudContainer>

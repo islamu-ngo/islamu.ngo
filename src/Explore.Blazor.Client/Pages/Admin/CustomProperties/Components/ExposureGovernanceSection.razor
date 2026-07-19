@@ -23,7 +23,6 @@
                        Variant="Variant.Outlined"
                        Margin="Margin.Dense"
                        Style="min-width: 180px;">
-                <MudSelectItem Value="EntityTypeName.Event">Event</MudSelectItem>
                 <MudSelectItem Value="EntityTypeName.Organization">Organization</MudSelectItem>
                 <MudSelectItem Value="EntityTypeName.Group">Group</MudSelectItem>
             </MudSelect>
@@ -169,7 +168,7 @@
     private FormSubmitState _submitState = new();
     private string? _errorMessage;
     private string? _search;
-    private EntityTypeName _entityType = EntityTypeName.Event;
+    private EntityTypeName _entityType = EntityTypeName.Organization;
     private List<CustomPropertyDefinitionListDto> _definitions = new();
     private HashSet<CustomPropertyDefinitionListDto> _selected = new();
 

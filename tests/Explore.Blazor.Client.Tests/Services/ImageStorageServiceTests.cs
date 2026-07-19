@@ -10,14 +10,14 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class ImageStorageServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly System.Net.Http.IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ImageStorageService> _logger;
     private readonly ImageStorageService _service;
 
     public ImageStorageServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _httpClientFactory = Substitute.For<System.Net.Http.IHttpClientFactory>();
         _logger = Substitute.For<ILogger<ImageStorageService>>();
         _service = new ImageStorageService(_apiClient, _httpClientFactory, _logger);
@@ -126,6 +126,46 @@ public class ImageStorageServiceTests
 
         // Assert
         await Assert.That(result).IsNull();
+    }
+
+    [Test]
+    public async Task GetUploadUrlAsync_WithOmittedPurpose_ForwardsLegacyImagePurpose()
+    {
+        var uploadClient = Substitute.For<IImageUploadClient>();
+        uploadClient.GetUploadUrlAsync("test.jpg", "image/jpeg", 3, ImageUploadPurposes.LegacyImage)
+            .Returns(new ImageUploadTarget { UploadSessionId = "session-1" });
+        var service = new ImageStorageService(
+            _apiClient,
+            _httpClientFactory,
+            _logger,
+            uploadClient: uploadClient);
+
+        var result = await service.GetUploadUrlAsync("test.jpg", "image/jpeg", expectedSizeBytes: 3);
+
+        await Assert.That(result).IsNotNull();
+        await uploadClient.Received(1).GetUploadUrlAsync("test.jpg", "image/jpeg", 3, ImageUploadPurposes.LegacyImage);
+    }
+
+    [Test]
+    public async Task GetUploadUrlAsync_WithBlogPurpose_ForwardsBlogImagePurpose()
+    {
+        var uploadClient = Substitute.For<IImageUploadClient>();
+        uploadClient.GetUploadUrlAsync("test.jpg", "image/jpeg", 3, ImageUploadPurposes.BlogImage)
+            .Returns(new ImageUploadTarget { UploadSessionId = "session-1" });
+        var service = new ImageStorageService(
+            _apiClient,
+            _httpClientFactory,
+            _logger,
+            uploadClient: uploadClient);
+
+        var result = await service.GetUploadUrlAsync(
+            "test.jpg",
+            "image/jpeg",
+            expectedSizeBytes: 3,
+            purpose: ImageUploadPurposes.BlogImage);
+
+        await Assert.That(result).IsNotNull();
+        await uploadClient.Received(1).GetUploadUrlAsync("test.jpg", "image/jpeg", 3, ImageUploadPurposes.BlogImage);
     }
 
     #endregion
@@ -271,7 +311,7 @@ public class ImageStorageServiceTests
             ContentType = "image/jpeg"
         };
         var storageId = Guid.NewGuid();
-        uploadClient.GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size)
+        uploadClient.GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, ImageUploadPurposes.LegacyImage)
             .Returns(new ImageUploadTarget
             {
                 UploadSessionId = "session-1",
@@ -295,8 +335,47 @@ public class ImageStorageServiceTests
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Success).IsTrue();
         await Assert.That(result.StorageObjectId).IsEqualTo(storageId);
+        await uploadClient.Received(1).GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, ImageUploadPurposes.LegacyImage);
         await uploadClient.Received(1).UploadViaBffProxyAsync("session-1", fileData);
         await uploadClient.DidNotReceive().UploadImageFromBytesAsync(Arg.Any<string>(), Arg.Any<FileUploadData>());
+    }
+
+    [Test]
+    public async Task UploadAndCreateRecordFromBytesAsync_WithBlogPurpose_ForwardsBlogImagePurpose()
+    {
+        var uploadClient = Substitute.For<IImageUploadClient>();
+        var fileData = new FileUploadData
+        {
+            Content = new byte[] { 10, 20, 30 },
+            FileName = "test.jpg",
+            ContentType = "image/jpeg"
+        };
+        var storageId = Guid.NewGuid();
+        uploadClient.GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, ImageUploadPurposes.BlogImage)
+            .Returns(new ImageUploadTarget
+            {
+                UploadSessionId = "session-1",
+                ExpiresInMinutes = 15
+            });
+        uploadClient.UploadViaBffProxyAsync("session-1", fileData)
+            .Returns(new ImageUploadResult
+            {
+                Success = true,
+                StorageObjectId = storageId,
+                ViewUrl = $"/api/storageobject/{storageId}/public"
+            });
+        var service = new ImageStorageService(
+            _apiClient,
+            _httpClientFactory,
+            _logger,
+            uploadClient: uploadClient);
+
+        var result = await service.UploadAndCreateRecordFromBytesAsync(fileData, ImageUploadPurposes.BlogImage);
+
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Success).IsTrue();
+        await uploadClient.Received(1).GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, ImageUploadPurposes.BlogImage);
+        await uploadClient.Received(1).UploadViaBffProxyAsync("session-1", fileData);
     }
 
     [Test]
@@ -309,7 +388,7 @@ public class ImageStorageServiceTests
             FileName = @"..\..\secret<script>.png",
             ContentType = "image/png"
         };
-        uploadClient.GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size)
+        uploadClient.GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, ImageUploadPurposes.LegacyImage)
             .Returns(new ImageUploadTarget
             {
                 UploadSessionId = "session-1",

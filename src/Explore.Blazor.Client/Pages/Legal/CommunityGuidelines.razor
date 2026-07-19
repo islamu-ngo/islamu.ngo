@@ -1,4 +1,4 @@
-@* ABOUTME: Community Guidelines page displaying event posting and participation rules for this platform.
+@* ABOUTME: Community Guidelines page displaying participation rules for the ISLAMU community platform.
    ABOUTME: Content is loaded from tenant settings and rendered dynamically; admins can customise it. *@
 
 @page "/community-guidelines"
@@ -6,7 +6,7 @@
 @using Explore.Blazor.Client.Services
 @inject IPublicExperienceService PublicExperienceService
 
-<PageTitle>Community Guidelines — Event Platform</PageTitle>
+<PageTitle>Community Guidelines — ISLAMU</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
     @if (_isLoading)
@@ -51,7 +51,7 @@
     private static string RenderContent(string content)
     {
         if (string.IsNullOrWhiteSpace(content))
-            return "<p>No community guidelines have been published for this platform.</p>";
+            return "<p>No community guidelines have been published for this community platform.</p>";
 
         var sb = new System.Text.StringBuilder();
         var lines = content.Split('\n');

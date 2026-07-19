@@ -187,7 +187,7 @@ public class InstanceOnboardingTests : IDisposable
     }
 
     [Test]
-    public async Task OrdinaryWarning_IsNonBlockingAndSingleTenantUsesEventHandoff()
+    public async Task OrdinaryWarning_IsNonBlockingAndSingleTenantUsesHomeHandoff()
     {
         var cut = RenderForDeploymentMode("SingleTenant");
 
@@ -197,7 +197,7 @@ public class InstanceOnboardingTests : IDisposable
         cut.WaitForAssertion(() =>
         {
             RequireContains(cut.Markup, "Instance setup is complete");
-            Require(FindLink(cut, "/events") is not null, "Expected events handoff.");
+            Require(FindLink(cut, "/") is not null, "Expected home handoff.");
             Require(FindLink(cut, "/admin/instance/settings") is not null, "Expected settings handoff.");
         });
 

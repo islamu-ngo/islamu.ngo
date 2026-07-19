@@ -182,7 +182,7 @@ public sealed class TenantOnboardingTests : IDisposable
             RequireContains(cut.Markup, "Tenant onboarding is complete");
             RequireContains(cut.Markup, "Open tenant settings");
             RequireContains(cut.Markup, "href=\"/admin/tenant/settings\"");
-            RequireContains(cut.Markup, "href=\"/events\"");
+            RequireContains(cut.Markup, "href=\"/\"");
 
             if (cut.FindAll("[role='status']").Count == 0)
             {
@@ -219,7 +219,7 @@ public sealed class TenantOnboardingTests : IDisposable
             RequireContains(cut.Markup, "Tenant onboarding is complete");
             RequireContains(cut.Markup, "Open control plane");
             RequireContains(cut.Markup, $"href=\"{ControlPlaneRoutes.Overview}\"");
-            RequireContains(cut.Markup, "href=\"/events\"");
+            RequireContains(cut.Markup, "href=\"/\"");
             RequireDoesNotContain(cut.Markup, "/admin/tenant/settings");
         });
 
@@ -244,8 +244,7 @@ public sealed class TenantOnboardingTests : IDisposable
         cut.WaitForAssertion(() => RequireContains(cut.Markup, "Tenant onboarding is complete"));
         _ = _tenantOnboardingService.Received(2).GetStatusAsync();
         _ = _tenantOnboardingService.Received(1).GetSettingsAsync();
-        _ = _tenantOnboardingService.Received(1).CompleteAsync(Arg.Is<TenantPolicySettingsDto>(
-            settings => settings.PreferredHomePage == "EventList"));
+        _ = _tenantOnboardingService.Received(1).CompleteAsync(Arg.Any<TenantPolicySettingsDto>());
         _ = _announcer.Received(1).AnnouncePoliteAsync(
             "Tenant onboarding completed and confirmed by the server.");
         await Assert.That(cut.FindAll("[role='status']").Count).IsGreaterThan(0);
@@ -431,14 +430,9 @@ public sealed class TenantOnboardingTests : IDisposable
     private static TenantPolicySettingsDto CreateSettingsModel(bool allOverridesAllowed = true) =>
         new()
         {
-            AllowUserSubmittedEvents = true,
-            RequireEventApproval = true,
             RequireOrganizationVerification = true,
-            EventCardClickOpensDetailPage = true,
-            PreferredHomePage = "EventList",
-            InstanceBaseDomain = "events.example.test",
-            CanOverrideHomePagePreference = allOverridesAllowed,
-            CanOverrideEventCardClickBehavior = allOverridesAllowed,
+            AllowOrganizationSelfRegistration = true,
+            InstanceBaseDomain = "islamu.example.test",
             CanOverrideSubdomain = allOverridesAllowed,
             CanOverrideCustomDomain = allOverridesAllowed,
             CanTenantOmitVerification = allOverridesAllowed

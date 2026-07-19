@@ -62,10 +62,10 @@ public interface IOrganizationService
 /// </summary>
 public class OrganizationService : IOrganizationService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<OrganizationService> _logger;
 
-    public OrganizationService(IEventApiClient apiClient, ILogger<OrganizationService> logger)
+    public OrganizationService(IIslamuApiClient apiClient, ILogger<OrganizationService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

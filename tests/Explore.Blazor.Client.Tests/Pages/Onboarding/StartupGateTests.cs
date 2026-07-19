@@ -32,7 +32,7 @@ public class StartupGateTests : IDisposable
     }
 
     [Test]
-    public async Task StartupGate_WhenSingleTenantCompleted_RedirectsToEvents()
+    public async Task StartupGate_WhenSingleTenantCompleted_RedirectsToHome()
     {
         // Arrange
         _instanceOnboardingService.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
@@ -48,7 +48,7 @@ public class StartupGateTests : IDisposable
         var cut = _ctx.RenderMudComponent<StartupGate>();
 
         // Assert
-        cut.WaitForAssertion(() => AssertUriEndsWith("/events"));
+        cut.WaitForAssertion(() => AssertUriEndsWith("/"));
 
         await Task.CompletedTask;
     }
@@ -77,7 +77,7 @@ public class StartupGateTests : IDisposable
     }
 
     [Test]
-    public async Task StartupGate_WhenMultiTenantCompletedForNonAdmin_RedirectsToEvents()
+    public async Task StartupGate_WhenMultiTenantCompletedForNonAdmin_RedirectsToHome()
     {
         // Arrange
         _instanceOnboardingService.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
@@ -93,7 +93,7 @@ public class StartupGateTests : IDisposable
         var cut = _ctx.RenderMudComponent<StartupGate>();
 
         // Assert
-        cut.WaitForAssertion(() => AssertUriEndsWith("/events"));
+        cut.WaitForAssertion(() => AssertUriEndsWith("/"));
 
         await Task.CompletedTask;
     }

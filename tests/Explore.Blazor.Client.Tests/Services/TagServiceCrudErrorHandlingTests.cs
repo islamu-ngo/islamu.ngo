@@ -16,13 +16,13 @@ namespace Explore.Blazor.Client.Tests.Services;
 /// </remarks>
 public class TagServiceCrudErrorHandlingTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly Microsoft.Extensions.Logging.ILogger<TagService> _logger;
     private readonly TagService _service;
 
     public TagServiceCrudErrorHandlingTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<Microsoft.Extensions.Logging.ILogger<TagService>>();
         _service = new TagService(_apiClient, _logger);
     }

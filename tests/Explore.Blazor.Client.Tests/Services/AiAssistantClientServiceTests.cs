@@ -8,7 +8,7 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public sealed class AiAssistantClientServiceTests
 {
-    private readonly IEventApiClient _apiClient = Substitute.For<IEventApiClient>();
+    private readonly IIslamuApiClient _apiClient = Substitute.For<IIslamuApiClient>();
     private readonly ILogger<AiAssistantClientService> _logger = Substitute.For<ILogger<AiAssistantClientService>>();
 
     [Test]
@@ -49,24 +49,24 @@ public sealed class AiAssistantClientServiceTests
                 [
                     HalLinkTestFactory.WithLinks(new HalResourceOfAiReferenceSearchResultDto
                     {
-                        Kind = "Event",
+                        Kind = "Organization",
                         ReferenceId = referenceId,
-                        DisplayName = "Community Iftar"
-        }, new HalLinkTestLink("event", $"/api/events/{referenceId}", "GET"))
+                        DisplayName = "Northside Masjid"
+        }, new HalLinkTestLink("organization", $"/api/organizations/{referenceId}", "GET"))
                 ]
             }
         };
 
-        _apiClient.SearchAiReferencesAsync("iftar", 20, null, null, Arg.Any<CancellationToken>())
+        _apiClient.SearchAiReferencesAsync("masjid", 20, null, null, Arg.Any<CancellationToken>())
             .Returns(response);
 
         var service = CreateService();
 
-        var references = await service.SearchReferencesAsync("iftar", 20);
+        var references = await service.SearchReferencesAsync("masjid", 20);
 
         await Assert.That(references.Count).IsEqualTo(1);
         await Assert.That(references[0].ReferenceId).IsEqualTo(referenceId);
-        await Assert.That(references[0]._links).ContainsKey("event");
+        await Assert.That(references[0]._links).ContainsKey("organization");
     }
 
     [Test]
@@ -100,10 +100,10 @@ public sealed class AiAssistantClientServiceTests
         {
             new()
             {
-                Kind = "Event",
+                Kind = "Organization",
                 ReferenceId = Guid.CreateVersion7(),
-                DisplayName = "Community Iftar",
-                Summary = "Public evening program"
+                DisplayName = "Northside Masjid",
+                Summary = "Community profile"
             }
         };
         _apiClient.SendAiMessageAsync(
@@ -119,7 +119,7 @@ public sealed class AiAssistantClientServiceTests
 
         var result = await service.SendMessageAsync(
             conversationId,
-            "Plan an iftar",
+            "Plan a community update",
             idempotencyKey: "send-key",
             images: images,
             references: references);
@@ -128,7 +128,7 @@ public sealed class AiAssistantClientServiceTests
         await _apiClient.Received(1).SendAiMessageAsync(
             conversationId,
             Arg.Is<SendAiMessageRequestDto>(request =>
-                request.Content == "Plan an iftar"
+                request.Content == "Plan a community update"
                 && request.ModelId == null
                 && request.IdempotencyKey == "send-key"
                 && request.Images != null
@@ -137,8 +137,8 @@ public sealed class AiAssistantClientServiceTests
                 && request.Images.Single().Data == "aW1hZ2U="
                 && request.References != null
                 && request.References.Count == 1
-                && request.References.Single().Kind == "Event"
-                && request.References.Single().DisplayName == "Community Iftar"),
+                && request.References.Single().Kind == "Organization"
+                && request.References.Single().DisplayName == "Northside Masjid"),
             "send-key",
             null,
             null,
@@ -232,7 +232,7 @@ public sealed class AiAssistantClientServiceTests
     {
         var conversationId = Guid.CreateVersion7();
         var proposedActionId = Guid.CreateVersion7();
-        var eventId = Guid.CreateVersion7();
+        var resultId = Guid.CreateVersion7();
         _apiClient.ConfirmAiProposedActionAsync(
                 conversationId,
                 proposedActionId,
@@ -240,14 +240,14 @@ public sealed class AiAssistantClientServiceTests
                 null,
                 null,
                 Arg.Any<CancellationToken>())
-            .Returns(new BaseCommandResponseOfGuid { Success = true, Id = eventId });
+            .Returns(new BaseCommandResponseOfGuid { Success = true, Id = resultId });
 
         var service = CreateService();
 
         var result = await service.ConfirmProposedActionAsync(conversationId, proposedActionId, "confirm-key");
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Id).IsEqualTo(eventId);
+        await Assert.That(result.Id).IsEqualTo(resultId);
         await _apiClient.Received(1).ConfirmAiProposedActionAsync(
             conversationId,
             proposedActionId,
@@ -272,12 +272,12 @@ public sealed class AiAssistantClientServiceTests
             .ThrowsAsync(new ApiException<ProblemDetails>(
                 "Bad Request",
                 400,
-                """{"type":"https://httpstatuses.com/400","title":"AI assistant request failed","status":400,"detail":"AI event draft organization is not allowed for this mapping context.","code":"invalid_organization_scope"}""",
+                """{"type":"https://httpstatuses.com/400","title":"AI assistant request failed","status":400,"detail":"AI action organization is not allowed for this context.","code":"invalid_organization_scope"}""",
                 new Dictionary<string, IEnumerable<string>>(),
                 new ProblemDetails
                 {
                     Title = "AI assistant request failed",
-                    Detail = "AI event draft organization is not allowed for this mapping context.",
+                    Detail = "AI action organization is not allowed for this context.",
                     AdditionalProperties = { ["code"] = "invalid_organization_scope" }
                 },
                 null));
@@ -288,7 +288,7 @@ public sealed class AiAssistantClientServiceTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.FailureCode).IsEqualTo("invalid_organization_scope");
-        await Assert.That(result.Message).IsEqualTo("AI event draft organization is not allowed for this mapping context.");
+        await Assert.That(result.Message).IsEqualTo("AI action organization is not allowed for this context.");
     }
 
     [Test]
@@ -311,7 +311,7 @@ public sealed class AiAssistantClientServiceTests
                 new ProblemDetails
                 {
                     Title = "AI assistant request failed",
-                    Detail = "Selected AI actor context is not allowed to create events for this user.",
+                    Detail = "Selected AI actor context is not allowed for this user.",
                     AdditionalProperties = { ["code"] = "actor_context_not_allowed" }
                 },
                 null));
@@ -322,7 +322,7 @@ public sealed class AiAssistantClientServiceTests
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.FailureCode).IsEqualTo("actor_context_not_allowed");
-        await Assert.That(result.Message).IsEqualTo("Selected AI actor context is not allowed to create events for this user.");
+        await Assert.That(result.Message).IsEqualTo("Selected AI actor context is not allowed for this user.");
     }
 
     [Test]

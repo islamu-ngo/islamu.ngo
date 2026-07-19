@@ -8,9 +8,9 @@ using Explore.Blazor.Client.Clients;
 public static class BffManifestEndpoints
 {
     private const string ManifestContentType = "application/manifest+json";
-    private const string FallbackName = "Event Platform";
-    private const string FallbackShortName = "Events";
-    private const string FallbackDescription = "Discover and register for events.";
+    private const string FallbackName = "ISLAMU";
+    private const string FallbackShortName = "ISLAMU";
+    private const string FallbackDescription = "Visit the first-party ISLAMU website and community platform.";
     private const string ThemeColor = "#2563eb";
     private const string BackgroundColor = "#ffffff";
 
@@ -24,7 +24,7 @@ public static class BffManifestEndpoints
     }
 
     private static async Task<IResult> HandleManifestAsync(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -34,7 +34,7 @@ public static class BffManifestEndpoints
     }
 
     private static async Task<ManifestBrand> ResolveBrandAsync(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         ILogger logger,
         CancellationToken cancellationToken)
     {

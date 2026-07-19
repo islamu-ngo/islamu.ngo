@@ -89,7 +89,7 @@ public sealed class SafeAuthDiagnosticsPolicyTests
 
         return factory.CreateKeycloakOptions(new EventBffOidcProviderOptions(
             "https://idp.example.test/realms/ISLAMU",
-            "islamu-event-blazor",
+            "islamu-ngo-blazor",
             "super-secret-value"));
     }
 }

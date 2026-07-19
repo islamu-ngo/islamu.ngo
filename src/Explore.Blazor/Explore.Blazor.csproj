@@ -13,11 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\Explore.Blazor.Client\Pages\Event\Component.razor" Link="Component.razor" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
     <PackageReference Include="Blazouter" />
     <PackageReference Include="Blazouter.Server" />
@@ -27,7 +22,6 @@
     <ProjectReference Include="..\Explore.Blazor.Client\Explore.Blazor.Client.csproj" />
     <ProjectReference Include="..\Explore.ServiceDefaults\Explore.ServiceDefaults.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
-	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
 	<PackageReference Include="Microsoft.Extensions.Http.Resilience" />
 	<PackageReference Include="Microsoft.OpenApi" />
 	<ProjectReference Include="..\Event.Web.BffHosting\Event.Web.BffHosting.csproj" />

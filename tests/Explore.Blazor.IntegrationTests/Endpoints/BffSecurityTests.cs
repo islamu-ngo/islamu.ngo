@@ -80,7 +80,7 @@ public class BffSecurityTests : IAsyncDisposable
         location.Should().Contain("response_type=code",
             "the redirect must request authorization code flow");
 
-        location.Should().Contain("client_id=islamu-event-blazor",
+        location.Should().Contain("client_id=islamu-ngo-blazor",
             "the redirect must include the correct client_id");
 
         location.Should().Contain("redirect_uri=",

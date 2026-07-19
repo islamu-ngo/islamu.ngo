@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Bunit;
 using Bunit.TestDoubles;
 using Explore.Blazor.Client.Clients;
-using Explore.Blazor.Client.Contracts.Services.Events;
 using Explore.Blazor.Client.Contracts.Services.Organizations;
 using Explore.Blazor.Client.Layout;
 using Explore.Blazor.Client.Pages;
@@ -356,7 +355,7 @@ public class AuthenticationFlowTests
         var principal = new AuthenticationTestBuilder()
             .WithUser(Guid.NewGuid(), "Custom Claims User")
             .WithClaim("organization_id", orgId.ToString())
-            .WithClaim("custom_permission", "can_create_events")
+            .WithClaim("custom_permission", "can_manage_organizations")
             .BuildPrincipal();
 
         // Assert
@@ -366,7 +365,7 @@ public class AuthenticationFlowTests
 
         var permissionClaim = principal.FindFirst("custom_permission");
         await Assert.That(permissionClaim).IsNotNull();
-        await Assert.That(permissionClaim!.Value).IsEqualTo("can_create_events");
+        await Assert.That(permissionClaim!.Value).IsEqualTo("can_manage_organizations");
     }
 
     [Test]
@@ -390,39 +389,21 @@ public class AuthenticationFlowTests
         var authState = new AuthenticationTestBuilder()
             .WithUser(AuthenticationTestConstants.DefaultUserId, "Fluent User")
             .WithEmail("fluent@test.com")
-            .WithRole(AuthenticationTestConstants.EventOrganizerRole)
+            .WithRole(AuthenticationTestConstants.OrganizationOwnerRole)
             .WithTenant(AuthenticationTestConstants.DefaultTenantId)
-            .WithPolicy(AuthenticationTestConstants.CreateEventPolicy)
-            .WithClaim("department", "events")
+            .WithPolicy(AuthenticationTestConstants.ManageOrganizationPolicy)
+            .WithClaim("department", "organizations")
             .BuildAuthenticationState();
 
         // Assert
         await Assert.That(authState).IsNotNull();
         await Assert.That(authState.User.Identity?.IsAuthenticated ?? false).IsTrue();
-        await Assert.That(authState.User.IsInRole(AuthenticationTestConstants.EventOrganizerRole)).IsTrue();
+        await Assert.That(authState.User.IsInRole(AuthenticationTestConstants.OrganizationOwnerRole)).IsTrue();
     }
 
     #endregion
 
     #region Policy-Based Authorization Tests
-
-    [Test]
-    [DisplayName("EventOrganizer_HasCanCreateEventPolicy")]
-    public async Task EventOrganizer_HasCanCreateEventPolicy()
-    {
-        // Arrange & Act - Build principal directly to verify setup
-        var orgId = Guid.NewGuid();
-        var principal = AuthenticationScenarios.EventOrganizer(orgId).BuildPrincipal();
-
-        // Assert - Should be authenticated with EventOrganizer role
-        await Assert.That(principal.Identity?.IsAuthenticated ?? false).IsTrue();
-        await Assert.That(principal.IsInRole(AuthenticationTestConstants.EventOrganizerRole)).IsTrue();
-
-        // Verify org claim is set
-        var orgClaim = principal.FindFirst("org_id");
-        await Assert.That(orgClaim).IsNotNull();
-        await Assert.That(orgClaim!.Value).IsEqualTo(orgId.ToString());
-    }
 
     [Test]
     [DisplayName("UserWithPolicies_HasCorrectPoliciesSet")]
@@ -432,10 +413,7 @@ public class AuthenticationFlowTests
         using var ctx = CreateContext();
         var authContext = ctx.AddAuthorization();
         authContext.SetAuthorized("Policy User");
-        authContext.SetPolicies(
-            AuthenticationTestConstants.CreateEventPolicy,
-            AuthenticationTestConstants.ManageOrganizationPolicy
-        );
+        authContext.SetPolicies(AuthenticationTestConstants.ManageOrganizationPolicy);
 
         var authState = ctx.Services.GetRequiredService<AuthenticationStateProvider>();
         var state = await authState.GetAuthenticationStateAsync();
@@ -509,11 +487,6 @@ public class AuthenticationFlowTests
         var settings = PublicExperienceSettingsBuilder.DefaultBranded().Build();
         NavMenuTestServices.Register(ctx, publicExperienceSettings: settings);
 
-        // AuthenticationFlowTests additionally needs IEventService and IAuthStateService
-        var eventService = Substitute.For<IEventService>();
-        eventService.GetAllEventsAsync().Returns(new List<EventListDto>());
-        ctx.Services.AddSingleton(eventService);
-
         var authStateService = Substitute.For<IAuthStateService>();
         ctx.Services.AddSingleton(authStateService);
     }
@@ -529,9 +502,6 @@ public class AuthenticationFlowTests
         authStateService.GetCurrentUserIdAsync().Returns(Task.FromResult(Guid.NewGuid().ToString()));
         authStateService.GetCurrentTenantIdAsync().Returns(Task.FromResult(AuthenticationTestConstants.DefaultTenantId));
         ctx.Services.AddSingleton(authStateService);
-
-        var eventService = Substitute.For<IEventService>();
-        ctx.Services.AddSingleton(eventService);
 
         // Required by CreateOrganization component
         var imageStorageService = Substitute.For<IImageStorageService>();

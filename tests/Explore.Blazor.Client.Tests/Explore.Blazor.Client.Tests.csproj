@@ -19,6 +19,8 @@
 
     <!-- BUnit for Blazor Component Testing -->
     <PackageReference Include="bunit" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" />
 
     <!-- Mocking -->
     <PackageReference Include="NSubstitute" />

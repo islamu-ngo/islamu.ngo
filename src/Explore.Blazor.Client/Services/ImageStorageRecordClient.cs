@@ -14,7 +14,7 @@ public interface IImageStorageRecordClient
 }
 
 public sealed class ImageStorageRecordClient(
-    IEventApiClient apiClient,
+    IIslamuApiClient apiClient,
     IImageContentClassifier contentClassifier,
     ILogger<ImageStorageRecordClient> logger) : IImageStorageRecordClient
 {

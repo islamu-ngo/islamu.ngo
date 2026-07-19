@@ -19,13 +19,13 @@ namespace Explore.Blazor.Client.Tests.Services;
 /// </remarks>
 public class OrganizationServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly Microsoft.Extensions.Logging.ILogger<OrganizationService> _logger;
     private readonly OrganizationService _service;
 
     public OrganizationServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<Microsoft.Extensions.Logging.ILogger<OrganizationService>>();
         _service = new OrganizationService(_apiClient, _logger);
     }

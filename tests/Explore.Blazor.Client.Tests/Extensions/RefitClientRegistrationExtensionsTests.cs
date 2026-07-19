@@ -85,7 +85,6 @@ public sealed class RefitClientRegistrationExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<NavigationManager>(new TestNavigationManager("https://test.local/"));
-        services.AddTransient<BrowserCredentialsMessageHandler>();
         services.AddTransient<BffAntiforgeryMessageHandler>();
         services.AddTransient<BffUnauthorizedHandler>();
 

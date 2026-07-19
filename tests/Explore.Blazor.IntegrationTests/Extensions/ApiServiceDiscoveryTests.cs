@@ -40,7 +40,7 @@ public sealed class ApiServiceDiscoveryTests
 
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<IHttpClientFactory>()
-            .CreateClient(nameof(IEventApiClient));
+            .CreateClient(nameof(IIslamuApiClient));
 
         client.BaseAddress.Should().Be(new Uri("https://localhost:7211/"));
     }

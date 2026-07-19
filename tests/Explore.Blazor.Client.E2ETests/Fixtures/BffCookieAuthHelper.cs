@@ -25,13 +25,13 @@ public static class BffCookieAuthHelper
     public static async Task LoginAsTestUserAsync(
         IPage page,
         AppHostFixture appHost,
-        string returnUrl = "/events") =>
+        string returnUrl = "/home") =>
         await LoginAsync(page, appHost, TestUserName, TestUserPassword, returnUrl);
 
     public static async Task LoginAsTestAdminAsync(
         IPage page,
         AppHostFixture appHost,
-        string returnUrl = "/events") =>
+        string returnUrl = "/home") =>
         await LoginAsync(page, appHost, TestAdminName, TestAdminPassword, returnUrl);
 
     private static async Task LoginAsync(

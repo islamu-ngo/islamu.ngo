@@ -278,7 +278,7 @@ public class AccessTokenForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/blog");
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(refreshHandler.Called).IsTrue();
@@ -317,7 +317,7 @@ public class AccessTokenForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/blog");
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(refreshHandler.Called).IsTrue();
@@ -360,7 +360,7 @@ public class AccessTokenForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/event");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/blog");
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(refreshHandler.Called).IsTrue();

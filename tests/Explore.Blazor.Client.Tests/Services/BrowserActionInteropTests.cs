@@ -15,13 +15,28 @@ public sealed class BrowserActionInteropTests
         jsRuntime.Module.Results["share"] = true;
         await using var interop = CreateInterop(jsRuntime);
 
-        var result = await interop.ShareAsync("Dangerous <script>alert(1)</script>", "https://example.test/events/123");
+        var result = await interop.ShareAsync("Dangerous <script>alert(1)</script>", "https://example.test/organizations/123");
 
         var invocation = jsRuntime.Module.SingleInvocation("share");
         await Assert.That(result).IsTrue();
         await Assert.That(jsRuntime.ImportedModulePath).IsEqualTo("/js/browser-actions.js");
         await Assert.That(invocation.Arguments[0]).IsEqualTo("Dangerous <script>alert(1)</script>");
-        await Assert.That(invocation.Arguments[1]).IsEqualTo("https://example.test/events/123");
+        await Assert.That(invocation.Arguments[1]).IsEqualTo("https://example.test/organizations/123");
+    }
+
+    [Test]
+    public async Task ShareAsync_WithBlankTitleFallsBackToIslamuBrandTitle()
+    {
+        var jsRuntime = new RecordingJsRuntime();
+        jsRuntime.Module.Results["share"] = true;
+        await using var interop = CreateInterop(jsRuntime);
+
+        var result = await interop.ShareAsync(" ", "https://example.test/about");
+
+        var invocation = jsRuntime.Module.SingleInvocation("share");
+        await Assert.That(result).IsTrue();
+        await Assert.That(invocation.Arguments[0]).IsEqualTo("ISLAMU");
+        await Assert.That(invocation.Arguments[1]).IsEqualTo("https://example.test/about");
     }
 
     [Test]
@@ -31,12 +46,12 @@ public sealed class BrowserActionInteropTests
         jsRuntime.Module.Results["copyText"] = true;
         await using var interop = CreateInterop(jsRuntime);
 
-        var result = await interop.CopyTextAsync("https://example.test/events/123");
+        var result = await interop.CopyTextAsync("https://example.test/organizations/123");
 
         var invocation = jsRuntime.Module.SingleInvocation("copyText");
         await Assert.That(result).IsTrue();
         await Assert.That(invocation.Identifier).IsEqualTo("copyText");
-        await Assert.That(invocation.Arguments[0]).IsEqualTo("https://example.test/events/123");
+        await Assert.That(invocation.Arguments[0]).IsEqualTo("https://example.test/organizations/123");
     }
 
     [Test]
@@ -61,7 +76,7 @@ public sealed class BrowserActionInteropTests
         await using var interop = CreateInterop(new ThrowingJsRuntime(new InvalidOperationException(
             "JavaScript interop calls cannot be issued at this time.")));
 
-        var result = await interop.ShareAsync("Event", "https://example.test/events/123");
+        var result = await interop.ShareAsync("Organization", "https://example.test/organizations/123");
 
         await Assert.That(result).IsFalse();
     }
@@ -72,7 +87,7 @@ public sealed class BrowserActionInteropTests
         var jsRuntime = new RecordingJsRuntime();
         await using var interop = CreateInterop(jsRuntime);
 
-        var shareResult = await interop.ShareAsync("Event", "");
+        var shareResult = await interop.ShareAsync("Organization", "");
         var copyResult = await interop.CopyTextAsync("");
         var scrollResult = await interop.ScrollToElementByIdAsync("");
         var downloadResult = await interop.DownloadBase64FileAsync("", "event.ics", "text/calendar");

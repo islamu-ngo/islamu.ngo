@@ -69,10 +69,10 @@ public interface IAdminService
 
 public class AdminService : IAdminService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<AdminService> _logger;
 
-    public AdminService(IEventApiClient apiClient, ILogger<AdminService> logger)
+    public AdminService(IIslamuApiClient apiClient, ILogger<AdminService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

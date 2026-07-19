@@ -256,7 +256,7 @@ public class AppearanceThemeServiceTests
             BaseAddress = new Uri("https://example.test/")
         };
 
-        return new AppearanceThemeService(new EventApiClient(client), logger);
+        return new AppearanceThemeService(new IslamuApiClient(client), logger);
     }
 
     private static HttpResponseMessage CreateJsonResponse<T>(T value) => new(HttpStatusCode.OK)

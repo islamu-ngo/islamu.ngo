@@ -10,7 +10,7 @@ public class BffProxyHeaderSanitizerTests
     [Test]
     public async Task RemoveBrowserControlledHeaders_StripsBrowserCredentialAndTenantHeaders()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/api/organizations");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "browser-token");
         request.Headers.Add("Proxy-Authorization", "Bearer proxy-token");
         request.Headers.Add("Cookie", "bff=session; setup-secret=secret");
@@ -59,7 +59,7 @@ public class BffProxyHeaderSanitizerTests
     [Test]
     public async Task RemoveBrowserControlledHeaders_PreservesNonCredentialRequestMetadata()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/organizations");
         request.Headers.Accept.ParseAdd("application/hal+json");
         request.Headers.Add("X-Correlation-ID", "correlation-123");
         request.Headers.Add("X-Request-ID", "request-123");
@@ -76,7 +76,7 @@ public class BffProxyHeaderSanitizerTests
     [Test]
     public async Task RemoveBrowserControlledHeaders_StripsUnsafeCorrelationMetadata()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/organizations");
         _ = request.Headers.TryAddWithoutValidation("X-Correlation-ID", new string('a', 129));
         _ = request.Headers.TryAddWithoutValidation("X-Request-ID", "request\ninjection");
 

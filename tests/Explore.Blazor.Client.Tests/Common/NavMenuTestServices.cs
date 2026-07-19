@@ -15,11 +15,6 @@ namespace Explore.Blazor.Client.Tests.Common;
 /// Registers all services required by the NavMenu component.
 /// Eliminates duplication across test files that render NavMenu or full-page layouts.
 /// </summary>
-/// <remarks>
-/// NavMenu injects: IUserService, IUserSettingsService, IPublicExperienceService, IInstanceOnboardingService,
-/// ITenantNavigationService, IEventCreationEligibilityService, IOrganizationService,
-/// IGroupService, SidebarState, NotificationService, ITranslationService, IHttpClientFactory.
-/// </remarks>
 public static class NavMenuTestServices
 {
     /// <summary>
@@ -73,7 +68,7 @@ public static class NavMenuTestServices
                 var settings = callInfo.Arg<PublicExperienceSettingsDto?>();
                 return settings?.PreferredHomePage?.Equals("LandingPage", StringComparison.OrdinalIgnoreCase) == true
                     ? "/home"
-                    : "/events";
+                    : "/";
             });
         ctx.Services.AddSingleton(publicExperienceService);
 
@@ -99,10 +94,6 @@ public static class NavMenuTestServices
         var tenantNavigationService = Substitute.For<ITenantNavigationService>();
         tenantNavigationService.GetNavigationLinksAsync().Returns(new List<TenantNavigationLinkDto>());
         ctx.Services.AddSingleton(tenantNavigationService);
-
-        var eligibilityService = Substitute.For<IEventCreationEligibilityService>();
-        eligibilityService.GetEligibilityAsync().Returns(EventCreationEligibility.NotEligible);
-        ctx.Services.AddSingleton(eligibilityService);
 
         var organizationService = Substitute.For<IOrganizationService>();
         organizationService.GetMyOrganizationsAsync().Returns(new List<OrganizationListDto>());

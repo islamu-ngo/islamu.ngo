@@ -77,7 +77,7 @@ public interface IInstanceOnboardingService
 }
 
 public sealed class InstanceOnboardingService(
-    IEventApiClient api,
+    IIslamuApiClient api,
     IBffAuthApi bffAuthApi,
     ILogger<InstanceOnboardingService> logger,
     NavigationManager navigation) : IInstanceOnboardingService

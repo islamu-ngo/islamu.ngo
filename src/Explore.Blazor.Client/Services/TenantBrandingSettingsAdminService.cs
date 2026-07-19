@@ -13,7 +13,7 @@ public interface ITenantBrandingSettingsAdminService
 }
 
 public sealed class TenantBrandingSettingsAdminService(
-    IEventApiClient api,
+    IIslamuApiClient api,
     ILogger<TenantBrandingSettingsAdminService> logger) : ITenantBrandingSettingsAdminService
 {
     private const string ReplaceLinkRel = "self/replace-settings";

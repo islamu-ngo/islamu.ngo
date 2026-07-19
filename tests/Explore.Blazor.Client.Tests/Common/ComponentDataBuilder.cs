@@ -12,7 +12,6 @@ namespace Explore.Blazor.Client.Tests.Common;
 /// - Price: double? (not decimal)
 /// - CreateOrganizationDto.Postcode: int (not string)
 /// - OrganizationListDto.Postcode: string
-/// - Property names use FullName suffix (e.g., EventTypeFullName, not EventTypeName)
 /// </para>
 /// </remarks>
 public static class ComponentDataBuilder
@@ -21,7 +20,7 @@ public static class ComponentDataBuilder
 
     /// <summary>
     /// Generates fake OrganizationListDto for list displays.
-    /// Property names match EventApiClient.g.cs (line 25785+)
+    /// Property names match IslamuApiClient.g.cs (line 25785+)
     /// Postcode is string in OrganizationListDto (verified)
     /// </summary>
     public static Faker<OrganizationListDto> OrganizationListDto => new Faker<OrganizationListDto>()
@@ -39,7 +38,7 @@ public static class ComponentDataBuilder
 
     /// <summary>
     /// Generates fake OrganizationDto for detail views.
-    /// Property names match EventApiClient.g.cs (line 25694+)
+    /// Property names match IslamuApiClient.g.cs (line 25694+)
     /// Postcode is string in OrganizationDto (verified)
     /// </summary>
     public static Faker<OrganizationDto> OrganizationDto => new Faker<OrganizationDto>()
@@ -57,7 +56,7 @@ public static class ComponentDataBuilder
 
     /// <summary>
     /// Generates fake CreateOrganizationDto for form testing.
-    /// Property names match EventApiClient.g.cs (line 24045+)
+    /// Property names match IslamuApiClient.g.cs (line 24045+)
     /// IMPORTANT: Postcode is int in CreateOrganizationDto (verified from API line 24063)
     /// </summary>
     public static Faker<CreateOrganizationDto> CreateOrganizationDto => new Faker<CreateOrganizationDto>()
@@ -92,7 +91,7 @@ public static class ComponentDataBuilder
 
     /// <summary>
     /// Generates fake LocationListDto for location dropdowns.
-    /// Property names match EventApiClient.g.cs (line 25610+)
+    /// Property names match IslamuApiClient.g.cs (line 25610+)
     /// NOTE: LocationListDto does NOT have Postcode, Latitude, or Longitude properties
     /// </summary>
     public static Faker<LocationListDto> LocationListDto => new Faker<LocationListDto>()
@@ -102,46 +101,6 @@ public static class ComponentDataBuilder
         .RuleFor(l => l.City, f => f.Address.City())
         .RuleFor(l => l.Country, f => f.Address.Country())
         .RuleFor(l => l.Timezone, f => f.PickRandom("UTC", "Europe/London", "America/New_York"));
-
-    /// <summary>
-    /// Generates fake AudienceAgeListDto for age dropdown.
-    /// </summary>
-    public static Faker<AudienceAgeListDto> AudienceAgeListDto => new Faker<AudienceAgeListDto>()
-        .RuleFor(a => a.Id, f => f.IndexFaker + 1)
-        .RuleFor(a => a.FullName, f => f.PickRandom("Children", "Youth", "Adults", "Seniors", "All Ages"))
-        .RuleFor(a => a.MasterCode, f => f.Random.AlphaNumeric(5).ToUpper());
-
-    /// <summary>
-    /// Generates fake AudienceGenderListDto for gender dropdown.
-    /// </summary>
-    public static Faker<AudienceGenderListDto> AudienceGenderListDto => new Faker<AudienceGenderListDto>()
-        .RuleFor(a => a.Id, f => f.IndexFaker + 1)
-        .RuleFor(a => a.FullName, f => f.PickRandom("Mixed", "Men Only", "Women Only", "Family"))
-        .RuleFor(a => a.MasterCode, f => f.Random.AlphaNumeric(5).ToUpper());
-
-    /// <summary>
-    /// Generates fake EventTypeListDto for event type dropdown.
-    /// </summary>
-    public static Faker<EventTypeListDto> EventTypeListDto => new Faker<EventTypeListDto>()
-        .RuleFor(e => e.Id, f => f.IndexFaker + 1)
-        .RuleFor(e => e.FullName, f => f.PickRandom("Conference", "Workshop", "Webinar", "Seminar", "Lecture"))
-        .RuleFor(e => e.MasterCode, f => f.Random.AlphaNumeric(5).ToUpper());
-
-    /// <summary>
-    /// Generates fake EventFormatListDto for format dropdown.
-    /// </summary>
-    public static Faker<EventFormatListDto> EventFormatListDto => new Faker<EventFormatListDto>()
-        .RuleFor(e => e.Id, f => f.IndexFaker + 1)
-        .RuleFor(e => e.FullName, f => f.PickRandom("In-Person", "Online", "Hybrid"))
-        .RuleFor(e => e.MasterCode, f => f.Random.AlphaNumeric(5).ToUpper());
-
-    /// <summary>
-    /// Generates fake EventStatusListDto for status dropdown.
-    /// </summary>
-    public static Faker<EventStatusListDto> EventStatusListDto => new Faker<EventStatusListDto>()
-        .RuleFor(e => e.Id, f => f.IndexFaker + 1)
-        .RuleFor(e => e.FullName, f => f.PickRandom("Draft", "Published", "Cancelled", "Completed"))
-        .RuleFor(e => e.MasterCode, f => f.Random.AlphaNumeric(5).ToUpper());
 
     /// <summary>
     /// Generates fake LanguageListDto for language dropdown.

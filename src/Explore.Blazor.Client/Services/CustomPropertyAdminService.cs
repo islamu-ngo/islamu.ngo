@@ -1,5 +1,5 @@
-// ABOUTME: Tenant-scoped custom-property governance service — wraps IEventApiClient with HAL unwrap + logging.
-// ABOUTME: Single source of truth for admin pages interacting with Layer 3 definitions and projection runtime.
+// ABOUTME: Tenant-scoped custom-property governance service — wraps IIslamuApiClient with HAL unwrap + logging.
+// ABOUTME: Single source of truth for admin pages interacting with Layer 3 definitions and governance reports.
 
 using System.Text.Json;
 using Explore.Blazor.Client.Clients;
@@ -13,10 +13,10 @@ namespace Explore.Blazor.Client.Services;
 
 public sealed class CustomPropertyAdminService : ICustomPropertyAdminService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<CustomPropertyAdminService> _logger;
 
-    public CustomPropertyAdminService(IEventApiClient apiClient, ILogger<CustomPropertyAdminService> logger)
+    public CustomPropertyAdminService(IIslamuApiClient apiClient, ILogger<CustomPropertyAdminService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -179,150 +179,6 @@ public sealed class CustomPropertyAdminService : ICustomPropertyAdminService
         {
             _logger.LogError(ex, "[CP ADMIN] Governance report fetch failed");
             return PaginatedResult<CustomPropertyGovernanceRowDto>.Empty(pageNumber, pageSize);
-        }
-    }
-
-    public async Task<IReadOnlyList<HalResourceOfProjectionStatusDto>> GetEventProjectionStatusAsync(
-        Guid? tenantId = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var response = await _apiClient.GetCustomPropertyProjectionStatusAsync(tenantId, cancellationToken: cancellationToken);
-            return response?._embedded?.Items?.ToList() ?? new List<HalResourceOfProjectionStatusDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Event projection status fetch failed");
-            return Array.Empty<HalResourceOfProjectionStatusDto>();
-        }
-    }
-
-    public async Task<IReadOnlyList<HalResourceOfProjectionStatusDto>> GetSessionProjectionStatusAsync(
-        Guid? tenantId = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var response = await _apiClient.GetSessionCustomPropertyProjectionStatusAsync(tenantId, cancellationToken: cancellationToken);
-            return response?._embedded?.Items?.ToList() ?? new List<HalResourceOfProjectionStatusDto>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Session projection status fetch failed");
-            return Array.Empty<HalResourceOfProjectionStatusDto>();
-        }
-    }
-
-    public async Task<PaginatedResult<HalResourceOfProjectionDirtyScopeDto>> GetDirtyScopesAsync(
-        Guid? tenantId = null,
-        string? projectionName = null,
-        int pageNumber = 1,
-        int pageSize = 50,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var response = await _apiClient.GetCustomPropertyProjectionDirtyScopesAsync(
-                tenantId,
-                projectionName,
-                pageNumber,
-                pageSize,
-                cancellationToken: cancellationToken);
-
-            if (response is null)
-                return PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty(pageNumber, pageSize);
-
-            return new PaginatedResult<HalResourceOfProjectionDirtyScopeDto>
-            {
-                Items = response._embedded?.Items?.ToList() ?? [],
-                PageNumber = response.PageNumber ?? pageNumber,
-                PageSize = response.PageSize ?? pageSize,
-                TotalCount = response.TotalCount ?? 0
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Dirty scopes fetch failed");
-            return PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty(pageNumber, pageSize);
-        }
-    }
-
-    public async Task<BaseCommandResponseOfRebuildProjectionResponseDto?> RebuildEventProjectionAsync(
-        Guid tenantId,
-        int? batchSize = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var request = new RebuildProjectionRequestDto
-            {
-                TenantId = tenantId,
-                BatchSize = batchSize
-            };
-
-            return await _apiClient.RebuildCustomPropertyProjectionAsync(request, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Event projection rebuild failed for {TenantId}", tenantId);
-            return new BaseCommandResponseOfRebuildProjectionResponseDto
-            {
-                Success = false,
-                Message = ex.Message
-            };
-        }
-    }
-
-    public async Task<BaseCommandResponseOfRebuildProjectionResponseDto?> RebuildSessionProjectionAsync(
-        Guid tenantId,
-        int? batchSize = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var request = new RebuildProjectionRequestDto
-            {
-                TenantId = tenantId,
-                BatchSize = batchSize
-            };
-
-            return await _apiClient.RebuildSessionCustomPropertyProjectionAsync(request, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Session projection rebuild failed for {TenantId}", tenantId);
-            return new BaseCommandResponseOfRebuildProjectionResponseDto
-            {
-                Success = false,
-                Message = ex.Message
-            };
-        }
-    }
-
-    public async Task<BaseCommandResponseOfDrainDirtyScopesResponseDto?> DrainDirtyScopesAsync(
-        Guid tenantId,
-        string? projectionName = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var request = new DrainDirtyScopesRequestDto
-            {
-                TenantId = tenantId,
-                ProjectionName = projectionName
-            };
-
-            return await _apiClient.DrainCustomPropertyProjectionDirtyScopesAsync(request, cancellationToken: cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[CP ADMIN] Dirty-scope drain failed for {TenantId}", tenantId);
-            return new BaseCommandResponseOfDrainDirtyScopesResponseDto
-            {
-                Success = false,
-                Message = ex.Message
-            };
         }
     }
 

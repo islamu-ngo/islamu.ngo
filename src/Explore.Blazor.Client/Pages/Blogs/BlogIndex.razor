@@ -1,0 +1,105 @@
+@* ABOUTME: Public editorial Blog index page for anonymous readers. *@
+@* ABOUTME: Loads published Blog summaries through BlogService with accessible search, states, and pagination. *@
+
+@using Explore.Blazor.Client.Helpers
+@using Explore.Blazor.Client.Services.Blogs
+@inject BlogService BlogService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Blog | ISLAMU</PageTitle>
+<HeadContent>
+    <link rel="canonical" href="@CanonicalUrlHelper.Build(Navigation, "/blog")" />
+    <meta name="description" content="Read the latest ISLAMU editorial notes, community updates, and platform reflections." />
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="blog-index">
+    <header class="blog-index__header">
+        <p class="blog-index__eyebrow">Journal</p>
+        <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-index__title">Blog</MudText>
+        <p class="blog-index__intro">
+            Notes and updates from the ISLAMU team, written for communities building a calmer digital home.
+        </p>
+    </header>
+
+    <form class="blog-index__search" @onsubmit="ApplySearchAsync" @onsubmit:preventDefault="true">
+        <label class="blog-index__label" for="blog-search">Search by title</label>
+        <div class="blog-index__search-row">
+            <input id="blog-search"
+                   class="blog-index__input"
+                   type="search"
+                   value="@_searchText"
+                   @oninput="OnSearchInput"
+                   placeholder="Search published notes" />
+            <AppButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Primary">
+                Search
+            </AppButton>
+        </div>
+    </form>
+
+    @if (_isLoading)
+    {
+        <section class="blog-index__state" role="status" aria-live="polite" aria-busy="true">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+            <span>Loading published articles...</span>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <section class="blog-index__state blog-index__state--error" role="alert">
+            @_errorMessage
+        </section>
+    }
+    else if (_posts.Count == 0)
+    {
+        <section class="blog-index__state" role="status" aria-live="polite">
+            No published articles are available yet.
+        </section>
+    }
+    else
+    {
+        <section aria-labelledby="blog-list-heading" class="blog-index__content">
+            <MudText Typo="Typo.h5" HtmlTag="h2" Id="blog-list-heading" Class="blog-index__section-title">
+                Latest articles
+            </MudText>
+
+            <ol class="blog-index__list">
+                @foreach (var post in _posts)
+                {
+                    <li class="blog-index__item" @key="post.Id">
+                        <article class="blog-index__article">
+                            @if (post.ThumbnailStorageObjectId is { } thumbnailId && thumbnailId != Guid.Empty)
+                            {
+                                <div class="blog-index__media">
+                                    <StorageImage StorageObjectId="thumbnailId"
+                                                  Alt="@($"Thumbnail for {post.Title}")"
+                                                  ObjectFit="cover"
+                                                  BorderRadius="var(--isl-radius-lg)" />
+                                </div>
+                            }
+
+                            <div class="blog-index__article-body">
+                                <time class="blog-index__date" datetime="@FormatMachineDate(post.PublishedAtUtc)">
+                                    @FormatDisplayDate(post.PublishedAtUtc)
+                                </time>
+                                <MudText Typo="Typo.h5" HtmlTag="h3" Class="blog-index__article-title">
+                                    <a class="blog-index__link" href="@BuildArticleHref(post.Slug)">@post.Title</a>
+                                </MudText>
+                            </div>
+                        </article>
+                    </li>
+                }
+            </ol>
+        </section>
+
+        <nav class="blog-index__pagination" aria-label="Blog pagination">
+            <AppButton Variant="Variant.Text" Color="Color.Primary" Disabled="@(!CanGoPrevious)" OnClick="PreviousPageAsync">
+                Previous
+            </AppButton>
+            <span class="blog-index__page-status" role="status" aria-live="polite">Page @_pageNumber</span>
+            <AppButton Variant="Variant.Text" Color="Color.Primary" Disabled="@(!CanGoNext)" OnClick="NextPageAsync">
+                Next
+            </AppButton>
+        </nav>
+    }
+</MudContainer>

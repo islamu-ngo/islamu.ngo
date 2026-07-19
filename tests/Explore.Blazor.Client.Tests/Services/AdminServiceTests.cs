@@ -17,13 +17,13 @@ namespace Explore.Blazor.Client.Tests.Services;
 /// </summary>
 public class AdminServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<AdminService> _logger;
     private readonly AdminService _service;
 
     public AdminServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<ILogger<AdminService>>();
         _service = new AdminService(_apiClient, _logger);
     }
@@ -212,39 +212,6 @@ public class AdminServiceTests
     // ========== Lookup Tables (Representative Selection) ==========
 
     #region Lookup Table Tests
-
-    [Test]
-    public async Task GetEventTypesAsync_ReturnsTypes_WhenApiSucceeds()
-    {
-        // Arrange
-        var types = new List<EventTypeListDto>
-        {
-            new() { Id = 1, FullName = "Conference", MasterCode = "CONF" },
-            new() { Id = 2, FullName = "Workshop", MasterCode = "WKSP" }
-        };
-        _apiClient.GetEventTypesAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(types);
-
-        // Act
-        var result = await _service.GetEventTypesAsync();
-
-        // Assert
-        await Assert.That(result.Count).IsEqualTo(2);
-        await Assert.That(result.First().FullName).IsEqualTo("Conference");
-    }
-
-    [Test]
-    public async Task GetEventTypesAsync_ReturnsEmptyList_WhenApiThrows()
-    {
-        // Arrange
-        _apiClient.GetEventTypesAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .ThrowsAsync(CreateApiException("Error", 500));
-
-        // Act
-        var result = await _service.GetEventTypesAsync();
-
-        // Assert
-        await Assert.That(result).IsEmpty();
-    }
 
     [Test]
     public async Task GetMadhabsAsync_ReturnsData_WhenApiSucceeds()

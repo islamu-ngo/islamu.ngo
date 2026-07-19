@@ -23,7 +23,7 @@ public class TenantHeaderForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/organizations");
         using var response = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
@@ -46,7 +46,7 @@ public class TenantHeaderForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/organizations");
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(innerHandler.CapturedRequest).IsNotNull();
@@ -70,7 +70,7 @@ public class TenantHeaderForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/organizations");
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
         await Assert.That(innerHandler.CapturedRequest).IsNotNull();
@@ -95,7 +95,7 @@ public class TenantHeaderForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/organizations");
         request.Headers.Add(EventBffHeaderNames.TenantSlug, "preset-tenant");
         request.Headers.Add("X-Forwarded-Host", "preset-host");
 

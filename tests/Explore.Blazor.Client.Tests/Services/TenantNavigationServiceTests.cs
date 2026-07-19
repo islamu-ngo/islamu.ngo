@@ -5,12 +5,12 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class TenantNavigationServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<TenantNavigationService> _logger;
 
     public TenantNavigationServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<ILogger<TenantNavigationService>>();
     }
 

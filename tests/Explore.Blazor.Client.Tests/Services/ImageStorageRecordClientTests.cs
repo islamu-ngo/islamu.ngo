@@ -5,7 +5,7 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public sealed class ImageStorageRecordClientTests
 {
-    private readonly IEventApiClient _apiClient = Substitute.For<IEventApiClient>();
+    private readonly IIslamuApiClient _apiClient = Substitute.For<IIslamuApiClient>();
     private readonly ILogger<ImageStorageRecordClient> _logger = Substitute.For<ILogger<ImageStorageRecordClient>>();
 
     [Test]

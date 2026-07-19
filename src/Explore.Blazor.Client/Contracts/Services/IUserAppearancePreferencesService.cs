@@ -1,5 +1,5 @@
-// ABOUTME: Interface for user appearance preferences operations wrapping IEventApiClient.
-// ABOUTME: Decouples Blazor components from direct IEventApiClient injection.
+// ABOUTME: Interface for user appearance preferences operations wrapping IIslamuApiClient.
+// ABOUTME: Decouples Blazor components from direct IIslamuApiClient injection.
 
 using Explore.Blazor.Client.Clients;
 

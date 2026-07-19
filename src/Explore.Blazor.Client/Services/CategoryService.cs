@@ -22,10 +22,10 @@ public interface ICategoryService
 
 public class CategoryService : ICategoryService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<CategoryService> _logger;
 
-    public CategoryService(IEventApiClient apiClient, ILogger<CategoryService> logger)
+    public CategoryService(IIslamuApiClient apiClient, ILogger<CategoryService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

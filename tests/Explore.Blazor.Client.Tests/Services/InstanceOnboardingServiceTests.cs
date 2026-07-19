@@ -32,7 +32,7 @@ public class InstanceOnboardingServiceTests
         {
             BaseAddress = new Uri("https://test.local")
         };
-        var api = new EventApiClient(client);
+        var api = new IslamuApiClient(client);
         _bffAuthApi = RestService.For<IBffAuthApi>(authClient);
         _service = new InstanceOnboardingService(api, _bffAuthApi, _logger, _navigation);
     }
@@ -364,7 +364,7 @@ public class InstanceOnboardingServiceTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://keycloak.example.com/auth/realms/ISLAMU",
-            KeycloakClientId = "islamu-event-blazor",
+            KeycloakClientId = "islamu-ngo-blazor",
             KeycloakClientSecret = string.Empty,
             KeycloakDetectedFromEnvironment = true
         };
@@ -393,7 +393,7 @@ public class InstanceOnboardingServiceTests
         {
             KeycloakEnabled = true,
             KeycloakAuthority = "https://keycloak.example.com/realms/ISLAMU",
-            KeycloakClientId = "islamu-event-blazor"
+            KeycloakClientId = "islamu-ngo-blazor"
         };
         SetupBffClient(request =>
         {
@@ -407,7 +407,7 @@ public class InstanceOnboardingServiceTests
         // Assert
         await Assert.That(requestUri).IsNotNull();
         await Assert.That(requestUri!.AbsolutePath).IsEqualTo("/api/instance/settings/auth-provider");
-        await Assert.That(result.KeycloakClientId).IsEqualTo("islamu-event-blazor");
+        await Assert.That(result.KeycloakClientId).IsEqualTo("islamu-ngo-blazor");
     }
 
     #endregion
@@ -776,9 +776,9 @@ public class InstanceOnboardingServiceTests
         {
             KeycloakBaseUrl = "https://keycloak.example.com",
             Realm = "ISLAMU",
-            BlazorClientId = "islamu-event-blazor",
+            BlazorClientId = "islamu-ngo-blazor",
             BlazorClientSecret = "runtime-blazor-secret",
-            ApiClientId = "islamu-event-api",
+            ApiClientId = "islamu-ngo-api",
             ApiClientSecret = "runtime-api-secret",
             Mode = 0,
             BootstrapAdminUsername = "keycloak-admin",

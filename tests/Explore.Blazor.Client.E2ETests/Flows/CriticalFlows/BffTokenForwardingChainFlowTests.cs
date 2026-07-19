@@ -33,14 +33,14 @@ public class BffTokenForwardingChainFlowTests(
 
     private async Task AssertPublicProxyIsReachableAsync(IPage page)
     {
-        var response = await page.Context.APIRequest.GetAsync($"{appHost.BlazorBaseUrl}/api/event");
+        var response = await page.Context.APIRequest.GetAsync($"{appHost.BlazorBaseUrl}/api/blog");
 
         await Assert.That(response.Status).IsEqualTo((int)HttpStatusCode.OK);
     }
 
     private async Task AssertAuthenticatedProxyCallUsesBffCookieAsync(IPage page)
     {
-        var response = await page.Context.APIRequest.GetAsync($"{appHost.BlazorBaseUrl}/api/event/my");
+        var response = await page.Context.APIRequest.GetAsync($"{appHost.BlazorBaseUrl}/api/blog/manage");
 
         await Assert.That(response.Status).IsEqualTo((int)HttpStatusCode.OK);
     }

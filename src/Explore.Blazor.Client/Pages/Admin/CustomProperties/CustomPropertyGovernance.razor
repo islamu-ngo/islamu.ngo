@@ -1,5 +1,5 @@
-@* ABOUTME: Tenant-scoped custom-property governance workbench combining exposure flags, promotion report and projection health. *@
-@* ABOUTME: Route /admin/tenant/custom-properties. Requires tenant-admin claim. Pure shell that composes three section components. *@
+@* ABOUTME: Tenant-scoped custom-property governance workbench combining exposure flags and promotion reports. *@
+@* ABOUTME: Route /admin/tenant/custom-properties. Requires tenant-admin claim. Pure shell that composes governance section components. *@
 
 @page "/admin/tenant/custom-properties"
 @using Explore.Blazor.Client.Pages.Admin.CustomProperties.Components
@@ -15,7 +15,7 @@
         <MudText Typo="Typo.h4" HtmlTag="h1" Style="font-weight: 800;">Custom Property Governance</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
             Manage exposure, searchability, and analytics flags for tenant-scoped custom-property definitions.
-            Monitor projection health and review promotion recommendations for definitions that have outgrown Layer 3.
+            Review promotion recommendations for definitions that have outgrown Layer 3.
         </MudText>
         <MudLink Href="/docs/CUSTOM_PROPERTIES.md" Target="_blank" Class="mt-2 d-inline-flex align-center"
                  aria-label="Open custom properties documentation in new tab">
@@ -34,9 +34,6 @@
         </MudTabPanel>
         <MudTabPanel Text="Governance Report" Icon="@Icons.Material.Filled.Analytics">
             <GovernanceReportSection />
-        </MudTabPanel>
-        <MudTabPanel Text="Projection Status" Icon="@Icons.Material.Filled.MonitorHeart">
-            <ProjectionStatusSection />
         </MudTabPanel>
     </MudTabs>
 </MudContainer>

@@ -20,73 +20,6 @@ public static class HalResourceExtensions
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
-    // ========== Event Extensions ==========
-
-    /// <summary>
-    /// Gets the typed items from a HAL collection of EventListDto.
-    /// </summary>
-    public static ICollection<EventListDto> GetItems(this HalCollectionResourceOfEventListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<EventListDto>();
-
-        return DeserializeItems<EventListDto>(collection._embedded.Items);
-    }
-
-    /// <summary>
-    /// Converts HalResourceOfEventDto to EventDto using JSON serialization.
-    /// This ensures all properties are correctly mapped regardless of changes in the DTO schema.
-    /// </summary>
-    public static EventDto ToDto(this HalResourceOfEventDto halResource)
-    {
-        // Use JSON serialization to copy all matching properties
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<EventDto>(json, JsonOptions) ?? new EventDto();
-    }
-
-    // ========== EventSession Extensions ==========
-
-    /// <summary>
-    /// Gets the typed items from a HAL collection of EventSessionListDto.
-    /// </summary>
-    public static ICollection<EventSessionListDto> GetItems(this HalCollectionResourceOfEventSessionListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<EventSessionListDto>();
-
-        return DeserializeItems<EventSessionListDto>(collection._embedded.Items);
-    }
-
-    public static ICollection<EventSessionSpeakerListDto> GetItems(this HalCollectionResourceOfEventSessionSpeakerListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<EventSessionSpeakerListDto>();
-
-        return DeserializeItems<EventSessionSpeakerListDto>(collection._embedded.Items);
-    }
-
-    /// <summary>
-    /// Converts HalResourceOfEventSessionDto to EventSessionDto using JSON serialization.
-    /// </summary>
-    public static EventSessionDto ToDto(this HalResourceOfEventSessionDto halResource)
-    {
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<EventSessionDto>(json, JsonOptions) ?? new EventSessionDto();
-    }
-
-    // ========== EventSessionGroup Extensions ==========
-
-    /// <summary>
-    /// Gets typed event program section/track/devroom items from a HAL collection.
-    /// </summary>
-    public static ICollection<HalResourceOfEventSessionGroupListDto> GetItems(this HalCollectionResourceOfEventSessionGroupListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<HalResourceOfEventSessionGroupListDto>();
-
-        return collection._embedded.Items.ToList();
-    }
-
     // ========== Category Extensions ==========
 
     /// <summary>
@@ -225,33 +158,11 @@ public static class HalResourceExtensions
         return JsonSerializer.Deserialize<ActorSubscriptionDto>(json, JsonOptions) ?? new ActorSubscriptionDto();
     }
 
-    public static ICollection<HalResourceOfMyEventReportDto> GetItems(this HalCollectionResourceOfMyEventReportDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<HalResourceOfMyEventReportDto>();
-
-        return collection._embedded.Items.ToList();
-    }
-
-    public static ICollection<HalResourceOfModerationReportQueueItemDto> GetItems(this HalCollectionResourceOfModerationReportQueueItemDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<HalResourceOfModerationReportQueueItemDto>();
-
-        return collection._embedded.Items.ToList();
-    }
-
     // ========== LINQ-like Extensions for HAL Collections ==========
 
     /// <summary>
     /// Checks if the HAL collection contains any items.
     /// </summary>
-    public static bool Any(this HalCollectionResourceOfEventListDto collection)
-        => collection._embedded?.Items?.Count > 0;
-
-    public static bool Any(this HalCollectionResourceOfEventSessionListDto collection)
-        => collection._embedded?.Items?.Count > 0;
-
     public static bool Any(this HalCollectionResourceOfCategoryListDto collection)
         => collection._embedded?.Items?.Count > 0;
 
@@ -270,12 +181,6 @@ public static class HalResourceExtensions
     /// <summary>
     /// Gets the count of items in the HAL collection.
     /// </summary>
-    public static int Count(this HalCollectionResourceOfEventListDto collection)
-        => collection._embedded?.Items?.Count ?? 0;
-
-    public static int Count(this HalCollectionResourceOfEventSessionListDto collection)
-        => collection._embedded?.Items?.Count ?? 0;
-
     public static int Count(this HalCollectionResourceOfCategoryListDto collection)
         => collection._embedded?.Items?.Count ?? 0;
 
@@ -294,12 +199,6 @@ public static class HalResourceExtensions
     /// <summary>
     /// Converts HAL collection to a List for LINQ operations.
     /// </summary>
-    public static List<EventListDto> ToList(this HalCollectionResourceOfEventListDto collection)
-        => collection.GetItems().ToList();
-
-    public static List<EventSessionListDto> ToList(this HalCollectionResourceOfEventSessionListDto collection)
-        => collection.GetItems().ToList();
-
     public static List<CategoryListDto> ToList(this HalCollectionResourceOfCategoryListDto collection)
         => collection.GetItems().ToList();
 
@@ -318,12 +217,6 @@ public static class HalResourceExtensions
     /// <summary>
     /// Gets the first item or default from a HAL collection.
     /// </summary>
-    public static EventListDto? FirstOrDefault(this HalCollectionResourceOfEventListDto collection)
-        => collection.GetItems().FirstOrDefault();
-
-    public static EventSessionListDto? FirstOrDefault(this HalCollectionResourceOfEventSessionListDto collection)
-        => collection.GetItems().FirstOrDefault();
-
     public static CategoryListDto? FirstOrDefault(this HalCollectionResourceOfCategoryListDto collection)
         => collection.GetItems().FirstOrDefault();
 
@@ -342,54 +235,7 @@ public static class HalResourceExtensions
     /// <summary>
     /// Orders HAL collection items by a key selector.
     /// </summary>
-    public static IOrderedEnumerable<EventSessionListDto> OrderBy<TKey>(
-        this HalCollectionResourceOfEventSessionListDto collection,
-        Func<EventSessionListDto, TKey> keySelector)
-        => collection.GetItems().OrderBy(keySelector);
-
-    /// <summary>
-    /// Selects a projection from HAL collection items.
-    /// </summary>
-    public static IEnumerable<TResult> Select<TResult>(
-        this HalCollectionResourceOfEventSessionListDto collection,
-        Func<EventSessionListDto, TResult> selector)
-        => collection.GetItems().Select(selector);
-
     // ========== Paginated Result Mappers ==========
-
-    /// <summary>
-    /// Maps a HAL collection response to a <see cref="PaginatedResult{T}"/> for Event lists.
-    /// </summary>
-    public static PaginatedResult<EventListDto> ToPaginatedResult(this HalCollectionResourceOfEventListDto? collection)
-    {
-        if (collection is null)
-            return PaginatedResult<EventListDto>.Empty();
-
-        return new PaginatedResult<EventListDto>
-        {
-            Items = collection.GetItems().ToList(),
-            PageNumber = collection.PageNumber ?? 1,
-            PageSize = collection.PageSize ?? 20,
-            TotalCount = collection.TotalCount ?? 0
-        };
-    }
-
-    /// <summary>
-    /// Maps a HAL collection response to a <see cref="PaginatedResult{T}"/> for EventSession lists.
-    /// </summary>
-    public static PaginatedResult<EventSessionListDto> ToPaginatedResult(this HalCollectionResourceOfEventSessionListDto? collection)
-    {
-        if (collection is null)
-            return PaginatedResult<EventSessionListDto>.Empty();
-
-        return new PaginatedResult<EventSessionListDto>
-        {
-            Items = collection.GetItems().ToList(),
-            PageNumber = collection.PageNumber ?? 1,
-            PageSize = collection.PageSize ?? 20,
-            TotalCount = collection.TotalCount ?? 0
-        };
-    }
 
     /// <summary>
     /// Maps a HAL collection response to a <see cref="PaginatedResult{T}"/> for Category lists.
@@ -476,38 +322,6 @@ public static class HalResourceExtensions
         };
     }
 
-    // ========== EventDay Extensions ==========
-
-    public static ICollection<EventDayListDto> GetItems(this HalCollectionResourceOfEventDayListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<EventDayListDto>();
-
-        return DeserializeItems<EventDayListDto>(collection._embedded.Items);
-    }
-
-    public static EventDayDto ToDto(this HalResourceOfEventDayDto halResource)
-    {
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<EventDayDto>(json, JsonOptions) ?? new EventDayDto();
-    }
-
-    // ========== EventAgendaItem Extensions ==========
-
-    public static ICollection<EventAgendaItemListDto> GetItems(this HalCollectionResourceOfEventAgendaItemListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<EventAgendaItemListDto>();
-
-        return DeserializeItems<EventAgendaItemListDto>(collection._embedded.Items);
-    }
-
-    public static EventAgendaItemDto ToDto(this HalResourceOfEventAgendaItemDto halResource)
-    {
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<EventAgendaItemDto>(json, JsonOptions) ?? new EventAgendaItemDto();
-    }
-
     // ========== LocationRoom Extensions ==========
 
     public static ICollection<LocationRoomListDto> GetItems(this HalCollectionResourceOfLocationRoomListDto collection)
@@ -548,41 +362,7 @@ public static class HalResourceExtensions
         };
     }
 
-    public static ICollection<CustomPropertyDefinitionListDto> GetItems(this HalCollectionResourceOfEventCustomPropertyDefinitionListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<CustomPropertyDefinitionListDto>();
-
-        return DeserializeItems<CustomPropertyDefinitionListDto>(collection._embedded.Items);
-    }
-
-    public static ICollection<CustomPropertyDefinitionListDto> GetItems(this HalCollectionResourceOfEventSessionCustomPropertyDefinitionListDto collection)
-    {
-        if (collection._embedded?.Items == null)
-            return new List<CustomPropertyDefinitionListDto>();
-
-        return DeserializeItems<CustomPropertyDefinitionListDto>(collection._embedded.Items);
-    }
-
     public static CustomPropertyDefinitionDto? ToDto(this HalResourceOfCustomPropertyDefinitionDto? halResource)
-    {
-        if (halResource is null)
-            return null;
-
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<CustomPropertyDefinitionDto>(json, JsonOptions);
-    }
-
-    public static CustomPropertyDefinitionDto? ToDto(this HalResourceOfEventCustomPropertyDefinitionDto? halResource)
-    {
-        if (halResource is null)
-            return null;
-
-        var json = JsonSerializer.Serialize(halResource, JsonOptions);
-        return JsonSerializer.Deserialize<CustomPropertyDefinitionDto>(json, JsonOptions);
-    }
-
-    public static CustomPropertyDefinitionDto? ToDto(this HalResourceOfEventSessionCustomPropertyDefinitionDto? halResource)
     {
         if (halResource is null)
             return null;
@@ -609,42 +389,13 @@ public static class HalResourceExtensions
         return JsonSerializer.Deserialize<TenantOnboardingStatusDto>(json, JsonOptions);
     }
 
-    // ========== Non-HAL Paginated Result Mappers ==========
-
-    /// <summary>
-    /// Maps a NSwag-generated <see cref="PaginatedResultOfEventRegistrationListDto"/> to a <see cref="PaginatedResult{T}"/>.
-    /// Unlike HAL collections, registrations use a plain PaginatedResult response from the API.
-    /// </summary>
-    public static PaginatedResult<EventRegistrationListDto> ToPaginatedResult(this PaginatedResultOfEventRegistrationListDto? result)
-    {
-        if (result is null)
-            return PaginatedResult<EventRegistrationListDto>.Empty();
-
-        return new PaginatedResult<EventRegistrationListDto>
-        {
-            Items = result.Items?.ToList() ?? [],
-            PageNumber = result.PageNumber ?? 1,
-            PageSize = result.PageSize ?? 20,
-            TotalCount = result.TotalCount ?? 0
-        };
-    }
-
     // ========== HAL Link Helpers ==========
-
-    public static bool HasHalLink(this EventListDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
 
     public static bool HasHalLink(this InstanceOnboardingStatusDto dto, string linkRel)
         => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
 
     public static bool HasHalLink(this TenantOnboardingStatusDto dto, string linkRel)
         => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
-    public static bool HasManagementLinks(this EventListDto dto)
-        => dto.HasHalLink("edit") || dto.HasHalLink("delete");
-
-    public static bool HasLink(this HalResourceOfEventDto dto, string linkRel)
-        => dto._links?.ContainsKey(linkRel) == true;
 
     public static bool HasHalLink(this HalResourceOfGroupDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
@@ -655,26 +406,8 @@ public static class HalResourceExtensions
     public static bool HasLink(this HalResourceOfWebPushSubscriptionDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
 
-    public static bool HasHalLink(this EventDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
-    public static bool HasHalLink(this EventSessionDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
-    public static bool HasHalLink(this EventSessionListDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
-    public static bool HasLink(this HalCollectionResourceOfEventSessionSpeakerListDto dto, string linkRel)
-        => dto._links?.ContainsKey(linkRel) == true;
-
-    public static bool HasHalLink(this EventSessionSpeakerListDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
     public static bool HasHalLink(this CustomPropertyDefinitionDto dto, string linkRel)
         => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
-    public static bool HasHalLink(this HalResourceOfEventSessionGroupListDto dto, string linkRel)
-        => dto._links?.ContainsKey(linkRel) == true;
 
     // ========== Organization HAL Link Helpers ==========
 
@@ -732,19 +465,41 @@ public static class HalResourceExtensions
     public static bool HasHalLink(this ActorSubscriptionListDto dto, string linkRel)
         => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
 
-    public static bool HasHalLink(this EventTeamMemberDto dto, string linkRel)
-        => HasHalLinkInAdditionalProperties(dto.AdditionalProperties, linkRel);
-
     public static bool HasLink(this HalResourceOfActorSubscriptionDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
 
-    public static bool HasLink(this HalResourceOfMyEventReportDto dto, string linkRel)
+    // ========== Blog Extensions ==========
+
+    /// <summary>
+    /// Gets the typed items from a HAL collection of BlogSummaryDto.
+    /// </summary>
+    public static ICollection<BlogSummaryDto> GetItems(this HalCollectionResourceOfBlogSummaryDto collection)
+    {
+        if (collection._embedded?.Items == null)
+            return new List<BlogSummaryDto>();
+
+        return DeserializeItems<BlogSummaryDto>(collection._embedded.Items);
+    }
+
+    public static ICollection<HalResourceOfBlogSummaryDto> GetHalItems(this HalCollectionResourceOfBlogSummaryDto collection)
+        => collection._embedded?.Items ?? new List<HalResourceOfBlogSummaryDto>();
+
+    /// <summary>
+    /// Converts HalResourceOfBlogDetailDto to BlogDetailDto using JSON serialization.
+    /// </summary>
+    public static BlogDetailDto ToDto(this HalResourceOfBlogDetailDto halResource)
+    {
+        var json = JsonSerializer.Serialize(halResource, JsonOptions);
+        return JsonSerializer.Deserialize<BlogDetailDto>(json, JsonOptions) ?? new BlogDetailDto();
+    }
+
+    public static bool HasLink(this HalCollectionResourceOfBlogSummaryDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
 
-    public static bool HasLink(this HalResourceOfModerationReportQueueItemDto dto, string linkRel)
+    public static bool HasLink(this HalResourceOfBlogSummaryDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
 
-    public static bool HasLink(this HalResourceOfModerationReportDetailDto dto, string linkRel)
+    public static bool HasLink(this HalResourceOfBlogDetailDto dto, string linkRel)
         => dto._links?.ContainsKey(linkRel) == true;
 
     // ========== Helper Methods ==========

@@ -1,7 +1,7 @@
 // ABOUTME: bUnit tests for TenantAdminSettings redirect behaviour based on deployment mode.
 // ABOUTME: Verifies single-tenant redirects, multi-tenant no-redirect, and error fallback rendering.
 
-using Explore.Blazor.Client.Pages.Events;
+using Explore.Blazor.Client.Pages;
 
 namespace Explore.Blazor.Client.Tests.Pages.Admin;
 
@@ -42,7 +42,7 @@ public class TenantAdminSettingsRedirectTests : IDisposable
         _onboardingService.GetDeploymentModeAsync()
             .Returns(new DeploymentModeDto { Mode = DeploymentMode.SingleTenant });
 
-        var componentType = typeof(EventList).Assembly
+        var componentType = typeof(Home).Assembly
             .GetTypes()
             .First(type => type.Name == "TenantAdminSettings" && typeof(IComponent).IsAssignableFrom(type));
 
@@ -65,7 +65,7 @@ public class TenantAdminSettingsRedirectTests : IDisposable
         _onboardingService.GetDeploymentModeAsync()
             .Returns(new DeploymentModeDto { Mode = DeploymentMode.MultiTenant });
 
-        var componentType = typeof(EventList).Assembly
+        var componentType = typeof(Home).Assembly
             .GetTypes()
             .First(type => type.Name == "TenantAdminSettings" && typeof(IComponent).IsAssignableFrom(type));
 
@@ -81,7 +81,7 @@ public class TenantAdminSettingsRedirectTests : IDisposable
         _onboardingService.GetDeploymentModeAsync()
             .ThrowsAsync(new HttpRequestException("Service unavailable"));
 
-        var componentType = typeof(EventList).Assembly
+        var componentType = typeof(Home).Assembly
             .GetTypes()
             .First(type => type.Name == "TenantAdminSettings" && typeof(IComponent).IsAssignableFrom(type));
 

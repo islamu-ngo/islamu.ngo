@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for runtime render policy service route-group classification and fallback behavior.
-// ABOUTME: Verifies governance-based mode selection, SeoBalanced defaults, and onboarding guardrails.
+// ABOUTME: Verifies server-only mode selection, SeoBalanced defaults, and route-group prerender overrides.
 
 namespace Explore.Blazor.Client.Tests.Services;
 
@@ -24,14 +24,14 @@ public class RuntimeRenderPolicyServiceTests
             EnableAdvancedRenderPolicyOverrides = true,
             GlobalRenderMode = "InteractiveServer",
             GlobalPrerenderEnabled = false,
-            PublicSeoRenderMode = "InteractiveWebAssembly",
+            PublicSeoRenderMode = "InteractiveServer",
             PublicSeoPrerenderEnabled = true
         });
 
-        var result = await _service.ResolveForPathAsync("/events");
+        var result = await _service.ResolveForPathAsync("/organizations");
 
         await Assert.That(result.RouteGroup).IsEqualTo(RuntimeRouteGroup.PublicSeo);
-        await Assert.That(result.RenderMode).IsEqualTo("InteractiveWebAssembly");
+        await Assert.That(result.RenderMode).IsEqualTo("InteractiveServer");
         await Assert.That(result.PrerenderEnabled).IsTrue();
     }
 
@@ -44,7 +44,7 @@ public class RuntimeRenderPolicyServiceTests
             EnableAdvancedRenderPolicyOverrides = false,
             GlobalRenderMode = "InteractiveServer",
             GlobalPrerenderEnabled = false,
-            OperationalRenderMode = "InteractiveWebAssembly",
+            OperationalRenderMode = "InteractiveServer",
             OperationalPrerenderEnabled = true
         });
 
@@ -61,9 +61,8 @@ public class RuntimeRenderPolicyServiceTests
         _publicExperienceService.GetCachedSettingsAsync().Returns(new PublicExperienceSettingsDto
         {
             EnableAdvancedRenderPolicyOverrides = true,
-            OnboardingRenderMode = "InteractiveAuto",
-            OnboardingPrerenderEnabled = true,
-            DisallowInteractiveServerOnOnboarding = true
+            OnboardingRenderMode = "InteractiveServer",
+            OnboardingPrerenderEnabled = true
         });
 
         var result = await _service.ResolveForPathAsync("/onboarding/instance");
@@ -80,14 +79,14 @@ public class RuntimeRenderPolicyServiceTests
         {
             RenderPolicyPreset = "SeoBalanced",
             EnableAdvancedRenderPolicyOverrides = false,
-            GlobalRenderMode = "InteractiveAuto",
+            GlobalRenderMode = "InteractiveServer",
             GlobalPrerenderEnabled = false
         });
 
         var result = await _service.ResolveForPathAsync("/");
 
         await Assert.That(result.RouteGroup).IsEqualTo(RuntimeRouteGroup.PublicSeo);
-        await Assert.That(result.RenderMode).IsEqualTo("InteractiveAuto");
+        await Assert.That(result.RenderMode).IsEqualTo("InteractiveServer");
         await Assert.That(result.PrerenderEnabled).IsTrue();
     }
 }

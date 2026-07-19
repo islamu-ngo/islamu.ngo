@@ -8,12 +8,12 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public sealed class GroupServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly GroupService _service;
 
     public GroupServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         var logger = Substitute.For<ILogger<GroupService>>();
         _service = new GroupService(_apiClient, logger);
     }

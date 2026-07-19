@@ -5,12 +5,12 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class PublicExperienceServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly PublicExperienceService _service;
 
     public PublicExperienceServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _service = new PublicExperienceService(
             _apiClient,
             Substitute.For<ILogger<PublicExperienceService>>());
@@ -63,11 +63,7 @@ public class PublicExperienceServiceTests
                 State = PublicExperiencePrimaryOrganizationState.Available,
                 DisplayName = "Community Center"
             },
-            EventCatalog = new PublicExperienceEventCatalogDto
-            {
-                Label = "Programs",
-                Url = "/events?ActorId=11111111-1111-1111-1111-111111111111"
-            }
+            Home = new PublicExperienceHomeDto { PreferredHomePage = "LandingPage" }
         };
         _apiClient.GetPublicExperienceShellAsync(
                 Arg.Any<string?>(),
@@ -80,7 +76,7 @@ public class PublicExperienceServiceTests
         await Assert.That(result).IsSameReferenceAs(expected);
         await Assert.That(result!.PrimaryOrganization!.State)
             .IsEqualTo(PublicExperiencePrimaryOrganizationState.Available);
-        await Assert.That(result.EventCatalog!.Label).IsEqualTo("Programs");
+        await Assert.That(result.Home!.PreferredHomePage).IsEqualTo("LandingPage");
     }
 
     [Test]
@@ -126,7 +122,6 @@ public class PublicExperienceServiceTests
     [Test]
     [Arguments("LandingPage", "/home")]
     [Arguments("landingpage", "/home")]
-    [Arguments("EventList", "/events")]
     public async Task ResolveHomeRoute_UsesPreferredHomePage(string preferredHomePage, string expectedRoute)
     {
         var route = _service.ResolveHomeRoute(new PublicExperienceSettingsDto
@@ -169,7 +164,7 @@ public class PublicExperienceServiceTests
     }
 
     [Test]
-    public async Task ResolveHomeRoute_ReturnsEvents_ForMissingOrganizationOrNullShell()
+    public async Task ResolveHomeRoute_ReturnsRoot_ForMissingOrganizationOrNullShell()
     {
         var shell = new PublicExperienceShellDto
         {
@@ -180,7 +175,7 @@ public class PublicExperienceServiceTests
             }
         };
 
-        await Assert.That(_service.ResolveHomeRoute(shell)).IsEqualTo("/events");
-        await Assert.That(_service.ResolveHomeRoute((PublicExperienceShellDto?)null)).IsEqualTo("/events");
+        await Assert.That(_service.ResolveHomeRoute(shell)).IsEqualTo("/");
+        await Assert.That(_service.ResolveHomeRoute((PublicExperienceShellDto?)null)).IsEqualTo("/");
     }
 }

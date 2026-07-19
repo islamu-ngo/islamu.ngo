@@ -6,7 +6,7 @@ using Explore.Blazor.Client.Contracts.Services.ControlPlane;
 
 namespace Explore.Blazor.Client.Services.ControlPlane;
 
-public sealed class ControlPlaneApiAdapter(IEventApiClient apiClient) :
+public sealed class ControlPlaneApiAdapter(IIslamuApiClient apiClient) :
     IControlPlaneOverviewService,
     IControlPlaneTenantService,
     IControlPlaneDomainService,

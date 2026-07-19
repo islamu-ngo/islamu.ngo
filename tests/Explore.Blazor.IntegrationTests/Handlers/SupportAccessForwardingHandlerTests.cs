@@ -32,7 +32,7 @@ public class SupportAccessForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler, disposeHandler: false);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/organizations");
         AddBrowserSuppliedSupportHeaders(request);
         using var response = await invoker.SendAsync(request, CancellationToken.None);
 
@@ -56,7 +56,7 @@ public class SupportAccessForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler, disposeHandler: false);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/organizations");
         AddBrowserSuppliedSupportHeaders(request);
         _ = await invoker.SendAsync(request, CancellationToken.None);
 
@@ -84,7 +84,7 @@ public class SupportAccessForwardingHandlerTests
         };
 
         using var invoker = new HttpMessageInvoker(handler, disposeHandler: false);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/events");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/api/organizations");
         AddBrowserSuppliedSupportHeaders(request);
         _ = await invoker.SendAsync(request, CancellationToken.None);
 

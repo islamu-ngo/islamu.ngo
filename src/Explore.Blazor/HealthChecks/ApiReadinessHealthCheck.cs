@@ -15,7 +15,7 @@ public sealed class ApiReadinessHealthCheck(IServiceScopeFactory scopeFactory) :
         try
         {
             await using var scope = scopeFactory.CreateAsyncScope();
-            var apiClient = scope.ServiceProvider.GetRequiredService<IEventApiClient>();
+            var apiClient = scope.ServiceProvider.GetRequiredService<IIslamuApiClient>();
             _ = await apiClient.GetInstanceResolverConfigurationAsync(
                 cancellationToken: cancellationToken).ConfigureAwait(false);
             return HealthCheckResult.Healthy("Explore API generated-client probe succeeded.");

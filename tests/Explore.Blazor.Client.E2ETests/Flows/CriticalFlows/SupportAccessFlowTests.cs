@@ -205,7 +205,7 @@ public sealed class SupportAccessFlowTests(
     }
 
     private static async Task AssertDirectAdminAuthorityAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         string accessToken,
         SupportAccessScenarioSeed.Result seed,
         IReadOnlyCollection<string> adminProviderSubjects)

@@ -20,12 +20,6 @@ public static class RoleHelper
     public const int OrgMember = 24;
     public const int OrgViewer = 25;
 
-    // Event-scope role IDs matching RoleEnum
-    public const int EventOwner = 41;
-    public const int EventManager = 42;
-    public const int RegistrationManager = 43;
-    public const int CheckInStaff = 44;
-
     // Group-scope role IDs matching RoleEnum
     public const int GroupCreator = 30;
     public const int GroupAdmin = 31;
@@ -147,32 +141,6 @@ public static class RoleHelper
         (GroupMember, "Member")
     ];
 
-    public static string GetEventRoleName(int? roleId) => roleId switch
-    {
-        EventOwner => "Owner",
-        EventManager => "Manager",
-        RegistrationManager => "Registration Manager",
-        CheckInStaff => "Check-in Staff",
-        _ => "Unknown"
-    };
-
-    public static Color GetEventRoleColor(int? roleId) => roleId switch
-    {
-        EventOwner => Color.Primary,
-        EventManager => Color.Info,
-        RegistrationManager => Color.Success,
-        CheckInStaff => Color.Warning,
-        _ => Color.Default
-    };
-
-    public static IReadOnlyList<(int Id, string Name)> GetAllEventRoles() =>
-    [
-        (EventOwner, "Owner"),
-        (EventManager, "Manager"),
-        (RegistrationManager, "Registration Manager"),
-        (CheckInStaff, "Check-in Staff")
-    ];
-
     public static RoleEnum? ToRoleEnum(int? roleId) => roleId switch
     {
         OrgAdmin => RoleEnum.OrgAdmin,
@@ -198,10 +166,6 @@ public static class RoleHelper
         RoleEnum.GroupAdmin => GroupAdmin,
         RoleEnum.GroupModerator => GroupModerator,
         RoleEnum.GroupMember => GroupMember,
-        RoleEnum.EventOwner => 41,
-        RoleEnum.EventManager => 42,
-        RoleEnum.RegistrationManager => 43,
-        RoleEnum.CheckInStaff => 44,
         _ => null
     };
 }

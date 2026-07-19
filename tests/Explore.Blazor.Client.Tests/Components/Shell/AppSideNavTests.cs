@@ -33,9 +33,7 @@ public sealed class AppSideNavTests : IDisposable
     {
         var cut = _ctx.RenderMudComponent<AppSideNav>();
 
-        await Assert.That(cut.Markup).Contains("Advanced Search");
-        await Assert.That(cut.Markup).Contains("Recently Added");
-        await Assert.That(cut.Markup).Contains("Random");
+        await Assert.That(cut.Markup).Contains("Community Guidelines");
         await Assert.That(cut.Markup).Contains("About Us");
         await Assert.That(cut.Markup).Contains("Contact");
         await Assert.That(cut.Find("[data-testid='app-side-nav']").GetAttribute("aria-label")).IsEqualTo("Sidebar navigation");
@@ -65,12 +63,11 @@ public sealed class AppSideNavTests : IDisposable
     {
         _publicExperienceService.GetCachedSettingsAsync().Returns(new PublicExperienceSettingsDto
         {
-            AllowUserSubmittedEvents = false,
-            AllowOrganizationSubmittedEvents = false,
-            AllowGroupSubmittedEvents = false
+            CommunityGuidelinesContent = string.Empty
         });
 
-        var cut = _ctx.RenderMudComponent<AppSideNav>();
+        var cut = _ctx.RenderMudComponent<AppSideNav>(parameters => parameters
+            .Add(component => component.ShowCommunityGuidelinesLink, false));
 
         cut.WaitForAssertion(() =>
         {
@@ -117,38 +114,6 @@ public sealed class AppSideNavTests : IDisposable
         await Assert.That(firstIndex).IsLessThan(secondIndex);
         await Assert.That(cut.Markup).Contains("target=\"_blank\"");
         await Assert.That(cut.Markup).Contains("rel=\"noopener noreferrer\"");
-    }
-
-    [Test]
-    public async Task Render_WithOrganizationCentricShell_UsesCatalogLabelAndHidesDiscoveryShortcuts()
-    {
-        _publicExperienceService.GetCachedShellAsync().Returns(new PublicExperienceShellDto
-        {
-            Mode = PublicExperienceMode.OrganizationCentric,
-            EventCatalog = new PublicExperienceEventCatalogDto
-            {
-                Label = "Programs",
-                Url = "/events?ActorId=11111111-1111-1111-1111-111111111111"
-            },
-            PrimaryOrganization = new PublicExperiencePrimaryOrganizationDto
-            {
-                State = PublicExperiencePrimaryOrganizationState.Available
-            }
-        });
-
-        var cut = _ctx.RenderMudComponent<AppSideNav>();
-
-        cut.WaitForAssertion(() =>
-        {
-            if (!cut.Markup.Contains("Programs", StringComparison.Ordinal))
-                throw new InvalidOperationException("Expected catalog label");
-            if (cut.Markup.Contains("Advanced Search", StringComparison.Ordinal)
-                || cut.Markup.Contains("Recently Added", StringComparison.Ordinal)
-                || cut.Markup.Contains("Random", StringComparison.Ordinal))
-                throw new InvalidOperationException("Expected discovery shortcuts to be hidden");
-        });
-
-        await Task.CompletedTask;
     }
 
     [Test]

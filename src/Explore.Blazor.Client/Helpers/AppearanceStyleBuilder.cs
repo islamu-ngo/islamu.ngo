@@ -1,4 +1,4 @@
-// ABOUTME: Unified appearance style builder replacing EventAppearanceMetadataHelper, OrganizationAppearanceMetadataHelper, and GroupBrandingMetadataHelper.
+// ABOUTME: Unified appearance style builder replacing entity-specific appearance and branding helpers.
 // ABOUTME: Builds CSS inline styles from background color, image, and effect settings for banner/hero sections.
 
 using System.Globalization;
@@ -7,7 +7,7 @@ namespace Explore.Blazor.Client.Helpers;
 
 /// <summary>
 /// Unified appearance settings for background customization.
-/// Used by events, organizations, groups, and users.
+/// Used by organizations, groups, users, and other branded surfaces.
 /// </summary>
 public sealed class AppearanceSettings
 {
@@ -81,7 +81,7 @@ public static class AppearanceStyleBuilder
     }
 
     /// <summary>
-    /// Builds a hero-style CSS string with 16:9 aspect ratio (for event detail/create pages).
+    /// Builds a hero-style CSS string with 16:9 aspect ratio.
     /// </summary>
     public static string BuildHeroStyle(AppearanceSettings settings, string fallbackColorHex)
         => BuildStyle(settings, fallbackColorHex, "aspect-ratio: 16/9; position: relative");

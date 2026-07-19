@@ -2,7 +2,7 @@
 @* ABOUTME: Shows proposal preview separately from committed/failed result state. *@
 @using Explore.Blazor.Client.Services.Ai
 
-@if (Action is not null && !IsRemovedEventAction)
+@if (Action is not null)
 {
     <article class="@ActionCardClass" data-testid="ai-rail-proposed-action" aria-label="@ActionAriaLabel">
         <div class="ai-rail__action-status-row">
@@ -75,9 +75,6 @@
 
     private bool HasActionButtons => Action is not null
         && (AiAssistantConversationState.CanReject(Action) || AiAssistantConversationState.CanConfirm(Action));
-
-    private bool IsRemovedEventAction =>
-        string.Equals(Action?.Kind, "CreateEventDraft", StringComparison.OrdinalIgnoreCase);
 
     private bool IsRejected => string.Equals(Action?.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
         || Action?.RejectedAt is not null;

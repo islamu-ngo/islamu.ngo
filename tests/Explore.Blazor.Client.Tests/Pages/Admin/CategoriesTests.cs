@@ -115,13 +115,6 @@ public class CategoriesTests : IDisposable
         _adminService.GetCategoriesAsync().Returns(new List<CategoryListDto>());
         _adminService.GetTagsAsync().Returns(new List<TagListDto>());
         _adminService.GetLocationsAsync().Returns(new List<LocationListDto>());
-        _adminService.GetEventTypesAsync().Returns(new List<EventTypeListDto>());
-        _adminService.GetEventFormatsAsync().Returns(new List<EventFormatListDto>());
-        _adminService.GetEventStatusesAsync().Returns(new List<EventStatusListDto>());
-        _adminService.GetVisibilityTypesAsync().Returns(new List<VisibilityTypeListDto>());
-        _adminService.GetRegistrationModesAsync().Returns(new List<RegistrationModeListDto>());
-        _adminService.GetAudienceGendersAsync().Returns(new List<AudienceGenderListDto>());
-        _adminService.GetAudienceAgesAsync().Returns(new List<AudienceAgeListDto>());
         _adminService.GetMadhabsAsync().Returns(new List<MadhabListDto>());
         _adminService.GetLanguagesAsync().Returns(new List<LanguageListDto>());
         _adminService.GetOrganizationPositionsAsync().Returns(new List<OrganizationPositionListDto>());

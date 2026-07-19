@@ -900,7 +900,7 @@
     font-weight: 700;
 }
 
-/* ── Result event card (CreateEventDraft success) ── */
+/* ── Result action card ── */
 
 ::deep .ai-rail__result-event-card {
     display: flex;

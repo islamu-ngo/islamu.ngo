@@ -188,7 +188,6 @@
                        Label="Default Public Home Page"
                        @bind-Value="Delegation.DefaultPublicHomePage"
                        Variant="Variant.Outlined">
-                <MudSelectItem Value="@("EventList")">Event List</MudSelectItem>
                 <MudSelectItem Value="@("LandingPage")">Landing Page</MudSelectItem>
             </MudSelect>
 
@@ -262,7 +261,7 @@
         <MudStack Spacing="2">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                 <MudText Typo="Typo.h6" Style="font-weight:600;">Runtime Render Policy</MudText>
-                <MudTooltip Text="Choose a preset strategy for route rendering. All Interactive Server is recommended for most deployments.">
+                <MudTooltip Text="Choose a preset strategy for route rendering. Interactive Server is used for every route group.">
                     <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Small" />
                 </MudTooltip>
             </MudStack>
@@ -315,15 +314,9 @@
 
                         <MudGrid>
                             <MudItem xs="12" md="6">
-                                <MudSelect T="string"
-                                           Label="Global Render Mode"
-                                           @bind-Value="RenderPolicy.GlobalRenderMode"
-                                           Variant="Variant.Outlined">
-                                    @foreach (var mode in RenderModeOptions)
-                                    {
-                                        <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
+                                <MudText Typo="Typo.body2" role="status" aria-label="Global render mode">
+                                    Global render mode: <strong>Interactive Server</strong>
+                                </MudText>
                             </MudItem>
                             <MudItem xs="12" md="6">
                                 <MudSwitch T="bool" Value="RenderPolicy.GlobalPrerenderEnabled == true"
@@ -346,16 +339,9 @@
 
                             <MudGrid>
                                 <MudItem xs="12" md="6">
-                                    <MudSelect T="string"
-                                               Label="@($"{group.Label} Render Mode")"
-                                               Value="@GetRouteGroupMode(group.Value)"
-                                               ValueChanged="mode => SetRouteGroupMode(group.Value, mode)"
-                                               Variant="Variant.Outlined">
-                                        @foreach (var mode in RenderModeOptions.Where(x => !IsOnboardingInteractiveServerRestricted(group.Value) || x.Value != "InteractiveServer"))
-                                        {
-                                            <MudSelectItem Value="@mode.Value">@mode.Label</MudSelectItem>
-                                        }
-                                    </MudSelect>
+                                    <MudText Typo="Typo.body2" role="status" aria-label="@($"{group.Label} render mode")">
+                                        @group.Label render mode: <strong>Interactive Server</strong>
+                                    </MudText>
                                 </MudItem>
                                 <MudItem xs="12" md="6">
                                     <MudSwitch T="bool"
@@ -434,15 +420,7 @@
         new("AllInteractiveServer", "All Interactive Server", "Best default — fast SignalR interactivity for all routes", "Uses InteractiveServer for all route groups with no prerendering. Fastest time-to-interactive via SignalR."),
         new("SeoBalanced", "SEO Balanced", "Prerendering for SEO-sensitive public pages", "Prioritizes prerendering for SEO-sensitive public pages while keeping operational flows interactive."),
         new("AllPrerendered", "All Prerendered", "Maximum first paint and crawler readiness", "Forces prerendering across route groups for predictable initial HTML output."),
-        new("AllInteractiveAutoNoPrerender", "All Interactive Auto", "Fast interactivity startup without prerender", "Disables prerender globally and uses InteractiveAuto for all route groups."),
         new("CustomAdvanced", "Custom Advanced", "Fine-grained per route-group control", "Enables explicit overrides for Public SEO, Operational, Admin, and Onboarding route groups.")
-    ];
-
-    private static readonly IReadOnlyList<RenderModeOption> RenderModeOptions =
-    [
-        new("InteractiveAuto", "Interactive Auto"),
-        new("InteractiveWebAssembly", "Interactive WebAssembly"),
-        new("InteractiveServer", "Interactive Server")
     ];
 
     private static readonly IReadOnlyList<RouteGroupOption> RouteGroupOptions =
@@ -450,7 +428,7 @@
         new("public-seo", "Public SEO", "Public landing and detail routes where SEO/prerender strategy matters most."),
         new("operational", "Operational", "Authenticated user workflows and day-to-day app interactions."),
         new("admin", "Admin", "Administrative surfaces under /admin routes."),
-        new("onboarding", "Onboarding", "Setup and onboarding routes. Always uses InteractiveServer for instant interactivity (no WASM download delay).")
+        new("onboarding", "Onboarding", "Setup and onboarding routes. Always uses InteractiveServer for instant interactivity.")
     ];
 
     [Parameter, EditorRequired]
@@ -549,6 +527,8 @@
         {
             OrganizationPolicy = new();
         }
+
+        NormalizeRenderPolicy();
     }
 
     private string GetPresetCardClass(string preset)
@@ -662,17 +642,12 @@
                 break;
             case "AllPrerendered":
                 RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
-                RenderPolicy.GlobalRenderMode = "InteractiveAuto";
+                RenderPolicy.GlobalRenderMode = "InteractiveServer";
                 RenderPolicy.GlobalPrerenderEnabled = true;
-                break;
-            case "AllInteractiveAutoNoPrerender":
-                RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
-                RenderPolicy.GlobalRenderMode = "InteractiveAuto";
-                RenderPolicy.GlobalPrerenderEnabled = false;
                 break;
             case "CustomAdvanced":
                 RenderPolicy.EnableAdvancedRenderPolicyOverrides = true;
-                RenderPolicy.GlobalRenderMode = NormalizeRenderMode(RenderPolicy.GlobalRenderMode);
+                RenderPolicy.GlobalRenderMode = "InteractiveServer";
                 break;
             default:
                 RenderPolicy.EnableAdvancedRenderPolicyOverrides = false;
@@ -702,41 +677,6 @@
         }
 
         SelectPreset(RecommendedPreset);
-    }
-
-    private string GetRouteGroupMode(string group)
-    {
-        return group switch
-        {
-            "public-seo" => NormalizeRenderMode(RenderPolicy.PublicSeoRenderMode),
-            "operational" => NormalizeRenderMode(RenderPolicy.OperationalRenderMode),
-            "admin" => NormalizeRenderMode(RenderPolicy.AdminRenderMode),
-            "onboarding" => NormalizeOnboardingRenderMode(RenderPolicy.OnboardingRenderMode),
-            _ => "InteractiveAuto"
-        };
-    }
-
-    private void SetRouteGroupMode(string group, string mode)
-    {
-        var normalizedMode = NormalizeRenderMode(mode);
-
-        switch (group)
-        {
-            case "public-seo":
-                RenderPolicy.PublicSeoRenderMode = normalizedMode;
-                break;
-            case "operational":
-                RenderPolicy.OperationalRenderMode = normalizedMode;
-                break;
-            case "admin":
-                RenderPolicy.AdminRenderMode = normalizedMode;
-                break;
-            case "onboarding":
-                RenderPolicy.OnboardingRenderMode = NormalizeOnboardingRenderMode(normalizedMode);
-                break;
-        }
-
-        EnsureOnboardingGuardrail();
     }
 
     private bool GetRouteGroupPrerender(string group)
@@ -770,15 +710,9 @@
         }
     }
 
-    private static bool IsOnboardingInteractiveServerRestricted(string group)
-    {
-        // InteractiveServer is no longer restricted for onboarding — it's the forced default.
-        return false;
-    }
-
     private void ApplyGlobalFallbackToAllGroups()
     {
-        var mode = NormalizeRenderMode(RenderPolicy.GlobalRenderMode);
+        var mode = "InteractiveServer";
         var prerender = RenderPolicy.GlobalPrerenderEnabled == true;
 
         RenderPolicy.PublicSeoRenderMode = mode;
@@ -787,39 +721,29 @@
         RenderPolicy.OperationalPrerenderEnabled = prerender;
         RenderPolicy.AdminRenderMode = mode;
         RenderPolicy.AdminPrerenderEnabled = prerender;
-        RenderPolicy.OnboardingRenderMode = NormalizeOnboardingRenderMode(mode);
+        RenderPolicy.OnboardingRenderMode = mode;
         RenderPolicy.OnboardingPrerenderEnabled = prerender;
     }
 
     private void EnsureOnboardingGuardrail()
     {
-        // Onboarding is always InteractiveServer for best first-impression UX.
-        RenderPolicy.DisallowInteractiveServerOnOnboarding = false;
         RenderPolicy.OnboardingRenderMode = "InteractiveServer";
     }
 
-    private static string NormalizeRenderMode(string? mode)
+    private void NormalizeRenderPolicy()
     {
-        if (string.Equals(mode, "InteractiveWebAssembly", StringComparison.OrdinalIgnoreCase))
-        {
-            return "InteractiveWebAssembly";
-        }
-
-        if (string.Equals(mode, "InteractiveServer", StringComparison.OrdinalIgnoreCase))
-        {
-            return "InteractiveServer";
-        }
-
-        return "InteractiveAuto";
+        RenderPolicy.RenderPolicyPreset = NormalizePreset(RenderPolicy.RenderPolicyPreset);
+        RenderPolicy.GlobalRenderMode = "InteractiveServer";
+        RenderPolicy.PublicSeoRenderMode = "InteractiveServer";
+        RenderPolicy.OperationalRenderMode = "InteractiveServer";
+        RenderPolicy.AdminRenderMode = "InteractiveServer";
+        RenderPolicy.OnboardingRenderMode = "InteractiveServer";
     }
 
-    private static string NormalizeOnboardingRenderMode(string? mode)
-    {
-        // Onboarding always uses InteractiveServer regardless of input.
-        return "InteractiveServer";
-    }
+    private static string NormalizePreset(string? preset) =>
+        PresetOptions.FirstOrDefault(option => string.Equals(option.Value, preset, StringComparison.OrdinalIgnoreCase))?.Value
+        ?? RecommendedPreset;
 
     private sealed record PresetOption(string Value, string Label, string Description, string HelpText);
-    private sealed record RenderModeOption(string Value, string Label);
     private sealed record RouteGroupOption(string Value, string Label, string HelpText);
 }

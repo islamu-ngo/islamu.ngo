@@ -1,0 +1,135 @@
+@* ABOUTME: Standalone primary mega menu with static public-route sections for the site shell. *@
+@* ABOUTME: Provides accessible desktop disclosures and a mobile temporary drawer without API dependencies. *@
+
+<div class="site-mega-menu" @onkeydown="HandleKeyDownAsync" data-testid="site-mega-menu">
+    <button type="button"
+            id="site-mega-menu-mobile-toggle"
+            class="site-mega-menu__mobile-toggle"
+            data-testid="site-mega-menu-mobile-toggle"
+            aria-label="Open primary navigation"
+            aria-expanded="@(_mobileOpen ? "true" : "false")"
+            aria-controls="site-mega-menu-mobile-drawer"
+            @onclick="ToggleMobileMenuAsync">
+        Menu
+    </button>
+
+    <div class="site-mega-menu__desktop" @onpointerleave="ScheduleDesktopCloseAsync" @onfocusout="ScheduleDesktopCloseAsync">
+        <nav class="site-mega-menu__nav" aria-label="Primary" data-testid="site-mega-menu-primary-nav">
+            <ul class="site-mega-menu__trigger-list">
+                @foreach (var section in Sections)
+                {
+                    var isOpen = IsDesktop && OpenSectionId == section.Id;
+                    <li class="site-mega-menu__trigger-item" @key="section.Id">
+                        <button type="button"
+                                id="@TriggerId(section.Id)"
+                                class="@TriggerClass(section.Id)"
+                                data-testid="@($"site-mega-menu-trigger-{section.Id}")"
+                                aria-expanded="@(isOpen ? "true" : "false")"
+                                aria-controls="site-mega-menu-panel"
+                                @onpointerenter="() => OpenDesktopSectionAsync(section.Id)"
+                                @onfocusin="() => OpenDesktopSectionAsync(section.Id)"
+                                @onclick="() => ToggleDesktopSectionAsync(section.Id)">
+                            @section.Title
+                        </button>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+        @if (IsDesktop && ShouldRenderDesktopPanel)
+        {
+            <button type="button"
+                    class="site-mega-menu__backdrop"
+                    data-testid="site-mega-menu-backdrop"
+                    aria-label="Close primary navigation"
+                    @onclick="() => CloseDesktopAsync(restoreFocus: true)"></button>
+
+            <section id="site-mega-menu-panel"
+                     class="@PanelClass"
+                     data-testid="site-mega-menu-panel"
+                     aria-label="Primary navigation links"
+                     @onpointerenter="CancelDesktopClose"
+                     @onfocusin="CancelDesktopClose">
+                <div class="site-mega-menu__panel-inner">
+                    <div class="site-mega-menu__panel-header">
+                        <h2 class="site-mega-menu__panel-title">Explore ISLAMU</h2>
+                        <button type="button"
+                                class="site-mega-menu__close"
+                                data-testid="site-mega-menu-desktop-close"
+                                @onclick="() => CloseDesktopAsync(restoreFocus: true)">
+                            Close
+                        </button>
+                    </div>
+
+                    <div class="site-mega-menu__grid">
+                        @foreach (var section in Sections)
+                        {
+                            <section id="@PanelId(section.Id)"
+                                     class="@PanelSectionClass(section.Id)"
+                                     data-testid="@($"site-mega-menu-section-{section.Id}")"
+                                     aria-labelledby="@HeadingId(section.Id)">
+                                <h3 id="@HeadingId(section.Id)" class="site-mega-menu__heading">@section.Title</h3>
+                                <ul class="site-mega-menu__link-list">
+                                    @foreach (var item in section.Items)
+                                    {
+                                        <li @key="item.Href">
+                                            <a class="site-mega-menu__link"
+                                               data-testid="@($"site-mega-menu-link-{item.TestId}")"
+                                               href="@item.Href"
+                                               @onclick="() => CloseForNavigationAsync()">
+                                                @item.Label
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </section>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+    </div>
+
+    <MudDrawer id="site-mega-menu-mobile-drawer"
+               Class="site-mega-menu__drawer"
+               Open="@_mobileOpen"
+               OpenChanged="HandleMobileOpenChangedAsync"
+               Variant="DrawerVariant.Temporary"
+               Anchor="Anchor.Start"
+               Overlay="true"
+               OverlayAutoClose="true">
+        <div class="site-mega-menu__mobile-panel" data-testid="site-mega-menu-mobile-panel">
+            <div class="site-mega-menu__mobile-header">
+                <h2 class="site-mega-menu__mobile-title">Primary navigation</h2>
+                <button type="button"
+                        class="site-mega-menu__close"
+                        data-testid="site-mega-menu-mobile-close"
+                        @onclick="() => CloseMobileAsync(restoreFocus: true)">
+                    Close
+                </button>
+            </div>
+
+            <div class="site-mega-menu__mobile-sections">
+                @foreach (var section in Sections)
+                {
+                    <details class="site-mega-menu__mobile-section" data-testid="@($"site-mega-menu-mobile-section-{section.Id}")" @key="section.Id">
+                        <summary class="site-mega-menu__mobile-summary">@section.Title</summary>
+                        <ul class="site-mega-menu__mobile-link-list">
+                            @foreach (var item in section.Items)
+                            {
+                                <li @key="item.Href">
+                                    <a class="site-mega-menu__mobile-link"
+                                       data-testid="@($"site-mega-menu-mobile-link-{item.TestId}")"
+                                       href="@item.Href"
+                                       @onclick="() => CloseForNavigationAsync()">
+                                        @item.Label
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </details>
+                }
+            </div>
+        </div>
+    </MudDrawer>
+</div>

@@ -40,7 +40,6 @@
 
     <MudCard Elevation="0" Class="cp-def-list__card pa-4 mb-4">
         <MudSelect T="EntityTypeName" Label="Filter by Entity Type" Value="@_entityTypeFilter" ValueChanged="OnEntityTypeChanged" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cp-def-list__filter">
-            <MudSelectItem Value="EntityTypeName.Event">Event</MudSelectItem>
             <MudSelectItem Value="EntityTypeName.Organization">Organization</MudSelectItem>
             <MudSelectItem Value="EntityTypeName.Group">Group</MudSelectItem>
         </MudSelect>
@@ -95,7 +94,7 @@
 
 @code {
     private MudDataGrid<CustomPropertyDefinitionListDto> _dataGrid = default!;
-    private EntityTypeName _entityTypeFilter = EntityTypeName.Event;
+    private EntityTypeName _entityTypeFilter = EntityTypeName.Organization;
 
     private async Task<GridData<CustomPropertyDefinitionListDto>> ServerReloadAsync(GridState<CustomPropertyDefinitionListDto> state, CancellationToken ct)
     {

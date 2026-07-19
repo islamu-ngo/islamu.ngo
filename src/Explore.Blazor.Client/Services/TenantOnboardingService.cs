@@ -19,11 +19,11 @@ public interface ITenantOnboardingService
 
 public class TenantOnboardingService : ITenantOnboardingService
 {
-    private readonly IEventApiClient _api;
+    private readonly IIslamuApiClient _api;
     private readonly ILogger<TenantOnboardingService> _logger;
 
     public TenantOnboardingService(
-        IEventApiClient api,
+        IIslamuApiClient api,
         ILogger<TenantOnboardingService> logger)
     {
         _api = api;

@@ -23,7 +23,7 @@ public static class WebhookManagementScenarioSeed
         string DryRunEndpointUrl,
         string ExistingEndpointUrl);
 
-    public static async Task<Result> SeedAsync(IEventApiClient api)
+    public static async Task<Result> SeedAsync(IIslamuApiClient api)
     {
         var user = await api.GetCurrentUserAsync();
         var tenant = (await api.GetTenantsAsync()).Single(candidate => candidate.IsActive == true);
@@ -80,7 +80,7 @@ public static class WebhookManagementScenarioSeed
     }
 
     private static async Task<Guid> CreateEndpointAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         Guid consumerId,
         string url,
         string description,
@@ -100,7 +100,7 @@ public static class WebhookManagementScenarioSeed
             $"creating webhook endpoint {url}");
 
     private static async Task<HalResourceOfWebhookDeliveryAttemptDto> WaitForFailedAttemptAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         Guid endpointId)
     {
         var deadline = DateTimeOffset.UtcNow.AddSeconds(45);

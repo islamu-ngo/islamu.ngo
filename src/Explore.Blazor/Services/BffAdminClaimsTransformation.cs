@@ -129,7 +129,7 @@ public sealed class BffAdminClaimsTransformation
         {
             var client = _httpClientFactory.CreateClient(HttpClientName);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            var apiClient = new EventApiClient(client);
+            var apiClient = new IslamuApiClient(client);
             return await apiClient.GetCurrentUserAdminAuthorityAsync(cancellationToken: cancellationToken);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)

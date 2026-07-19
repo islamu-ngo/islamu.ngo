@@ -22,10 +22,10 @@ public interface ITagService
 
 public class TagService : ITagService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<TagService> _logger;
 
-    public TagService(IEventApiClient apiClient, ILogger<TagService> logger)
+    public TagService(IIslamuApiClient apiClient, ILogger<TagService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -1,4 +1,4 @@
-// ABOUTME: Focused tests for the Blazor control-plane adapter over generated Event API contracts.
+// ABOUTME: Focused tests for the Blazor control-plane adapter over generated Islamu API contracts.
 // ABOUTME: Protects HAL resource pass-through, generated request construction, and DI registration.
 
 using Explore.Blazor.Client.Contracts.ControlPlane;
@@ -13,12 +13,12 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetOverviewAsync_PreservesSummaryWarningsAndLinks()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var overview = new HalResourceOfControlPlaneOverviewDto
         {
             DeploymentMode = "MultiTenant",
             Version = "1.2.3",
-            PublicOrigin = "https://events.example.test",
+            PublicOrigin = "https://islamu.example.test",
             AdminOrigin = "https://admin.example.test",
             TotalTenantCount = 3,
             ActiveTenantCount = 2,
@@ -64,7 +64,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetTenantsAsync_PreservesEmbeddedItemsAndHalLinks()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var tenant = new HalResourceOfControlPlaneTenantListItemDto
         {
             Id = Guid.NewGuid(),
@@ -99,7 +99,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetPlansAsync_PreservesCatalogItemsPricingAndHalLinks()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var plan = new HalResourceOfControlPlaneTenantPlanListItemDto
         {
             Id = Guid.NewGuid(),
@@ -142,7 +142,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetPlanAsync_PreservesVersionsSettingsQuotasAndLinks()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var planId = Guid.NewGuid();
         var versionId = Guid.NewGuid();
         var detail = new HalResourceOfControlPlaneTenantPlanDetailDto
@@ -198,7 +198,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetPlansAsync_WhenApiReturnsForbidden_PropagatesGeneratedApiException()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetControlPlaneTenantPlansAsync(null, null, Arg.Any<CancellationToken>())
             .Returns<Task<HalCollectionResourceOfControlPlaneTenantPlanListItemDto>>(_ => throw CreateApiException(403));
         var adapter = new ControlPlaneApiAdapter(apiClient);
@@ -211,7 +211,7 @@ public sealed class ControlPlaneApiAdapterTests
     {
         using var source = new CancellationTokenSource();
         source.Cancel();
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetControlPlaneTenantPlanByKeyAsync("enterprise", null, null, source.Token)
             .Returns<Task<HalResourceOfControlPlaneTenantPlanDetailDto>>(_ =>
                 throw new OperationCanceledException(source.Token));
@@ -226,7 +226,7 @@ public sealed class ControlPlaneApiAdapterTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton(Substitute.For<IEventApiClient>());
+        services.AddSingleton(Substitute.For<IIslamuApiClient>());
         services.AddSharedApplicationServices();
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
@@ -240,7 +240,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetDomainsAsync_PreservesDnsRecords()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var domains = new HalResourceOfControlPlaneDomainOverviewDto
         {
             DnsRecords =
@@ -274,7 +274,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetOperationsAsync_PreservesStatusesWarningsMetricsAndLinks()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var operations = new HalResourceOfControlPlaneOperationsDto
         {
             GeneratedAtUtc = new DateTimeOffset(2026, 7, 5, 12, 0, 0, TimeSpan.Zero),
@@ -328,7 +328,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task GetOverviewAsync_WhenApiReturnsForbidden_PropagatesGeneratedApiException()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetControlPlaneOverviewAsync(null, null, Arg.Any<CancellationToken>())
             .Returns<Task<HalResourceOfControlPlaneOverviewDto>>(_ => throw CreateApiException(403));
         var adapter = new ControlPlaneApiAdapter(apiClient);
@@ -340,7 +340,7 @@ public sealed class ControlPlaneApiAdapterTests
     public async Task ScheduleTenantPurgeAsync_SendsReasonAndConfirmationText()
     {
         var tenantId = Guid.NewGuid();
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.ScheduleControlPlaneTenantPurgeAsync(
                 tenantId,
                 null,
@@ -366,7 +366,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Arguments(true)]
     public async Task CreateTenantAsync_PassesGeneratedRequest(bool assignCurrentUserAsTenantAdmin)
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         var request = new CreateTenantDto
         {
             FullName = "New Mosque",
@@ -396,7 +396,7 @@ public sealed class ControlPlaneApiAdapterTests
     [Test]
     public async Task SuspendTenantAsync_WhenApiReturnsConflict_PropagatesGeneratedApiException()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.SuspendControlPlaneTenantAsync(
                 Arg.Any<Guid>(),
                 null,

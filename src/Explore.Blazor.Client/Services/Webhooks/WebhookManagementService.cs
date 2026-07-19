@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Explore.Blazor.Client.Services.Webhooks;
 
 public sealed class WebhookManagementService(
-    IEventApiClient apiClient,
+    IIslamuApiClient apiClient,
     ILogger<WebhookManagementService> logger) : IWebhookManagementService
 {
     private const int SnapshotLimit = 200;

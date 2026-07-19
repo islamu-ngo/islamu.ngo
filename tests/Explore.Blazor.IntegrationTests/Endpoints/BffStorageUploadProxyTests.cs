@@ -51,8 +51,8 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
             {
                 services.RemoveAll<IAntiforgery>();
                 services.AddSingleton(antiforgery);
-                services.RemoveAll<IEventApiClient>();
-                services.AddSingleton<IEventApiClient>(_ => CreateApiClient(_apiHandler));
+                services.RemoveAll<IIslamuApiClient>();
+                services.AddSingleton<IIslamuApiClient>(_ => CreateApiClient(_apiHandler));
             });
         });
 
@@ -314,6 +314,48 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
         _apiHandler.CapturedReserveRequestBody.ToLowerInvariant().Should().NotContain("objectkey");
     }
 
+    [Test]
+    public async Task UploadSession_WithBlogPurpose_ForwardsBlogPurposeAndPublicImageVisibility()
+    {
+        using var request = CreateUploadSessionRequest("probe.png", "image/png", "blog_image");
+
+        using var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _apiHandler.ReserveCallCount.Should().Be(1);
+        _apiHandler.CapturedReserveRequestBody.Should().NotBeNull();
+        _apiHandler.CapturedReserveRequestBody.Should().Contain("\"purpose\":\"blog_image\"");
+        _apiHandler.CapturedReserveRequestBody.Should().Contain("\"visibility\":\"public_image\"");
+    }
+
+    [Test]
+    public async Task UploadSession_WithOmittedPurpose_ForwardsLegacyPurposeAndPublicImageVisibility()
+    {
+        using var request = CreateUploadSessionRequest("probe.png", "image/png");
+
+        using var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        _apiHandler.ReserveCallCount.Should().Be(1);
+        _apiHandler.CapturedReserveRequestBody.Should().NotBeNull();
+        _apiHandler.CapturedReserveRequestBody.Should().Contain("\"purpose\":\"legacy_image\"");
+        _apiHandler.CapturedReserveRequestBody.Should().Contain("\"visibility\":\"public_image\"");
+    }
+
+    [Test]
+    public async Task UploadSession_WithInvalidPurpose_ReturnsBadRequestWithoutCallingApi()
+    {
+        using var request = CreateUploadSessionRequest("probe.png", "image/png", "avatar_image");
+
+        using var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Upload purpose is not accepted");
+        _apiHandler.CallCount.Should().Be(0);
+        _apiHandler.ReserveCallCount.Should().Be(0);
+    }
+
     public async ValueTask DisposeAsync()
     {
         _client.Dispose();
@@ -350,7 +392,7 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
         return document.RootElement.GetProperty("uploadSessionId").GetString()!;
     }
 
-    private HttpRequestMessage CreateUploadSessionRequest(string fileName, string contentType)
+    private HttpRequestMessage CreateUploadSessionRequest(string fileName, string contentType, string? purpose = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/bff/storage/upload-session");
         AddBffHeaders(request);
@@ -358,7 +400,8 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
         {
             fileName,
             contentType,
-            expectedSizeBytes = 4L
+            expectedSizeBytes = 4L,
+            purpose
         });
 
         return request;
@@ -443,8 +486,8 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
         {
             builder.ConfigureTestServices(services =>
             {
-                services.RemoveAll<IEventApiClient>();
-                services.AddSingleton<IEventApiClient>(_ => CreateApiClient(apiHandler));
+                services.RemoveAll<IIslamuApiClient>();
+                services.AddSingleton<IIslamuApiClient>(_ => CreateApiClient(apiHandler));
             });
         });
     }
@@ -477,13 +520,13 @@ public sealed class BffStorageUploadProxyTests : IAsyncDisposable
         ],
         "Test"));
 
-    private static IEventApiClient CreateApiClient(StorageApiHandler apiHandler)
+    private static IIslamuApiClient CreateApiClient(StorageApiHandler apiHandler)
     {
         var httpClient = new HttpClient(apiHandler, disposeHandler: false)
         {
             BaseAddress = new Uri("https://api.example.test/")
         };
-        return new EventApiClient(httpClient);
+        return new IslamuApiClient(httpClient);
     }
 
     private sealed class StorageApiHandler : HttpMessageHandler

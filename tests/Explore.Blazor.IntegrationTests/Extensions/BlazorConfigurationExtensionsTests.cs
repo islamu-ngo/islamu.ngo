@@ -10,6 +10,45 @@ namespace Explore.Blazor.IntegrationTests.Extensions;
 public sealed class BlazorConfigurationExtensionsTests
 {
     [Test]
+    public void AddInfisicalBlazorCompatibility_UsesNgoKeycloakClientDefaultWhenAuthorityExists()
+    {
+        var configurationBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["KEYCLOAK_ENDPOINT"] = "https://keycloak.example/auth",
+                ["KEYCLOAK_REALM"] = "ISLAMU",
+                ["Infisical:ProjectId"] = "",
+                ["Infisical:ClientId"] = "",
+                ["Infisical:ClientSecret"] = ""
+            });
+
+        configurationBuilder.AddInfisicalBlazorCompatibility();
+
+        var configuration = configurationBuilder.Build();
+        configuration["Keycloak:ClientId"].Should().Be("islamu-ngo-blazor");
+    }
+
+    [Test]
+    public void AddInfisicalBlazorCompatibility_DoesNotOverrideExplicitKeycloakClientId()
+    {
+        var configurationBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["KEYCLOAK_ENDPOINT"] = "https://keycloak.example/auth",
+                ["KEYCLOAK_REALM"] = "ISLAMU",
+                ["KEYCLOAK_CLIENT_ID"] = "explicit-client",
+                ["Infisical:ProjectId"] = "",
+                ["Infisical:ClientId"] = "",
+                ["Infisical:ClientSecret"] = ""
+            });
+
+        configurationBuilder.AddInfisicalBlazorCompatibility();
+
+        var configuration = configurationBuilder.Build();
+        configuration["Keycloak:ClientId"].Should().Be("explicit-client");
+    }
+
+    [Test]
     public void AddInfisicalBlazorCompatibility_WhenAspireApiReferenceExists_DoesNotMapInfisicalApiEndpoint()
     {
         var configurationBuilder = new ConfigurationBuilder()

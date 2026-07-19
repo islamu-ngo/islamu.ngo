@@ -32,12 +32,8 @@
                                      Text="Notifications" 
                                      Class="@GetNavItemClass("notifications")"
                                      OnClick="@(() => SelectSection("notifications"))" />
-                        <MudListItem Icon="@Icons.Material.Filled.Link" 
-                                     Text="Connected Apps" 
-                                     Class="@GetNavItemClass("connected-apps")"
-                                     OnClick="@(() => SelectSection("connected-apps"))" />
-                         <MudListItem Icon="@Icons.Material.Filled.Palette" 
-                                      Text="Appearance" 
+                          <MudListItem Icon="@Icons.Material.Filled.Palette"
+                                       Text="Appearance"
                                       Class="@GetNavItemClass("appearance")"
                                       OnClick="@(() => SelectSection("appearance"))" />
                          <MudListItem Icon="@Icons.Material.Filled.AutoAwesome"
@@ -76,10 +72,6 @@
                     {
                         <SettingsNotifications />
                     }
-                    else if (CurrentSection == "connected-apps")
-                    {
-                        <SettingsConnectedApps />
-                    }
                      else if (CurrentSection == "appearance")
                      {
                          <SettingsAppearance />
@@ -102,7 +94,7 @@
     private static readonly string[] AllowedSections =
     {
         "personal", "security", "privacy", "notifications",
-        "connected-apps", "appearance", "ai-assistant", "api-keys"
+        "appearance", "ai-assistant", "api-keys"
     };
 
     private string CurrentSection { get; set; } = "personal";

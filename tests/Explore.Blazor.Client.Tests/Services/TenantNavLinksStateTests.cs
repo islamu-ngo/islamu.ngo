@@ -28,8 +28,8 @@ public sealed class TenantNavLinksStateTests
             new TenantNavigationLinkDto
             {
                 Id = Guid.NewGuid(),
-                Label = "Events",
-                Url = "/events",
+                Label = "Organizations",
+                Url = "/organizations",
                 Order = 10
             }
         ]);

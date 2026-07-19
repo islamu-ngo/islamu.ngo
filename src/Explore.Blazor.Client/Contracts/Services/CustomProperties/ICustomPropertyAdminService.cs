@@ -1,5 +1,5 @@
 // ABOUTME: Client contract for tenant-scoped governance operations on custom-property definitions.
-// ABOUTME: Wraps IEventApiClient with HAL unwrap + error handling so admin pages bind to plain models.
+// ABOUTME: Wraps IIslamuApiClient with HAL unwrap + error handling so admin pages bind to plain models.
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Models;
@@ -33,35 +33,5 @@ public interface ICustomPropertyAdminService
         PromotionRecommendation? recommendation = null,
         int pageNumber = 1,
         int pageSize = 50,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<HalResourceOfProjectionStatusDto>> GetEventProjectionStatusAsync(
-        Guid? tenantId = null,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<HalResourceOfProjectionStatusDto>> GetSessionProjectionStatusAsync(
-        Guid? tenantId = null,
-        CancellationToken cancellationToken = default);
-
-    Task<PaginatedResult<HalResourceOfProjectionDirtyScopeDto>> GetDirtyScopesAsync(
-        Guid? tenantId = null,
-        string? projectionName = null,
-        int pageNumber = 1,
-        int pageSize = 50,
-        CancellationToken cancellationToken = default);
-
-    Task<BaseCommandResponseOfRebuildProjectionResponseDto?> RebuildEventProjectionAsync(
-        Guid tenantId,
-        int? batchSize = null,
-        CancellationToken cancellationToken = default);
-
-    Task<BaseCommandResponseOfRebuildProjectionResponseDto?> RebuildSessionProjectionAsync(
-        Guid tenantId,
-        int? batchSize = null,
-        CancellationToken cancellationToken = default);
-
-    Task<BaseCommandResponseOfDrainDirtyScopesResponseDto?> DrainDirtyScopesAsync(
-        Guid tenantId,
-        string? projectionName = null,
         CancellationToken cancellationToken = default);
 }

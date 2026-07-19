@@ -1,4 +1,4 @@
-// ABOUTME: JS-module-backed implementation for browser actions used by event UI affordances.
+// ABOUTME: JS-module-backed implementation for browser actions used by ISLAMU UI affordances.
 // ABOUTME: Fails closed during prerender/JS disconnects and avoids logging raw user content.
 
 using Explore.Blazor.Client.Contracts.Interop;
@@ -33,7 +33,7 @@ public sealed class BrowserActionInterop : IBrowserActionInterop, IAsyncDisposab
             return await module.InvokeAsync<bool>(
                 "share",
                 cancellationToken,
-                string.IsNullOrWhiteSpace(title) ? "Event" : title,
+                string.IsNullOrWhiteSpace(title) ? "ISLAMU" : title,
                 url);
         }
         catch (Exception ex) when (IsExpectedBrowserInteropFailure(ex))

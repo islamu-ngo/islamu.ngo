@@ -13,7 +13,11 @@ namespace Explore.Blazor.Client.Services;
 
 public interface IImageUploadClient
 {
-    Task<ImageUploadTarget?> GetUploadUrlAsync(string fileName, string contentType, long? expectedSizeBytes = null);
+    Task<ImageUploadTarget?> GetUploadUrlAsync(
+        string fileName,
+        string contentType,
+        long? expectedSizeBytes = null,
+        string purpose = ImageUploadPurposes.LegacyImage);
 
     Task<bool> UploadImageAsync(string uploadUrl, IBrowserFile file);
 
@@ -25,7 +29,7 @@ public interface IImageUploadClient
 }
 
 public sealed class ImageUploadClient(
-    IEventApiClient apiClient,
+    IIslamuApiClient apiClient,
     IHttpClientFactory httpClientFactory,
     ILogger<ImageUploadClient> logger,
     BffClient? bffClient = null,
@@ -37,7 +41,11 @@ public sealed class ImageUploadClient(
 
     private readonly IApiClientExecutor _apiClientExecutor = apiClientExecutor ?? new ApiClientExecutor();
 
-    public async Task<ImageUploadTarget?> GetUploadUrlAsync(string fileName, string contentType, long? expectedSizeBytes = null)
+    public async Task<ImageUploadTarget?> GetUploadUrlAsync(
+        string fileName,
+        string contentType,
+        long? expectedSizeBytes = null,
+        string purpose = ImageUploadPurposes.LegacyImage)
     {
         try
         {
@@ -55,7 +63,7 @@ public sealed class ImageUploadClient(
 
             var isBrowser = OperatingSystem.IsBrowser();
             var bffUploadSession = expectedSizeBytes.HasValue
-                ? await GetUploadSessionViaBffAsync(safeFileName, contentType, expectedSizeBytes.Value)
+                ? await GetUploadSessionViaBffAsync(safeFileName, contentType, expectedSizeBytes.Value, purpose)
                 : null;
             if (bffUploadSession != null)
             {
@@ -71,6 +79,12 @@ public sealed class ImageUploadClient(
             if (expectedSizeBytes.HasValue)
             {
                 logger.LogWarning("BFF upload session request returned no usable response for sized upload. Direct provider fallback is disabled for browser-originated image uploads.");
+                return null;
+            }
+
+            if (!string.Equals(purpose, ImageUploadPurposes.LegacyImage, StringComparison.Ordinal))
+            {
+                logger.LogWarning("Direct provider fallback is disabled for non-legacy image upload purposes.");
                 return null;
             }
 
@@ -370,13 +384,15 @@ public sealed class ImageUploadClient(
     private async Task<ImageUploadTarget?> GetUploadSessionViaBffAsync(
         string fileName,
         string contentType,
-        long expectedSizeBytes)
+        long expectedSizeBytes,
+        string purpose)
     {
         var request = new BffStorageUploadSessionRequest
         {
             FileName = fileName,
             ContentType = contentType,
-            ExpectedSizeBytes = expectedSizeBytes
+            ExpectedSizeBytes = expectedSizeBytes,
+            Purpose = purpose
         };
 
         try

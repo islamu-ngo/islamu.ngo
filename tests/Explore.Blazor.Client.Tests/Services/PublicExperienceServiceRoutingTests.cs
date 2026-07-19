@@ -6,12 +6,11 @@ namespace Explore.Blazor.Client.Tests.Services;
 public class PublicExperienceServiceRoutingTests
 {
     private readonly PublicExperienceService _service = new(
-        Substitute.For<IEventApiClient>(),
+        Substitute.For<IIslamuApiClient>(),
         Substitute.For<ILogger<PublicExperienceService>>());
 
     [Test]
     [Arguments("LandingPage", "/home")]
-    [Arguments("EventList", "/events")]
     public async Task ResolveHomeRoute_UsesGeneratedSettingsPreference(string preference, string expectedRoute)
     {
         var route = _service.ResolveHomeRoute(new PublicExperienceSettingsDto
@@ -23,11 +22,11 @@ public class PublicExperienceServiceRoutingTests
     }
 
     [Test]
-    public async Task ResolveHomeRoute_ReturnsEvents_WhenSettingsAreNull()
+    public async Task ResolveHomeRoute_ReturnsRoot_WhenSettingsAreNull()
     {
         var route = _service.ResolveHomeRoute((PublicExperienceSettingsDto?)null);
 
-        await Assert.That(route).IsEqualTo("/events");
+        await Assert.That(route).IsEqualTo("/");
     }
 
     [Test]

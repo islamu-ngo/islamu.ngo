@@ -7,7 +7,7 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public sealed class LocalizationAdminServiceTests
 {
-    private readonly IEventApiClient _api = Substitute.For<IEventApiClient>();
+    private readonly IIslamuApiClient _api = Substitute.For<IIslamuApiClient>();
 
     [Test]
     public async Task GetConfigurationAsync_WhenApiSucceeds_ReturnsConfiguration()
@@ -112,7 +112,7 @@ public sealed class LocalizationAdminServiceTests
     {
         IDictionary<string, string> expected = new Dictionary<string, string>
         {
-            ["ui.common.appName"] = "ISLAMU Event"
+            ["ui.common.appName"] = "ISLAMU"
         };
         _api.ExportLocalizationBundleAsync(
                 "en",
@@ -124,7 +124,7 @@ public sealed class LocalizationAdminServiceTests
         var result = await CreateService().ExportBundleAsync("en");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!["ui.common.appName"]).IsEqualTo("ISLAMU Event");
+        await Assert.That(result!["ui.common.appName"]).IsEqualTo("ISLAMU");
     }
 
     [Test]
@@ -138,7 +138,7 @@ public sealed class LocalizationAdminServiceTests
             .Returns(new BaseCommandResponseOfGuid { Success = true, Message = "Imported." });
         var translations = new Dictionary<string, string>
         {
-            ["ui.common.appName"] = "ISLAMU Event"
+            ["ui.common.appName"] = "ISLAMU"
         };
 
         var result = await CreateService().ImportBundleAsync("en", translations);
@@ -146,7 +146,7 @@ public sealed class LocalizationAdminServiceTests
         await Assert.That(result.Success).IsTrue();
         await _api.Received(1).ImportLocalizationBundleAsync(
             Arg.Is<ImportLocalizationBundleDto>(request =>
-                request.LanguageCode == "en" && request.Translations["ui.common.appName"] == "ISLAMU Event"),
+                request.LanguageCode == "en" && request.Translations["ui.common.appName"] == "ISLAMU"),
             Arg.Any<string?>(),
             Arg.Any<string?>(),
             Arg.Any<CancellationToken>());

@@ -13,26 +13,20 @@ public class OrganizationDetailsHateoasTests : IDisposable
 {
     private readonly BlazorTestContext _ctx;
     private readonly IOrganizationService _organizationService;
-    private readonly IEventService _eventService;
     private readonly IOrganizationMemberService _organizationMemberService;
 
     public OrganizationDetailsHateoasTests()
     {
         _ctx = new BlazorTestContext();
         _organizationService = Substitute.For<IOrganizationService>();
-        _eventService = Substitute.For<IEventService>();
         _organizationMemberService = Substitute.For<IOrganizationMemberService>();
 
         _ctx.Services.AddSingleton(_organizationService);
-        _ctx.Services.AddSingleton(_eventService);
         _ctx.Services.AddSingleton(_organizationMemberService);
         _ctx.Services.AddScoped<RouterStateService>();
         _ctx.Services.AddSingleton(Substitute.For<ISnackbar>());
         _ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         _ctx.Services.AddSingleton(Substitute.For<ILogger<OrganizationDetails>>());
-
-        _eventService.GetPublicEventsByActorAsync(Arg.Any<Guid>()).Returns(new List<EventListDto>());
-        _eventService.GetPublicEventsByOrganizationAsync(Arg.Any<Guid>()).Returns(new List<EventListDto>());
     }
 
     public void Dispose()
@@ -49,7 +43,6 @@ public class OrganizationDetailsHateoasTests : IDisposable
         var cut = _ctx.RenderMudComponent<OrganizationDetails>();
         cut.WaitForState(() => !cut.Markup.Contains("Loading", StringComparison.OrdinalIgnoreCase), TimeSpan.FromSeconds(3));
 
-        await Assert.That(cut.Markup).Contains("Create Event");
         await Assert.That(cut.Markup).Contains("Members");
         await Assert.That(cut.Markup).Contains("Edit");
     }
@@ -63,7 +56,6 @@ public class OrganizationDetailsHateoasTests : IDisposable
         var cut = _ctx.RenderMudComponent<OrganizationDetails>();
         cut.WaitForState(() => !cut.Markup.Contains("Loading", StringComparison.OrdinalIgnoreCase), TimeSpan.FromSeconds(3));
 
-        await Assert.That(cut.Markup.Contains("Create Event", StringComparison.Ordinal)).IsFalse();
         await Assert.That(cut.Markup.Contains("Members", StringComparison.Ordinal)).IsFalse();
         await Assert.That(cut.Markup.Contains("Edit", StringComparison.Ordinal)).IsFalse();
     }

@@ -1,6 +1,7 @@
 // ABOUTME: Centralizes all HttpClient registrations for the Blazor BFF server.
 // ABOUTME: Eliminates repeated ConfigurePrimaryHttpMessageHandler blocks for dev cert bypass.
 
+using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Contracts.Services;
 using Explore.Blazor.Client.Extensions;
 using Explore.Blazor.Client.Services;
@@ -39,6 +40,17 @@ public static class HttpClientExtensions
         services.AddHttpClient("BffSelfClient")
             .AddHttpMessageHandler<BffCookieForwardingHandler>()
             .ConfigureDevCertBypass(environment);
+
+        services.AddHttpClient<IIslamuApiClient, IslamuApiClient>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl);
+        })
+        .AddHttpMessageHandler<AccessTokenForwardingHandler>()
+        .AddHttpMessageHandler<TenantHeaderForwardingHandler>()
+        .AddHttpMessageHandler<SetupSecretForwardingHandler>()
+        .AddHttpMessageHandler<SupportAccessForwardingHandler>()
+        .ConfigureDevCertBypass(environment)
+        .AddInteractiveResilience();
 
         // Named direct storage upload client — used only for trusted server-issued provider upload URLs.
         services.AddHttpClient(StorageHttpClientNames.DirectUpload, client =>

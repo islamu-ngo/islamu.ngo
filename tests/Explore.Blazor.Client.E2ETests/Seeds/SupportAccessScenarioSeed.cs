@@ -13,7 +13,7 @@ public static class SupportAccessScenarioSeed
         string TenantSlug,
         Guid AdminUserId);
 
-    public static async Task<Result> SeedAsync(IEventApiClient api)
+    public static async Task<Result> SeedAsync(IIslamuApiClient api)
     {
         var user = await api.GetCurrentUserAsync();
         var tenant = (await api.GetTenantsAsync()).Single(candidate => candidate.IsActive == true);
@@ -32,7 +32,7 @@ public static class SupportAccessScenarioSeed
             Required(user.Id, "administrator user id"));
     }
 
-    private static async Task UpdateSettingAsync(IEventApiClient api, string key, string value)
+    private static async Task UpdateSettingAsync(IIslamuApiClient api, string key, string value)
     {
         var response = await api.UpdateTenantSettingAsync(key, new UpdateSettingValueDto { Value = value });
         EnsureSuccess(response, $"updating {key}");

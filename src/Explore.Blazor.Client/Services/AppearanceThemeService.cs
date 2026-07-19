@@ -8,7 +8,7 @@ namespace Explore.Blazor.Client.Services;
 
 public sealed class AppearanceThemeService : IAppearanceThemeService
 {
-    private readonly IEventApiClient _api;
+    private readonly IIslamuApiClient _api;
     private readonly ILogger<AppearanceThemeService> _logger;
 
     private AppearanceState _current = new();
@@ -107,7 +107,7 @@ public sealed class AppearanceThemeService : IAppearanceThemeService
     public event EventHandler<AppearanceStateChangedEventArgs>? Changed;
 
     public AppearanceThemeService(
-        IEventApiClient api,
+        IIslamuApiClient api,
         ILogger<AppearanceThemeService> logger)
     {
         _api = api;

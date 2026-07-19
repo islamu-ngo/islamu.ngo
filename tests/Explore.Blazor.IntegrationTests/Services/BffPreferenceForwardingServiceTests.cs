@@ -13,7 +13,7 @@ public sealed class BffPreferenceForwardingServiceTests
     public async Task GetAppearanceAsync_UsesGeneratedApiClient()
     {
         var expected = new ResolvedAppearanceDto { ThemeMode = "dark" };
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetCurrentUserAppearancePreferencesAsync(cancellationToken: Arg.Any<CancellationToken>())
             .Returns(expected);
         var service = new BffPreferenceForwardingService(apiClient);
@@ -28,7 +28,7 @@ public sealed class BffPreferenceForwardingServiceTests
     [Test]
     public async Task PersistPreferencesAsync_MapsPreferenceDtoToApiUpdateRequest()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         UpdateUserAppearancePreferencesDto? captured = null;
         apiClient.UpdateCurrentUserAppearancePreferencesAsync(
                 Arg.Do<UpdateUserAppearancePreferencesDto>(request => captured = request),
@@ -51,7 +51,7 @@ public sealed class BffPreferenceForwardingServiceTests
     public async Task GeneratePaletteAsync_ForwardsValuesToGeneratedApiClient()
     {
         var expected = new UiThemePaletteDto();
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GenerateAppearancePaletteAsync(
                 "blue green",
                 "#ff/00",
@@ -74,7 +74,7 @@ public sealed class BffPreferenceForwardingServiceTests
     public async Task GetAvailableThemesAsync_UsesCurrentPresetCatalogRoute()
     {
         ICollection<AvailablePresetDto> expected = [];
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetAvailableThemesAsync(cancellationToken: Arg.Any<CancellationToken>())
             .Returns(expected);
         var service = new BffPreferenceForwardingService(apiClient);

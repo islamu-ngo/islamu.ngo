@@ -65,8 +65,8 @@ public sealed class NotificationItemTests : IDisposable
         return new NotificationListDto
         {
             Id = Guid.NewGuid(),
-            Title = "New event: Community Iftar",
-            Body = "An organization or group you follow published a new event.",
+            Title = "New update: Community Iftar",
+            Body = "An organization or group you follow published a new update.",
             NotificationReasonName = "Subscription",
             NotificationScopeName = "Group",
             SourceActorName = "Islamic Center",

@@ -65,7 +65,7 @@ public class MainLayoutTests : IDisposable
 
         // Override IPublicExperienceService for settings assertions
         _publicExperienceService = Substitute.For<IPublicExperienceService>();
-        _publicExperienceService.ResolveHomeRoute(Arg.Any<PublicExperienceSettingsDto?>()).Returns("/events");
+        _publicExperienceService.ResolveHomeRoute(Arg.Any<PublicExperienceSettingsDto?>()).Returns("/");
         _ctx.Services.AddSingleton(_publicExperienceService);
 
         // Theme service — CreateTheme returns a valid MudTheme to avoid NRE
@@ -221,7 +221,7 @@ public class MainLayoutTests : IDisposable
         var navigationManager = _ctx.Services.GetRequiredService<NavigationManager>();
         var focusService = _ctx.Services.GetRequiredService<IAccessibilityFocusService>();
 
-        navigationManager.NavigateTo("/events?page=2");
+        navigationManager.NavigateTo("/organizations?page=2");
 
         cut.WaitForAssertion(() => focusService.Received(1).FocusOnNavigateAsync());
 
@@ -341,12 +341,12 @@ public class MainLayoutTests : IDisposable
         });
 
         // Navigate back to normal route — chrome restores
-        nav.NavigateTo("/events");
+        nav.NavigateTo("/organizations");
         cut.WaitForAssertion(() =>
         {
             var root = cut.Find(".main-layout-root");
             if (root.ClassList.Contains("main-layout-root--hide-chrome"))
-                throw new InvalidOperationException("Expected chrome restored on /events");
+                throw new InvalidOperationException("Expected chrome restored on /organizations");
         });
 
         await Task.CompletedTask;
@@ -778,13 +778,10 @@ public class MainLayoutTests : IDisposable
     }
 
     [Test]
-    public async Task OnFirstRender_NoSubmissionPolicies_HidesCommunityGuidelinesLink()
+    public async Task OnFirstRender_NoCommunityGuidelinesContent_HidesCommunityGuidelinesLink()
     {
-        // Model defaults AllowUser/Org/GroupSubmittedEvents to true — must explicitly disable
         PublicExperienceSettingsDto settings = new PublicExperienceSettingsBuilder()
-            .WithUserSubmittedEvents(false)
-            .WithOrganizationSubmittedEvents(false)
-            .WithGroupSubmittedEvents(false);
+            .WithCommunityGuidelines(string.Empty);
         _publicExperienceService.GetCachedSettingsAsync().Returns(settings);
 
         var cut = RenderLayout();

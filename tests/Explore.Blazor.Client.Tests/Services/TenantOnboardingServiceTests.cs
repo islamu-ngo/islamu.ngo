@@ -1,4 +1,4 @@
-// ABOUTME: Unit tests for tenant onboarding delegation through the generated Event API client.
+// ABOUTME: Unit tests for tenant onboarding delegation through the generated Islamu API client.
 // ABOUTME: Verifies generated contract mapping, command results, and resilient failure behavior.
 
 using Explore.Blazor.Client.Helpers;
@@ -7,12 +7,12 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class TenantOnboardingServiceTests
 {
-    private readonly IEventApiClient _api;
+    private readonly IIslamuApiClient _api;
     private readonly TenantOnboardingService _service;
 
     public TenantOnboardingServiceTests()
     {
-        _api = Substitute.For<IEventApiClient>();
+        _api = Substitute.For<IIslamuApiClient>();
         _service = new TenantOnboardingService(
             _api,
             Substitute.For<ILogger<TenantOnboardingService>>());
@@ -74,15 +74,14 @@ public class TenantOnboardingServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(new TenantPolicySettingsDto
             {
-                AllowUserSubmittedEvents = false,
-                RequireEventApproval = true,
-                PreferredHomePage = "Dashboard"
+                AllowOrganizationSelfRegistration = false,
+                RequireOrganizationVerification = true
             });
 
         var result = await _service.GetSettingsAsync();
 
-        await Assert.That(result.RequireEventApproval).IsTrue();
-        await Assert.That(result.PreferredHomePage).IsEqualTo("Dashboard");
+        await Assert.That(result.RequireOrganizationVerification).IsTrue();
+        await Assert.That(result.AllowOrganizationSelfRegistration).IsFalse();
     }
 
     [Test]
@@ -97,7 +96,8 @@ public class TenantOnboardingServiceTests
         var result = await _service.GetSettingsAsync();
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result.PreferredHomePage).IsEqualTo("EventList");
+        await Assert.That(result.AllowOrganizationSelfRegistration).IsTrue();
+        await Assert.That(result.RequireOrganizationVerification).IsTrue();
     }
 
     [Test]
@@ -115,8 +115,8 @@ public class TenantOnboardingServiceTests
             });
         var settings = new TenantPolicySettingsDto
         {
-            PreferredHomePage = "Dashboard",
-            RequireEventApproval = true
+            AllowOrganizationSelfRegistration = false,
+            RequireOrganizationVerification = true
         };
 
         var result = await _service.CompleteAsync(settings);
@@ -125,7 +125,7 @@ public class TenantOnboardingServiceTests
         await Assert.That(result.Message).IsEqualTo("OK");
         await _api.Received(1).CompleteTenantOnboardingAsync(
             Arg.Is<UpdateTenantPolicyRequest>(request =>
-                request.PreferredHomePage == "Dashboard" && request.RequireEventApproval == true),
+                request.AllowOrganizationSelfRegistration == false && request.RequireOrganizationVerification == true),
             Arg.Any<string?>(),
             Arg.Any<string?>(),
             Arg.Any<CancellationToken>());

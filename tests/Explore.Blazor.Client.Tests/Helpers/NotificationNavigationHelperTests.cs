@@ -1,5 +1,5 @@
 // ABOUTME: Verifies notification entity deep links match the Blazouter route table.
-// ABOUTME: Covers event, organization, group, and unsupported notification entity targets.
+// ABOUTME: Covers organization, group, and unsupported notification entity targets.
 
 using Explore.Blazor.Client.Helpers;
 
@@ -7,17 +7,6 @@ namespace Explore.Blazor.Client.Tests.Helpers;
 
 public sealed class NotificationNavigationHelperTests
 {
-    [Test]
-    public async Task GetEntityUrl_WithEventNotification_ReturnsEventDetailRoute()
-    {
-        var eventId = Guid.NewGuid().ToString();
-        var notification = CreateNotification("Event", eventId);
-
-        var url = NotificationNavigationHelper.GetEntityUrl(notification);
-
-        await Assert.That(url).IsEqualTo($"/events/{eventId}");
-    }
-
     [Test]
     public async Task GetEntityUrl_WithOrganizationNotification_ReturnsOrganizationProfileRoute()
     {
@@ -43,7 +32,7 @@ public sealed class NotificationNavigationHelperTests
     [Test]
     public async Task GetEntityUrl_WithUnsupportedNotification_ReturnsNull()
     {
-        var notification = CreateNotification("EventSession", Guid.NewGuid().ToString());
+        var notification = CreateNotification("Unknown", Guid.NewGuid().ToString());
 
         var url = NotificationNavigationHelper.GetEntityUrl(notification);
 

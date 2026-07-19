@@ -4,7 +4,7 @@
 using System.Reflection;
 using Explore.Blazor.Client.Contracts.Services.ControlPlane;
 using Explore.Blazor.Client.Models;
-using Explore.Blazor.Client.Pages.Events;
+using Explore.Blazor.Client.Pages;
 using Explore.Blazor.Client.Tests.Common.Authentication;
 
 namespace Explore.Blazor.Client.Tests.Pages.Admin;
@@ -40,7 +40,7 @@ public sealed class InstanceAdminSettingsLayoutTests : IDisposable
     public async Task InstanceAdminSettingsLayout_SingleTenant_ExposesPublicExperienceNavigation()
     {
         // Arrange
-        Type componentType = typeof(EventList).Assembly
+        Type componentType = typeof(Home).Assembly
             .GetTypes()
             .First(type => type.Name == "InstanceAdminSettingsLayout" && typeof(IComponent).IsAssignableFrom(type));
 
@@ -64,7 +64,7 @@ public sealed class InstanceAdminSettingsLayoutTests : IDisposable
     public async Task InstanceAdminSettingsLayout_SingleTenant_RendersPublicExperienceSectionWhenSelected()
     {
         // Arrange
-        Type componentType = typeof(EventList).Assembly
+        Type componentType = typeof(Home).Assembly
             .GetTypes()
             .First(type => type.Name == "InstanceAdminSettingsLayout" && typeof(IComponent).IsAssignableFrom(type));
 
@@ -102,7 +102,6 @@ public sealed class InstanceAdminSettingsLayoutTests : IDisposable
             }
         });
 
-        await Assert.That(cut.Markup).Contains("Event catalog label", StringComparison.OrdinalIgnoreCase);
         await Assert.That(cut.Markup).Contains("Advanced home blocks JSON", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -457,7 +456,6 @@ public sealed class InstanceAdminSettingsLayoutTests : IDisposable
         _instanceOnboardingService.GetDeploymentModeAsync()
             .Returns(new DeploymentModeDto { Mode = DeploymentMode.SingleTenant });
         _instanceOnboardingService.GetModuleSettingsAsync().Returns(new ModuleSettingsDto());
-        _instanceOnboardingService.GetEventPolicyAsync().Returns(new EventPolicyDto());
         _instanceOnboardingService.GetOrganizationPolicyAsync().Returns(new OrganizationPolicyDto());
         _instanceOnboardingService.GetBrandingSettingsAsync().Returns(new BrandingSettingsDto());
         _instanceOnboardingService.GetDomainSettingsAsync().Returns(new DomainSettingsDto());
@@ -494,7 +492,7 @@ public sealed class InstanceAdminSettingsLayoutTests : IDisposable
             .Returns(PaginatedResult<OrganizationListDto>.Empty());
     }
 
-    private static Type GetLayoutComponentType() => typeof(EventList).Assembly
+    private static Type GetLayoutComponentType() => typeof(Home).Assembly
         .GetTypes()
         .First(type => type.Name == "InstanceAdminSettingsLayout" && typeof(IComponent).IsAssignableFrom(type));
 

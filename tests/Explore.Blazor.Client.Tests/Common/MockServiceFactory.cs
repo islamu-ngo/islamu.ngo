@@ -145,40 +145,9 @@ public static class MockServiceFactory
     /// </summary>
     /// <param name="services">Service collection to add mocks to</param>
     /// <remarks>
-    /// Method names follow the actual interface signatures:
-    /// - IAudienceAgeService.GetAudienceAgesAsync()
-    /// - IAudienceGenderService.GetAudienceGendersAsync()
-    /// - IEventTypeService.GetEventTypesAsync()
-    /// - IEventFormatService.GetEventFormatsAsync()
-    /// - IEventStatusService.GetEventStatusesAsync()
-    /// - ILanguageService.GetLanguagesAsync()
-    /// - IMadhabService.GetMadhabsAsync()
     /// </remarks>
     public static void RegisterLookupServiceMocks(IServiceCollection services)
     {
-        // Audience services
-        var audienceAgeMock = Substitute.For<IAudienceAgeService>();
-        audienceAgeMock.GetAudienceAgesAsync().Returns(new List<AudienceAgeListDto>());
-        services.AddSingleton(audienceAgeMock);
-
-        var audienceGenderMock = Substitute.For<IAudienceGenderService>();
-        audienceGenderMock.GetAudienceGendersAsync().Returns(new List<AudienceGenderListDto>());
-        services.AddSingleton(audienceGenderMock);
-
-        // Event metadata services
-        var eventTypeMock = Substitute.For<IEventTypeService>();
-        eventTypeMock.GetEventTypesAsync().Returns(new List<EventTypeListDto>());
-        services.AddSingleton(eventTypeMock);
-
-        var eventFormatMock = Substitute.For<IEventFormatService>();
-        eventFormatMock.GetEventFormatsAsync().Returns(new List<EventFormatListDto>());
-        services.AddSingleton(eventFormatMock);
-
-        var eventStatusMock = Substitute.For<IEventStatusService>();
-        eventStatusMock.GetEventStatusesAsync().Returns(new List<EventStatusListDto>());
-        services.AddSingleton(eventStatusMock);
-
-        // Language and cultural services
         var languageMock = Substitute.For<ILanguageService>();
         languageMock.GetLanguagesAsync().Returns(new List<LanguageListDto>());
         services.AddSingleton(languageMock);
@@ -187,10 +156,6 @@ public static class MockServiceFactory
         madhabMock.GetMadhabsAsync().Returns(new List<MadhabListDto>());
         services.AddSingleton(madhabMock);
 
-        var registrationScopeMock = Substitute.For<IRegistrationScopeService>();
-        registrationScopeMock.GetRegistrationScopesAsync()
-            .Returns(new List<RegistrationScopeListDto>());
-        services.AddSingleton(registrationScopeMock);
     }
 
     /// <summary>
@@ -198,26 +163,6 @@ public static class MockServiceFactory
     /// </summary>
     public static void RegisterLookupServiceMocksWithData(IServiceCollection services, int itemCount = 5)
     {
-        var audienceAgeMock = Substitute.For<IAudienceAgeService>();
-        audienceAgeMock.GetAudienceAgesAsync().Returns(ComponentDataBuilder.AudienceAgeListDto.Generate(itemCount));
-        services.AddSingleton(audienceAgeMock);
-
-        var audienceGenderMock = Substitute.For<IAudienceGenderService>();
-        audienceGenderMock.GetAudienceGendersAsync().Returns(ComponentDataBuilder.AudienceGenderListDto.Generate(itemCount));
-        services.AddSingleton(audienceGenderMock);
-
-        var eventTypeMock = Substitute.For<IEventTypeService>();
-        eventTypeMock.GetEventTypesAsync().Returns(ComponentDataBuilder.EventTypeListDto.Generate(itemCount));
-        services.AddSingleton(eventTypeMock);
-
-        var eventFormatMock = Substitute.For<IEventFormatService>();
-        eventFormatMock.GetEventFormatsAsync().Returns(ComponentDataBuilder.EventFormatListDto.Generate(itemCount));
-        services.AddSingleton(eventFormatMock);
-
-        var eventStatusMock = Substitute.For<IEventStatusService>();
-        eventStatusMock.GetEventStatusesAsync().Returns(ComponentDataBuilder.EventStatusListDto.Generate(itemCount));
-        services.AddSingleton(eventStatusMock);
-
         var languageMock = Substitute.For<ILanguageService>();
         languageMock.GetLanguagesAsync().Returns(ComponentDataBuilder.LanguageListDto.Generate(itemCount));
         services.AddSingleton(languageMock);
@@ -226,10 +171,6 @@ public static class MockServiceFactory
         madhabMock.GetMadhabsAsync().Returns(ComponentDataBuilder.MadhabListDto.Generate(itemCount));
         services.AddSingleton(madhabMock);
 
-        var registrationScopeMock = Substitute.For<IRegistrationScopeService>();
-        registrationScopeMock.GetRegistrationScopesAsync()
-            .Returns(new List<RegistrationScopeListDto>());
-        services.AddSingleton(registrationScopeMock);
     }
 
     #endregion
@@ -299,10 +240,6 @@ public static class MockServiceFactory
         services.AddSingleton(Substitute.For<IHttpClientFactory>());
         RegisterLookupServiceMocks(services);
 
-        var locationRoomMock = Substitute.For<ILocationRoomService>();
-        locationRoomMock.GetRoomsByLocationAsync(Arg.Any<Guid>())
-            .Returns(new List<LocationRoomListDto>());
-        services.AddSingleton(locationRoomMock);
     }
 
     #endregion

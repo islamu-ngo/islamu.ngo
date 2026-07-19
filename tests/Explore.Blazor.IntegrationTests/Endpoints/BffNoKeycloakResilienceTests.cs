@@ -137,7 +137,8 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
 
         var csp = values.Should().ContainSingle().Subject;
         csp.Should().Contain("default-src 'self'");
-        csp.Should().Contain("script-src 'self' 'wasm-unsafe-eval'");
+        csp.Should().Contain("script-src 'self'");
+        csp.Should().NotContain("wasm-unsafe-eval");
         csp.Should().Contain("img-src 'self' data: https: blob:");
         csp.Should().Contain("connect-src 'self' https: http: ws: wss:");
         csp.Should().Contain("font-src 'self' https://fonts.gstatic.com");
@@ -176,7 +177,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
     [Test]
     public async Task ManifestWebManifest_ReturnsDbBackedWhiteLabelInstallMetadata()
     {
-        var apiClient = Substitute.For<IEventApiClient>();
+        var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetPublicExperienceShellAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new PublicExperienceShellDto
             {
@@ -189,7 +190,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
             }));
         await using var factory = new NoKeycloakBlazorBffWebApplicationFactory(configureServices: services =>
         {
-            services.RemoveAll<IEventApiClient>();
+            services.RemoveAll<IIslamuApiClient>();
             services.AddSingleton(apiClient);
         });
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -250,7 +251,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
         });
         using var request = new HttpRequestMessage(HttpMethod.Get, "/robots.txt");
         request.Headers.TryAddWithoutValidation("X-Forwarded-Proto", "https");
-        request.Headers.TryAddWithoutValidation("X-Forwarded-Host", "events.example.test");
+        request.Headers.TryAddWithoutValidation("X-Forwarded-Host", "islamu.example.test");
 
         var response = await client.SendAsync(request);
 
@@ -258,7 +259,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("User-agent: *");
         body.Should().Contain("Allow: /");
-        body.Should().Contain("Sitemap: https://events.example.test/sitemap.xml");
+        body.Should().Contain("Sitemap: https://islamu.example.test/sitemap.xml");
     }
 
     #endregion

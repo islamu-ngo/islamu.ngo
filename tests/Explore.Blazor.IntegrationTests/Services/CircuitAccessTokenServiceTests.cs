@@ -403,7 +403,7 @@ public class CircuitAccessTokenServiceTests
         var terminal = new CaptureHandler();
         handler.InnerHandler = terminal;
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost/api/events");
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost/api/organizations");
         _ = await handler.InvokeAsync(request);
 
         await Assert.That(terminal.Request?.Headers.Contains("X-Setup-Secret")).IsFalse();

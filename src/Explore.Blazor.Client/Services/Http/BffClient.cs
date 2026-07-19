@@ -3,10 +3,6 @@ using System.Net.Http.Json;
 
 namespace Explore.Blazor.Client.Services.Http;
 
-/// <summary>
-/// BFF HTTP facade for browser-side same-origin calls that rely on the shared WASM handler pipeline.
-/// BrowserCredentialsMessageHandler adds credentials and antiforgery headers for mutating requests.
-/// </summary>
 public interface IBffClient
 {
     Task<T?> GetAsync<T>(string path, CancellationToken ct = default);

@@ -37,7 +37,7 @@ public class InstanceGovernanceSectionTests : IDisposable
 
         var cut = RenderGovernanceSection(renderPolicy: renderPolicy);
 
-        await Assert.That(renderPolicy.RenderPolicyPreset).IsEmpty();
+        await Assert.That(renderPolicy.RenderPolicyPreset).IsEqualTo("AllInteractiveServer");
 
         var selectedCard = cut.FindAll(".instance-governance__preset-card--selected")
             .Single(x => x.TextContent.Contains("All Interactive Server", StringComparison.OrdinalIgnoreCase));
@@ -78,9 +78,51 @@ public class InstanceGovernanceSectionTests : IDisposable
 
         var cut = RenderGovernanceSection(renderPolicy: renderPolicy);
 
-        await Assert.That(cut.FindAll(".instance-governance__preset-card .mud-tooltip-root").Count).IsEqualTo(5);
-        await Assert.That(cut.FindAll(".mud-tooltip-root").Count).IsGreaterThanOrEqualTo(5);
+        await Assert.That(cut.FindAll(".instance-governance__preset-card .mud-tooltip-root").Count).IsEqualTo(4);
+        await Assert.That(cut.FindAll(".mud-tooltip-root").Count).IsGreaterThanOrEqualTo(4);
         await Assert.That(cut.Markup).Contains("Runtime Render Policy");
+    }
+
+    [Test]
+    public async Task RenderPolicyPreset_LegacyAutoInput_NormalizesToServerOnlyPresetAndModes()
+    {
+        var renderPolicy = new RenderPolicySettingsDto
+        {
+            RenderPolicyPreset = "AllInteractiveAutoNoPrerender",
+            GlobalRenderMode = "InteractiveAuto",
+            PublicSeoRenderMode = "InteractiveWebAssembly",
+            OperationalRenderMode = "InteractiveAuto",
+            AdminRenderMode = "InteractiveWebAssembly",
+            OnboardingRenderMode = "InteractiveAuto",
+            EnableAdvancedRenderPolicyOverrides = true
+        };
+
+        var cut = RenderGovernanceSection(renderPolicy: renderPolicy, displayMode: "advanced");
+
+        await Assert.That(renderPolicy.RenderPolicyPreset).IsEqualTo("AllInteractiveServer");
+        await Assert.That(renderPolicy.GlobalRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(renderPolicy.PublicSeoRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(renderPolicy.OperationalRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(renderPolicy.AdminRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(renderPolicy.OnboardingRenderMode).IsEqualTo("InteractiveServer");
+        await Assert.That(cut.Markup).Contains("Interactive Server", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Test]
+    public async Task RenderPolicyPreset_ServerOnlyUi_DoesNotRenderAutoOrWebAssemblyChoices()
+    {
+        var renderPolicy = new RenderPolicySettingsDto
+        {
+            RenderPolicyPreset = "CustomAdvanced",
+            EnableAdvancedRenderPolicyOverrides = true
+        };
+
+        var cut = RenderGovernanceSection(renderPolicy: renderPolicy, displayMode: "advanced");
+
+        await Assert.That(cut.Markup).DoesNotContain("Interactive Auto", StringComparison.OrdinalIgnoreCase);
+        await Assert.That(cut.Markup).DoesNotContain("Interactive WebAssembly", StringComparison.OrdinalIgnoreCase);
+        await Assert.That(cut.Markup).DoesNotContain("Render Mode</label>", StringComparison.OrdinalIgnoreCase);
+        await Assert.That(cut.Markup).Contains("Global render mode", StringComparison.OrdinalIgnoreCase);
     }
 
     [Test]
@@ -185,7 +227,6 @@ public class InstanceGovernanceSectionTests : IDisposable
 
     private IRenderedComponent<DynamicComponent> RenderGovernanceSection(
         TenantDelegationSettingsDto? delegation = null,
-        EventPolicyDto? eventPolicy = null,
         OrganizationPolicyDto? orgPolicy = null,
         RenderPolicySettingsDto? renderPolicy = null,
         string deploymentMode = "SingleTenant",
@@ -199,7 +240,6 @@ public class InstanceGovernanceSectionTests : IDisposable
              .Add(x => x.Parameters, new Dictionary<string, object>
              {
                  ["Delegation"] = delegation ?? new TenantDelegationSettingsDto(),
-                 ["EventPolicy"] = eventPolicy ?? new EventPolicyDto(),
                  ["OrganizationPolicy"] = orgPolicy ?? new OrganizationPolicyDto(),
                  ["RenderPolicy"] = renderPolicy ?? new RenderPolicySettingsDto(),
                  ["DeploymentMode"] = deploymentMode,

@@ -1,4 +1,4 @@
-// ABOUTME: Contract for user-scoped settings (event list customization).
+// ABOUTME: Contract for user-scoped settings customization.
 // ABOUTME: Supports authenticated (BFF API) and anonymous (localStorage) storage with SSR safety.
 
 using Explore.Blazor.Client.Clients;

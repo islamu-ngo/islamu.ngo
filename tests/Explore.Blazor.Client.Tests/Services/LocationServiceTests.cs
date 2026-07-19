@@ -8,13 +8,13 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class LocationServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly Microsoft.Extensions.Logging.ILogger<LocationService> _logger;
     private readonly LocationService _service;
 
     public LocationServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<Microsoft.Extensions.Logging.ILogger<LocationService>>();
         _service = new LocationService(_apiClient, _logger);
     }

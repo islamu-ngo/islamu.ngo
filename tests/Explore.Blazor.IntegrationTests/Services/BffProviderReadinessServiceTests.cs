@@ -71,7 +71,7 @@ public sealed class BffProviderReadinessServiceTests
         optionsMonitor.Get(AuthSchemeNames.Keycloak).Returns(new OpenIdConnectOptions
         {
             Authority = "https://idp.example.test/realms/islamu",
-            ClientId = "islamu-event-blazor"
+            ClientId = "islamu-ngo-blazor"
         });
         var service = CreateService(optionsMonitor: optionsMonitor);
 

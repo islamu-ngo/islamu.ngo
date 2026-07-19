@@ -38,7 +38,6 @@ public static class RefitClientRegistrationExtensions
 
     /// <summary>
     /// Registers a secure Refit client for BFF (Backend-for-Frontend) endpoints.
-    /// Guarantees that cookies, unauthorized handlers, and antiforgery tokens are applied.
     /// </summary>
     /// <typeparam name="TInterface">The Refit API interface</typeparam>
     /// <param name="services">The service collection</param>
@@ -59,11 +58,7 @@ public static class RefitClientRegistrationExtensions
                     $"A BaseAddress is required for BFF Refit client {typeof(TInterface).Name}.");
             }
         })
-        // 1. Ensure cookies/credentials are included for authentication
-        .AddHttpMessageHandler<BrowserCredentialsMessageHandler>()
-        // 2. Add CSRF token for mutating requests
         .AddHttpMessageHandler<BffAntiforgeryMessageHandler>()
-        // 3. Catch 401s and trigger re-auth
         .AddHttpMessageHandler<BffUnauthorizedHandler>();
 
         return builder;

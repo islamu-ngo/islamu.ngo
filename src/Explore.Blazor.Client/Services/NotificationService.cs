@@ -1,4 +1,4 @@
-// ABOUTME: Notification service wrapping NSwag-generated IEventApiClient notification methods.
+// ABOUTME: Notification service wrapping NSwag-generated IIslamuApiClient notification methods.
 // ABOUTME: Handles API failures with structured logging and safe fallback results.
 
 using Explore.Blazor.Client.Clients;
@@ -11,10 +11,10 @@ namespace Explore.Blazor.Client.Services;
 
 public class NotificationService : INotificationService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<NotificationService> _logger;
 
-    public NotificationService(IEventApiClient apiClient, ILogger<NotificationService> logger)
+    public NotificationService(IIslamuApiClient apiClient, ILogger<NotificationService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

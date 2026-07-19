@@ -11,7 +11,7 @@ namespace Explore.Blazor.Client.Services;
 
 public sealed class UserSettingsService : IUserSettingsService, IAsyncDisposable
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly IAuthStateService _authState;
     private readonly IJSRuntime _jsRuntime;
     private readonly ILogger<UserSettingsService> _logger;
@@ -21,7 +21,7 @@ public sealed class UserSettingsService : IUserSettingsService, IAsyncDisposable
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
     public UserSettingsService(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         IAuthStateService authState,
         IJSRuntime jsRuntime,
         ILogger<UserSettingsService> logger)
@@ -238,7 +238,7 @@ public sealed class UserSettingsService : IUserSettingsService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Converts API category (kebab-case "event-list") to key prefix (underscore "event_list").
+    /// Converts API category (kebab-case "public-experience") to key prefix (underscore "public_experience").
     /// </summary>
     private static string CategoryToKeyPrefix(string category)
     {

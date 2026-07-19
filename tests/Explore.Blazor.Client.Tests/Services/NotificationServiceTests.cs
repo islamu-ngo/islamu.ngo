@@ -16,13 +16,13 @@ namespace Explore.Blazor.Client.Tests.Services;
 /// </summary>
 public class NotificationServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<NotificationService> _logger;
     private readonly NotificationService _service;
 
     public NotificationServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _logger = Substitute.For<ILogger<NotificationService>>();
         _service = new NotificationService(_apiClient, _logger);
     }

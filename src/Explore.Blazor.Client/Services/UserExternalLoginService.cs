@@ -14,7 +14,7 @@ public interface IUserExternalLoginService
         CancellationToken cancellationToken = default);
 }
 
-public sealed class UserExternalLoginService(IEventApiClient apiClient) : IUserExternalLoginService
+public sealed class UserExternalLoginService(IIslamuApiClient apiClient) : IUserExternalLoginService
 {
     public Task<ICollection<UserExternalLoginListDto>> GetAsync(CancellationToken cancellationToken = default) =>
         apiClient.GetUserExternalLoginsAsync(cancellationToken: cancellationToken);

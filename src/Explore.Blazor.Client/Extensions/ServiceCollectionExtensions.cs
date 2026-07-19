@@ -1,5 +1,5 @@
-// ABOUTME: Shared service registrations used by both Blazor Server (BFF) and WASM host.
-// ABOUTME: Eliminates duplication between server Program.cs and client Program.cs (DRY).
+// ABOUTME: Shared service registrations used by the Blazor Server BFF host and client RCL.
+// ABOUTME: Keeps component-library service wiring reusable without a browser-side bootstrap.
 
 using Explore.Blazor.Client.Contracts.Interop;
 using Explore.Blazor.Client.Contracts.Providers;
@@ -8,8 +8,6 @@ using Explore.Blazor.Client.Contracts.Services.Accessibility;
 using Explore.Blazor.Client.Contracts.Services.Ai;
 using Explore.Blazor.Client.Contracts.Services.ControlPlane;
 using Explore.Blazor.Client.Contracts.Services.CustomProperties;
-using Explore.Blazor.Client.Contracts.Services.EventReporting;
-using Explore.Blazor.Client.Contracts.Services.Events;
 using Explore.Blazor.Client.Contracts.Services.Footer;
 using Explore.Blazor.Client.Contracts.Services.Lookup;
 using Explore.Blazor.Client.Contracts.Services.Notifications;
@@ -19,10 +17,9 @@ using Explore.Blazor.Client.Contracts.Services.Webhooks;
 using Explore.Blazor.Client.Services;
 using Explore.Blazor.Client.Services.Accessibility;
 using Explore.Blazor.Client.Services.Ai;
+using Explore.Blazor.Client.Services.Blogs;
 using Explore.Blazor.Client.Services.ControlPlane;
 using Explore.Blazor.Client.Services.Docking;
-using Explore.Blazor.Client.Services.EventSessionTemplateSync;
-using Explore.Blazor.Client.Services.EventTemplateSync;
 using Explore.Blazor.Client.Services.Http;
 using Explore.Blazor.Client.Services.Lookup;
 using Explore.Blazor.Client.Services.Webhooks;
@@ -34,7 +31,7 @@ namespace Explore.Blazor.Client.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers application services shared between Blazor Server and WebAssembly hosts.
+    /// Registers application services shared by the Blazor Server host and client RCL.
     /// Services that need different implementations per host (e.g., IAnalyticsInterop)
     /// must be registered separately by each host.
     /// </summary>
@@ -43,7 +40,7 @@ public static class ServiceCollectionExtensions
         Action<IServiceProvider, HttpClient>? configureBffRefitClient = null,
         Action<IHttpClientBuilder>? configureBffRefitClientBuilder = null)
     {
-        // Domain services (NSwag IEventApiClient consumers)
+        // Domain services (NSwag IIslamuApiClient consumers)
         services.AddScoped<IApiClientExecutor, ApiClientExecutor>();
         services.AddScoped<ExploreControlPlaneApiAdapter>();
         services.AddScoped<IControlPlaneOverviewService>(provider => provider.GetRequiredService<ExploreControlPlaneApiAdapter>());
@@ -55,19 +52,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IExternalApiKeyService, ExternalApiKeyService>();
         services.AddScoped<IWebhookManagementService, WebhookManagementService>();
         services.AddScoped<IListmonkIntegrationSettingsService, ListmonkIntegrationSettingsService>();
-        services.AddScoped<IEventService, EventService>();
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IOrganizationMemberService, OrganizationMemberService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<ICustomPropertyAdminService, CustomPropertyAdminService>();
         services.AddScoped<ICustomPropertyDefinitionService, CustomPropertyDefinitionService>();
-        services.AddScoped<ICustomPropertyValueService, CustomPropertyValueService>();
-        services.AddScoped<Explore.Blazor.Client.Contracts.Services.EventTemplates.IEventTemplateService, EventTemplateService>();
-        services.AddScoped<Explore.Blazor.Client.Contracts.Services.EventSessionTemplates.IEventSessionTemplateService, EventSessionTemplateService>();
-        services.AddScoped<Explore.Blazor.Client.Services.EventTemplateSync.IEventTemplateSyncService, EventTemplateSyncService>();
-        services.AddScoped<Explore.Blazor.Client.Services.EventSessionTemplateSync.IEventSessionTemplateSyncService, EventSessionTemplateSyncService>();
-        services.AddScoped<ILandingPageService, LandingPageService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ISupportAccessClientService, SupportAccessClientService>();
         services.AddScoped<IAiAssistantClientService, AiAssistantClientService>();
@@ -85,37 +75,19 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IImageStorageRecordClient, ImageStorageRecordClient>();
         services.AddScoped<IImageStorageService, ImageStorageService>();
 
+        // Blog rendering
+        services.AddScoped<BlogMarkdownRenderer>();
+        services.AddScoped<BlogService>();
+
         // Lookup / reference data services
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<ILocationService, LocationService>();
-        services.AddScoped<IAudienceAgeService, AudienceAgeService>();
-        services.AddScoped<IAudienceGenderService, AudienceGenderService>();
-        services.AddScoped<IEventFormatService, EventFormatService>();
-        services.AddScoped<IEventStatusService, EventStatusService>();
-        services.AddScoped<IEventTypeService, EventTypeService>();
         services.AddScoped<ILanguageService, LanguageService>();
         services.AddScoped<IMadhabService, MadhabService>();
-        services.AddScoped<IEventAspectService, EventAspectService>();
-        services.AddScoped<IScheduleItemKindService, ScheduleItemKindService>();
-        services.AddScoped<IRegistrationScopeService, RegistrationScopeService>();
-        services.AddScoped<IEventRegistrationPolicyService, EventRegistrationPolicyService>();
         services.AddScoped<ILookupCacheService, LookupCacheService>();
 
-        // Event-specific services
-        services.AddScoped<IEventRegistrationService, EventRegistrationService>();
-        services.AddScoped<Explore.Blazor.Client.Contracts.Services.EventReporting.IEventReportingService, EventReportingService>();
-        services.AddScoped<IEventReportModerationService, EventReportModerationService>();
-        services.AddScoped<IEventSessionLanguageService, EventSessionLanguageService>();
-        services.AddScoped<IEventSessionSpeakerService, EventSessionSpeakerService>();
-        services.AddScoped<IEventSessionAgendaItemService, EventSessionAgendaItemService>();
-        services.AddScoped<IEventDayService, EventDayService>();
-        services.AddScoped<IEventAgendaItemService, EventAgendaItemService>();
-        services.AddScoped<ILocationRoomService, LocationRoomService>();
         services.AddScoped<IActorService, ActorService>();
-        services.AddScoped<IEventCreationEligibilityService, EventCreationEligibilityService>();
-        services.AddScoped<IEventTeamService, EventTeamService>();
-        services.AddScoped<IContactShareConsentService, ContactShareConsentService>();
 
         // Notification services
         services.AddScoped<INotificationService, NotificationService>();

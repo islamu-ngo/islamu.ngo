@@ -89,11 +89,6 @@ public class HomeTests : IDisposable
         SetupLandingPageServices(new PublicExperienceShellDto
         {
             Mode = PublicExperienceMode.OrganizationCentric,
-            EventCatalog = new PublicExperienceEventCatalogDto
-            {
-                Label = "Programs",
-                Url = "/events?ActorId=11111111-1111-1111-1111-111111111111"
-            },
             PrimaryOrganization = new PublicExperiencePrimaryOrganizationDto
             {
                 State = PublicExperiencePrimaryOrganizationState.Available,
@@ -116,16 +111,6 @@ public class HomeTests : IDisposable
                     }
                 ]
             },
-            EventSections =
-            [
-                new PublicExperienceEventSectionDto
-                {
-                    Key = "youth",
-                    Label = "Youth Programs",
-                    Url = "/events?IncludedCategoryIds=11111111-1111-1111-1111-111111111112",
-                    Icon = "calendar"
-                }
-            ],
             Ctas =
             [
                 new PublicExperienceCtaDto
@@ -155,24 +140,6 @@ public class HomeTests : IDisposable
                     }
                 ]
             }
-        },
-        new List<EventListDto>
-        {
-            new EventListDto
-            {
-                Id = Guid.NewGuid(),
-                Title = "Friday Family Night",
-                Subtitle = "Dinner and reminders",
-                FirstSessionDate = new DateTimeOffset(2026, 5, 8, 18, 0, 0, TimeSpan.Zero),
-                EventTypeFullName = "Program",
-                AudienceGenderFullName = "All",
-                AudienceAgeFullName = "Families",
-                ActorDisplayName = "Northside Masjid",
-                ActorTypeFullName = "Organization",
-                EventStatusFullName = "Published",
-                VisibilityTypeFullName = "Public",
-                EventFormatFullName = "In Person"
-            }
         });
 
         // Act
@@ -182,9 +149,7 @@ public class HomeTests : IDisposable
         // Assert
         await Assert.That(cut.Markup).Contains("Northside Masjid");
         await Assert.That(cut.Markup).Contains("Community programs for every family.");
-        await Assert.That(cut.Markup).Contains("Youth Programs");
         await Assert.That(cut.Markup).Contains("Support Us");
-        await Assert.That(cut.Markup).Contains("Friday Family Night");
         await Assert.That(cut.Markup).Contains("Connect with Northside Masjid");
         await Assert.That(cut.Markup).Contains("Volunteer");
         await Assert.That(cut.Markup).DoesNotContain("Never Miss a Muslim Event Again");
@@ -197,11 +162,6 @@ public class HomeTests : IDisposable
         SetupLandingPageServices(new PublicExperienceShellDto
         {
             Mode = PublicExperienceMode.OrganizationCentric,
-            EventCatalog = new PublicExperienceEventCatalogDto
-            {
-                Label = "Programs",
-                Url = "/events"
-            },
             PrimaryOrganization = new PublicExperiencePrimaryOrganizationDto
             {
                 State = PublicExperiencePrimaryOrganizationState.Available,
@@ -249,7 +209,6 @@ public class HomeTests : IDisposable
         SetupLandingPageServices(new PublicExperienceShellDto
         {
             Mode = PublicExperienceMode.OrganizationCentric,
-            EventCatalog = new PublicExperienceEventCatalogDto { Label = "Programs", Url = "/events" },
             PrimaryOrganization = new PublicExperiencePrimaryOrganizationDto { State = PublicExperiencePrimaryOrganizationState.Missing }
         });
 
@@ -259,7 +218,6 @@ public class HomeTests : IDisposable
 
         // Assert
         await Assert.That(cut.Markup).Contains("Organization home is not available yet");
-        await Assert.That(cut.Markup).Contains("Browse Programs");
         await Assert.That(cut.Markup).DoesNotContain("Never Miss a Muslim Event Again");
     }
 
@@ -307,73 +265,8 @@ public class HomeTests : IDisposable
     /// <summary>
     /// Sets up services required by the landing page components.
     /// </summary>
-    private void SetupLandingPageServices(
-        PublicExperienceShellDto? shell = null,
-        IReadOnlyList<EventListDto>? featuredEvents = null)
+    private void SetupLandingPageServices(PublicExperienceShellDto? shell = null)
     {
-        // LandingPageService is required by both landing pages
-        var landingPageService = Substitute.For<ILandingPageService>();
-        landingPageService.GetFeaturedEventsAsync(Arg.Any<int>()).Returns(new List<EventListDto>());
-        landingPageService.GetTotalMembersCountAsync().Returns(100);
-        landingPageService.GetUpcomingEventsCountAsync().Returns(10);
-        _ctx.Services.AddSingleton(landingPageService);
-
-        // Services that LandingPageForUsers/NonUsers might need
-        var eventService = Substitute.For<IEventService>();
-        eventService.GetAllEventsAsync().Returns(new List<EventListDto>());
-        eventService.GetEventsPagedAsync(
-                Arg.Any<int>(),
-                Arg.Any<int>(),
-                searchTerm: Arg.Any<string?>(),
-                categoryId: Arg.Any<Guid?>(),
-                includedCategoryIds: Arg.Any<List<Guid>?>(),
-                excludedCategoryIds: Arg.Any<List<Guid>?>(),
-                categoryInclusionMode: Arg.Any<string?>(),
-                categoryExclusionMode: Arg.Any<string?>(),
-                includedTagIds: Arg.Any<List<Guid>?>(),
-                excludedTagIds: Arg.Any<List<Guid>?>(),
-                inclusionMode: Arg.Any<string?>(),
-                exclusionMode: Arg.Any<string?>(),
-                formatIds: Arg.Any<List<int>?>(),
-                madhabIds: Arg.Any<List<int>?>(),
-                locationIds: Arg.Any<List<Guid>?>(),
-                registrationModeIds: Arg.Any<List<int>?>(),
-                languageIds: Arg.Any<List<int>?>(),
-                dateFrom: Arg.Any<DateTimeOffset?>(),
-                dateTo: Arg.Any<DateTimeOffset?>(),
-                sortBy: Arg.Any<string?>(),
-                sortDescending: Arg.Any<bool?>(),
-                eventTypeIds: Arg.Any<List<int>?>(),
-                audienceGenderIds: Arg.Any<List<int>?>(),
-                audienceAgeIds: Arg.Any<List<int>?>(),
-                eventStatusIds: Arg.Any<List<int>?>(),
-                genderModeIds: Arg.Any<List<int>?>(),
-                includesQuranRecitation: Arg.Any<bool?>(),
-                referencePrayerIds: Arg.Any<List<int>?>(),
-                islamicPrimaryLanguageIds: Arg.Any<List<int>?>(),
-                hasIslamicAspect: Arg.Any<bool?>(),
-                skillLevelId: Arg.Any<int?>(),
-                isCodingCompetition: Arg.Any<bool?>(),
-                isHackathon: Arg.Any<bool?>(),
-                requiresLaptop: Arg.Any<bool?>(),
-                techStackTag: Arg.Any<string?>(),
-                hasTechAspect: Arg.Any<bool?>(),
-                actorId: Arg.Any<Guid?>(),
-                organizationId: Arg.Any<Guid?>(),
-                groupId: Arg.Any<Guid?>(),
-                cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(new PaginatedResult<EventListDto>
-            {
-                Items = featuredEvents?.ToList() ?? [],
-                PageNumber = 1,
-                PageSize = 3,
-                TotalCount = featuredEvents?.Count ?? 0
-            });
-        eventService.GetEventTypesAsync().Returns(new List<EventTypeListDto>());
-        eventService.GetEventFormatsAsync().Returns(new List<EventFormatListDto>());
-        eventService.GetAllSessionsAsync().Returns(new List<EventSessionListDto>());
-        _ctx.Services.AddSingleton(eventService);
-
         var categoryService = Substitute.For<ICategoryService>();
         categoryService.GetAllCategoriesAsync().Returns(new List<CategoryListDto>());
         _ctx.Services.AddSingleton(categoryService);

@@ -2,7 +2,7 @@
 // ABOUTME: Verifies status display, secret input, provider quick actions, and BFF JS interop integration.
 
 using Explore.Blazor.Client.Models.Responses;
-using Explore.Blazor.Client.Pages.Events;
+using Explore.Blazor.Client.Pages;
 
 namespace Explore.Blazor.Client.Tests.Pages;
 
@@ -83,7 +83,7 @@ public class SetupTests : IDisposable
 
     private static Type GetPageComponentType(string componentName)
     {
-        var componentType = typeof(EventList).Assembly
+        var componentType = typeof(Home).Assembly
             .GetTypes()
             .FirstOrDefault(t => t.Name == componentName && typeof(IComponent).IsAssignableFrom(t));
 

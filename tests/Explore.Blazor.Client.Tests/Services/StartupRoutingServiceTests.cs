@@ -50,8 +50,8 @@ public sealed class StartupRoutingServiceTests
         var publicExperience = Substitute.For<IPublicExperienceService>();
         publicExperience.GetCachedShellAsync().Returns(Task.FromResult<PublicExperienceShellDto?>(null));
         publicExperience.GetCachedSettingsAsync().Returns(Task.FromResult<PublicExperienceSettingsDto?>(null));
-        publicExperience.ResolveHomeRoute(Arg.Any<PublicExperienceShellDto?>()).Returns("/events");
-        publicExperience.ResolveHomeRoute(Arg.Any<PublicExperienceSettingsDto?>()).Returns("/events");
+        publicExperience.ResolveHomeRoute(Arg.Any<PublicExperienceShellDto?>()).Returns("/home");
+        publicExperience.ResolveHomeRoute(Arg.Any<PublicExperienceSettingsDto?>()).Returns("/home");
         return publicExperience;
     }
 }

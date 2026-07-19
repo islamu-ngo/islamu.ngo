@@ -1,7 +1,10 @@
+// ABOUTME: Multi-tenancy configuration for the ISLAMU website and community platform.
+// ABOUTME: Defines single-instance defaults and future tenant routing settings.
+
 namespace Explore.Blazor.Client.Configuration;
 
 /// <summary>
-/// Multi-tenancy configuration for the event platform.
+/// Multi-tenancy configuration for the ISLAMU website and community platform.
 ///
 /// DEPLOYMENT MODES:
 /// - MODE 1 (Default): Single-Instance Deployment

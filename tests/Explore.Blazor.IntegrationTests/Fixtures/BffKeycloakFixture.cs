@@ -17,7 +17,7 @@ public sealed class BffKeycloakFixture : IAsyncInitializer, IAsyncDisposable
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromMinutes(2);
 
     public const string RealmName = "ISLAMU";
-    public const string TestClientId = "islamu-event-blazor";
+    public const string TestClientId = "islamu-ngo-blazor";
     public const string TestClientSecret = "test-blazor-secret";
 
     private IContainer _container = null!;

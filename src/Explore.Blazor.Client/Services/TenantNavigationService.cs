@@ -13,11 +13,11 @@ namespace Explore.Blazor.Client.Services;
 /// </summary>
 public class TenantNavigationService : ITenantNavigationService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<TenantNavigationService> _logger;
 
     public TenantNavigationService(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         ILogger<TenantNavigationService> logger)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));

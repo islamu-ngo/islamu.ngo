@@ -1,5 +1,5 @@
 // ABOUTME: Client service for anonymous-safe public experience settings used by startup routing and white-label UI.
-// ABOUTME: Provides a single route-resolution helper for event-list versus landing-page entry behavior.
+// ABOUTME: Provides a single route-resolution helper for default versus landing-page entry behavior.
 
 using Explore.Blazor.Client.Clients;
 
@@ -20,7 +20,7 @@ public interface IPublicExperienceService
 
 public class PublicExperienceService : IPublicExperienceService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<PublicExperienceService> _logger;
     private PublicExperienceSettingsDto? _cachedSettings;
     private DateTimeOffset _settingsCacheExpiresAt;
@@ -31,7 +31,7 @@ public class PublicExperienceService : IPublicExperienceService
     public event Action? SettingsChanged;
 
     public PublicExperienceService(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         ILogger<PublicExperienceService> logger)
     {
         _apiClient = apiClient;
@@ -49,13 +49,13 @@ public class PublicExperienceService : IPublicExperienceService
         catch (ApiException ex)
         {
             _logger.LogWarning(
-                "Failed to load public experience settings, falling back to event list. Status: {StatusCode}.",
+                "Failed to load public experience settings, falling back to default public route. Status: {StatusCode}.",
                 ex.StatusCode);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load public experience settings, falling back to event list.");
+            _logger.LogWarning(ex, "Failed to load public experience settings, falling back to default public route.");
             return null;
         }
     }
@@ -71,13 +71,13 @@ public class PublicExperienceService : IPublicExperienceService
         catch (ApiException ex)
         {
             _logger.LogWarning(
-                "Failed to load public experience shell, falling back to event list. Status: {StatusCode}.",
+                "Failed to load public experience shell, falling back to default public route. Status: {StatusCode}.",
                 ex.StatusCode);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load public experience shell, falling back to event list.");
+            _logger.LogWarning(ex, "Failed to load public experience shell, falling back to default public route.");
             return null;
         }
     }

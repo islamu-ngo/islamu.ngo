@@ -1044,9 +1044,7 @@
             return;
         }
 
-        SetReferenceResults(MergeReferenceResults(
-            actorReferences,
-            references?.Where(reference => !IsRemovedEventReference(reference))));
+        SetReferenceResults(MergeReferenceResults(actorReferences, references));
         _isReferenceSearchRunning = false;
     }
 
@@ -1573,10 +1571,6 @@
         "Group" => "Group",
         _ => "Ref"
     };
-
-    private static bool IsRemovedEventReference(HalResourceOfAiReferenceSearchResultDto reference) =>
-        string.Equals(reference.Kind, "Event", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(reference.Kind, "EventSession", StringComparison.OrdinalIgnoreCase);
 
     private static string GetReferenceDisplayKind(HalResourceOfAiReferenceSearchResultDto reference)
     {

@@ -1,5 +1,5 @@
 // ABOUTME: Component tests for Phase 9.7 + 9.9 custom-property governance admin UI sections.
-// ABOUTME: Verifies exposure grid, governance report, and projection status loading/error/success states.
+// ABOUTME: Verifies exposure-grid and governance-report loading, error, and success states.
 
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Contracts.Services.CustomProperties;
@@ -41,7 +41,7 @@ public class CustomPropertyGovernanceTests : IDisposable
     private static CustomPropertyDefinitionListDto SampleDefinition(string key = "venue_capacity") => new()
     {
         Id = Guid.NewGuid(),
-        EntityTypeName = (int)EntityTypeName.Event,
+        EntityTypeName = (int)EntityTypeName.Organization,
         Namespace = "tenant",
         Key = key,
         DisplayName = "Venue Capacity",
@@ -145,7 +145,7 @@ public class CustomPropertyGovernanceTests : IDisposable
             Namespace = "tenant",
             Key = "venue_capacity",
             DisplayName = "Venue Capacity",
-            EntityScope = "Event",
+            EntityScope = "Organization",
             PropertyType = "Number",
             ExposureLevel = ExposureLevel.Public,
             IsSearchable = true,
@@ -176,224 +176,4 @@ public class CustomPropertyGovernanceTests : IDisposable
         await Assert.That(cut.Markup).Contains("42");
     }
 
-    // ── ProjectionStatusSection ──
-
-    [Test]
-    public async Task ProjectionStatus_ShowsBothProjectionCards_WhenLoaded()
-    {
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_custom_property_projection",
-                    ProjectionVersion = 1,
-                    State = 0,
-                    RowsProcessed = 100
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_session_custom_property_projection",
-                    ProjectionVersion = 1,
-                    State = 0,
-                    RowsProcessed = 50
-                }
-            });
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Event Projection") && cut.Markup.Contains("Session Projection"),
-            TimeSpan.FromSeconds(3));
-
-        await Assert.That(cut.Markup).Contains("Event Projection");
-        await Assert.That(cut.Markup).Contains("Session Projection");
-    }
-
-    [Test]
-    public async Task ProjectionStatus_EncodesDangerousLastErrorText()
-    {
-        const string dangerousError = "<img src=x onerror=alert(1)><script>alert(2)</script>";
-
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_custom_property_projection",
-                    ProjectionVersion = 1,
-                    RowsProcessed = 100,
-                    LastErrorMessage = dangerousError
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>());
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Last error:", StringComparison.OrdinalIgnoreCase),
-            TimeSpan.FromSeconds(3));
-
-        await Assert.That(cut.Markup).Contains("&lt;img");
-        await Assert.That(cut.Markup).Contains("&lt;script&gt;");
-        await Assert.That(cut.FindAll("img").Count).IsEqualTo(0);
-        await Assert.That(cut.FindAll("script").Count).IsEqualTo(0);
-    }
-
-
-    [Test]
-    public async Task ProjectionStatus_HidesActions_WhenHalLinksAreMissing()
-    {
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_custom_property_projection",
-                    ProjectionVersion = 1,
-                    RowsProcessed = 100
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_session_custom_property_projection",
-                    ProjectionVersion = 1,
-                    RowsProcessed = 50
-                }
-            });
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Event Projection") && cut.Markup.Contains("Session Projection"),
-            TimeSpan.FromSeconds(3));
-
-        await Assert.That(cut.Markup).DoesNotContain("Rebuild</button>");
-        await Assert.That(cut.Markup).DoesNotContain("Drain dirty scopes");
-    }
-
-    [Test]
-    public async Task ProjectionStatus_RendersActions_WhenHalLinksArePresent()
-    {
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_custom_property_projection",
-                    ProjectionVersion = 1,
-                    RowsProcessed = 100,
-                    _links = CreateLinks("rebuild", "drain-dirty-scopes")
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = "event_session_custom_property_projection",
-                    ProjectionVersion = 1,
-                    RowsProcessed = 50,
-                    _links = CreateLinks("rebuild")
-                }
-            });
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Drain dirty scopes"), TimeSpan.FromSeconds(3));
-
-        await Assert.That(cut.Markup).Contains("Drain dirty scopes");
-        await Assert.That(cut.FindAll("button").Count(button => button.TextContent.Contains("Rebuild", StringComparison.OrdinalIgnoreCase))).IsEqualTo(2);
-    }
-
-
-    [Test]
-    public async Task ProjectionStatus_LoadsDirtyScopes_ForEventProjectionName()
-    {
-        const string projectionName = "event_custom_property_projection";
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = projectionName,
-                    ProjectionVersion = 1,
-                    _links = CreateLinks("dirty-scopes")
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>());
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Event Projection"), TimeSpan.FromSeconds(3));
-
-        await _adminService.Received().GetDirtyScopesAsync(_tenantId, projectionName, 1, 100, Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task ProjectionStatus_DrainAction_UsesEventProjectionName()
-    {
-        const string projectionName = "event_custom_property_projection";
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>
-            {
-                new()
-                {
-                    ProjectionName = projectionName,
-                    ProjectionVersion = 1,
-                    _links = CreateLinks("drain-dirty-scopes", "dirty-scopes")
-                }
-            });
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>());
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-        _adminService.DrainDirtyScopesAsync(Arg.Any<Guid>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
-            .Returns(new BaseCommandResponseOfDrainDirtyScopesResponseDto
-            {
-                Success = true,
-                Id = new DrainDirtyScopesResponseDto { DrainedCount = 3 }
-            });
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("Drain dirty scopes"), TimeSpan.FromSeconds(3));
-
-        cut.FindAll("button").First(button => button.TextContent.Contains("Drain dirty scopes", StringComparison.OrdinalIgnoreCase)).Click();
-
-        await _adminService.Received().DrainDirtyScopesAsync(_tenantId, projectionName, Arg.Any<CancellationToken>());
-    }
-
-    [Test]
-    public async Task ProjectionStatus_ShowsErrorAlert_WhenStatusFails()
-    {
-        _adminService.GetEventProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .ThrowsAsync(new InvalidOperationException("status unavailable"));
-        _adminService.GetSessionProjectionStatusAsync(Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
-            .Returns(new List<HalResourceOfProjectionStatusDto>());
-        _adminService.GetDirtyScopesAsync(Arg.Any<Guid?>(), Arg.Any<string?>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(PaginatedResult<HalResourceOfProjectionDirtyScopeDto>.Empty());
-
-        var cut = Render("ProjectionStatusSection");
-        cut.WaitForState(() => cut.Markup.Contains("status unavailable", StringComparison.OrdinalIgnoreCase),
-            TimeSpan.FromSeconds(3));
-
-        await Assert.That(cut.Markup).Contains("status unavailable");
-    }
-
-    private static Dictionary<string, HalLink> CreateLinks(params string[] relations) =>
-        relations.ToDictionary(
-            relation => relation,
-            relation => new HalLink { Href = $"/api/projections/{relation}", Method = "POST" },
-            StringComparer.OrdinalIgnoreCase);
 }

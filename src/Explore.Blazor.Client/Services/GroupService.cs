@@ -26,10 +26,10 @@ public sealed record GroupMembersResult(ICollection<GroupMemberDto> Members, boo
 
 public class GroupService : IGroupService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly ILogger<GroupService> _logger;
 
-    public GroupService(IEventApiClient apiClient, ILogger<GroupService> logger)
+    public GroupService(IIslamuApiClient apiClient, ILogger<GroupService> logger)
     {
         _apiClient = apiClient;
         _logger = logger;

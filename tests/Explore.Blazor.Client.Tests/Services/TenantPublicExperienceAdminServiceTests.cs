@@ -7,14 +7,14 @@ public class TenantPublicExperienceAdminServiceTests
 {
     private const string Category = "PublicExperience";
 
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly IPublicExperienceService _publicExperienceService;
     private readonly ILogger<TenantPublicExperienceAdminService> _logger;
     private readonly TenantPublicExperienceAdminService _service;
 
     public TenantPublicExperienceAdminServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         _publicExperienceService = Substitute.For<IPublicExperienceService>();
         _logger = Substitute.For<ILogger<TenantPublicExperienceAdminService>>();
         _service = new TenantPublicExperienceAdminService(_apiClient, _publicExperienceService, _logger);
@@ -31,11 +31,9 @@ public class TenantPublicExperienceAdminServiceTests
             Settings =
             [
                 Setting("public_experience.mode", "OrganizationCentric"),
-                Setting("public_experience.event_catalog_label", "Programs"),
                 Setting("public_experience.primary_organization_id", organizationId.ToString("D"), canEdit: false),
                 Setting("public_experience.home_blocks", "{\"schemaVersion\":1,\"blocks\":[{\"id\":\"hero\"}]}"),
-                Setting("public_experience.ctas", "{\"schemaVersion\":1,\"ctas\":[]}"),
-                Setting("public_experience.event_section_presets", "{\"schemaVersion\":1,\"presets\":[]}")
+                Setting("public_experience.ctas", "{\"schemaVersion\":1,\"ctas\":[]}")
             ]
         };
 
@@ -51,7 +49,6 @@ public class TenantPublicExperienceAdminServiceTests
 
         // Assert
         await Assert.That(result.Mode).IsEqualTo("OrganizationCentric");
-        await Assert.That(result.EventCatalogLabel).IsEqualTo("Programs");
         await Assert.That(result.PrimaryOrganizationId).IsEqualTo(organizationId);
         await Assert.That(result.HomeBlocksJson).Contains("hero");
         await Assert.That(result.CanEditPrimaryOrganization).IsFalse();
@@ -74,7 +71,6 @@ public class TenantPublicExperienceAdminServiceTests
 
         // Assert
         await Assert.That(result.Mode).IsEqualTo("DiscoveryCentric");
-        await Assert.That(result.EventCatalogLabel).IsEqualTo("Events");
         await Assert.That(result.PrimaryOrganizationId).IsNull();
         await Assert.That(result.HomeBlocksJson).IsEqualTo("{\"schemaVersion\":1,\"blocks\":[]}");
         await Assert.That(result.CanEditAny).IsTrue();
@@ -86,23 +82,6 @@ public class TenantPublicExperienceAdminServiceTests
         // Arrange
         var model = new TenantPolicySettingsDto();
 
-        _apiClient.GetTenantScopedSettingsAsync(
-                "Events",
-                null,
-                null,
-                Arg.Any<CancellationToken>())
-            .Returns(new SettingGroupResponseDto
-            {
-                Category = "Events",
-                Settings =
-                [
-                    Setting("events.user_submission_enabled", "false"),
-                    Setting("events.organization_submission_enabled", "true"),
-                    Setting("events.group_submission_enabled", "false"),
-                    Setting("events.require_approval", "true"),
-                    Setting("events.card_click_opens_detail_page", "true")
-                ]
-            });
         _apiClient.GetTenantScopedSettingsAsync(
                 "Organizations",
                 null,
@@ -153,11 +132,6 @@ public class TenantPublicExperienceAdminServiceTests
         await _service.ApplySingleTenantPolicySettingsAsync(model);
 
         // Assert
-        await Assert.That(model.AllowUserSubmittedEvents).IsFalse();
-        await Assert.That(model.AllowOrganizationSubmittedEvents).IsTrue();
-        await Assert.That(model.AllowGroupSubmittedEvents).IsFalse();
-        await Assert.That(model.RequireEventApproval).IsTrue();
-        await Assert.That(model.EventCardClickOpensDetailPage).IsTrue();
         await Assert.That(model.RequireOrganizationVerification).IsFalse();
         await Assert.That(model.AllowOrganizationSelfRegistration).IsFalse();
         await Assert.That(model.AllowGroupSelfRegistration).IsFalse();
@@ -168,7 +142,6 @@ public class TenantPublicExperienceAdminServiceTests
         await Assert.That(model.AiAssistantModelId).IsEqualTo("gpt-test");
         await Assert.That(model.AiAssistantAllowAnonymousAccess).IsTrue();
         await Assert.That(model.CanTenantOmitVerification).IsTrue();
-        await Assert.That(model.CanOverrideEventCardClickBehavior).IsTrue();
         await Assert.That(model.CanOverrideAiAssistant).IsTrue();
     }
 
@@ -179,11 +152,9 @@ public class TenantPublicExperienceAdminServiceTests
         var model = new TenantPublicExperienceAdminModel
         {
             Mode = "OrganizationCentric",
-            EventCatalogLabel = "  Programs  ",
             PrimaryOrganizationId = null,
             HomeBlocksJson = " ",
-            CtasJson = "{\"schemaVersion\":1,\"ctas\":[{\"id\":\"join\"}]}",
-            EventSectionPresetsJson = "\n{\"schemaVersion\":1,\"presets\":[]}\n"
+            CtasJson = "{\"schemaVersion\":1,\"ctas\":[{\"id\":\"join\"}]}"
         };
 
         UpdateSettingBatchDto? captured = null;
@@ -203,11 +174,9 @@ public class TenantPublicExperienceAdminServiceTests
         await Assert.That(captured).IsNotNull();
         await Assert.That(captured!.Mode).IsEqualTo(BatchUpdateMode.Strict);
         await Assert.That(captured.Values["public_experience.mode"]).IsEqualTo("OrganizationCentric");
-        await Assert.That(captured.Values["public_experience.event_catalog_label"]).IsEqualTo("Programs");
         await Assert.That(captured.Values["public_experience.primary_organization_id"]).IsEqualTo(string.Empty);
         await Assert.That(captured.Values["public_experience.home_blocks"]).IsEqualTo("{\"schemaVersion\":1,\"blocks\":[]}");
         await Assert.That(captured.Values["public_experience.ctas"]).Contains("join");
-        await Assert.That(captured.Values["public_experience.event_section_presets"]).IsEqualTo("{\"schemaVersion\":1,\"presets\":[]}");
     }
 
     [Test]
@@ -254,17 +223,13 @@ public class TenantPublicExperienceAdminServiceTests
         var model = new TenantPublicExperienceAdminModel
         {
             Mode = "OrganizationCentric",
-            EventCatalogLabel = "Programs",
             PrimaryOrganizationId = organizationId,
             HomeBlocksJson = """{"schemaVersion":1,"blocks":[{"id":"hero"}]}""",
             CtasJson = """{"schemaVersion":1,"ctas":[]}""",
-            EventSectionPresetsJson = """{"schemaVersion":1,"presets":[]}""",
             CanEditMode = true,
-            CanEditEventCatalogLabel = false,
             CanEditPrimaryOrganization = true,
             CanEditHomeBlocks = false,
-            CanEditCtas = true,
-            CanEditEventSectionPresets = false
+            CanEditCtas = true
         };
 
         UpdateSettingBatchDto? captured = null;
@@ -285,9 +250,7 @@ public class TenantPublicExperienceAdminServiceTests
         await Assert.That(captured!.Values.ContainsKey("public_experience.mode")).IsTrue();
         await Assert.That(captured.Values.ContainsKey("public_experience.primary_organization_id")).IsTrue();
         await Assert.That(captured.Values.ContainsKey("public_experience.ctas")).IsTrue();
-        await Assert.That(captured.Values.ContainsKey("public_experience.event_catalog_label")).IsFalse();
         await Assert.That(captured.Values.ContainsKey("public_experience.home_blocks")).IsFalse();
-        await Assert.That(captured.Values.ContainsKey("public_experience.event_section_presets")).IsFalse();
         await Assert.That(captured.Values["public_experience.primary_organization_id"]).IsEqualTo(organizationId.ToString("D"));
     }
 
@@ -298,11 +261,9 @@ public class TenantPublicExperienceAdminServiceTests
         var model = new TenantPublicExperienceAdminModel
         {
             CanEditMode = false,
-            CanEditEventCatalogLabel = false,
             CanEditPrimaryOrganization = false,
             CanEditHomeBlocks = false,
-            CanEditCtas = false,
-            CanEditEventSectionPresets = false
+            CanEditCtas = false
         };
 
         // Act
@@ -325,11 +286,6 @@ public class TenantPublicExperienceAdminServiceTests
         // Arrange
         var model = new TenantPolicySettingsDto
         {
-            AllowUserSubmittedEvents = true,
-            AllowOrganizationSubmittedEvents = true,
-            AllowGroupSubmittedEvents = false,
-            RequireEventApproval = true,
-            EventCardClickOpensDetailPage = true,
             RequireOrganizationVerification = true,
             AllowOrganizationSelfRegistration = false,
             AllowGroupSelfRegistration = true,
@@ -358,17 +314,15 @@ public class TenantPublicExperienceAdminServiceTests
 
         // Assert
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(categories).IsEquivalentTo(["Events", "Organizations", "Groups", "AiAssistant"]);
-        await Assert.That(batches.Count).IsEqualTo(4);
+        await Assert.That(categories).IsEquivalentTo(["Organizations", "Groups", "AiAssistant"]);
+        await Assert.That(batches.Count).IsEqualTo(3);
         await Assert.That(batches.All(batch => batch.Mode == BatchUpdateMode.Strict)).IsTrue();
-        await Assert.That(batches[0].Values["events.user_submission_enabled"]).IsEqualTo("true");
-        await Assert.That(batches[0].Values["events.group_submission_enabled"]).IsEqualTo("false");
-        await Assert.That(batches[1].Values["organizations.verification_required"]).IsEqualTo("true");
-        await Assert.That(batches[2].Values["groups.self_registration_enabled"]).IsEqualTo("true");
-        await Assert.That(batches[3].Values["ai_assistant.enabled"]).IsEqualTo("true");
-        await Assert.That(batches[3].Values["ai_assistant.provider"]).IsEqualTo("openai-compatible");
-        await Assert.That(batches[3].Values["ai_assistant.endpoint_url"]).IsEqualTo("https://ai.example.test");
-        await Assert.That(batches[3].Values["ai_assistant.model_id"]).IsEqualTo("gpt-test");
+        await Assert.That(batches[0].Values["organizations.verification_required"]).IsEqualTo("true");
+        await Assert.That(batches[1].Values["groups.self_registration_enabled"]).IsEqualTo("true");
+        await Assert.That(batches[2].Values["ai_assistant.enabled"]).IsEqualTo("true");
+        await Assert.That(batches[2].Values["ai_assistant.provider"]).IsEqualTo("openai-compatible");
+        await Assert.That(batches[2].Values["ai_assistant.endpoint_url"]).IsEqualTo("https://ai.example.test");
+        await Assert.That(batches[2].Values["ai_assistant.model_id"]).IsEqualTo("gpt-test");
     }
 
     [Test]
@@ -377,9 +331,6 @@ public class TenantPublicExperienceAdminServiceTests
         // Arrange
         var model = new TenantPolicySettingsDto
         {
-            AllowUserSubmittedEvents = true,
-            AllowOrganizationSubmittedEvents = true,
-            AllowGroupSubmittedEvents = true,
             RequireOrganizationVerification = true,
             AiAssistantEnabled = true,
             AiAssistantProvider = "openai-compatible",
@@ -402,8 +353,8 @@ public class TenantPublicExperienceAdminServiceTests
 
         // Assert
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(batches.Count).IsEqualTo(4);
-        var aiBatch = batches[3];
+        await Assert.That(batches.Count).IsEqualTo(3);
+        var aiBatch = batches[2];
         await Assert.That(aiBatch.Values["ai_assistant.enabled"]).IsEqualTo("true");
         await Assert.That(aiBatch.Values["ai_assistant.provider"]).IsEqualTo("openai-compatible");
         await Assert.That(aiBatch.Values["ai_assistant.endpoint_url"]).IsEqualTo("http://127.0.0.1:1337/v1");

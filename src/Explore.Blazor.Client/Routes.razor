@@ -21,6 +21,7 @@
 @using Explore.Blazor.Client.Pages.Legal
 @using Explore.Blazor.Client.Pages.Contact
 @using Explore.Blazor.Client.Pages.About
+@using Explore.Blazor.Client.Pages.Blogs
 @using Explore.Blazor.Client.Pages.Onboarding
 @using Explore.Blazor.Client.Providers
 @using Explore.Blazor.Client.Routing.Guards
@@ -83,6 +84,13 @@
                 Guards = RequireAuthenticated()
             },
 
+            // Blog routes - management routes stay before the public slug route
+            new RouteConfig { Path = "/blog", Component = typeof(BlogIndex), Transition = RouteTransition.Fade },
+            new RouteConfig { Path = "/blog/manage/new", Component = typeof(BlogEditor), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
+            new RouteConfig { Path = "/blog/manage", Component = typeof(BlogManagement), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
+            new RouteConfig { Path = "/blog/manage/:Id", Component = typeof(BlogEditor), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
+            new RouteConfig { Path = "/blog/:Slug", Component = typeof(BlogArticle), Transition = RouteTransition.Fade },
+
             // User authenticated routes
             new RouteConfig { Path = "/my/profile", Component = typeof(UserProfile), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
             new RouteConfig { Path = "/my/reviews", Component = typeof(MyReviews), Transition = RouteTransition.Fade, Guards = RequireAuthenticated() },
@@ -104,8 +112,6 @@
             new RouteConfig { Path = "/about", Component = typeof(AboutUs), Transition = RouteTransition.Fade },
             new RouteConfig { Path = "/contact", Component = typeof(Contact), Transition = RouteTransition.Fade },
             new RouteConfig { Path = "/community-guidelines", Component = typeof(CommunityGuidelines), Transition = RouteTransition.Fade },
-            new RouteConfig { Path = "/privacy", Component = typeof(PrivacyPolicy), Transition = RouteTransition.Fade },
-            new RouteConfig { Path = "/terms", Component = typeof(TermsOfService), Transition = RouteTransition.Fade },
 
             // Admin routes
             new RouteConfig { Path = "/admin/organization/:organizationId", Component = typeof(AdminListDetails), Transition = RouteTransition.Fade, Guards = RequireAdmin() },

@@ -218,12 +218,12 @@ public class AnalyticsInitializerTests : IDisposable
                 Arg.Is<IDictionary<string, object>>(properties => MatchesInitialPageViewProperties(properties, tenantId)));
         });
 
-        navigationManager.NavigateTo("/events");
+        navigationManager.NavigateTo("/organizations");
 
         cut.WaitForAssertion(() =>
         {
             analyticsInterop.Received(1).PageViewAsync(
-                "/events",
+                "/organizations",
                 Arg.Is<IDictionary<string, object>>(properties => MatchesProgrammaticPageViewProperties(properties, tenantId, "/")));
         });
     }

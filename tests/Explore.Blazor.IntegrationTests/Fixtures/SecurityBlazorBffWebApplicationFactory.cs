@@ -31,7 +31,7 @@ public class SecurityBlazorBffWebApplicationFactory : WebApplicationFactory<Prog
     public SecurityBlazorBffWebApplicationFactory(
         string keycloakAuthority,
         string keycloakMetadataAddress,
-        string keycloakClientId = "islamu-event-blazor",
+        string keycloakClientId = "islamu-ngo-blazor",
         string keycloakClientSecret = "test-blazor-secret")
     {
         _keycloakAuthority = keycloakAuthority;

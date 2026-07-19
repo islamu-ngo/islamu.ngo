@@ -27,23 +27,6 @@ public sealed class AiAssistantConversationStateTests
     }
 
     [Test]
-    public async Task HasEventLink_ReadsReferenceHalLink()
-    {
-        var reference = HalLinkTestFactory.WithLinks(new HalResourceOfAiReferenceSearchResultDto
-        {
-            Kind = "Event",
-            ReferenceId = Guid.CreateVersion7(),
-            DisplayName = "Community Iftar"
-        }, new HalLinkTestLink("event", "/api/events/1", "GET"));
-
-        await Assert.That(AiAssistantConversationState.HasEventLink(reference)).IsTrue();
-
-        reference._links.Clear();
-
-        await Assert.That(AiAssistantConversationState.HasEventLink(reference)).IsFalse();
-    }
-
-    [Test]
     public async Task StateMutators_UpdateValuesAndNotifySubscribers()
     {
         var state = new AiAssistantConversationState();
@@ -53,7 +36,7 @@ public sealed class AiAssistantConversationStateTests
         var conversation = new HalResourceOfAiConversationDto { Id = Guid.CreateVersion7(), Title = "Planning" };
         var references = new List<HalResourceOfAiReferenceSearchResultDto>
         {
-            new() { Kind = "Event", ReferenceId = Guid.CreateVersion7(), DisplayName = "Event" }
+            new() { Kind = "Organization", ReferenceId = Guid.CreateVersion7(), DisplayName = "Organization" }
         };
 
         state.SetLoading(true);

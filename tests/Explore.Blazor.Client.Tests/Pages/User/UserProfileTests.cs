@@ -1,5 +1,5 @@
 // ABOUTME: Component tests for UserProfile auth-sensitive loading/error/fallback/success states.
-// ABOUTME: Verifies sync fallback and stats/review rendering from service data.
+// ABOUTME: Verifies sync fallback and review rendering from service data.
 
 using Explore.Blazor.Client.Pages.User;
 
@@ -9,7 +9,6 @@ public class UserProfileTests : IDisposable
 {
     private readonly BlazorTestContext _ctx;
     private readonly IUserService _userService;
-    private readonly IEventService _eventService;
     private readonly IOrganizationReviewService _reviewService;
 
     public UserProfileTests()
@@ -17,14 +16,10 @@ public class UserProfileTests : IDisposable
         _ctx = new BlazorTestContext();
         _ctx.AddShellStateMocks();
         _userService = Substitute.For<IUserService>();
-        _eventService = Substitute.For<IEventService>();
         _reviewService = Substitute.For<IOrganizationReviewService>();
 
         _ctx.Services.AddSingleton(_userService);
-        _ctx.Services.AddSingleton(_eventService);
         _ctx.Services.AddSingleton(_reviewService);
-        _ctx.Services.AddSingleton(Substitute.For<IContactShareConsentService>());
-        _ctx.Services.AddSingleton(Substitute.For<IEventRegistrationService>());
         _ctx.Services.AddSingleton(Substitute.For<ILogger<UserProfile>>());
 
         _ctx.SetAuthenticatedUser(Guid.NewGuid(), "Test User", "test@example.com");
@@ -83,7 +78,7 @@ public class UserProfileTests : IDisposable
     }
 
     [Test]
-    public async Task UserProfile_ShowsUserAndStats_WhenDataLoadsSuccessfully()
+    public async Task UserProfile_ShowsUserAndReviews_WhenDataLoadsSuccessfully()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -97,35 +92,13 @@ public class UserProfileTests : IDisposable
             EmailVerified = true
         });
 
-        _eventService.GetRegistrationEventsByUserAsync(userId).Returns(
-        [
-            new EventListDto
-            {
-                Id = Guid.NewGuid(),
-                Title = "Registered Conference",
-                EventTypeFullName = "Conference",
-                FirstSessionDate = DateTimeOffset.UtcNow.AddDays(7),
-                LastSessionDate = DateTimeOffset.UtcNow.AddDays(7),
-                IsPast = false
-            },
-            new EventListDto
-            {
-                Id = Guid.NewGuid(),
-                Title = "Past Workshop",
-                EventTypeFullName = "Workshop",
-                FirstSessionDate = DateTimeOffset.UtcNow.AddDays(-7),
-                LastSessionDate = DateTimeOffset.UtcNow.AddDays(-7),
-                IsPast = true
-            }
-        ]);
-
         _reviewService.GetReviewsByUserId(userId).Returns(
         [
             new OrganizationReviewDto
             {
                 Id = Guid.NewGuid(),
                 OrganizationFullName = "Community Center",
-                Comment = "Great event",
+                Comment = "Great organization",
                 Rating = 5,
                 CreatedAt = DateTimeOffset.UtcNow
             }
@@ -139,19 +112,7 @@ public class UserProfileTests : IDisposable
         await Assert.That(cut.Markup).Contains("Amina Rahman");
         await Assert.That(cut.Markup).Contains("amina@example.com");
         await Assert.That(cut.Markup).Contains("Email Verified");
-        await Assert.That(cut.Markup).Contains("events attended");
-
-        cut.FindAll("[role='tab']")
-            .First(tab => tab.TextContent.Contains("Registration", StringComparison.OrdinalIgnoreCase))
-            .Click();
-
-        await Assert.That(cut.Markup).Contains("Registered Conference");
-        await Assert.That(cut.Markup).Contains("Past Workshop");
-
-        cut.FindAll("[role='tab']")
-            .First(tab => tab.TextContent.Contains("Reviews", StringComparison.OrdinalIgnoreCase))
-            .Click();
-
+        await Assert.That(cut.Markup).Contains("reviews");
         await Assert.That(cut.Markup).Contains("Community Center");
     }
 }

@@ -21,13 +21,13 @@ public class SmokeTests(
         var page = await playwright.CreatePageAsync(nameof(BlazorFrontend_Loads_ReturnsHtml));
         try
         {
-            var response = await page.GotoAsync($"{appHost.BlazorBaseUrl}/events");
+            var response = await page.GotoAsync($"{appHost.BlazorBaseUrl}/home");
             await Assert.That(response).IsNotNull();
             await Assert.That(response!.Status).IsEqualTo(200);
 
             await page.GetByRole(AriaRole.Heading, new PageGetByRoleOptions
             {
-                Name = "Explore Events"
+                Name = "Grow with your Muslim community"
             })
                 .WaitForAsync();
         }

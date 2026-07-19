@@ -1,0 +1,138 @@
+@* ABOUTME: Authenticated editorial Blog management page for draft and published posts. *@
+@* ABOUTME: Renders HAL-gated create, edit, publish, unpublish, delete, and public-link affordances. *@
+
+@page "/blog/manage"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>Manage Blog | ISLAMU</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex,nofollow" />
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="blog-management">
+    <header class="blog-management__header">
+        <div>
+            <p class="blog-management__eyebrow">Editorial</p>
+            <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-management__title">Manage Blog</MudText>
+            <p class="blog-management__intro">Review drafts, publication state, and editorial actions from the API-provided affordances.</p>
+        </div>
+
+        @if (CanCreate)
+        {
+            <AppButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateBlogAsync" Disabled="@_isMutating">
+                New article
+            </AppButton>
+        }
+    </header>
+
+    <form class="blog-management__search" @onsubmit="ApplySearchAsync" @onsubmit:preventDefault="true">
+        <label class="blog-management__label" for="blog-management-search">Search by title</label>
+        <div class="blog-management__search-row">
+            <input id="blog-management-search"
+                   class="blog-management__input"
+                   type="search"
+                   value="@_searchText"
+                   @oninput="OnSearchInput"
+                   placeholder="Search managed articles"
+                   disabled="@(_isLoading || _isMutating)" />
+            <AppButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(_isLoading || _isMutating)">
+                Search
+            </AppButton>
+        </div>
+    </form>
+
+    @if (_isLoading)
+    {
+        <section class="blog-management__state" role="status" aria-live="polite" aria-busy="true">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+            <span>Loading managed articles...</span>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <section class="blog-management__state blog-management__state--error" role="alert">
+            @_errorMessage
+        </section>
+    }
+    else if (_items.Count == 0)
+    {
+        <section class="blog-management__state" role="status" aria-live="polite">
+            No managed articles match this view.
+        </section>
+    }
+    else
+    {
+        <section class="blog-management__content" aria-labelledby="blog-management-list-heading">
+            <MudText Typo="Typo.h5" HtmlTag="h2" Id="blog-management-list-heading" Class="blog-management__section-title">
+                Editorial articles
+            </MudText>
+
+            <div class="blog-management__list" role="list" aria-label="Managed Blog articles">
+                @foreach (var item in _items)
+                {
+                    <article class="blog-management__row" role="listitem" @key="item.Id">
+                        <div class="blog-management__summary">
+                            <MudText Typo="Typo.h6" HtmlTag="h3" Class="blog-management__row-title">@item.Title</MudText>
+                            <dl class="blog-management__meta">
+                                <div class="blog-management__meta-item">
+                                    <dt>Status</dt>
+                                    <dd>@FormatPublicationState(item)</dd>
+                                </div>
+                                <div class="blog-management__meta-item">
+                                    <dt>Publication date</dt>
+                                    <dd>@FormatDisplayDate(item.PublishedAtUtc)</dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <div class="blog-management__actions" aria-label="Actions for @item.Title">
+                            @if (TryGetSelfHref(item, out var publicHref))
+                            {
+                                <a class="blog-management__public-link" href="@publicHref">View public article</a>
+                            }
+
+                            @if (item.HasLink("edit"))
+                            {
+                                <AppButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => EditBlogAsync(item))" Disabled="@_isMutating">
+                                    Edit
+                                </AppButton>
+                            }
+
+                            @if (item.HasLink("publish"))
+                            {
+                                <AppButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => PublishBlogAsync(item))" Disabled="@_isMutating">
+                                    Publish
+                                </AppButton>
+                            }
+
+                            @if (item.HasLink("unpublish"))
+                            {
+                                <AppButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => UnpublishBlogAsync(item))" Disabled="@_isMutating">
+                                    Unpublish
+                                </AppButton>
+                            }
+
+                            @if (item.HasLink("delete"))
+                            {
+                                <AppButton Variant="Variant.Text" Color="Color.Error" OnClick="@(() => DeleteBlogAsync(item))" Disabled="@_isMutating">
+                                    Delete
+                                </AppButton>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <nav class="blog-management__pagination" aria-label="Blog management pagination">
+            <AppButton Variant="Variant.Text" Color="Color.Primary" Disabled="@(!CanGoPrevious || _isMutating)" OnClick="PreviousPageAsync">
+                Previous
+            </AppButton>
+            <span class="blog-management__page-status" role="status" aria-live="polite">Page @_pageNumber</span>
+            <AppButton Variant="Variant.Text" Color="Color.Primary" Disabled="@(!CanGoNext || _isMutating)" OnClick="NextPageAsync">
+                Next
+            </AppButton>
+        </nav>
+    }
+</MudContainer>

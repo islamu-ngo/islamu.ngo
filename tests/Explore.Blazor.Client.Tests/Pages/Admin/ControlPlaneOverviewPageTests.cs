@@ -42,7 +42,7 @@ public sealed class ControlPlaneOverviewPageTests : IDisposable
             }
         });
 
-        await Assert.That(cut.Find("h1").TextContent).IsEqualTo("Event Control Plane");
+        await Assert.That(cut.Find("h1").TextContent).IsEqualTo("ISLAMU Control Plane");
         await Assert.That(cut.Markup).Contains("The control-plane API is currently unavailable.");
         await Assert.That(cut.Markup).DoesNotContain("Generated API client unavailable.");
     }
@@ -55,7 +55,7 @@ public sealed class ControlPlaneOverviewPageTests : IDisposable
         {
             DeploymentMode = "MultiTenant",
             Version = "1.0.0",
-            PublicOrigin = "https://events.example.test",
+            PublicOrigin = "https://islamu.example.test",
             AdminOrigin = "https://admin.example.test",
             _links = Links(ControlPlaneLinkRelations.Plans)
         });

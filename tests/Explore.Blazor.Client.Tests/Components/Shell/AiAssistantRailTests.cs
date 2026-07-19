@@ -81,13 +81,13 @@ public sealed class AiAssistantRailTests : IDisposable
                 Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(
                     CreateConversationCollection(
                     [
-                        new() { Id = previousConversationId, Title = "Event planning", Status = "Active", LastMessageSequence = 2 }
+                        new() { Id = previousConversationId, Title = "Community planning", Status = "Active", LastMessageSequence = 2 }
                     ])),
                 Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(
                     CreateConversationCollection(
                     [
                         new() { Id = freshConversationId, Title = "AI Assistant", Status = "Active", LastMessageSequence = 0 },
-                        new() { Id = previousConversationId, Title = "Event planning", Status = "Active", LastMessageSequence = 2 }
+                        new() { Id = previousConversationId, Title = "Community planning", Status = "Active", LastMessageSequence = 2 }
                     ])));
         _clientService.CreateConversationAsync(Arg.Any<CreateAiConversationRequestDto>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new AiAssistantCommandResult(true, freshConversationId, "Created", null, [])));
@@ -128,13 +128,13 @@ public sealed class AiAssistantRailTests : IDisposable
                 new ProposedActions2
                 {
                     Id = linkedActionId,
-                    Kind = "CreateEventDraft",
+                    Kind = "GenericProposal",
                     Status = "Proposed"
                 },
                 new ProposedActions2
                 {
                     Id = staleActionId,
-                    Kind = "CreateEventDraft",
+                    Kind = "GenericProposal",
                     Status = "Executed"
                 }
             ]
@@ -175,55 +175,6 @@ public sealed class AiAssistantRailTests : IDisposable
     }
 
     [Test]
-    public async Task Render_WhenActionBelongsToAssistantMessage_RendersActionInlineAfterThatMessage()
-    {
-        var conversationId = Guid.CreateVersion7();
-        var userMessageId = Guid.CreateVersion7();
-        var assistantMessageId = Guid.CreateVersion7();
-        _conversationState.SelectConversation(CreateConversation(
-            conversationId,
-            "Inline proposal",
-            [
-                new Messages2 { Id = userMessageId, Role = "User", Sequence = 1, Content = "Create an event draft" },
-                new Messages2 { Id = assistantMessageId, Role = "Assistant", Sequence = 2, Content = "I prepared a draft for review." }
-            ],
-            [
-                new ProposedActions2
-                {
-                    Id = Guid.CreateVersion7(),
-                    MessageId = assistantMessageId,
-                    Kind = "CreateEventDraft",
-                    Status = "Proposed",
-                    PayloadJson = "{\"title\":\"Community Iftar\",\"description\":\"Plan the meal.\"}"
-                }
-            ]));
-        var inlineAction = _conversationState.SelectedConversation!.ProposedActions!.Single();
-        GeneratedHalLinkTestHelper.SetLinks(
-            inlineAction,
-            ("confirm-action", "/confirm", "POST"),
-            ("reject-action", "/reject", "POST"));
-        _clientService.GetConversationCollectionAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(CreateConversationCollection([])));
-        _shellState.SetPolicy(tenantEnabled: true, tenantAvailable: true, allowAnonymousAccess: false, isAuthenticated: true);
-        _shellState.Open();
-
-        var cut = _ctx.RenderMudComponent<AiAssistantRail>();
-
-        cut.WaitForAssertion(() =>
-        {
-            var markup = cut.Markup;
-            var userIndex = markup.IndexOf("Create an event draft", StringComparison.Ordinal);
-            var assistantIndex = markup.IndexOf("I prepared a draft for review.", StringComparison.Ordinal);
-            var actionIndex = markup.IndexOf("Community Iftar", StringComparison.Ordinal);
-
-            if (userIndex < 0 || assistantIndex < 0 || actionIndex < 0 || !(userIndex < assistantIndex && assistantIndex < actionIndex))
-            {
-                throw new InvalidOperationException("Expected proposal card to render inline after its assistant message.");
-            }
-        });
-    }
-
-    [Test]
     public async Task ReferenceSearch_SelectsAndRemovesInlineMentionReference()
     {
         var conversationId = Guid.CreateVersion7();
@@ -231,31 +182,31 @@ public sealed class AiAssistantRailTests : IDisposable
         _conversationState.SelectConversation(new HalResourceOfAiConversationDto { Id = conversationId, Title = "References" });
         _clientService.GetConversationCollectionAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(CreateConversationCollection([])));
-        _clientService.SearchReferencesAsync("iftar", Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _clientService.SearchReferencesAsync("masjid", Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<HalResourceOfAiReferenceSearchResultDto>>(
             [
                 HalLinkTestFactory.WithLinks(new HalResourceOfAiReferenceSearchResultDto
                 {
-                    Kind = "Event",
+                    Kind = "Organization",
                     ReferenceId = referenceId,
-                    DisplayName = "Community Iftar"
-                }, new HalLinkTestLink("event", $"/api/events/{referenceId}", "GET"))
+                    DisplayName = "Northside Masjid"
+                }, new HalLinkTestLink("organization", $"/api/organizations/{referenceId}", "GET"))
             ]));
         _shellState.SetPolicy(tenantEnabled: true, tenantAvailable: true, allowAnonymousAccess: false, isAuthenticated: true);
         _shellState.Open();
 
         var cut = _ctx.RenderMudComponent<AiAssistantRail>();
 
-        await cut.Find("[data-testid='ai-rail-prompt']").InputAsync(new ChangeEventArgs { Value = "@iftar" });
+        await cut.Find("[data-testid='ai-rail-prompt']").InputAsync(new ChangeEventArgs { Value = "@masjid" });
 
         cut.WaitForElement("[data-testid='ai-rail-reference-result']");
 
         await cut.Find("[data-testid='ai-rail-reference-result']").ClickAsync(new MouseEventArgs());
         await Assert.That(_conversationState.SelectedReferences.Count).IsEqualTo(1);
-        await Assert.That(cut.Find("[data-testid='ai-rail-prompt']").GetAttribute("value")).IsEqualTo("@Community Iftar ");
-        await Assert.That(cut.Find("[data-testid='ai-rail-prompt-reference-token']").TextContent).IsEqualTo("@Community Iftar");
+        await Assert.That(cut.Find("[data-testid='ai-rail-prompt']").GetAttribute("value")).IsEqualTo("@Northside Masjid ");
+        await Assert.That(cut.Find("[data-testid='ai-rail-prompt-reference-token']").TextContent).IsEqualTo("@Northside Masjid");
         await Assert.That(cut.Find("[data-testid='ai-rail-prompt']").GetAttribute("data-reference-mention-tokens"))
-            .Contains("@Community Iftar");
+            .Contains("@Northside Masjid");
         await Assert.That(cut.FindAll(".ai-rail__selected-reference-list")).IsEmpty();
         await Assert.That(cut.FindAll("[data-testid='ai-reference-chip']")).IsEmpty();
 
@@ -284,10 +235,10 @@ public sealed class AiAssistantRailTests : IDisposable
             [
                 HalLinkTestFactory.WithLinks(new HalResourceOfAiReferenceSearchResultDto
                 {
-                    Kind = "Event",
+                    Kind = "Organization",
                     ReferenceId = referenceId,
                     DisplayName = displayName
-                }, new HalLinkTestLink("event", $"/api/events/{referenceId}", "GET"))
+                }, new HalLinkTestLink("organization", $"/api/organizations/{referenceId}", "GET"))
             ]));
         _shellState.SetPolicy(tenantEnabled: true, tenantAvailable: true, allowAnonymousAccess: false, isAuthenticated: true);
         _shellState.Open();
@@ -321,10 +272,10 @@ public sealed class AiAssistantRailTests : IDisposable
         var cut = _ctx.RenderMudComponent<AiAssistantRail>();
         var prompt = cut.Find("[data-testid='ai-rail-prompt']");
 
-        await prompt.InputAsync(new ChangeEventArgs { Value = "@iftar" });
+        await prompt.InputAsync(new ChangeEventArgs { Value = "@masjid" });
         cut.WaitForElement("[data-testid='ai-rail-reference-autocomplete']");
 
-        await prompt.InputAsync(new ChangeEventArgs { Value = "iftar" });
+        await prompt.InputAsync(new ChangeEventArgs { Value = "masjid" });
 
         cut.WaitForAssertion(() =>
         {
@@ -344,20 +295,20 @@ public sealed class AiAssistantRailTests : IDisposable
         _conversationState.SelectConversation(CreateConversation(conversationId, "Reference send"));
         _clientService.GetConversationCollectionAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(CreateConversationCollection([])));
-        _clientService.SearchReferencesAsync("iftar", Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _clientService.SearchReferencesAsync("masjid", Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<HalResourceOfAiReferenceSearchResultDto>>(
             [
                 HalLinkTestFactory.WithLinks(new HalResourceOfAiReferenceSearchResultDto
                 {
-                    Kind = "Event",
+                    Kind = "Organization",
                     ReferenceId = referenceId,
-                    DisplayName = "Community Iftar",
-                    Summary = "Public evening program"
-                }, new HalLinkTestLink("event", $"/api/events/{referenceId}", "GET"))
+                    DisplayName = "Northside Masjid",
+                    Summary = "Community profile"
+                }, new HalLinkTestLink("organization", $"/api/organizations/{referenceId}", "GET"))
             ]));
         _clientService.SendMessageAsync(
                 conversationId,
-                "@Community Iftar",
+                "@Northside Masjid",
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
@@ -374,14 +325,14 @@ public sealed class AiAssistantRailTests : IDisposable
         _shellState.Open();
 
         var cut = _ctx.RenderMudComponent<AiAssistantRail>();
-        await cut.Find("[data-testid='ai-rail-prompt']").InputAsync(new ChangeEventArgs { Value = "@iftar" });
+        await cut.Find("[data-testid='ai-rail-prompt']").InputAsync(new ChangeEventArgs { Value = "@masjid" });
         cut.WaitForElement("[data-testid='ai-rail-reference-result']");
         await cut.Find("[data-testid='ai-rail-reference-result']").ClickAsync(new MouseEventArgs());
         await cut.Find("[data-testid='ai-rail-send']").ClickAsync(new MouseEventArgs());
 
         await _clientService.Received(1).SendMessageAsync(
             conversationId,
-            "@Community Iftar",
+            "@Northside Masjid",
             Arg.Any<string?>(),
             Arg.Is<string?>(value => value != null && value.StartsWith("blazor-ai-send-", StringComparison.Ordinal)),
             Arg.Is<string?>(value => value == "build"),
@@ -390,10 +341,10 @@ public sealed class AiAssistantRailTests : IDisposable
             Arg.Is<IReadOnlyList<AiSelectedReferenceDto>?>(references =>
                 references != null
                 && references.Count == 1
-                && references.Single().Kind == "Event"
+                && references.Single().Kind == "Organization"
                 && references.Single().ReferenceId == referenceId
-                && references.Single().DisplayName == "Community Iftar"
-                && references.Single().Summary == "Public evening program"),
+                && references.Single().DisplayName == "Northside Masjid"
+                && references.Single().Summary == "Community profile"),
             Arg.Any<CancellationToken>());
     }
 
@@ -447,7 +398,7 @@ public sealed class AiAssistantRailTests : IDisposable
             .Returns(Task.FromResult<HalCollectionResourceOfAiConversationSummaryDto?>(CreateConversationCollection([])));
         _clientService.SendMessageAsync(
                 conversationId,
-                "Draft a khutbah event",
+                "Draft a community update",
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
@@ -472,7 +423,7 @@ public sealed class AiAssistantRailTests : IDisposable
         _shellState.Open();
 
         var cut = _ctx.RenderMudComponent<AiAssistantRail>();
-        await cut.Find("[data-testid='ai-rail-prompt']").ChangeAsync(new ChangeEventArgs { Value = "Draft a khutbah event" });
+        await cut.Find("[data-testid='ai-rail-prompt']").ChangeAsync(new ChangeEventArgs { Value = "Draft a community update" });
         await cut.Find("[data-testid='ai-rail-send']").ClickAsync(new MouseEventArgs());
 
         cut.WaitForAssertion(() =>
@@ -484,7 +435,7 @@ public sealed class AiAssistantRailTests : IDisposable
         });
         await _clientService.Received(1).SendMessageAsync(
             conversationId,
-            "Draft a khutbah event",
+            "Draft a community update",
             Arg.Any<string?>(),
             Arg.Is<string?>(value => value != null && value.StartsWith("blazor-ai-send-", StringComparison.Ordinal)),
             Arg.Is<string?>(value => value == "build"),

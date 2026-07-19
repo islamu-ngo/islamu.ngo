@@ -17,7 +17,7 @@ public static class MiddlewareExtensions
         "default-src 'self'; " +
         "img-src 'self' data: https: blob:; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "script-src 'self' 'wasm-unsafe-eval' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0='; " +
+        "script-src 'self' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0='; " +
         "connect-src 'self' https: http: ws: wss:; " +
         "font-src 'self' https://fonts.gstatic.com; " +
         "frame-ancestors 'none'; " +

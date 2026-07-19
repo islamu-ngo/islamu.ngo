@@ -13,7 +13,7 @@ namespace Explore.Blazor.Client.Tests.Common;
 /// Usage:
 /// <code>
 /// var settings = new PublicExperienceSettingsBuilder()
-///     .WithBranding("My Event Hub", "/logo.png")
+///     .WithBranding("My Community Hub", "/logo.png")
 ///     .WithIslamicModule()
 ///     .WithHomePage("LandingPage")
 ///     .Build();
@@ -89,17 +89,10 @@ public sealed class PublicExperienceSettingsBuilder
 
     // ── Home Page & Navigation ──────────────────────────────────────────
 
-    /// <summary>Sets the preferred home page. "EventList" (default) or "LandingPage".</summary>
+    /// <summary>Sets the preferred home page, normally "LandingPage".</summary>
     public PublicExperienceSettingsBuilder WithHomePage(string preferredHomePage)
     {
         _model.PreferredHomePage = preferredHomePage;
-        return this;
-    }
-
-    /// <summary>Configures event card click to open detail page.</summary>
-    public PublicExperienceSettingsBuilder WithEventCardOpensDetail(bool enabled = true)
-    {
-        _model.EventCardClickOpensDetailPage = enabled;
         return this;
     }
 
@@ -120,29 +113,6 @@ public sealed class PublicExperienceSettingsBuilder
         _model.IsTechModuleEnabled = enabled;
         if (enabled && !_model.EnabledModules.Contains("Tech"))
             _model.EnabledModules.Add("Tech");
-        return this;
-    }
-
-    // ── Content Policies ────────────────────────────────────────────────
-
-    /// <summary>Controls whether users can submit events.</summary>
-    public PublicExperienceSettingsBuilder WithUserSubmittedEvents(bool allowed = true)
-    {
-        _model.AllowUserSubmittedEvents = allowed;
-        return this;
-    }
-
-    /// <summary>Controls whether organizations can submit events.</summary>
-    public PublicExperienceSettingsBuilder WithOrganizationSubmittedEvents(bool allowed = true)
-    {
-        _model.AllowOrganizationSubmittedEvents = allowed;
-        return this;
-    }
-
-    /// <summary>Controls whether groups can submit events.</summary>
-    public PublicExperienceSettingsBuilder WithGroupSubmittedEvents(bool allowed = true)
-    {
-        _model.AllowGroupSubmittedEvents = allowed;
         return this;
     }
 
@@ -257,7 +227,7 @@ public sealed class PublicExperienceSettingsBuilder
     {
         return new PublicExperienceSettingsBuilder()
             .WithBranding("ISLAMU Explore")
-            .WithHomePage("EventList");
+            .WithHomePage("LandingPage");
     }
 
     /// <summary>

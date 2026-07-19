@@ -32,7 +32,7 @@ public interface IBffPreferenceForwardingService
     Task PersistPreferencesAsync(BffAppearancePreferences preferences, CancellationToken cancellationToken);
 }
 
-public sealed class BffPreferenceForwardingService(Api.IEventApiClient apiClient) : IBffPreferenceForwardingService
+public sealed class BffPreferenceForwardingService(Api.IIslamuApiClient apiClient) : IBffPreferenceForwardingService
 {
     public Task<Api.ResolvedAppearanceDto> GetAppearanceAsync(CancellationToken cancellationToken) =>
         apiClient.GetCurrentUserAppearancePreferencesAsync(cancellationToken: cancellationToken);

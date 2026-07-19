@@ -1,5 +1,5 @@
 // ABOUTME: Contract for notification operations consumed by Blazor UI components.
-// ABOUTME: Wraps NSwag-generated IEventApiClient notification methods with clean async API.
+// ABOUTME: Wraps NSwag-generated IIslamuApiClient notification methods with clean async API.
 
 using Explore.Blazor.Client.Models;
 

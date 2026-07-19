@@ -9,9 +9,9 @@ namespace Explore.Blazor.Client.Services.Lookup;
 
 public class ActorService : IActorService
 {
-    private readonly IEventApiClient _client;
+    private readonly IIslamuApiClient _client;
 
-    public ActorService(IEventApiClient client)
+    public ActorService(IIslamuApiClient client)
     {
         _client = client;
     }

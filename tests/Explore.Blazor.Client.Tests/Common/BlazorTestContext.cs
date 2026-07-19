@@ -190,7 +190,7 @@ public class BlazorTestContext : BunitContext
 
     /// <summary>
     /// Add group service mock with empty defaults.
-    /// Required by GroupProfile, CreateEvent, NavMenu admin sections.
+    /// Required by group-dependent components and NavMenu admin sections.
     /// NOT registered by constructor — call explicitly when testing group-dependent components.
     /// </summary>
     public void AddGroupServiceMock()
@@ -450,8 +450,8 @@ public class BlazorTestContext : BunitContext
     /// <param name="configure">Configuration action for setting up mock behavior</param>
     /// <returns>The configured mock instance</returns>
     /// <example>
-    /// ctx.AddMockService&lt;IEventService&gt;(svc =>
-    ///     svc.GetAllEventsAsync().Returns(eventList));
+    /// ctx.AddMockService&lt;IOrganizationService&gt;(svc =>
+    ///     svc.GetMyOrganizationsAsync().Returns(organizations));
     /// </example>
     public T AddMockService<T>(Action<T> configure) where T : class
     {

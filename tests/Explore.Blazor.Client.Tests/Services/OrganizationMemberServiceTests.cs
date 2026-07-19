@@ -8,12 +8,12 @@ namespace Explore.Blazor.Client.Tests.Services;
 
 public class OrganizationMemberServiceTests
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly OrganizationMemberService _service;
 
     public OrganizationMemberServiceTests()
     {
-        _apiClient = Substitute.For<IEventApiClient>();
+        _apiClient = Substitute.For<IIslamuApiClient>();
         var logger = Substitute.For<ILogger<OrganizationMemberService>>();
         _service = new OrganizationMemberService(_apiClient, logger);
     }

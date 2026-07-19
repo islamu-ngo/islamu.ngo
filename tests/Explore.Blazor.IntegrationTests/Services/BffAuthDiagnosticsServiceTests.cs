@@ -47,7 +47,7 @@ public sealed class BffAuthDiagnosticsServiceTests
         {
             Authority = "https://issuer.example",
             MetadataAddress = "https://metadata.example/.well-known/openid-configuration",
-            ClientId = "islamu-event-blazor"
+            ClientId = "islamu-ngo-blazor"
         });
 
         return new BffAuthDiagnosticsService(options, new DiagnosticsHttpClientFactory(handler));

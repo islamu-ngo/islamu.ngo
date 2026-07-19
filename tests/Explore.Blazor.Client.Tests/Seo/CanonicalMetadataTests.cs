@@ -8,7 +8,6 @@ public sealed class CanonicalMetadataTests
     [Arguments("Pages/HomeStart.razor")]
     [Arguments("Pages/Home.razor")]
     [Arguments("Pages/Landing/LandingPageForNonUsers.razor")]
-    [Arguments("Pages/Events/EventList.razor")]
     [Arguments("Pages/Organizations/OrganizationProfile.razor")]
     [Arguments("Pages/Organizations/OrganizationDetails.razor")]
     [Test]
@@ -18,15 +17,6 @@ public sealed class CanonicalMetadataTests
 
         await Assert.That(content).Contains("rel=\"canonical\"");
         await Assert.That(content).Contains("CanonicalUrlHelper.Build");
-    }
-
-    [Test]
-    public async Task EventDetail_ShouldUse_CanonicalUrlHelper_ForCanonicalUrl()
-    {
-        var content = await ReadClientSourceAsync("Pages/Events/EventDetail.razor.cs");
-
-        await Assert.That(content).Contains("EventUrlHelper.BuildPublicPath(_eventDetails?.Slug, _eventDetails?.PublicCode)");
-        await Assert.That(content).Contains("CanonicalUrlHelper.Build(Navigation, path)");
     }
 
     private static async Task<string> ReadClientSourceAsync(string relativePath)

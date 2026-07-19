@@ -164,7 +164,7 @@ public sealed class WebhookManagementFlowTests(
     }
 
     private static async Task AssertDirectAdminAuthorityAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         string accessToken,
         WebhookManagementScenarioSeed.Result seed,
         IReadOnlyCollection<string> adminProviderSubjects)
@@ -265,7 +265,7 @@ public sealed class WebhookManagementFlowTests(
 
     private static async Task RetrySeededFailedAttemptAsync(
         IPage page,
-        IEventApiClient api,
+        IIslamuApiClient api,
         Guid failedAttemptId)
     {
         await page.GetByRole(AriaRole.Tab, new PageGetByRoleOptions { NameString = "Deliveries" })
@@ -290,7 +290,7 @@ public sealed class WebhookManagementFlowTests(
     }
 
     private static async Task WaitForManualRetryAttemptAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         Guid retryAttemptId,
         Guid failedMessageId,
         Guid failedEndpointId)
@@ -311,7 +311,7 @@ public sealed class WebhookManagementFlowTests(
     }
 
     private static async Task AssertDryRunEndpointHasNoDeliveryAttemptsAsync(
-        IEventApiClient api,
+        IIslamuApiClient api,
         Guid dryRunEndpointId)
     {
         var attempts = await api.GetWebhookDeliveryAttemptsAsync(endpointId: dryRunEndpointId, limit: 100);

@@ -14,6 +14,7 @@ public static class BffStorageEndpoints
     private const int MaxUploadContentTypeLength = 100;
     private const int UploadSessionIdLength = 32;
     private const string LegacyImagePurpose = "legacy_image";
+    private const string BlogImagePurpose = "blog_image";
     private const string PublicImageVisibility = "public_image";
     private static readonly HashSet<string> ReservedFileNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -62,7 +63,7 @@ public static class BffStorageEndpoints
     private static async Task<IResult> HandleStorageUploadSessionAsync(
         StorageUploadSessionRequest? request,
         HttpContext ctx,
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         IStorageUploadSessionStore sessionStore,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
@@ -120,7 +121,7 @@ public static class BffStorageEndpoints
 
     private static async Task<IResult> HandleStorageUploadProxyAsync(
         HttpContext ctx,
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         IStorageUploadSessionStore sessionStore,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
@@ -248,7 +249,8 @@ public static class BffStorageEndpoints
     private sealed record StorageUploadSessionRequest(
         string FileName,
         string ContentType,
-        long ExpectedSizeBytes);
+        long ExpectedSizeBytes,
+        string? Purpose);
 
     private sealed record StorageUploadSessionResponse(
         string UploadSessionId,
@@ -270,7 +272,7 @@ public static class BffStorageEndpoints
             OriginalFileName = request?.FileName?.Trim(),
             SafeDisplayName = request?.FileName?.Trim(),
             Extension = Path.GetExtension(request?.FileName ?? string.Empty).TrimStart('.'),
-            Purpose = LegacyImagePurpose,
+            Purpose = NormalizeUploadPurpose(request?.Purpose),
             Visibility = PublicImageVisibility,
             IdempotencyKey = $"bff:{Guid.CreateVersion7():N}"
         };
@@ -295,9 +297,24 @@ public static class BffStorageEndpoints
             return InvalidStorageUploadRequest(contentTypeProblem);
         }
 
+        if (!IsAllowedUploadPurpose(normalizedRequest.Purpose))
+        {
+            return InvalidStorageUploadRequest("Upload purpose is not accepted.");
+        }
+
         normalizedRequest.ContentType = contentType;
         return null;
     }
+
+    private static string NormalizeUploadPurpose(string? value)
+    {
+        var purpose = value?.Trim() ?? string.Empty;
+        return string.IsNullOrWhiteSpace(purpose) ? LegacyImagePurpose : purpose;
+    }
+
+    private static bool IsAllowedUploadPurpose(string? purpose) =>
+        string.Equals(purpose, LegacyImagePurpose, StringComparison.Ordinal) ||
+        string.Equals(purpose, BlogImagePurpose, StringComparison.Ordinal);
 
     private static bool TryNormalizeContentType(
         string? value,

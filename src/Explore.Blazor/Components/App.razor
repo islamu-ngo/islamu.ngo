@@ -7,15 +7,15 @@
 @using Microsoft.AspNetCore.Components.Web
 @using System.Security.Cryptography
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IRuntimeRenderPolicyService RuntimeRenderPolicyService
 @inject AdminHostControlPlaneShellSelector AdminHostShellSelector
+@inject IRuntimeRenderPolicyService RuntimeRenderPolicyService
 @inject ILogger<App> Logger
 
 @{
     var cspNonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     var csp = string.Join(" ",
         "default-src 'self';",
-        $"script-src 'self' 'wasm-unsafe-eval' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0=' 'nonce-{cspNonce}';",
+        $"script-src 'self' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0=' 'nonce-{cspNonce}';",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
         "connect-src 'self' https: http: ws: wss:;",
         "img-src 'self' data: https: blob:;",
@@ -54,7 +54,7 @@
 	<link rel="manifest" href="manifest.webmanifest" />
 	<meta name="theme-color" content="#2563eb" />
 	<link rel="icon" type="image/ico" href="favicon.ico" />
-	<HeadOutlet @rendermode="@_effectiveRenderMode" />
+	<HeadOutlet @rendermode="EffectiveRenderMode" />
 </head>
 
 <body>
@@ -69,11 +69,11 @@
                 <ChildContent>
                     @if (ShouldUseControlPlaneShell())
                     {
-                        <EmbeddedControlPlaneRoutes @rendermode="@_effectiveRenderMode" />
+                        <EmbeddedControlPlaneRoutes @rendermode="EffectiveRenderMode" />
                     }
                     else
                     {
-		                <Routes @rendermode="@_effectiveRenderMode" />
+		                <Routes @rendermode="EffectiveRenderMode" />
                     }
                 </ChildContent>
                 <ErrorContent Context="ex">
@@ -104,50 +104,20 @@
 </html>
 
 @code {
-    // Resolved asynchronously from governance settings for non-onboarding paths.
-    private IComponentRenderMode? _asyncResolvedMode;
+    private Microsoft.AspNetCore.Components.IComponentRenderMode EffectiveRenderMode { get; set; } =
+        new InteractiveServerRenderMode(prerender: true);
 
-    // Effective render mode used by Routes and HeadOutlet.
-    // Onboarding paths are resolved synchronously from the request path — no async dependency.
-    // Non-onboarding paths use the async-resolved governance settings with a safe default.
-    private IComponentRenderMode _effectiveRenderMode
+    protected override async Task OnInitializedAsync()
     {
-        get
-        {
-            var path = HttpContextAccessor.HttpContext?.Request.Path.Value;
-            if (IsOnboardingPath(path))
-            {
-                return new InteractiveServerRenderMode(prerender: true);
-            }
-
-            if (ShouldUseControlPlaneShell())
-            {
-                return new InteractiveServerRenderMode(prerender: true);
-            }
-
-            return _asyncResolvedMode ?? new InteractiveServerRenderMode(prerender: true);
-        }
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        var requestPath = HttpContextAccessor.HttpContext?.Request.Path.Value;
-
-        // Onboarding and dedicated admin-host paths don't need async resolution — handled synchronously in _effectiveRenderMode.
-        if (IsOnboardingPath(requestPath) || ShouldUseControlPlaneShell())
-        {
-            return;
-        }
-
         try
         {
+            var requestPath = HttpContextAccessor.HttpContext?.Request.Path.Value;
             var decision = await RuntimeRenderPolicyService.ResolveForPathAsync(requestPath);
-            _asyncResolvedMode = CreateRenderMode(decision.RenderMode, decision.PrerenderEnabled);
+            EffectiveRenderMode = new InteractiveServerRenderMode(prerender: decision.PrerenderEnabled);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Logger.LogWarning(ex, "Falling back to default render policy for path {Path}", requestPath);
-            _asyncResolvedMode = new InteractiveServerRenderMode(prerender: true);
+            Logger.LogWarning(exception, "Failed to resolve Blazor render policy; using safe InteractiveServer default.");
         }
     }
 
@@ -161,36 +131,4 @@
         return AdminHostShellSelector.ShouldUseControlPlaneShell(HttpContextAccessor.HttpContext);
     }
 
-    private static bool IsOnboardingPath(string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return false;
-        }
-
-        var normalized = path.Trim().TrimEnd('/').ToLowerInvariant();
-        if (!normalized.StartsWith('/'))
-        {
-            normalized = "/" + normalized;
-        }
-
-        return normalized.StartsWith("/onboarding/", StringComparison.Ordinal) ||
-               normalized.Equals("/setup", StringComparison.Ordinal) ||
-               normalized.Equals("/startup", StringComparison.Ordinal);
-    }
-
-    private static IComponentRenderMode CreateRenderMode(string renderMode, bool prerenderEnabled)
-    {
-        if (renderMode.Equals("InteractiveWebAssembly", StringComparison.OrdinalIgnoreCase))
-        {
-            return new InteractiveWebAssemblyRenderMode(prerender: prerenderEnabled);
-        }
-
-        if (renderMode.Equals("InteractiveServer", StringComparison.OrdinalIgnoreCase))
-        {
-            return new InteractiveServerRenderMode(prerender: prerenderEnabled);
-        }
-
-        return new InteractiveAutoRenderMode(prerender: prerenderEnabled);
-    }
 }

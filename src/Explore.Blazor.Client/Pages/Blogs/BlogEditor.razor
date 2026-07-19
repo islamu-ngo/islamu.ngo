@@ -1,0 +1,179 @@
+@* ABOUTME: Authenticated Blog article create/edit page with HAL-gated mutation affordances. *@
+@* ABOUTME: Uses local editor state, accessible status regions, image upload, and sanitized Markdown preview. *@
+
+@page "/blog/manage/new"
+@page "/blog/manage/{Id:guid}"
+@using Explore.Blazor.Client.Helpers
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<PageTitle>@PageTitleText</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex,nofollow" />
+</HeadContent>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="blog-editor">
+    <header class="blog-editor__header">
+        <div>
+            <p class="blog-editor__eyebrow">Blog management</p>
+            <MudText Typo="Typo.h3" HtmlTag="h1" Class="blog-editor__title">@HeadingText</MudText>
+            <p class="blog-editor__intro">Write, preview, and manage editorial articles through the API-authorized links returned for this resource.</p>
+        </div>
+        <AppButton Variant="Variant.Outlined" Color="Color.Primary" Href="/blog/manage">Back to management</AppButton>
+    </header>
+
+    @if (_isLoading)
+    {
+        <section class="blog-editor__state" role="status" aria-live="polite" aria-busy="true">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+            <span>Loading article editor...</span>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <section class="blog-editor__state blog-editor__state--error" role="alert">
+            @_errorMessage
+        </section>
+    }
+    else if (!CanUseForm)
+    {
+        <section class="blog-editor__state" role="status" aria-live="polite">
+            @UnavailableMessage
+        </section>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(_statusMessage))
+        {
+            <div class="blog-editor__status" role="status" aria-live="polite">@_statusMessage</div>
+        }
+
+        <EditForm EditContext="_editContext" OnValidSubmit="SaveAsync" class="blog-editor__form" aria-busy="@(_isSaving || _isMutating)">
+            <DataAnnotationsValidator />
+
+            <section class="blog-editor__panel" aria-labelledby="blog-editor-fields-heading">
+                <MudText Typo="Typo.h4" HtmlTag="h2" Id="blog-editor-fields-heading" Class="blog-editor__section-title">Article details</MudText>
+
+                <div class="blog-editor__field">
+                    <label class="blog-editor__label" for="blog-editor-title">Title</label>
+                    <InputText id="blog-editor-title" class="blog-editor__input" @bind-Value="_model.Title" disabled="@IsBusy" />
+                    <ValidationMessage For="() => _model.Title" />
+                </div>
+
+                <div class="blog-editor__field">
+                    <label class="blog-editor__label" for="blog-editor-slug">Slug <span class="blog-editor__optional">optional</span></label>
+                    <InputText id="blog-editor-slug" class="blog-editor__input" @bind-Value="_model.Slug" disabled="@IsBusy" />
+                    <ValidationMessage For="() => _model.Slug" />
+                </div>
+
+                <div class="blog-editor__field">
+                    <label class="blog-editor__label" for="blog-editor-content">Markdown</label>
+                    <textarea id="blog-editor-content"
+                              class="blog-editor__textarea"
+                              value="@_model.ContentMarkdown"
+                              disabled="@IsBusy"
+                              @oninput="OnContentInput"></textarea>
+                    <ValidationMessage For="() => _model.ContentMarkdown" />
+                </div>
+
+                <fieldset class="blog-editor__fieldset">
+                    <legend class="blog-editor__legend">Categories</legend>
+                    @if (_categories.Count == 0)
+                    {
+                        <p class="blog-editor__hint">No categories are available.</p>
+                    }
+                    else
+                    {
+                        <div class="blog-editor__choices">
+                            @foreach (var category in _categories)
+                            {
+                                <label class="blog-editor__choice" for="@($"blog-editor-category-{category.Id}")">
+                                    <input id="@($"blog-editor-category-{category.Id}")"
+                                           type="checkbox"
+                                           checked="@_model.CategoryIds.Contains(category.Id!.Value)"
+                                           disabled="@IsBusy"
+                                           @onchange="args => ToggleCategory(category.Id!.Value, args)" />
+                                    <span>@DisplayName(category.FullName, category.MasterCode)</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </fieldset>
+
+                <fieldset class="blog-editor__fieldset">
+                    <legend class="blog-editor__legend">Tags</legend>
+                    @if (_tags.Count == 0)
+                    {
+                        <p class="blog-editor__hint">No tags are available.</p>
+                    }
+                    else
+                    {
+                        <div class="blog-editor__choices">
+                            @foreach (var tag in _tags)
+                            {
+                                <label class="blog-editor__choice" for="@($"blog-editor-tag-{tag.Id}")">
+                                    <input id="@($"blog-editor-tag-{tag.Id}")"
+                                           type="checkbox"
+                                           checked="@_model.TagIds.Contains(tag.Id!.Value)"
+                                           disabled="@IsBusy"
+                                           @onchange="args => ToggleTag(tag.Id!.Value, args)" />
+                                    <span>@DisplayName(tag.FullName, tag.MasterCode)</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </fieldset>
+
+                <section class="blog-editor__thumbnail" aria-labelledby="blog-editor-thumbnail-heading">
+                    <MudText Typo="Typo.h5" HtmlTag="h3" Id="blog-editor-thumbnail-heading" Class="blog-editor__subsection-title">Thumbnail</MudText>
+                    @if (_model.ThumbnailStorageObjectId is { } thumbnailId && thumbnailId != Guid.Empty && string.IsNullOrWhiteSpace(_thumbnailPreviewUrl))
+                    {
+                        <div class="blog-editor__existing-thumbnail" role="status" aria-live="polite">
+                            <StorageImage StorageObjectId="thumbnailId"
+                                          Alt="@($"Current thumbnail for {_model.Title}")"
+                                          ObjectFit="cover"
+                                          BorderRadius="var(--isl-radius-lg)" />
+                            <span>Existing thumbnail selected.</span>
+                            @if (CanRemoveThumbnail)
+                            {
+                                <AppButton Variant="Variant.Text" Color="Color.Error" Disabled="@IsBusy" OnClick="RemoveThumbnail">Remove thumbnail</AppButton>
+                            }
+                        </div>
+                    }
+                    <ImageUpload @bind-PreviewUrl="_thumbnailPreviewUrl"
+                                 FileDataSelected="OnThumbnailFileSelectedAsync"
+                                 PlaceholderText="Article thumbnail"
+                                 UploadButtonText="Select thumbnail"
+                                 HintText="Optional editorial image."
+                                 Alt="Article thumbnail preview"
+                                 IsProcessing="@IsBusy" />
+                </section>
+
+                <div class="blog-editor__actions">
+                    <AppButton ButtonType="ButtonType.Submit" Disabled="@IsBusy">@SaveButtonText</AppButton>
+                    @if (CanPublish)
+                    {
+                        <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="PublishAsync">Publish</AppButton>
+                    }
+                    @if (CanUnpublish)
+                    {
+                        <AppButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@IsBusy" OnClick="UnpublishAsync">Unpublish</AppButton>
+                    }
+                    @if (CanDelete)
+                    {
+                        <AppButton Variant="Variant.Text" Color="Color.Error" Disabled="@IsBusy" OnClick="DeleteAsync">Delete</AppButton>
+                    }
+                </div>
+            </section>
+
+            <section class="blog-editor__preview" aria-labelledby="blog-editor-preview-heading">
+                <MudText Typo="Typo.h4" HtmlTag="h2" Id="blog-editor-preview-heading" Class="blog-editor__section-title">Preview</MudText>
+                <div class="blog-editor__preview-body">
+                    @((MarkupString)RenderedPreviewHtml)
+                </div>
+            </section>
+        </EditForm>
+    }
+</MudContainer>

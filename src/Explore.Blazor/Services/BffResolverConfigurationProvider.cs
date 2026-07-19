@@ -12,7 +12,7 @@ public interface IBffResolverConfigurationProvider
 }
 
 public sealed class BffResolverConfigurationProvider(
-    IEventApiClient apiClient,
+    IIslamuApiClient apiClient,
     IMemoryCache cache,
     ILogger<BffResolverConfigurationProvider> logger) : IBffResolverConfigurationProvider
 {

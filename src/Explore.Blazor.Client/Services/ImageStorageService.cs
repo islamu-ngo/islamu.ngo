@@ -35,7 +35,11 @@ public interface IImageStorageService
     /// <summary>
     /// Get a server-issued upload session or trusted pre-signed URL for uploading an image.
     /// </summary>
-    Task<ImageUploadTarget?> GetUploadUrlAsync(string fileName, string contentType, long? expectedSizeBytes = null);
+    Task<ImageUploadTarget?> GetUploadUrlAsync(
+        string fileName,
+        string contentType,
+        long? expectedSizeBytes = null,
+        string purpose = ImageUploadPurposes.LegacyImage);
 
     /// <summary>
     /// Upload an image file using a pre-signed URL (legacy - uses IBrowserFile).
@@ -59,7 +63,9 @@ public interface IImageStorageService
     /// Upload image bytes and create a StorageObject record.
     /// Preferred method for reliable WASM uploads.
     /// </summary>
-    Task<ImageUploadResult?> UploadAndCreateRecordFromBytesAsync(FileUploadData fileData);
+    Task<ImageUploadResult?> UploadAndCreateRecordFromBytesAsync(
+        FileUploadData fileData,
+        string purpose = ImageUploadPurposes.LegacyImage);
 
     /// <summary>
     /// Get a metadata-backed public image URL.
@@ -116,6 +122,7 @@ public sealed class BffStorageUploadSessionRequest
     public required string FileName { get; set; }
     public required string ContentType { get; set; }
     public long ExpectedSizeBytes { get; set; }
+    public string Purpose { get; set; } = ImageUploadPurposes.LegacyImage;
 }
 
 public class ImageUploadResult
@@ -132,7 +139,7 @@ public class ImageUploadResult
 /// </summary>
 public class ImageStorageService : IImageStorageService
 {
-    private readonly IEventApiClient _apiClient;
+    private readonly IIslamuApiClient _apiClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ImageStorageService> _logger;
     private readonly BffClient? _bffClient;
@@ -145,7 +152,7 @@ public class ImageStorageService : IImageStorageService
     private const long DefaultMaxFileSize = 10 * 1024 * 1024; // 10MB
 
     public ImageStorageService(
-        IEventApiClient apiClient,
+        IIslamuApiClient apiClient,
         IHttpClientFactory httpClientFactory,
         ILogger<ImageStorageService> logger,
         BffClient? bffClient = null,
@@ -185,9 +192,13 @@ public class ImageStorageService : IImageStorageService
     }
 
     /// <inheritdoc />
-    public async Task<ImageUploadTarget?> GetUploadUrlAsync(string fileName, string contentType, long? expectedSizeBytes = null)
+    public async Task<ImageUploadTarget?> GetUploadUrlAsync(
+        string fileName,
+        string contentType,
+        long? expectedSizeBytes = null,
+        string purpose = ImageUploadPurposes.LegacyImage)
     {
-        return await _uploadClient.GetUploadUrlAsync(fileName, contentType, expectedSizeBytes);
+        return await _uploadClient.GetUploadUrlAsync(fileName, contentType, expectedSizeBytes, purpose);
     }
 
     /// <inheritdoc />
@@ -203,7 +214,9 @@ public class ImageStorageService : IImageStorageService
     }
 
     /// <inheritdoc />
-    public async Task<ImageUploadResult?> UploadAndCreateRecordFromBytesAsync(FileUploadData fileData)
+    public async Task<ImageUploadResult?> UploadAndCreateRecordFromBytesAsync(
+        FileUploadData fileData,
+        string purpose = ImageUploadPurposes.LegacyImage)
     {
         if (fileData == null || fileData.Content.Length == 0)
         {
@@ -222,7 +235,7 @@ public class ImageStorageService : IImageStorageService
                 ImageUploadClientPolicy.GetSizeBucket(fileData.Size),
                 ImageUploadClientPolicy.GetContentTypeBucket(fileData.ContentType));
 
-            var uploadResponse = await GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size);
+            var uploadResponse = await GetUploadUrlAsync(fileData.FileName, fileData.ContentType, fileData.Size, purpose);
             if (uploadResponse == null)
             {
                 _logger.LogWarning("Failed to get upload session for selected image.");

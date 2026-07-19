@@ -42,12 +42,6 @@ public partial class NavMenu : IDisposable
     protected ITenantOnboardingService TenantOnboardingService { get; set; } = null!;
 
     [Inject]
-    protected ITenantNavigationService TenantNavigationService { get; set; } = null!;
-
-    [Inject]
-    protected TenantNavLinksState TenantNavLinksState { get; set; } = null!;
-
-    [Inject]
     protected IOrganizationService OrganizationService { get; set; } = null!;
 
     [Inject]
@@ -70,7 +64,6 @@ public partial class NavMenu : IDisposable
     private bool _userLoaded = false;
     private string _brandDisplayName = string.Empty;
     private string _brandLogoUrl = string.Empty;
-    private IReadOnlyList<TenantNavigationLinkDto> _navigationLinks = [];
     private bool _isSingleTenantMode = true;
     private bool _isCurrentUserInstanceAdmin;
     private bool _isCurrentUserTenantAdmin;
@@ -79,6 +72,7 @@ public partial class NavMenu : IDisposable
     private ICollection<GroupListDto> _userGroups = new List<GroupListDto>();
     private bool _orgSubmenuOpen;
     private bool _groupSubmenuOpen;
+    private SiteMegaMenu? _siteMegaMenu;
     private const string AiAssistantPreferencesCategory = "AiAssistantPreferences";
     private const string ShowAiAssistantNavbarButtonKey = "ai_assistant_preferences.show_navbar_button";
 
@@ -86,12 +80,10 @@ public partial class NavMenu : IDisposable
     {
         SidebarState.OnChange += StateHasChanged;
         AiAssistantState.OnChange += StateHasChanged;
-        TenantNavLinksState.OnChange += StateHasChanged;
         DockLayoutState.Changed += OnDockLayoutChanged;
         CurrentUserState.OnChanged += OnCurrentUserChanged;
         await LoadPublicExperienceAsync();
         await LoadCurrentUserAsync();
-        await LoadNavigationLinksAsync();
         await LoadDeploymentModeAsync();
         await LoadUserOrganizationsAsync();
         await LoadUserGroupsAsync();
@@ -194,6 +186,8 @@ public partial class NavMenu : IDisposable
 
     private async Task ToggleDropdown()
     {
+        await DismissSiteMegaMenuAsync();
+
         if (!_dropdownOpen)
         {
             await LoadDeploymentModeAsync();
@@ -212,10 +206,30 @@ public partial class NavMenu : IDisposable
         DockLayoutState.Toggle(ShellDockPanels.LeftNavId);
     }
 
-    private void ToggleAiAssistantPanel()
+    private async Task ToggleAiAssistantPanel()
     {
+        await DismissSiteMegaMenuAsync();
+        CloseDropdown();
         AiAssistantState.Toggle();
         MirrorShellDockPanel(ShellDockPanels.AiAssistantId, AiAssistantState.IsAvailable && AiAssistantState.IsOpen);
+    }
+
+    private async Task HandleSiteMegaMenuOpeningAsync()
+    {
+        CloseDropdown();
+        AiAssistantState.Close();
+        MirrorShellDockPanel(ShellDockPanels.AiAssistantId, shouldBeOpen: false);
+        await Task.CompletedTask;
+    }
+
+    private async Task DismissSiteMegaMenuAsync()
+    {
+        if (_siteMegaMenu is null)
+        {
+            return;
+        }
+
+        await _siteMegaMenu.DismissAsync();
     }
 
     private void MirrorShellDockPanel(DockPanelId id, bool shouldBeOpen)
@@ -298,32 +312,6 @@ public partial class NavMenu : IDisposable
         return [];
     }
 
-    private async Task LoadNavigationLinksAsync()
-    {
-        var shellTask = PublicExperienceService.GetCachedShellAsync();
-        var shell = shellTask is null ? null : await shellTask;
-        if (shell?.Navigation?.Links?.Count > 0)
-        {
-            _navigationLinks = shell.Navigation.Links
-                .Where(link => !string.IsNullOrWhiteSpace(link.Label) && !string.IsNullOrWhiteSpace(link.Url))
-                .OrderBy(link => link.SortOrder)
-                .ThenBy(link => link.Label, StringComparer.OrdinalIgnoreCase)
-                .Select(link => new TenantNavigationLinkDto
-                {
-                    Id = Guid.NewGuid(),
-                    Label = link.Label!,
-                    Url = link.Url!,
-                    Order = link.SortOrder ?? 0,
-                    OpenInNewTab = false
-                })
-                .ToList();
-            return;
-        }
-
-        await TenantNavLinksState.EnsureLoadedAsync(TenantNavigationService);
-        _navigationLinks = TenantNavLinksState.Links;
-    }
-
     private async Task LoadDeploymentModeAsync()
     {
         try
@@ -396,7 +384,6 @@ public partial class NavMenu : IDisposable
     {
         SidebarState.OnChange -= StateHasChanged;
         AiAssistantState.OnChange -= StateHasChanged;
-        TenantNavLinksState.OnChange -= StateHasChanged;
         DockLayoutState.Changed -= OnDockLayoutChanged;
         CurrentUserState.OnChanged -= OnCurrentUserChanged;
         GC.SuppressFinalize(this);

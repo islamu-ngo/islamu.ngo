@@ -72,12 +72,7 @@ builder.Services.AddEventControlPlaneClient();
 builder.Services.AddApiHttpClients(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents()
-    .AddAuthenticationStateSerialization(options =>
-    {
-        options.SerializationCallback = AuthStateSerializationPolicy.SerializeDisplaySafeClaimsAsync;
-    });
+    .AddInteractiveServerComponents();
 
 builder.Services.AddBlazouter();
 builder.Services.AddHttpContextAccessor();
@@ -151,7 +146,6 @@ app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging();
     app.UseDeveloperExceptionPage();
 }
 else
@@ -200,7 +194,6 @@ app.MapReverseProxy();
 app.MapRazorComponents<App>()
     .AddBlazouterSupport()
     .AddInteractiveServerRenderMode()
-    .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Explore.Blazor.Client._Imports).Assembly);
 
 await app.RunAsync();

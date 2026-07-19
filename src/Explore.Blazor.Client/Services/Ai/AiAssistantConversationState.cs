@@ -79,8 +79,6 @@ public sealed class AiAssistantConversationState
     public static bool CanSendMessage(HalResourceOfAiConversationDto? conversation) =>
         HasLink(conversation?._links, "send-message");
 
-    public static bool HasEventLink(HalResourceOfAiReferenceSearchResultDto reference) => HasLink(reference._links, "event");
-
     public void RemoveConversation(Guid conversationId)
     {
         Conversations = Conversations.Where(c => c.Id != conversationId).ToList();

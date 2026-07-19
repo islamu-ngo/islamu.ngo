@@ -215,7 +215,14 @@ public partial class SiteMegaMenu : ComponentBase, IAsyncDisposable, IBrowserVie
         await CloseMobileAsync(restoreFocus: false);
     }
 
-    public Task DismissAsync() => CloseForNavigationAsync();
+    public async Task DismissAsync()
+    {
+        await CloseForNavigationAsync();
+        if (!_disposed)
+        {
+            StateHasChanged();
+        }
+    }
 
     protected async Task HandleKeyDownAsync(KeyboardEventArgs args)
     {

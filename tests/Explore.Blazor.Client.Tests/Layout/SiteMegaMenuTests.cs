@@ -94,8 +94,10 @@ public sealed class SiteMegaMenuTests : IDisposable
 
         var cut = RenderMenu();
         await OpenDesktopSectionAsync(cut, "discover");
-        await cut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
+        var pendingClose = cut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
+        await Task.Yield();
         await cut.Find("#site-mega-menu-panel").TriggerEventAsync("onpointerenter", new PointerEventArgs());
+        await pendingClose;
         await Task.Delay(190);
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("true");
@@ -202,12 +204,11 @@ public sealed class SiteMegaMenuTests : IDisposable
     [Test]
     public async Task SiteMegaMenu_ViewportTransitionClosesOpenSurfacesAndDisposalUnsubscribes()
     {
-        IBrowserViewportObserver? observer = null;
-        var viewportService = SetupViewport(Breakpoint.Lg, 1280, captured => observer = captured);
+        var viewportService = SetupViewport(Breakpoint.Lg, 1280);
 
         var cut = RenderMenu();
         await OpenDesktopSectionAsync(cut, "discover");
-        await observer!.NotifyBrowserViewportChangeAsync(new BrowserViewportEventArgs(
+        await ((IBrowserViewportObserver)cut.Instance).NotifyBrowserViewportChangeAsync(new BrowserViewportEventArgs(
             Guid.NewGuid(),
             new BrowserWindowSize { Width = 390, Height = 844 },
             Breakpoint.Sm,
@@ -215,8 +216,9 @@ public sealed class SiteMegaMenuTests : IDisposable
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("false");
 
-        cut.Dispose();
-        await viewportService.Received(1).UnsubscribeAsync(Arg.Any<IBrowserViewportObserver>());
+        var observer = (IBrowserViewportObserver)cut.Instance;
+        await _ctx.DisposeComponentsAsync();
+        await viewportService.Received(1).UnsubscribeAsync(observer);
     }
 
     [Test]
@@ -227,16 +229,19 @@ public sealed class SiteMegaMenuTests : IDisposable
         var delayedCloseCut = RenderMenu();
         await OpenDesktopSectionAsync(delayedCloseCut, "discover");
         await delayedCloseCut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
-        delayedCloseCut.Dispose();
+        var delayedCloseObserver = (IBrowserViewportObserver)delayedCloseCut.Instance;
 
         var exitCut = RenderMenu();
         await OpenDesktopSectionAsync(exitCut, "about");
         exitCut.Find("[data-testid='site-mega-menu-desktop-close']").Click();
-        exitCut.Dispose();
+        var exitObserver = (IBrowserViewportObserver)exitCut.Instance;
+
+        await _ctx.DisposeComponentsAsync();
 
         await Task.Delay(240);
 
-        await viewportService.Received(2).UnsubscribeAsync(Arg.Any<IBrowserViewportObserver>());
+        await viewportService.Received(1).UnsubscribeAsync(delayedCloseObserver);
+        await viewportService.Received(1).UnsubscribeAsync(exitObserver);
     }
 
     private IRenderedComponent<SiteMegaMenu> RenderMenu(Action<ComponentParameterCollectionBuilder<SiteMegaMenu>>? parameters = null)
@@ -258,10 +263,7 @@ public sealed class SiteMegaMenuTests : IDisposable
         return focusService;
     }
 
-    private IBrowserViewportService SetupViewport(
-        Breakpoint breakpoint,
-        int width,
-        Action<IBrowserViewportObserver>? capture = null)
+    private IBrowserViewportService SetupViewport(Breakpoint breakpoint, int width)
     {
         var viewportService = Substitute.For<IBrowserViewportService>();
         viewportService.SubscribeAsync(Arg.Any<IBrowserViewportObserver>(), Arg.Any<bool>())
@@ -273,7 +275,6 @@ public sealed class SiteMegaMenuTests : IDisposable
                     throw new InvalidOperationException("Viewport observer is required.");
                 }
 
-                capture?.Invoke(observer);
                 return observer.NotifyBrowserViewportChangeAsync(new BrowserViewportEventArgs(
                     Guid.NewGuid(),
                     new BrowserWindowSize { Width = width, Height = 844 },

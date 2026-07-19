@@ -62,8 +62,8 @@ public sealed class NavMenuMegaMenuTests : IDisposable
         var dockLayoutState = RegisterAiDockPanel();
 
         var cut = RenderNavMenu();
-        cut.Find("[data-testid='shell-ai-toggle']").Click();
-        cut.Find(".navbar__user-btn").Click();
+        await cut.Find("[data-testid='shell-ai-toggle']").ClickAsync(new MouseEventArgs());
+        await cut.Find(".navbar__user-btn").ClickAsync(new MouseEventArgs());
 
         await Assert.That(cut.FindAll(".navbar__dropdown-menu--open").Count).IsEqualTo(1);
         await Assert.That(_ctx.Services.GetRequiredService<AiAssistantState>().IsOpen).IsTrue();
@@ -88,13 +88,13 @@ public sealed class NavMenuMegaMenuTests : IDisposable
 
         var cut = RenderNavMenu();
         await OpenMegaMenuSectionAsync(cut, "discover");
-        cut.Find(".navbar__user-btn").Click();
+        await cut.Find(".navbar__user-btn").ClickAsync(new MouseEventArgs());
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("false");
         await Assert.That(cut.FindAll(".navbar__dropdown-menu--open").Count).IsEqualTo(1);
 
         await OpenMegaMenuSectionAsync(cut, "community");
-        cut.Find("[data-testid='shell-ai-toggle']").Click();
+        await cut.Find("[data-testid='shell-ai-toggle']").ClickAsync(new MouseEventArgs());
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-community']").GetAttribute("aria-expanded")).IsEqualTo("false");
         await Assert.That(_ctx.Services.GetRequiredService<AiAssistantState>().IsOpen).IsTrue();

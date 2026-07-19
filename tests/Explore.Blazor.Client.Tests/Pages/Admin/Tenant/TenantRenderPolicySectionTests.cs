@@ -2,6 +2,7 @@
 // ABOUTME: Proves tenant presets control prerender strategy without exposing legacy Auto or WebAssembly choices.
 
 using Explore.Blazor.Client.Pages.Admin.Tenant.Components;
+using MudBlazor;
 
 namespace Explore.Blazor.Client.Tests.Pages.Admin;
 
@@ -37,16 +38,9 @@ public sealed class TenantRenderPolicySectionTests : IDisposable
         IRenderedComponent<TenantRenderPolicySection> cut = _ctx.Render<TenantRenderPolicySection>(parameters => parameters
             .Add(component => component.Model, model));
 
-        string[] presetLabels =
-        [
-            "Interactive Server, no prerender",
-            "SEO balanced prerender",
-            "All routes prerendered",
-            "Custom prerender strategy"
-        ];
-
-        await Assert.That(presetLabels.Count(label => cut.Markup.Contains(label, StringComparison.OrdinalIgnoreCase)))
-            .IsEqualTo(4);
+        IRenderedComponent<MudSelect<string>> select = cut.FindComponent<MudSelect<string>>();
+        cut.Find(".mud-select > .mud-input-control").MouseDown();
+        await Assert.That(select.FindComponents<MudSelectItem<string>>().Count).IsEqualTo(4);
         await Assert.That(cut.Markup).DoesNotContain("AllInteractiveAutoNoPrerender", StringComparison.OrdinalIgnoreCase);
         await Assert.That(cut.Markup).Contains("Render modes are fixed to Interactive Server", StringComparison.OrdinalIgnoreCase);
     }

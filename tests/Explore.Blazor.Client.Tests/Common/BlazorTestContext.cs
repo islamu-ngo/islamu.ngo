@@ -38,6 +38,7 @@ namespace Explore.Blazor.Client.Tests.Common;
 public class BlazorTestContext : BunitContext
 {
     private readonly BunitAuthorizationContext _authContext;
+    private bool _mudPopoverProviderRendered;
 
     /// <summary>
     /// Creates a new BlazorTestContext with MudBlazor and authentication support pre-configured.
@@ -288,6 +289,7 @@ public class BlazorTestContext : BunitContext
         // MudOverlay/PointerEventsNoneService calls these during its lifecycle and dispose.
         // IPointerEventsNoneService is internal in MudBlazor v9 — cannot mock at DI level.
         JSInterop.SetupVoid("mudPointerEventsNone.addListener", _ => true).SetVoidResult();
+        JSInterop.SetupVoid("mudPointerEventsNone.listenForPointerEvents", _ => true).SetVoidResult();
         JSInterop.SetupVoid("mudPointerEventsNone.cancelListener", _ => true).SetVoidResult();
         JSInterop.SetupVoid("mudPointerEventsNone.dispose", _ => true).SetVoidResult();
 
@@ -317,10 +319,12 @@ public class BlazorTestContext : BunitContext
         Action<ComponentParameterCollectionBuilder<TComponent>>? parameterBuilder = null)
         where TComponent : IComponent
     {
-        // Render the component within a MudPopoverProvider wrapper
-        var wrapper = Render<MudPopoverProvider>();
+        if (!_mudPopoverProviderRendered)
+        {
+            Render<MudPopoverProvider>();
+            _mudPopoverProviderRendered = true;
+        }
 
-        // Now render the actual component
         return parameterBuilder != null
             ? Render<TComponent>(parameterBuilder)
             : Render<TComponent>();

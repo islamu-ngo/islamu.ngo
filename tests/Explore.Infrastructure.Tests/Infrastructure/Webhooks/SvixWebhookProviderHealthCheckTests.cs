@@ -80,9 +80,9 @@ public sealed class SvixWebhookProviderHealthCheckTests
         await Assert.That(result.Data["deploymentKind"]).IsEqualTo(nameof(SvixDeploymentKind.SelfHosted));
         await Assert.That(result.Data["conformanceExecutedTestCount"]).IsEqualTo(11);
         await Assert.That(result.Data["exactMessageLookupSupported"]).IsEqualTo(false);
-        await Assert.That(result.Data["providerCapabilityCount"]).IsEqualTo(4);
+        await Assert.That(result.Data["providerCapabilityCount"]).IsEqualTo(3);
         await Assert.That((string[])result.Data["providerCapabilityCodes"])
-            .IsEquivalentTo(["ENDPOINT_MANAGEMENT", "PAYLOAD_INSPECTION", "APP_PORTAL", "EVENT_CATALOG"]);
+            .IsEquivalentTo(["ENDPOINT_MANAGEMENT", "PAYLOAD_INSPECTION", "APP_PORTAL"]);
         await Assert.That(result.Data.Keys).DoesNotContain("baseUrl");
         await Assert.That(result.Data.Keys).DoesNotContain("authToken");
         await Assert.That(result.Data.Keys).DoesNotContain("secretRef");

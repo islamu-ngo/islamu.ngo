@@ -78,8 +78,8 @@ public sealed class WebhookProviderResolverTests
         {
             Id = Guid.CreateVersion7(),
             Name = WebhookEventNames.OrganizationVerified,
-            GroupName = "events",
-            Description = "Event published",
+            GroupName = "organization",
+            Description = "Organization verified",
             SchemaJson = "{}",
             SchemaVersion = 3,
             IsEnabled = true,
@@ -177,8 +177,8 @@ public sealed class WebhookProviderResolverTests
         {
             Id = Guid.CreateVersion7(),
             Name = WebhookEventNames.OrganizationVerified,
-            GroupName = "events",
-            Description = "Event published",
+            GroupName = "organization",
+            Description = "Organization verified",
             SchemaJson = "{}",
             SchemaVersion = 1,
             IsEnabled = true,
@@ -294,8 +294,8 @@ public sealed class WebhookProviderResolverTests
         {
             Id = Guid.CreateVersion7(),
             Name = WebhookEventNames.OrganizationVerified,
-            GroupName = "events",
-            Description = "Event published",
+            GroupName = "organization",
+            Description = "Organization verified",
             SchemaJson = "{}",
             SchemaVersion = 1,
             IsEnabled = true,
@@ -371,8 +371,7 @@ public sealed class WebhookProviderResolverTests
         await Assert.That(resolution.ProviderCapabilities).IsEqualTo(
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
-            WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.OperationalCallbacks);
+            WebhookProviderCapability.AppPortal);
         await Assert.That(resolution.ProviderCapabilities.HasFlag(WebhookProviderCapability.Replay)).IsFalse();
         await Assert.That(resolution.ProviderEnvironment)
             .IsEqualTo(SvixConformanceProfileRegistry.SelfHostedEnvironment);
@@ -389,9 +388,7 @@ public sealed class WebhookProviderResolverTests
         var resolution = resolver.Resolve(WebhookProviderMode.Local);
 
         await Assert.That(resolution.IsProviderModeAvailable).IsTrue();
-        await Assert.That(resolution.LocalCapabilities).IsEqualTo(
-            WebhookProviderCapability.EndpointManagement |
-            WebhookProviderCapability.OperationalCallbacks);
+        await Assert.That(resolution.LocalCapabilities).IsEqualTo(WebhookProviderCapability.EndpointManagement);
         await Assert.That(resolution.ProviderCapabilities).IsEqualTo(WebhookProviderCapability.None);
         await Assert.That(resolution.SupportsLocalConfiguration(WebhookProviderCapability.EndpointManagement)).IsTrue();
         await Assert.That(resolution.SupportsLocalConfiguration(WebhookProviderCapability.ProviderAttemptVisibility)).IsFalse();
@@ -462,7 +459,7 @@ public sealed class WebhookProviderResolverTests
         await Assert.That(captured.ProviderPublications).IsEmpty();
         await Assert.That(captured.LocalTargets).IsEmpty();
         await Assert.That(Encoding.UTF8.GetString(captured.Message.GetPayloadBytes()!))
-            .Contains("\"event.published\"");
+            .Contains("\"organization.verified\"");
     }
 
     private static WebhookEventBuildContext CreateContext()
@@ -476,14 +473,13 @@ public sealed class WebhookProviderResolverTests
             tenantId,
             WebhookEventNames.OrganizationVerified,
             "domain-event-1",
-            "Event",
+            "Organization",
             aggregateId,
             DateTimeOffset.UtcNow,
             new Dictionary<string, object?>
             {
-                ["eventId"] = aggregateId.ToString("D"),
-                ["status"] = "Published",
-                ["publicUrl"] = "https://example.org/events/community-iftar"
+                ["organizationId"] = aggregateId.ToString("D"),
+                ["status"] = "Verified"
             },
             Guid.CreateVersion7());
     }

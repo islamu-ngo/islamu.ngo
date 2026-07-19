@@ -55,8 +55,7 @@ public sealed class SvixVersionConformanceTests(SvixConformanceContainerFixture 
         await Assert.That(profile.Capabilities).IsEqualTo(
             WebhookProviderCapability.EndpointManagement |
             WebhookProviderCapability.PayloadInspection |
-            WebhookProviderCapability.AppPortal |
-            WebhookProviderCapability.OperationalCallbacks);
+            WebhookProviderCapability.AppPortal);
     }
 
     [Test]

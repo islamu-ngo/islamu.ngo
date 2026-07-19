@@ -15,7 +15,7 @@ using Explore.Domain.Enums;
 public sealed class SecretResolverMetrics : IDisposable
 {
     /// <summary>Meter name exposed to OpenTelemetry collectors.</summary>
-    public const string MeterName = "Event.Secrets";
+    public const string MeterName = "Explore.Secrets";
 
     private readonly Meter _meter;
     private readonly Counter<long> _resolveSuccess;

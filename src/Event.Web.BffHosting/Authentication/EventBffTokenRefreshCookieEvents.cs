@@ -49,7 +49,7 @@ public class EventBffTokenRefreshCookieEvents(
     ILogger<EventBffTokenRefreshCookieEvents> logger)
     : CookieAuthenticationEvents
 {
-    internal const string TokenRefreshHttpClientName = "Event.Web.BffHosting.TokenRefresh";
+    internal const string TokenRefreshHttpClientName = "Islamu.Bff.TokenRefresh";
 
     private static readonly TimeSpan RefreshBuffer = TimeSpan.FromSeconds(60);
     private static readonly Action<ILogger, string?, Exception?> LogTokensRefreshed =

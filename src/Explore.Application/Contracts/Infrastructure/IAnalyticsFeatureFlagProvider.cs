@@ -24,7 +24,7 @@ public interface IAnalyticsFeatureFlagProvider
     /// Checks if a feature flag is enabled for a specific user.
     /// Returns false if the provider doesn't support feature flags or on error.
     /// </summary>
-    /// <param name="featureKey">The feature flag key (e.g., "new-event-flow").</param>
+    /// <param name="featureKey">The feature flag key (e.g., "new-blog-layout").</param>
     /// <param name="distinctId">The user to evaluate the flag for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the feature is enabled for this user, false otherwise.</returns>

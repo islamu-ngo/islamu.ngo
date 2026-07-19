@@ -23,7 +23,5 @@ public static class ClientFeatureFlags
     [
         "new-dashboard",
         "beta-analytics",
-        "event-series",
-        "advanced-registration",
     ];
 }

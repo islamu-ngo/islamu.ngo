@@ -1,3 +1,6 @@
+// ABOUTME: Describes one HAL link relation, route, method, and authorization requirement.
+// ABOUTME: Carries policy metadata used by API assemblers to advertise permitted resource actions.
+
 namespace Explore.Application.Hateoas;
 
 using System.Collections.Generic;
@@ -7,7 +10,7 @@ using Explore.Application.Authorization;
 /// Defines a link that can be generated for a resource.
 /// Used by link policies to specify which links should be included for a resource.
 /// </summary>
-/// <param name="Rel">The link relation type (e.g., "self", "collection", "events").</param>
+/// <param name="Rel">The link relation type (e.g., "self", "collection", "blog").</param>
 /// <param name="RouteName">The name of the route to generate the URL.</param>
 /// <param name="RouteValues">Optional route values for URL generation.</param>
 /// <param name="Method">Optional HTTP method (GET, POST, PUT, DELETE). Null implies GET.</param>

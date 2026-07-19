@@ -32,8 +32,8 @@ public interface IAnalyticsProvider
     /// Tracks a named event with optional properties.
     /// </summary>
     /// <param name="distinctId">Unique user identifier.</param>
-    /// <param name="eventName">Event name (e.g., "Event Created", "User Signed Up").</param>
-    /// <param name="properties">Optional event properties (e.g., eventId, category).</param>
+    /// <param name="eventName">Event name (e.g., "Blog Published", "User Signed Up").</param>
+    /// <param name="properties">Optional event properties (e.g., blogId, category).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task TrackAsync(
         string distinctId,
@@ -45,7 +45,7 @@ public interface IAnalyticsProvider
     /// Tracks a page view event.
     /// </summary>
     /// <param name="distinctId">Unique user identifier.</param>
-    /// <param name="pagePath">The page path being viewed (e.g., "/events/123").</param>
+    /// <param name="pagePath">The page path being viewed (e.g., "/blog/welcome").</param>
     /// <param name="properties">Optional additional properties.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task PageViewAsync(

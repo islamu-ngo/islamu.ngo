@@ -272,7 +272,7 @@ public static class AuthorizationActions
 
     /// <summary>
     /// Valid actions for the <c>custom_property_value</c> resource kind.
-    /// Standard CRUD for runtime custom property values on events/sessions.
+    /// Standard CRUD for runtime custom property values.
     /// </summary>
     public static class CustomPropertyValues
     {

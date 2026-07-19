@@ -36,7 +36,7 @@ public interface IPdsSyncOutboxRepository
     /// <summary>
     /// Gets outbox entries for a specific source entity.
     /// </summary>
-    /// <param name="sourceEntityType">The source entity type (e.g., "Event").</param>
+    /// <param name="sourceEntityType">The source entity type (e.g., "Blog").</param>
     /// <param name="sourceEntityId">The source entity ID.</param>
     /// <returns>List of outbox entries for the entity.</returns>
     Task<List<PdsSyncOutbox>> GetBySourceEntity(string sourceEntityType, Guid sourceEntityId);

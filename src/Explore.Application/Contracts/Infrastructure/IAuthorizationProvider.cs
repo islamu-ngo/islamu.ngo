@@ -43,7 +43,7 @@ public interface IAuthorizationProvider
     /// Checks if the current user can modify a specific setting, considering lock semantics.
     /// Convenience method that builds the resource context from the setting key and scope.
     /// </summary>
-    /// <param name="settingKey">The setting key (e.g., "events.require_approval").</param>
+    /// <param name="settingKey">The setting key (e.g., "appearance.default_theme_mode").</param>
     /// <param name="action">The action (e.g., "update").</param>
     /// <param name="tenantId">The tenant scope (null for instance-level).</param>
     /// <param name="organizationId">The organization scope (null if not org-level).</param>

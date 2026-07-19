@@ -9,12 +9,12 @@ namespace Explore.Application.Contracts.Persistence;
 public interface IPermissionRepository : IGenericRepository<Permission, int>
 {
     /// <summary>
-    /// Gets a permission by its unique MasterCode (e.g., "event:update", "organization:delete").
+    /// Gets a permission by its unique MasterCode (e.g., "blog:update", "organization:delete").
     /// </summary>
     Task<Permission?> GetByMasterCodeAsync(string masterCode);
 
     /// <summary>
-    /// Gets all permissions for a specific resource kind (e.g., all "event" permissions).
+    /// Gets all permissions for a specific resource kind (e.g., all "blog" permissions).
     /// </summary>
     Task<IReadOnlyList<Permission>> GetByResourceKindAsync(string resourceKind);
 

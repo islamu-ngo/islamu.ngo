@@ -7,7 +7,7 @@
 > **Status:** Mixed
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-07-15
-> **Source Anchors:** `Explore.Infrastructure/Mail/`, `Explore.Infrastructure/EmailDispatchDrainService.cs`, `Explore.Infrastructure.Tests/Infrastructure/EmailDispatchDrainMailpitTests.cs`, `Explore.Infrastructure.Tests/Infrastructure/SmtpEmailServiceMailpitTests.cs`, `Explore.Persistence/Seed/DatabaseSeeder.cs`, `Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `Explore.Domain/Settings/Definitions/EmailSettingDefinitions.cs`, `Explore.API/HealthChecks/SmtpHealthCheck.cs`, `Explore.Application/Services/EventPublishedNotificationFanoutService.cs`, `Explore.Application/Services/EventModerationNotificationFanoutService.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Source Anchors:** `src/Explore.Infrastructure/Mail/`, `src/Explore.Infrastructure/EmailDispatchDrainService.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/EmailDispatchDrainMailpitTests.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/SmtpEmailServiceMailpitTests.cs`, `src/Explore.Persistence/Seed/DatabaseSeeder.cs`, `src/Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `src/Explore.Domain/Settings/Definitions/EmailSettingDefinitions.cs`, `src/Explore.API/HealthChecks/SmtpHealthCheck.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
 
 Email delivery is implemented through a durable outbox drained to SMTP. In-app notifications are a separate authenticated inbox feature. Event-specific fanout below documents current imported source and is removed with its code-owning slice; it is not a target website capability.
 
@@ -88,23 +88,21 @@ Basic Dispatch uses `EmailDispatchDrainService` as the scheduler-neutral boundar
 | RabbitMQ live topology and publish outcomes | `RabbitMqEmailDispatchTransportLiveTests` enables the real transport against the fixture, declares dispatch/DLX/parking topology, verifies durable direct exchanges and queues through the management API, verifies dispatch queue DLX arguments, confirms readiness is healthy, confirms routable pointer publishes, returns `mandatory_return` for an unbound routing key, and reads the live broker payload to prove only pointer fields are serialized. |
 | RabbitMQ live consumer | `RabbitMqEmailDispatchConsumerMailpitTests` starts the manual-ack consumer, publishes a valid pointer, drains the durable outbox through real SMTP to Mailpit, persists `Sent` attempt/receipt state, and waits for RabbitMQ ready/unacknowledged counters to reach zero after the durable outcome. The same class proves malformed JSON and valid pointers without a durable outbox reject to the DLQ without sending Mailpit email. |
 | RabbitMQ DLQ replay and parking | `RabbitMqEmailDispatchDeadLetterReplayLiveTests` starts the replay worker, resets a dead-lettered durable row before republishing to the dispatch queue, ACKs the original DLQ delivery, and parks missing-outbox payloads to the parking queue. |
-| Browser registration email | `RegistrationFlowTests` clears Mailpit, registers through the Aspire-backed API/BFF/browser stack, waits for the durable outbox row to become `Sent`, verifies attempt/receipt rows, finds the Mailpit message for the registrant, and checks semantic body text plus event title. |
 
 Focused commands:
 
 ```bash
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
-dotnet test --project Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTenantControlRepositoryTests/*" --minimum-expected-tests 1
-dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchAdminControllerTests/*|/*/*/EmailDispatchAdminHateoasTests/*" --minimum-expected-tests 1
-dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTickerQJobsTests/*|/*/*/EmailDispatchProcessorTests/*" --minimum-expected-tests 1
-dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchHealthCheckTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchRabbitMqHealthCheckTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqContainerFixtureTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchTransportLiveTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchConsumerMailpitTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchDeadLetterReplayLiveTests/*" --minimum-expected-tests 1
-dotnet test --project Explore.Blazor.Client.E2ETests/Explore.Blazor.Client.E2ETests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RegistrationFlowTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
+dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTenantControlRepositoryTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchAdminControllerTests/*|/*/*/EmailDispatchAdminHateoasTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTickerQJobsTests/*|/*/*/EmailDispatchProcessorTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchHealthCheckTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchRabbitMqHealthCheckTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqContainerFixtureTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchTransportLiveTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchConsumerMailpitTests/*" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchDeadLetterReplayLiveTests/*" --minimum-expected-tests 1
 ```
 
 ## Admin Workflow

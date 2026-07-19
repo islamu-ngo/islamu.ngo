@@ -7,7 +7,7 @@
 > **Status:** Active debt inventory
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-01
-> **Source Anchors:** `Event.API.IntegrationTests/Features/RouteNameCoverageTests.cs`, `.github/workflows/openapi-contract.yml`
+> **Source Anchors:** `tests/Event.API.IntegrationTests/Features/RouteNameCoverageTests.cs`, `.github/workflows/openapi-contract.yml`
 
 This inventory exists so skipped API contract tests cannot become invisible release debt. `OpenAPI Contract Guard` validates that every skipped test whose skip reason includes `Category: API contract` is listed here with an owner and a removal condition.
 

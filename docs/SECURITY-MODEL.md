@@ -6,7 +6,7 @@
 > **Audience:** Operators | Contributors | AI agents
 > **Status:** Active
 > **Owner:** Security
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `src/Explore.API/Extensions/AuthenticationExtensions.cs`, `src/Explore.Blazor/Program.cs`, `src/Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `src/Event.Web.BffHosting/Authentication/EventBffAuthenticationExtensions.cs`, `src/Explore.Blazor.Client/Services/Http/BffAntiforgeryMessageHandler.cs`, `src/Explore.Application/Authorization/ResourceKinds.cs`, `src/Explore.Infrastructure/Services/RuntimeAuthorizationProvider.cs`, `src/Explore.Infrastructure/Services/FallbackAuthorizationService.cs`
 
 ## Runtime Boundary
@@ -93,7 +93,7 @@ Outgoing webhooks materialize immutable tenant-scoped message and delivery-plan 
 
 Incoming webhook routes are provider-specific. The only public provider callback currently exposed is the Svix operational intake. Its verification, tenant resolution, replay/idempotency handling, settlement receipts, and redrive records are separate from outgoing endpoint delivery.
 
-Coop signature-verification services exist as integration foundation, but no public Coop or Osprey moderation callback route exists. Do not describe either provider as an active first-party report-moderation path. See [WEBHOOKS.md](WEBHOOKS.md), [COOP_INTEGRATION.md](COOP_INTEGRATION.md), and [OSPREY_INTEGRATION.md](OSPREY_INTEGRATION.md).
+No Coop or Osprey callback route or verifier is registered in the current API. Do not describe either provider as an active first-party report-moderation path. See [WEBHOOKS.md](WEBHOOKS.md), [INTEGRATIONS.md](INTEGRATIONS.md), and [OSPREY_INTEGRATION.md](OSPREY_INTEGRATION.md).
 
 ## Storage And Email
 

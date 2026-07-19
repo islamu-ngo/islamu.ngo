@@ -6,7 +6,7 @@
 > **Audience:** Operators | Integrators | Contributors | AI agents
 > **Status:** Active
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `src/Explore.Application/Webhooks/`, `src/Explore.Infrastructure/Webhooks/`, `src/Explore.Persistence/Services/WebhookDeliveryPlanMaterializer.cs`, `src/Explore.API/Controllers/WebhooksController.cs`, `src/Explore.API/Controllers/WebhookEndpointOperationsController.cs`, `src/Explore.API/Controllers/IncomingWebhooksController.cs`, `src/Explore.Blazor.Client/Components/Webhooks/WebhookManagementPanel.razor`, `src/Explore.AppHost/AppHost.cs`
 
 The webhook subsystem sends first-party ISLAMU website/platform notifications to configured consumers. Incoming provider callbacks are a separate ingestion boundary.
@@ -112,7 +112,7 @@ Required configuration depends on mode:
 
 Health checks report current provider/runtime reachability; they are not proof of end-to-end delivery. Operators should use a tenant-scoped webhook.test action, inspect the canonical message and attempt/publication evidence, and verify the receiving system independently.
 
-No public Coop or Osprey callback is part of the current webhook controller surface. Coop verifier services are retained integration foundation only; see [COOP_INTEGRATION.md](COOP_INTEGRATION.md).
+No Coop or Osprey callback route or verifier is registered in the current API. The only public provider callback is the Svix operational intake documented in [INTEGRATIONS.md](INTEGRATIONS.md).
 
 ## Change Checklist
 

@@ -9,7 +9,7 @@ This ledger is the routing point for sibling-bootstrap and alignment decisions. 
 
 ## Evidence Boundaries
 
-- Source evidence used here is limited to Control Plane `dev/report/EVENT_REFERENCE_ALIGNMENT_REPORT.md` sections 2 and 15, current `dev/active/init-import-islamu-event/*`, and current islamu.ngo source.
+- Source evidence used here is limited to Control Plane `dev/report/EVENT_REFERENCE_ALIGNMENT_REPORT.md` sections 2 and 15, archived `dev/zarchive/init-import-islamu-event/*`, and current islamu.ngo source.
 - Control Plane-derived assets may be copied into islamu.ngo because the owner holds copyright, but each copy is a deliberate public AGPL publication with provenance, stripped private identifiers/secrets, and no runtime/build coupling to Control Plane.
 - This ledger is static documentation evidence only. Runtime, build, test, backup, browser, and production drills remain acceptance gates until explicitly executed.
 
@@ -27,7 +27,7 @@ This ledger is the routing point for sibling-bootstrap and alignment decisions. 
 
 | Area | Verdict | Evidence | Decision |
 |---|---|---|---|
-| Generic platform chassis | Mandatory NGO parity | `Explore.slnx`; `dev/active/init-import-islamu-event/init-import-islamu-event-plan.md`; CP report §15 | Retain the generic API/Application/Domain/Infrastructure/Persistence/Blazor/AppHost/ServiceDefaults chassis as current foundation. |
+| Generic platform chassis | Mandatory NGO parity | `Explore.slnx`; `dev/zarchive/init-import-islamu-event/init-import-islamu-event-plan.md`; CP report §15 | Retain the generic API/Application/Domain/Infrastructure/Persistence/Blazor/AppHost/ServiceDefaults chassis as current foundation. |
 | Event product surface | Not applicable-delete | active plan D9/C-EVENT-DELETE; active tasks 8.1 | Final delete verdict. Do not reopen Event product routes, migrations, HAL affordances, OpenAPI/client surfaces, or UI unless a new approved feature workstream explicitly replaces this decision. |
 | Tenant model / tenants-as-projects | islamu.ngo adaptation | active context U5; current solution still has tenant infrastructure | Keep the current tenant model as platform isolation scaffolding for now. Do not reinterpret tenants as projects until a named product workflow proves the need. |
 | Users | Mandatory NGO parity | current chassis; CP report §15 identity/BFF decisions | Retain first-party user identity integration through Keycloak-backed auth and server-side UI/API access. |

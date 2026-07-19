@@ -7,7 +7,7 @@ ABOUTME: Points readers to the maintained security model while preserving docume
 > **Status:** Mixed
 > **Owner:** Security
 > **Last Verified:** 2026-05-12
-> **Source Anchors:** `docs/SECURITY-MODEL.md`, `Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `Explore.Blazor/Services/CircuitTokenStore.cs`, `Explore.Blazor/Extensions/BffStorageEndpoints.cs`, `Explore.Blazor/Extensions/BffPreferenceEndpoints.cs`
+> **Source Anchors:** `docs/SECURITY-MODEL.md`, `src/Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `src/Explore.Blazor/Services/CircuitTokenStore.cs`, `src/Explore.Blazor/Extensions/BffStorageEndpoints.cs`, `src/Explore.Blazor/Extensions/BffPreferenceEndpoints.cs`
 
 The maintained security model lives in [SECURITY-MODEL.md](SECURITY-MODEL.md).
 

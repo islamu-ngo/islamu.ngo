@@ -6,7 +6,7 @@
 > **Audience:** Contributors | Maintainers | AI agents
 > **Status:** Active
 > **Owner:** Architecture
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `Explore.slnx`, `src/`, `tests/`, `dev/report/EVENT_REFERENCE_ALIGNMENT.md`
 
 ## Naming Boundary
@@ -104,11 +104,10 @@ entry points include:
 - `src/Explore.Application/Features/Webhooks/`
 - `src/Explore.Infrastructure/Webhooks/`
 - `src/Explore.Infrastructure/Services/Federation/`
-- `src/Explore.API/Services/CoopIncomingWebhookVerifier.cs`
 - `src/Explore.Infrastructure/Protos/osprey/`
 - `src/Explore.AppHost/AppHost.cs`
 
-Coop, Osprey, federation, and webhook documentation remains source-backed. Product-facing
+Osprey orchestration, federation, and webhook documentation remains source-backed. Product-facing
 expansion stays deferred until a named consumer owns the UX and policy.
 
 ## Event Removal

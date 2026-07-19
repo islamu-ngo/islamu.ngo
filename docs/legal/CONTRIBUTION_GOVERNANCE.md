@@ -7,9 +7,9 @@
 > **Status:** CLA v2.0 workflow implemented; agreement remains pending legal review and repository settings verification
 > **Owner:** Platform/Ops | Contributor Experience | Legal reviewer
 > **Last Verified:** 2026-07-15
-> **Source Anchors:** `docs/CI_CD_GOVERNANCE.md`, `docs/CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `dev/active/enterprise-ci-cd-hardening/enterprise-ci-cd-hardening-tasks.md`
+> **Source Anchors:** `docs/CI_CD_GOVERNANCE.md`, `docs/CONTRIBUTING.md`, `legal/CLA.md`, `.github/workflows/cla.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
 
-This document records the legal contribution gate decision and automation threat model. The active agreement is [CLA.md](CLA.md).
+This document records the legal contribution gate decision and automation threat model. The active agreement is [CLA.md](../../legal/CLA.md).
 
 ## Current Decision
 

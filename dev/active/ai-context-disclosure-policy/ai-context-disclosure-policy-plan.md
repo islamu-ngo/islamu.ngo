@@ -78,7 +78,7 @@ The durable pattern is:
 
 ## 6. Verification
 
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet`
+- `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet`
 - Targeted checks: `AiContextDisclosureSchemaTests`, `AiContextGatewayBypassTests`, `GovernanceSettingKeysTests`.
 - Readback checks: `rg -n "field-classification-matrix|ai-context-disclosure-policy-plan" docs .claude dev/active`.
 
@@ -93,4 +93,4 @@ The durable pattern is:
 
 ## 8. Handoff
 
-This file was restored on 2026-07-04 because architecture tests failed when `.claude/contract/intents.yaml` referenced missing active workstream docs. Future changes to AI context disclosure should update this plan, `field-classification-matrix.md`, `mcp-tool-audit.md`, `docs/AI_CONTEXT_SECURITY.md`, and ADR-012 as appropriate.
+This file was restored on 2026-07-04 because architecture tests failed when `.claude/contract/intents.yaml` referenced missing active workstream docs. Future changes to AI context disclosure should update this plan, `field-classification-matrix.md`, `docs/AI_CONTEXT_SECURITY.md`, and ADR-012 as appropriate.

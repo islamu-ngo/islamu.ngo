@@ -510,22 +510,16 @@ Guards are registered in `Program.cs` and applied via Blazouter's routing config
 
 ## 25. Specification Pattern Implementation
 
-The application uses a custom **Specification Pattern** to handle complex filtering logic, particularly for the `Event` entity which has modular aspects.
+The application uses a custom **Specification Pattern** to keep complex Blog filtering in the Application layer and out of repositories.
 
 ### Core Components
 - **`IQuerySpecification<T>`**: Interface defining the contract for query specifications.
-- **`EventQuerySpecification`**: The main specification for event retrieval. It orchestrates sub-filters.
+- **`BlogQuerySpecification`**: The immutable specification for Blog retrieval. It composes tenant, publication, category, tag, title-search, and sort rules.
 - **`IFilterSpecification<T>`**: Interface for individual filter components.
 
-### Modular Filtering Strategy
-Instead of a massive `Where()` clause in the repository, filters are broken down into small, reusable classes:
-
-1.  **`EventFilter`**: Handles core fields (Date, Location, Category).
-2.  **`AspectPresenceFilter`**: Handles "HasIslamicAspect" / "HasTechAspect" flags.
-3.  **`IslamicAspectFilter`**: Handles Islamic-specific fields (Madhab, GenderMode).
-4.  **`TechAspectFilter`**: Handles Tech-specific fields (SkillLevel, Stack).
-
-The `EventQuerySpecification` applies these filters sequentially to the `IQueryable<Event>`. This allows module-specific filters to be applied only when relevant.
+`BlogQuerySpecification` starts from `Empty` and returns a new specification from each `ForTenant`,
+`PublishedAt`, `WithCategory`, `WithTag`, `SearchTitle`, or sort operation. `BlogRepository`
+applies the completed specification consistently to count and paged list queries.
 
 ---
 

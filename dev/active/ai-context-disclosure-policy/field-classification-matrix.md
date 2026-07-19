@@ -57,5 +57,5 @@ Every persisted public property on the supported `*Pii` entities must appear her
 ## Drift Control
 
 - Update this matrix, `AiContextDisclosureRegistry`, and `docs/AI_CONTEXT_SECURITY.md` together when a PII field is added, removed, or reclassified.
-- Run `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet` after any disclosure-policy change.
+- Run `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet` after any disclosure-policy change.
 - Do not set `PiiDisclosureEnabled` to `true` until the Phase 4 persistence, logging, deletion-propagation, and operator-review tasks are complete.

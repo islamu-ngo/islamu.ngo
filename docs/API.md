@@ -6,7 +6,7 @@
 > **Audience:** Contributors | Integrators | AI agents
 > **Status:** Active
 > **Owner:** API
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `src/Explore.API/Program.cs`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.API/Hateoas/Policies/BlogLinkPolicy.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Blazor.Client/nswag.json`
 
 ## Scope
@@ -120,8 +120,8 @@ Event-product removal did not remove every platform integration. Current source 
 
 - webhook consumer, endpoint, message, delivery-attempt, provider-binding, test, retry, and incoming
   redrive APIs;
-- incoming Svix and Coop callbacks;
-- Osprey coordinator protobuf/client and local orchestration configuration;
+- the incoming Svix operational callback;
+- Osprey coordinator protobuf/client and local orchestration configuration without a public callback route;
 - ATProto record and PDS synchronization APIs/infrastructure; and
 - Organizations, Groups, notifications, storage, email, support-access, and provider administration.
 
@@ -129,7 +129,6 @@ Their dedicated documentation remains authoritative only while its named source 
 
 - [WEBHOOKS.md](WEBHOOKS.md)
 - [FEDERATION.md](FEDERATION.md)
-- [COOP_INTEGRATION.md](COOP_INTEGRATION.md)
 - [OSPREY_INTEGRATION.md](OSPREY_INTEGRATION.md)
 
 Do not describe these technical surfaces as public ISLAMU products without a separate approved

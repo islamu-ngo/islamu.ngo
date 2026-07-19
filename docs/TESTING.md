@@ -6,8 +6,8 @@
 > **Audience:** Contributors | Maintainers | AI agents
 > **Status:** Active
 > **Owner:** Quality
-> **Last Verified:** 2026-07-18
-> **Source Anchors:** `Explore.slnx`, `tests/`, `.github/workflows/_build-test.yml`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `Explore.slnx`, `tests/`, `.github/workflows/_build-test.yml`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixVersionConformanceTests.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixManagedConformanceTests.cs`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
 
 ## Framework And Command Rules
 
@@ -47,7 +47,7 @@ dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTe
 dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
 dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet
 dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category!=Runtime]" --minimum-expected-tests 1
 dotnet test --project tests/Explore.Secrets.UnitTests/Explore.Secrets.UnitTests.csproj --configuration Release --verbosity quiet
 dotnet test --project tests/Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
 dotnet test --project tests/Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet
@@ -55,6 +55,44 @@ dotnet test --project tests/Explore.Diagnostic.UnitTests/Explore.Diagnostic.Unit
 ```
 
 Browser E2E is a separate/manual or scheduled lane because it starts the application topology.
+
+## Infrastructure Runtime Lanes
+
+The standard Infrastructure command excludes `Runtime` tests so the required local and CI lane is
+deterministic and does not silently depend on Docker, external credentials, or managed-provider
+state. Runtime evidence is additive and must use an explicit, non-empty selector.
+
+Run the pinned self-hosted Svix 1.96.1 conformance matrix with Testcontainers:
+
+```bash
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/SvixVersionConformanceTests/*" --minimum-expected-tests 2
+```
+
+Managed Svix conformance is a protected manual process, not part of the standard or self-hosted
+runtime lanes. It creates provider resources and preserves one expiry probe across the documented
+12-hour idempotency window. Run its phases as separate invocations; running both tests together
+cannot satisfy that elapsed-time boundary.
+
+Phase 1 requires `SVIX_CONFORMANCE_MANAGED_AUTH_TOKEN_CURRENT`,
+`SVIX_CONFORMANCE_MANAGED_AUTH_TOKEN_ROTATED`,
+`SVIX_CONFORMANCE_MANAGED_CREDENTIAL_VERSION`, and an absolute JSON path outside source control in
+`SVIX_CONFORMANCE_MANAGED_PROBE_PATH`. `SVIX_CONFORMANCE_MANAGED_BASE_URL` is optional and defaults
+to the managed Svix API.
+
+```bash
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/SvixManagedConformanceTests/ManagedProfile_SeedsExpiryProbeAfterImmediateMatrix" --minimum-expected-tests 1
+```
+
+After the probe's `VerifyNotBeforeUtc` has elapsed, run Phase 2 with the current token, the same
+credential version, and the same protected probe path. The rotated token is not required for this
+phase.
+
+```bash
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/SvixManagedConformanceTests/ManagedProfile_VerifiesExpiredProbeAndCleansUp" --minimum-expected-tests 1
+```
+
+Missing managed credentials or probe state must fail loudly; do not convert those failures into
+skips because that would allow a selected conformance lane to report success without evidence.
 
 ## Blog Coverage
 

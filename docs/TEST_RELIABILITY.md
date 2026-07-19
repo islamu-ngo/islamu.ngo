@@ -7,7 +7,7 @@ ABOUTME: Keeps scheduled and manual lanes advisory until reliability evidence su
 > **Status:** Implemented tracking policy
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-01 Europe/Brussels
-> **Source Anchors:** `.github/workflows/e2e.yml`, `Event.API.IntegrationTests/Features/`, `Explore.Blazor.Client.E2ETests/Flows/SidebarLayoutVisualTests.cs`
+> **Source Anchors:** `.github/workflows/e2e.yml`, `tests/Event.API.IntegrationTests/Features/`, `tests/Explore.Blazor.Client.E2ETests/Flows/SmokeTests.cs`
 
 This inventory keeps runtime, stress, and E2E reliability debt visible. A skipped or repeatedly flaky runtime lane may not be promoted to a required merge gate until it has an owner, first-seen date, evidence source, and removal or promotion criteria.
 

@@ -6,7 +6,7 @@
 > **Audience:** Contributors | AI agents
 > **Status:** Implemented
 > **Owner:** Contributor Experience
-> **Last Verified:** 2026-07-15
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `docs/FIRST_CONTRIBUTION.md`, `docs/TESTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/`, `dev/HANDOFF_TEMPLATE.md`
 
 ## Prerequisites
@@ -111,23 +111,28 @@ dotnet build --configuration Release --verbosity quiet
 Run each standard project individually — never use solution-level `dotnet test`:
 
 ```bash
-dotnet test --project Event.Domain.UnitTests/Event.Domain.UnitTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Secrets.UnitTests/Explore.Secrets.UnitTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category!=Runtime]" --minimum-expected-tests 1
-dotnet test --project Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet
-dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Domain.UnitTests/Event.Domain.UnitTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Secrets.UnitTests/Explore.Secrets.UnitTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category!=Runtime]" --minimum-expected-tests 1
+dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet
+dotnet test --project tests/Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet
 ```
 
-`Explore.Blazor.Client.E2ETests` is a tenth test project, but it is not part of the standard PR validation pass because it requires the full Aspire AppHost/browser stack. When a change touches SMTP, EmailDispatch, or optional RabbitMQ transport, also run the focused runtime category that matches the change:
+`Explore.Blazor.Client.E2ETests` is a tenth test project, but it is not part of the standard PR validation pass because it requires the full Aspire AppHost/browser stack. When a change touches SMTP, EmailDispatch, optional RabbitMQ transport, or the self-hosted Svix boundary, also run the focused runtime lane that matches the change:
 
 ```bash
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
-dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
+dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/SvixVersionConformanceTests/*" --minimum-expected-tests 2
 ```
+
+Managed Svix is a separate two-phase, secret-backed operator check. Follow the protected Phase 1
+and Phase 2 commands in [TESTING.md](TESTING.md#infrastructure-runtime-lanes); never include both
+managed tests in the standard PR invocation.
 
 ### Step 3: Verify Architecture Tests
 
@@ -209,9 +214,9 @@ Architecture tests enforce these boundaries automatically.
 When DTO contracts change, sequence matters to avoid false compile failures.
 
 1. Update DTOs, validators, mappings, and handlers in API/Application layers
-2. Build API: `dotnet build --project Explore.API/Explore.API.csproj --configuration Release --verbosity quiet`
+2. Build API: `dotnet build --project src/Explore.API/Explore.API.csproj --configuration Release --verbosity quiet`
 3. Confirm the API build refreshed `schemas/openapi.json` through build-time OpenAPI generation
-4. Build Blazor client: `dotnet build --project Explore.Blazor.Client/Explore.Blazor.Client.csproj --configuration Release --verbosity quiet`
+4. Build Blazor client: `dotnet build --project src/Explore.Blazor.Client/Explore.Blazor.Client.csproj --configuration Release --verbosity quiet`
 5. Update Blazor services/components that use the generated client types
 6. Rebuild and rerun all tests
 

@@ -7,7 +7,7 @@ ABOUTME: Defines run commands, interpretation rules, and limits so benchmark res
 > **Status:** Mixed
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-05-28
-> **Source Anchors:** `Event.Benchmarks/`, `Event.Benchmarks/Configuration/BenchmarkConfig.cs`, `Event.Benchmarks/Program.cs`, `Directory.Packages.props`, `.claude/benchmarks/README.md`, `dev/pause/performance-optimization/performance-optimization-context.md`
+> **Source Anchors:** `tests/Event.Benchmarks/`, `tests/Event.Benchmarks/Configuration/BenchmarkConfig.cs`, `tests/Event.Benchmarks/Program.cs`, `Directory.Packages.props`, `.claude/benchmarks/README.md`
 
 This repository has two benchmark families with different goals:
 
@@ -43,17 +43,17 @@ Run benchmarks from the repository root and use Release configuration:
 
 ```bash
 dotnet build --configuration Release --verbosity quiet
-dotnet run --configuration Release --project Event.Benchmarks -- --filter "*"
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --filter "*"
 ```
 
 Useful BenchmarkDotNet filters:
 
 ```bash
-dotnet run --configuration Release --project Event.Benchmarks -- --list flat
-dotnet run --configuration Release --project Event.Benchmarks -- --filter "*ApiEndpointBenchmarks*"
-dotnet run --configuration Release --project Event.Benchmarks -- --filter "*ApiEndpointPostgreSqlBenchmarks*"
-dotnet run --configuration Release --project Event.Benchmarks -- --filter "*Serialization*"
-dotnet run --configuration Release --project Event.Benchmarks -- --filter "*Caching*"
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --list flat
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --filter "*ApiEndpointBenchmarks*"
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --filter "*ApiEndpointPostgreSqlBenchmarks*"
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --filter "*Serialization*"
+dotnet run --configuration Release --project tests/Event.Benchmarks -- --filter "*Caching*"
 ```
 
 The shared benchmark config enables memory, threading, and exception diagnosers plus GitHub Markdown, HTML, and full JSON exporters. It also fails benchmark validation on execution errors or missing JIT optimizations. No custom artifact path is configured, so BenchmarkDotNet writes to its default artifact directory for the run.

@@ -6,7 +6,7 @@
 > **Audience:** Contributors | Maintainers | AI agents
 > **Status:** Active
 > **Owner:** Architecture
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `Explore.slnx`, `src/Explore.Domain/Blog.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Persistence/Repositories/BlogRepository.cs`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`
 
 ## System Profile
@@ -125,7 +125,7 @@ See [SEO.md](SEO.md) and [RENDER_POLICIES.md](RENDER_POLICIES.md).
 
 Source-backed infrastructure still includes Organizations, Groups, notifications, storage,
 transactional outboxes, account-authority email, Listmonk integration, webhooks, support access,
-ATProto/PDS federation hooks, and Coop/Osprey provider integration. These are technical platform
+ATProto/PDS federation hooks, and Osprey coordinator client/orchestration assets. These are technical platform
 capabilities. They do not restore Event product routes or create public product promises.
 
 Webhooks keep their catalog, consumer, endpoint, incoming-callback, delivery, retry, and provider
@@ -158,6 +158,5 @@ generic .NET events remain allowed source identifiers.
 - [BLAZOR.md](BLAZOR.md)
 - [OUTBOX_PATTERN.md](OUTBOX_PATTERN.md)
 - [FEDERATION.md](FEDERATION.md)
-- [COOP_INTEGRATION.md](COOP_INTEGRATION.md)
 - [OSPREY_INTEGRATION.md](OSPREY_INTEGRATION.md)
 - [WEBHOOKS.md](WEBHOOKS.md)

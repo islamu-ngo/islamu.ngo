@@ -7,7 +7,7 @@ ABOUTME: Summarizes authentication, tenant context, HAL, errors, pagination, ide
 > **Status:** Implemented
 > **Owner:** API
 > **Last Verified:** 2026-05-06
-> **Source Anchors:** `docs/API.md`, `Explore.API/Controllers/`, `Explore.API/Middleware/IdempotencyMiddleware.cs`, `Explore.API/Hateoas/ResourceAssemblerBase.cs`, `Explore.API/Extensions/AuthenticationExtensions.cs`
+> **Source Anchors:** `docs/API.md`, `src/Explore.API/Controllers/`, `src/Explore.API/Middleware/IdempotencyMiddleware.cs`, `src/Explore.API/Hateoas/ResourceAssemblerBase.cs`, `src/Explore.API/Extensions/AuthenticationExtensions.cs`
 
 ## Scope
 

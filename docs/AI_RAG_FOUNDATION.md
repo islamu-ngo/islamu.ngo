@@ -48,7 +48,7 @@ These contracts are deliberately provider-neutral. A future VectorData adapter c
 Run:
 
 ```bash
-dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet --no-restore
+dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet --no-restore
 ```
 
 Relevant tests: `AiRagIngestionPolicyTests`.

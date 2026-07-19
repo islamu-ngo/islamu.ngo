@@ -260,7 +260,7 @@ public sealed class RabbitMqEmailDispatchConsumerMailpitTests(
             Port = mailpit.SmtpPort,
             Security = SmtpSecurityMode.None,
             FromAddress = "noreply@example.test",
-            FromName = "ISLAMU Event Tests",
+            FromName = "ISLAMU Tests",
             TimeoutSeconds = 10
         });
 

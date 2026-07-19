@@ -1,8 +1,8 @@
 // ABOUTME: Unit tests for composite outbox dispatch routing to retained internal handlers.
 // ABOUTME: Verifies managed tenant provisioning dispatch and dead-letter reconciliation.
 
-using Explore.Application.Features.Management.Requests;
-using Explore.Application.Features.Management.Handlers;
+using Explore.Application.Features.Management.Requests.Commands;
+using Explore.Application.Features.Management;
 using Explore.Domain;
 using Explore.Infrastructure.Messaging;
 using MediatR;

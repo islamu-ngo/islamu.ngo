@@ -37,8 +37,8 @@ public class NotificationServiceTests
         // Arrange
         var notifications = new List<NotificationListDto>
         {
-            new() { Id = Guid.NewGuid(), Title = "Event Updated", IsRead = false },
-            new() { Id = Guid.NewGuid(), Title = "New Registration", IsRead = true }
+            new() { Id = Guid.NewGuid(), Title = "Blog Updated", IsRead = false },
+            new() { Id = Guid.NewGuid(), Title = "New Comment", IsRead = true }
         };
         var response = new PaginatedResultOfNotificationListDto
         {

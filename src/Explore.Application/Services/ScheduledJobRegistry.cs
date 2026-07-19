@@ -18,13 +18,6 @@ public sealed class ScheduledJobRegistry : IScheduledJobRegistry
             "Claims due EmailDispatchOutbox rows and executes approved dispatch transports.",
             "*/10 * * * * *"),
         new(
-            ScheduledJobNames.EventReminderDispatch,
-            "EventLifecycle",
-            ScheduledJobScheduleKind.Time,
-            ScheduledJobPayloadKind.PointerOnly,
-            ScheduledJobOperationalStatus.Implemented,
-            "Wakes a pre-persisted event reminder EmailDispatchOutbox row at its scheduled time."),
-        new(
             ScheduledJobNames.GeneralOutboxDrain,
             "Outbox",
             ScheduledJobScheduleKind.Cron,
@@ -53,13 +46,6 @@ public sealed class ScheduledJobRegistry : IScheduledJobRegistry
             ScheduledJobPayloadKind.None,
             ScheduledJobOperationalStatus.Planned,
             "Future operator summary for dead-lettered platform work."),
-        new(
-            ScheduledJobNames.WaitlistPromotionScan,
-            "EventLifecycle",
-            ScheduledJobScheduleKind.Cron,
-            ScheduledJobPayloadKind.None,
-            ScheduledJobOperationalStatus.Planned,
-            "Future waitlist promotion scanner that creates durable domain intents before side effects."),
         new(
             ScheduledJobNames.TenantMaintenanceScan,
             "Operations",

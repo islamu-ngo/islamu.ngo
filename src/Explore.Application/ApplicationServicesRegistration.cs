@@ -108,7 +108,6 @@ public static class ApplicationServicesRegistration
         services.AddScoped<INotificationOwnershipResolver, DefaultNotificationOwnershipResolver>();
         services.AddScoped<INotificationOrchestrator, DefaultNotificationOrchestrator>();
         services.AddScoped<INotificationRefreshStreamService, NotificationRefreshStreamService>();
-        services.AddScoped<IScheduledEmailDispatchTrigger, NoOpScheduledEmailDispatchTrigger>();
         services.AddSingleton<IScheduledJobRegistry, ScheduledJobRegistry>();
         services.AddSingleton<IWebhookEventTypeRegistry, WebhookEventTypeRegistry>();
         services.AddSingleton<IWebhookEventSchemaProvider, WebhookEventSchemaProvider>();

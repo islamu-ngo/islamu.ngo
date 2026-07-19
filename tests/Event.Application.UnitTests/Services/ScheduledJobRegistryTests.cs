@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for the scheduler-neutral job registry.
-// ABOUTME: Guards stable job names and pointer-only scheduling metadata for future operator surfaces.
+// ABOUTME: Guards stable retained job names and implemented/planned scheduling metadata.
 
 using Explore.Application.Contracts.Scheduling;
 using Explore.Application.Services;
@@ -10,16 +10,15 @@ namespace Event.Application.UnitTests.Services;
 public sealed class ScheduledJobRegistryTests
 {
     [Test]
-    public async Task ListJobsIncludesImplementedEmailDispatchAndEventReminderContracts()
+    public async Task ListJobsIncludesImplementedEmailDispatchContracts()
     {
         var registry = new ScheduledJobRegistry();
 
         var jobs = registry.ListJobs();
         var emailDrain = registry.FindByName(ScheduledJobNames.EmailDispatchDrain);
         var emailRecovery = registry.FindByName(ScheduledJobNames.EmailDispatchRecoveryScan);
-        var eventReminder = registry.FindByName(ScheduledJobNames.EventReminderDispatch);
 
-        await Assert.That(jobs.Count).IsGreaterThanOrEqualTo(8);
+        await Assert.That(jobs.Count).IsGreaterThanOrEqualTo(6);
         await Assert.That(emailDrain).IsNotNull();
         await Assert.That(emailDrain!.ScheduleKind).IsEqualTo(ScheduledJobScheduleKind.Cron);
         await Assert.That(emailDrain.PayloadKind).IsEqualTo(ScheduledJobPayloadKind.None);
@@ -30,10 +29,6 @@ public sealed class ScheduledJobRegistryTests
         await Assert.That(emailRecovery.PayloadKind).IsEqualTo(ScheduledJobPayloadKind.None);
         await Assert.That(emailRecovery.Status).IsEqualTo(ScheduledJobOperationalStatus.Implemented);
         await Assert.That(emailRecovery.CronExpression).IsEqualTo("0 */1 * * * *");
-        await Assert.That(eventReminder).IsNotNull();
-        await Assert.That(eventReminder!.ScheduleKind).IsEqualTo(ScheduledJobScheduleKind.Time);
-        await Assert.That(eventReminder.PayloadKind).IsEqualTo(ScheduledJobPayloadKind.PointerOnly);
-        await Assert.That(eventReminder.Status).IsEqualTo(ScheduledJobOperationalStatus.Implemented);
     }
 
     [Test]

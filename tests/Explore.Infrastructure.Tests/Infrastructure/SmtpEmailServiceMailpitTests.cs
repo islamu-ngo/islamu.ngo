@@ -68,7 +68,7 @@ public sealed class SmtpEmailServiceMailpitTests(MailpitContainerFixture mailpit
         Port = mailpit.SmtpPort,
         Security = SmtpSecurityMode.None,
         FromAddress = "noreply@example.test",
-        FromName = "ISLAMU Event Tests",
+        FromName = "ISLAMU Tests",
         Password = password,
         TimeoutSeconds = 10
     };

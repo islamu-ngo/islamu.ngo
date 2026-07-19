@@ -37,7 +37,7 @@ public sealed class DefaultNotificationOwnershipResolver : INotificationOwnershi
             NotificationOwnership.ExternalWorkflowProvider => new NotificationOwnershipDecision(
                 draft.Category,
                 owner,
-                ExternalWorkflowProviderKind: ResolveExternalProvider(draft.Category),
+                ExternalWorkflowProviderKind: _options.ProviderInternalProvider,
                 RequiresLocalAudit: draft.IsUserFacing),
             NotificationOwnership.Disabled => new NotificationOwnershipDecision(
                 draft.Category,
@@ -47,12 +47,5 @@ public sealed class DefaultNotificationOwnershipResolver : INotificationOwnershi
         };
 
         return Task.FromResult(decision);
-    }
-
-    private ExternalWorkflowProviderKind ResolveExternalProvider(NotificationCategory category)
-    {
-        return category is NotificationCategory.TrustSafetyReporting or NotificationCategory.TrustSafetyModeration
-            ? _options.ExternalUserFacingModerationProvider
-            : _options.ProviderInternalProvider;
     }
 }

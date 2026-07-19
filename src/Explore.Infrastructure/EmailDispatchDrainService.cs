@@ -645,9 +645,13 @@ public sealed class EmailDispatchDrainService(
         return string.IsNullOrWhiteSpace(body) ? footer : body + footer;
     }
 
-    private static string? ResolvePreferenceCategory(EmailDispatchKind kind) => null;
+    private static string? ResolvePreferenceCategory(EmailDispatchKind kind) => kind switch
+    {
+        EmailDispatchKind.TenantAdministratorInvitation => NotificationPreferenceCategoryCodes.ProductAnnouncements,
+        _ => null,
+    };
 
-    private static string? ResolveMatrixPreferenceCategory(EmailDispatchKind kind) => null;
+    private static string? ResolveMatrixPreferenceCategory(EmailDispatchKind kind) => ResolvePreferenceCategory(kind);
 
     private static bool IsSettled(EmailDispatchStatus status)
     {

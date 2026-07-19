@@ -40,7 +40,6 @@ public partial class NotificationItem
             "warning" => Icons.Material.Outlined.Warning,
             "success" => Icons.Material.Outlined.CheckCircle,
             "error" => Icons.Material.Outlined.Error,
-            "eventupdate" => Icons.Material.Outlined.Event,
             "registration" => Icons.Material.Outlined.HowToReg,
             "announcement" => Icons.Material.Outlined.Campaign,
             "reminder" => Icons.Material.Outlined.Alarm,

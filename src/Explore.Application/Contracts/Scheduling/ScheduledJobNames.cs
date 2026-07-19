@@ -10,7 +10,5 @@ public static class ScheduledJobNames
     public const string PdsSyncDrain = "pds-sync-drain";
     public const string EmailDispatchRecoveryScan = "email-dispatch-recovery-scan";
     public const string DeadLetterSummary = "dead-letter-summary";
-    public const string EventReminderDispatch = "event-reminder-dispatch";
-    public const string WaitlistPromotionScan = "waitlist-promotion-scan";
     public const string TenantMaintenanceScan = "tenant-maintenance-scan";
 }

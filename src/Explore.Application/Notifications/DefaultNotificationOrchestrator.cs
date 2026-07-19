@@ -7,7 +7,6 @@ using Explore.Domain;
 using DomainAccountAuthorityKind = Explore.Domain.Enums.AccountAuthorityKindEnum;
 using DomainExternalWorkflowProviderKind = Explore.Domain.Enums.ExternalWorkflowProviderKindEnum;
 using DomainNotificationCategory = Explore.Domain.Enums.NotificationCategoryEnum;
-using DomainNotificationDeliveryStatus = Explore.Domain.Enums.NotificationDeliveryStatusEnum;
 using DomainNotificationExternalDelegationStatus = Explore.Domain.Enums.NotificationExternalDelegationStatusEnum;
 using DomainNotificationIntentStatus = Explore.Domain.Enums.NotificationIntentStatusEnum;
 using DomainNotificationOwnershipType = Explore.Domain.Enums.NotificationOwnershipTypeEnum;
@@ -32,16 +31,10 @@ public sealed class DefaultNotificationOrchestrator(
         var decision = await ownershipResolver.ResolveAsync(draft, cancellationToken);
         var intent = CreateIntent(draft, decision, tenantId, templateKey, deduplicationKey);
 
-        NotificationDelivery? delivery = null;
         NotificationExternalDelegation? delegation = null;
 
         switch (decision.Ownership)
         {
-            case NotificationOwnership.IslamuEvent:
-                delivery = CreateDelivery(intent, tenantId);
-                intent.Deliveries.Add(delivery);
-                break;
-
             case NotificationOwnership.AccountAuthority:
                 if (decision.RequiresLocalAudit)
                 {
@@ -66,7 +59,7 @@ public sealed class DefaultNotificationOrchestrator(
         }
 
         var savedIntent = await notificationIntentRepository.CreateIntentAsync(intent, cancellationToken);
-        return new NotificationOrchestrationResult(savedIntent, decision, delivery, delegation);
+        return new NotificationOrchestrationResult(savedIntent, decision, delegation);
     }
 
     private static NotificationIntent CreateIntent(
@@ -89,18 +82,6 @@ public sealed class DefaultNotificationOrchestrator(
             SafePayloadHash = BlankToNull(draft.SafePayloadHash),
             CorrelationId = BlankToNull(draft.CorrelationId),
             UserId = draft.UserId,
-            CreatedAt = DateTime.UtcNow
-        };
-    }
-
-    private static NotificationDelivery CreateDelivery(NotificationIntent intent, Guid tenantId)
-    {
-        return new NotificationDelivery
-        {
-            TenantId = tenantId,
-            NotificationIntentId = intent.Id,
-            StatusId = (int)DomainNotificationDeliveryStatus.Pending,
-            QueuedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -176,7 +157,6 @@ public sealed class DefaultNotificationOrchestrator(
     {
         return decision.Ownership switch
         {
-            NotificationOwnership.IslamuEvent => (int)DomainNotificationIntentStatus.Pending,
             NotificationOwnership.Disabled => (int)DomainNotificationIntentStatus.Skipped,
             NotificationOwnership.AccountAuthority or NotificationOwnership.ExternalWorkflowProvider =>
                 decision.RequiresLocalAudit

@@ -158,7 +158,7 @@ public sealed class EmailDispatchDrainMailpitTests(MailpitContainerFixture mailp
             Port = mailpit.SmtpPort,
             Security = SmtpSecurityMode.None,
             FromAddress = "noreply@example.test",
-            FromName = "ISLAMU Event Tests",
+            FromName = "ISLAMU Tests",
             TimeoutSeconds = 10
         });
 

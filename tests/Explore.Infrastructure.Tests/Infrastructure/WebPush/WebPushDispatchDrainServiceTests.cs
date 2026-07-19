@@ -146,7 +146,7 @@ public sealed class WebPushDispatchDrainServiceTests
     {
         var fixture = new Fixture();
         var dispatch = CreateDispatch(NotificationPreferenceCategoryCodes.ProductAnnouncements);
-        dispatch.CreatedAt = DateTime.UtcNow.AddHours(-7);
+        dispatch.CreatedAt = DateTime.UtcNow.AddHours(-25);
         fixture.DispatchRepository.GetPendingBatch(Arg.Any<int>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns([dispatch]);
         fixture.DispatchRepository.TryMarkAsProcessing(dispatch.Id, Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);
         fixture.DispatchRepository.MarkAsSkipped(dispatch.Id, Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(true);

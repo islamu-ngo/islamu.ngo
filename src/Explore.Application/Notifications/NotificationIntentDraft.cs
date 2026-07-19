@@ -15,8 +15,5 @@ public sealed record NotificationIntentDraft(
     string? DeduplicationKey = null,
     string? CorrelationId = null,
     Guid? UserId = null,
-    Guid? EventId = null,
-    Guid? ReportId = null,
-    Guid? ReportDecisionId = null,
     string? ExternalProviderId = null,
     string? ExternalCorrelationId = null);

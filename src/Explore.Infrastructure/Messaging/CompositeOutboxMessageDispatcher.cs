@@ -2,8 +2,8 @@
 // ABOUTME: Handles managed tenant provisioning after durable transaction commits.
 
 using Explore.Application.Contracts.Infrastructure;
-using Explore.Application.Features.Management.Handlers;
-using Explore.Application.Features.Management.Requests;
+using Explore.Application.Features.Management;
+using Explore.Application.Features.Management.Requests.Commands;
 using Explore.Domain;
 using MediatR;
 

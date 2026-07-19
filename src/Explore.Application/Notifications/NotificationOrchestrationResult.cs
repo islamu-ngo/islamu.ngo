@@ -8,5 +8,4 @@ namespace Explore.Application.Notifications;
 public sealed record NotificationOrchestrationResult(
     NotificationIntent Intent,
     NotificationOwnershipDecision Decision,
-    NotificationDelivery? Delivery = null,
     NotificationExternalDelegation? ExternalDelegation = null);

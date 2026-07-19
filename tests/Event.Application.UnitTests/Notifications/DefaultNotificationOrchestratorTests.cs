@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for notification orchestration over ownership resolution and durable intent persistence.
-// ABOUTME: Locks local, delegated, disabled, and validation paths without invoking delivery providers.
+// ABOUTME: Locks delegated, disabled, and validation paths without invoking delivery providers.
 
 using Explore.Application.Contracts.Notifications;
 using Explore.Application.Contracts.Persistence;
@@ -30,7 +30,6 @@ public sealed class DefaultNotificationOrchestratorTests
         var result = await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.IdentityLifecycle));
 
         await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Delegated);
-        await Assert.That(result.Delivery).IsNull();
         await Assert.That(result.ExternalDelegation).IsNotNull();
         await Assert.That(result.ExternalDelegation!.ProviderKindId).IsEqualTo((int)ExternalWorkflowProviderKindEnum.None);
         await Assert.That(result.ExternalDelegation.AccountAuthorityKindId).IsEqualTo((int)AccountAuthorityKindEnum.Keycloak);
@@ -54,7 +53,6 @@ public sealed class DefaultNotificationOrchestratorTests
             isIslamuInitiated: false));
 
         await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Resolved);
-        await Assert.That(result.Delivery).IsNull();
         await Assert.That(result.ExternalDelegation).IsNull();
     }
 
@@ -69,7 +67,6 @@ public sealed class DefaultNotificationOrchestratorTests
         var result = await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.Marketing));
 
         await Assert.That(result.Intent.StatusId).IsEqualTo((int)NotificationIntentStatusEnum.Skipped);
-        await Assert.That(result.Delivery).IsNull();
         await Assert.That(result.ExternalDelegation).IsNull();
     }
 
@@ -78,17 +75,17 @@ public sealed class DefaultNotificationOrchestratorTests
     {
         var orchestrator = CreateOrchestrator(
             new CapturingNotificationIntentRepository(),
-            new NotificationOwnershipDecision(AppNotificationCategory.RegistrationLifecycle, AppNotificationOwnership.IslamuEvent));
+            new NotificationOwnershipDecision(AppNotificationCategory.ProductLifecycle, AppNotificationOwnership.Disabled, RequiresLocalAudit: false));
 
-        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.RegistrationLifecycle) with
+        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.ProductLifecycle) with
         {
             TenantId = null
         })).Throws<InvalidOperationException>();
-        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.RegistrationLifecycle) with
+        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.ProductLifecycle) with
         {
             TemplateKey = " "
         })).Throws<InvalidOperationException>();
-        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.RegistrationLifecycle) with
+        await Assert.That(async () => await orchestrator.EnqueueAsync(CreateDraft(AppNotificationCategory.ProductLifecycle) with
         {
             DeduplicationKey = null
         })).Throws<InvalidOperationException>();
@@ -109,7 +106,7 @@ public sealed class DefaultNotificationOrchestratorTests
             category,
             TenantId: Guid.CreateVersion7(),
             RecipientKind: "User",
-            TemplateKey: "registration.approved",
+            TemplateKey: "product.update",
             SafePayloadReference: "notification-intents/test-safe-payload",
             SafePayloadHash: "sha256:test-safe-payload",
             IsUserFacing: true,

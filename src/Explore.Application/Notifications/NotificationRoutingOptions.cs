@@ -10,27 +10,17 @@ public sealed class NotificationRoutingOptions
     public NotificationOwnership IdentityLifecycleOwner { get; set; } = NotificationOwnership.AccountAuthority;
     public AccountAuthorityKind DefaultAccountAuthorityKind { get; set; } = AccountAuthorityKind.Keycloak;
 
-    public NotificationOwnership ProductLifecycleOwner { get; set; } = NotificationOwnership.IslamuEvent;
-    public NotificationOwnership EventLifecycleOwner { get; set; } = NotificationOwnership.IslamuEvent;
-    public NotificationOwnership RegistrationLifecycleOwner { get; set; } = NotificationOwnership.IslamuEvent;
-    public NotificationOwnership TrustSafetyReportingOwner { get; set; } = NotificationOwnership.IslamuEvent;
-    public NotificationOwnership TrustSafetyModerationOwner { get; set; } = NotificationOwnership.IslamuEvent;
+    public NotificationOwnership ProductLifecycleOwner { get; set; } = NotificationOwnership.Disabled;
     public NotificationOwnership ProviderInternalOwner { get; set; } = NotificationOwnership.ExternalWorkflowProvider;
-    public NotificationOwnership PlatformOperationsOwner { get; set; } = NotificationOwnership.IslamuEvent;
-    public NotificationOwnership MarketingOwner { get; set; } = NotificationOwnership.IslamuEvent;
+    public NotificationOwnership PlatformOperationsOwner { get; set; } = NotificationOwnership.Disabled;
+    public NotificationOwnership MarketingOwner { get; set; } = NotificationOwnership.Disabled;
 
-    public bool AllowExternalUserFacingModerationEmails { get; set; }
-    public ExternalWorkflowProviderKind ExternalUserFacingModerationProvider { get; set; } = ExternalWorkflowProviderKind.None;
     public ExternalWorkflowProviderKind ProviderInternalProvider { get; set; } = ExternalWorkflowProviderKind.Other;
 
     public NotificationOwnership GetOwner(NotificationCategory category) => category switch
     {
         NotificationCategory.IdentityLifecycle => IdentityLifecycleOwner,
         NotificationCategory.ProductLifecycle => ProductLifecycleOwner,
-        NotificationCategory.EventLifecycle => EventLifecycleOwner,
-        NotificationCategory.RegistrationLifecycle => RegistrationLifecycleOwner,
-        NotificationCategory.TrustSafetyReporting => TrustSafetyReportingOwner,
-        NotificationCategory.TrustSafetyModeration => TrustSafetyModerationOwner,
         NotificationCategory.ProviderInternal => ProviderInternalOwner,
         NotificationCategory.PlatformOperations => PlatformOperationsOwner,
         NotificationCategory.Marketing => MarketingOwner,
@@ -43,7 +33,7 @@ public sealed class NotificationRoutingOptions
 
         ValidateDefinedOwners(errors);
         ValidateAccountAuthority(errors);
-        ValidateIslamuOwnedCategories(errors);
+        ValidateDisabledCategories(errors);
         ValidateExternalProviderRules(errors);
 
         return errors;
@@ -73,28 +63,23 @@ public sealed class NotificationRoutingOptions
         }
     }
 
-    private void ValidateIslamuOwnedCategories(List<string> errors)
+    private void ValidateDisabledCategories(List<string> errors)
     {
-        ValidateIslamuOwned(nameof(ProductLifecycleOwner), ProductLifecycleOwner, errors);
-        ValidateIslamuOwned(nameof(EventLifecycleOwner), EventLifecycleOwner, errors);
-        ValidateIslamuOwned(nameof(RegistrationLifecycleOwner), RegistrationLifecycleOwner, errors);
-        ValidateIslamuOwned(nameof(PlatformOperationsOwner), PlatformOperationsOwner, errors);
-        ValidateIslamuOwned(nameof(MarketingOwner), MarketingOwner, errors);
+        ValidateDisabled(nameof(ProductLifecycleOwner), ProductLifecycleOwner, errors);
+        ValidateDisabled(nameof(PlatformOperationsOwner), PlatformOperationsOwner, errors);
+        ValidateDisabled(nameof(MarketingOwner), MarketingOwner, errors);
     }
 
-    private static void ValidateIslamuOwned(string name, NotificationOwnership owner, List<string> errors)
+    private static void ValidateDisabled(string name, NotificationOwnership owner, List<string> errors)
     {
-        if (owner != NotificationOwnership.IslamuEvent && owner != NotificationOwnership.Disabled)
+        if (owner != NotificationOwnership.Disabled)
         {
-            errors.Add($"{name} must be IslamuEvent or Disabled; product-domain notifications cannot be owned by account authorities or workflow providers.");
+            errors.Add($"{name} must be Disabled until a supported notification owner is implemented.");
         }
     }
 
     private void ValidateExternalProviderRules(List<string> errors)
     {
-        ValidateTrustSafetyOwner(nameof(TrustSafetyReportingOwner), TrustSafetyReportingOwner, errors);
-        ValidateTrustSafetyOwner(nameof(TrustSafetyModerationOwner), TrustSafetyModerationOwner, errors);
-
         if (ProviderInternalOwner == NotificationOwnership.ExternalWorkflowProvider
             && (!Enum.IsDefined(ProviderInternalProvider) || ProviderInternalProvider == ExternalWorkflowProviderKind.None))
         {
@@ -107,34 +92,10 @@ public sealed class NotificationRoutingOptions
         }
     }
 
-    private void ValidateTrustSafetyOwner(string name, NotificationOwnership owner, List<string> errors)
-    {
-        if (owner == NotificationOwnership.AccountAuthority)
-        {
-            errors.Add($"{name} cannot be AccountAuthority; trust-safety notifications are product or delegated workflow decisions.");
-        }
-
-        if (owner == NotificationOwnership.ExternalWorkflowProvider && !AllowExternalUserFacingModerationEmails)
-        {
-            errors.Add($"{name} cannot be ExternalWorkflowProvider unless external user-facing moderation email delegation is explicitly enabled.");
-        }
-
-        if (owner == NotificationOwnership.ExternalWorkflowProvider
-            && (!Enum.IsDefined(ExternalUserFacingModerationProvider)
-                || ExternalUserFacingModerationProvider == ExternalWorkflowProviderKind.None))
-        {
-            errors.Add("ExternalUserFacingModerationProvider must be set when trust-safety notifications are delegated externally.");
-        }
-    }
-
     private IEnumerable<(string Name, NotificationOwnership Owner)> EnumerateOwners()
     {
         yield return (nameof(IdentityLifecycleOwner), IdentityLifecycleOwner);
         yield return (nameof(ProductLifecycleOwner), ProductLifecycleOwner);
-        yield return (nameof(EventLifecycleOwner), EventLifecycleOwner);
-        yield return (nameof(RegistrationLifecycleOwner), RegistrationLifecycleOwner);
-        yield return (nameof(TrustSafetyReportingOwner), TrustSafetyReportingOwner);
-        yield return (nameof(TrustSafetyModerationOwner), TrustSafetyModerationOwner);
         yield return (nameof(ProviderInternalOwner), ProviderInternalOwner);
         yield return (nameof(PlatformOperationsOwner), PlatformOperationsOwner);
         yield return (nameof(MarketingOwner), MarketingOwner);

@@ -65,7 +65,7 @@ public class GovernanceSettingKeysTests
 
         string[] expectedCategories =
         [
-            "Deployment", "Tenants", "Routing", "Events", "Organizations", "Groups",
+            "Deployment", "Tenants", "Routing", "Organizations", "Groups",
             "Modules", "Branding", "Domains", "Email", "Storage", "Security",
             "Cerbos", "Authentication", "Federation", "Analytics", "TenantDelegation", "Localization"
         ];

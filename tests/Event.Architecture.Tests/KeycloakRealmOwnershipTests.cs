@@ -1,4 +1,4 @@
-// ABOUTME: Locks the public Keycloak exports to first-party Event and NGO realm resources.
+// ABOUTME: Locks public Keycloak exports to preserved legacy and current NGO client identifiers.
 // ABOUTME: Rejects private Control Plane identifiers with bounded, secret-free diagnostics.
 
 using System.Text.Json;
@@ -55,7 +55,7 @@ public sealed class KeycloakRealmOwnershipTests
             .ToArray();
         await Assert.That(clientIds.Length).IsEqualTo(ExpectedClientIds.Length);
         await Assert.That(clientIds).IsEquivalentTo(ExpectedClientIds)
-            .Because($"{relativePath} must contain exactly the Event clients plus additive NGO clients.");
+            .Because($"{relativePath} must contain exactly the preserved legacy clients plus current NGO clients.");
 
         await AssertAudienceMapperAsync(
             root,

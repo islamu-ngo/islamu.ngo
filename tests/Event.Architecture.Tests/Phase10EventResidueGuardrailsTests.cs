@@ -152,6 +152,19 @@ public sealed class Phase10EventResidueGuardrailsTests
         "Event.Web.BffHosting",
     ];
 
+    private static readonly (string RelativePath, string Pattern, string Line)[] ExactAllowedLines =
+    [
+        ("src/Explore.API/Explore.API.csproj", @"\bEvent\b", "<InternalsVisibleTo Include=\"Event.API.IntegrationTests\" />"),
+        ("src/Explore.Persistence/Properties/AssemblyInfo.cs", @"\bEvent\b", "[assembly: InternalsVisibleTo(\"Event.Persistence.IntegrationTests\")]"),
+        ("tests/Event.Architecture.Tests/BlazorNswagClientGenerationConfigTests.cs", @"\bEvent\b", "private static string DeletedClientIdentity() => \"Event\" + \"ApiClient\";"),
+        ("tests/Explore.Blazor.Client.Tests/Common/MudBlazorTestMocks.cs", @"\bEvent\b", "#pragma warning disable CS0067 // Event required by interface but never raised in mock"),
+        ("src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs", @"\bEventType\b", "public string EventType { get; set; } = default!;"),
+        ("src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs", @"\bEventType\b", "public string? EventType { get; set; } = default!;"),
+        ("src/Explore.Application/Authorization/ResourceDescriptors.cs", @"\bEventType\b", "[\"eventType\"] = dto.EventType,"),
+        ("tests/Event.Application.UnitTests/Features/ControlPlane/Queries/GetControlPlaneOperationsQueryHandlerTests.cs", @"\bEventType\b", "EventType = \"TestEvent\","),
+        ("src/Explore.Secrets/Sources/InlineSecretSource.cs", @"\bEvent\b", "public static readonly string[] ProtectorPurpose = new[] { \"Event.Secrets\", \"Binding\", \"v1\" };"),
+    ];
+
     [Test]
     [DisplayName("Product source must not reference deleted Event product artifacts")]
     public async Task ProductSource_MustNotReference_DeletedEventProductArtifacts()
@@ -346,13 +359,19 @@ public sealed class Phase10EventResidueGuardrailsTests
         if (IsAboutmeOrCommentMention(trimmed))
             return true;
 
-        if (IsLegacyProjectNameLine(trimmed))
+        if (IsExactAllowedLine(relativePath, trimmed, pattern))
+            return true;
+
+        if (IsLegacyProjectNameLine(trimmed, pattern))
             return true;
 
         if (IsBffFrameworkIdentifierLine(trimmed))
             return true;
 
         if (IsTask34AppHostIdentifier(relativePath, trimmed))
+            return true;
+
+        if (IsNegativeAbsenceAssertion(trimmed))
             return true;
 
         if (IsGenericTechnicalEventConcept(relativePath, trimmed, pattern))
@@ -367,17 +386,27 @@ public sealed class Phase10EventResidueGuardrailsTests
             || trimmed.StartsWith("///", StringComparison.Ordinal);
     }
 
-    private static bool IsLegacyProjectNameLine(string trimmed)
+    private static bool IsExactAllowedLine(string relativePath, string trimmed, string pattern)
     {
-        if (!trimmed.StartsWith("namespace ", StringComparison.Ordinal)
-            && !trimmed.StartsWith("using ", StringComparison.Ordinal)
-            && !trimmed.Contains("<ProjectReference", StringComparison.Ordinal)
-            && !trimmed.Contains("AssemblyName", StringComparison.Ordinal))
-        {
+        return ExactAllowedLines.Any(allowed =>
+            allowed.RelativePath.Equals(relativePath, StringComparison.Ordinal)
+            && allowed.Pattern.Equals(pattern, StringComparison.Ordinal)
+            && allowed.Line.Equals(trimmed, StringComparison.Ordinal));
+    }
+
+    private static bool IsLegacyProjectNameLine(string trimmed, string pattern)
+    {
+        if (trimmed.Contains("InternalsVisibleTo", StringComparison.Ordinal))
             return false;
+
+        var withoutProjectIdentities = trimmed;
+        foreach (var fragment in AllowedLegacyProjectFragments)
+        {
+            withoutProjectIdentities = withoutProjectIdentities.Replace(fragment, string.Empty, StringComparison.Ordinal);
         }
 
-        return AllowedLegacyProjectFragments.Any(fragment => trimmed.Contains(fragment, StringComparison.Ordinal));
+        return !withoutProjectIdentities.Equals(trimmed, StringComparison.Ordinal)
+            && !Regex.IsMatch(withoutProjectIdentities, pattern, RegexOptions.CultureInvariant);
     }
 
     private static bool IsBffFrameworkIdentifierLine(string trimmed)
@@ -402,6 +431,12 @@ public sealed class Phase10EventResidueGuardrailsTests
             || trimmed.Contains("islamu-event-blazor-secret", StringComparison.Ordinal);
     }
 
+    private static bool IsNegativeAbsenceAssertion(string trimmed)
+    {
+        return trimmed.Contains(".DoesNotContain(", StringComparison.Ordinal)
+            || trimmed.Contains(".DoesNotMatch(", StringComparison.Ordinal);
+    }
+
     private static bool IsGenericTechnicalEventConcept(string relativePath, string trimmed, string pattern)
     {
         if (pattern is @"\bEventFormat\b" or @"\bEventStatus\b")
@@ -412,7 +447,8 @@ public sealed class Phase10EventResidueGuardrailsTests
 
         if (pattern is @"\bEvent\b" or @"\bEventType\b")
         {
-            return IsWebhookContext(relativePath, trimmed)
+            return IsAnalyticsContext(relativePath, trimmed)
+                || IsWebhookContext(relativePath, trimmed)
                 || IsOutboxContext(relativePath, trimmed)
                 || IsDomainOrIntegrationEventContext(relativePath, trimmed)
                 || IsAuditOrSupportLifecycleContext(relativePath, trimmed)
@@ -420,6 +456,14 @@ public sealed class Phase10EventResidueGuardrailsTests
         }
 
         return false;
+    }
+
+    private static bool IsAnalyticsContext(string relativePath, string trimmed)
+    {
+        return relativePath.Contains("/Analytics/", StringComparison.Ordinal)
+            || relativePath.Contains("Analytics", StringComparison.Ordinal)
+            || trimmed.Contains("Analytics", StringComparison.Ordinal)
+            || trimmed.Contains("PostHog", StringComparison.Ordinal);
     }
 
     private static bool IsWebhookContext(string relativePath, string trimmed)

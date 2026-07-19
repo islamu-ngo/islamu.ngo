@@ -54,10 +54,10 @@ public class OrganizationCentricGuardrailTests
     }
 
     [Test]
-    [DisplayName("Event ownership must remain actor-backed without workspace or scope IDs")]
-    public async Task EventOwnershipMustRemain_ActorBackedWithoutScopeIds()
+    [DisplayName("AI proposed-action ownership must remain actor-backed without workspace or scope IDs")]
+    public async Task AiProposedActionOwnershipMustRemain_ActorBackedWithoutScopeIds()
     {
-        var forbiddenEventPropertyNames = new[]
+        var forbiddenOwnershipPropertyNames = new[]
         {
             "WorkspaceId",
             "OrganizerScopeId",
@@ -68,17 +68,17 @@ public class OrganizationCentricGuardrailTests
             "ScopeId"
         };
 
-        var eventPropertyNames = typeof(Explore.Domain.Ai.AiProposedAction)
+        var proposedActionPropertyNames = typeof(Explore.Domain.Ai.AiProposedAction)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(property => property.Name)
             .ToHashSet(StringComparer.Ordinal);
 
-        var violations = forbiddenEventPropertyNames
-            .Where(eventPropertyNames.Contains)
+        var violations = forbiddenOwnershipPropertyNames
+            .Where(proposedActionPropertyNames.Contains)
             .ToList();
 
         await Assert.That(violations).IsEmpty()
-            .Because("public event ownership filters must remain ActorId/OrganizationId/GroupId projections over existing actor-backed data");
+            .Because("AI proposed-action ownership must use existing actor-backed data without introducing another isolation scope");
     }
 
     [Test]
@@ -137,8 +137,6 @@ public class OrganizationCentricGuardrailTests
             "PublicExperience",
             "DiscoveryCentric",
             "OrganizationCentric",
-            "PublicEventSection",
-            "EventCatalogLabel",
             "PrimaryOrganization"
         };
 
@@ -148,7 +146,7 @@ public class OrganizationCentricGuardrailTests
             .ToList();
 
         await Assert.That(violations).IsEmpty()
-            .Because("public posture, presets, event visibility posture, and import-convenience defaults belong in Application/read models or settings metadata, not Domain entities");
+            .Because("public posture, presets, and import-convenience defaults belong in Application/read models or settings metadata, not Domain entities");
     }
 
     private static DirectoryInfo RepositoryRoot

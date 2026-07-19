@@ -51,7 +51,7 @@ Use a stable kebab-case `[task-name]` derived from `$ARGUMENTS`. If an active di
 - **Database:** PostgreSQL + PostGIS via EF Core.
 - **Auth:** Keycloak OIDC/JWT, BFF token handling, Cerbos or local authorization provider.
 - **Orchestration:** .NET Aspire and Docker Compose.
-- **Testing:** TUnit, bUnit, integration tests, architecture/context tests.
+- **Testing:** TUnit, bUnit, integration tests, source-code architecture tests, and manual documentation/context review.
 - **Product constraints:** first-party deployment, truthful public claims, multilingual English/French/Arabic with RTL parity, WCAG 2.2 AA, privacy-respecting analytics, and no self-hosting or white-label product promise. Imported Event, tenant, and federation code is current source only until its owning workstream removes it.
 
 Do not let this context make you lazy. Treat it as orientation only; all claimed existing files/classes/behaviors must be verified.
@@ -278,7 +278,7 @@ Break work into vertical, reviewable slices where possible. Avoid giant vague ph
 - **Validation:** ...
 
 ## 7. Testing Strategy
-Map requirements to tests. Include unit, integration, architecture, UI/bUnit, E2E/manual smoke, policy checks, docs/context tests as applicable. Name test projects and likely test files.
+Map requirements to tests. Include unit, integration, source-code architecture, UI/bUnit, E2E/manual smoke, policy checks, and manual docs/context review as applicable. Name test projects and likely test files.
 
 ## 8. Documentation, Configuration, And Operations Impact
 List docs/config/deployment files to update, including `docs_to_update` from matched intents. Include Aspire/Docker/environment changes if relevant.
@@ -443,7 +443,7 @@ Last Updated: YYYY-MM-DD Europe/Brussels
 - [ ] LSP diagnostics clean for modified files.
 - [ ] `dotnet build --configuration Release --verbosity quiet` passes.
 - [ ] Intent minimum test projects pass individually with `dotnet test --project ...`.
-- [ ] Architecture/context tests pass if agent docs/rules/skills changed.
+- [ ] Agent docs/rules/skills pass manual schema, link, source-anchor, and diff review.
 - [ ] Docs updated where behavior/config/operations/API changed.
 - [ ] Dev docs refreshed with final state and remaining work.
 

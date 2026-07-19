@@ -1,10 +1,10 @@
 # ABOUTME: Ten cold-start benchmark scenarios validating the ISLAMU website AI-native contribution system.
 # ABOUTME: Each scenario is a self-contained task a fresh AI agent should be able to complete using only AGENTS.md + the context system.
-# Schema: see README.md §3. Validated by Event.Architecture.Tests.AgentContextIntentManifestTests.
+# Schema: see README.md §3. Reviewed manually; no architecture test parses this file.
 # Version: 1 (synthetic). Target: replace each with real issue-based scenario within 4–6 weeks.
 
 version: 1
-last_updated: "2026-07-13"
+last_updated: "2026-07-18"
 owner: "context-system-maintainers"
 
 scenarios:
@@ -25,14 +25,14 @@ scenarios:
       - ".claude/rules/api-hateoas.md"
       - ".agents/skills/cqrs-mediatr-guidelines/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.API/Controllers/**/*.cs"
-      - "Explore.API/Hateoas/**/*.cs"
-      - "Explore.Application/Features/**/Queries/**/*.cs"
-      - "Explore.Application/Features/**/DTOs/**/*.cs"
+      - "src/Explore.API/Controllers/**/*.cs"
+      - "src/Explore.API/Hateoas/**/*.cs"
+      - "src/Explore.Application/Features/**/Queries/**/*.cs"
+      - "src/Explore.Application/Features/**/DTOs/**/*.cs"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - 'Controller action uses explicit `[HttpGet("resources/summaries", Name = RouteNames.ResourceSummariesList)]`.'
       - "Controller action has `[AllowAnonymous]` attribute."
@@ -48,11 +48,11 @@ scenarios:
   - id: add-hal-link
     intent_id: add-hal-link
     summary: |
-      Extend an existing link policy to emit a conditional `cancel` affordance.
+      Extend an existing link policy to emit a conditional `unpublish` affordance.
     prompt: |
-      Extend `EventDetailLinkPolicy` so that when an event's status is `Published` and the
-      current user is authorized via the `events:cancel` permission, a `cancel` HAL link is
-      returned. The link target must be `POST /api/v1/events/{id}/cancel` by route name.
+      Extend `BlogDetailLinkPolicy` so that when a blog post is published and the current
+      user is authorized via the blog unpublish permission, an `unpublish` HAL link is
+      returned. The link target must use `RouteNames.UnpublishBlog` rather than a string URL.
       Do not modify controllers or handlers.
     expected_must_reads:
       - "AGENTS.md"
@@ -61,23 +61,23 @@ scenarios:
       - ".claude/rules/api-hateoas.md"
       - ".agents/skills/auth-patterns/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.API/Hateoas/**/*.cs"
+      - "src/Explore.API/Hateoas/**/*.cs"
     expected_paths_forbidden:
-      - "Explore.API/Controllers/**"
-      - "Explore.Application/**"
-      - "Explore.Persistence/**"
+      - "src/Explore.API/Controllers/**"
+      - "src/Explore.Application/**"
+      - "src/Explore.Persistence/**"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
-      - "`EventDetailLinkPolicy` adds a `yield return` for `cancel` when status is Published and permission granted."
+      - "`BlogDetailLinkPolicy` adds a `yield return` for `unpublish` when the post is published and permission is granted."
       - "Link uses route name, not string URL."
       - "Authorization evaluation uses the HATEOAS 4-phase pipeline; fail-closed on denial."
-      - "Integration test asserts the `cancel` link is present for authorized users and absent for anonymous/unauthorized callers."
+      - "Integration test asserts the `unpublish` link is present for authorized users and absent for anonymous/unauthorized callers."
     notes: |
-      Agent must NOT add a controller — the cancel endpoint already exists. Common failure:
-      touching handlers to derive 'status' instead of using the DTO already assembled.
+      Agent must NOT add a controller — the unpublish endpoint already exists. Common failure:
+      touching handlers to derive publication state instead of using the DTO already assembled.
 
   - id: add-cqrs-handler
     intent_id: add-cqrs-handler
@@ -96,15 +96,15 @@ scenarios:
       - ".agents/skills/cqrs-mediatr-guidelines/SKILL.md"
       - ".agents/skills/clean-architecture-rules/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.Application/Features/**/Commands/**/*.cs"
-      - "Explore.Application/Features/**/DTOs/**/*.cs"
+      - "src/Explore.Application/Features/**/Commands/**/*.cs"
+      - "src/Explore.Application/Features/**/DTOs/**/*.cs"
     expected_paths_forbidden:
-      - "Explore.Domain/**"
-      - "Explore.Persistence/Migrations/**"
+      - "src/Explore.Domain/**"
+      - "src/Explore.Persistence/Migrations/**"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - "`ArchiveResourceCommand` is a record/class wrapping a DTO (not loose properties)."
       - "`ArchiveResourceCommandValidator : AbstractValidator<...>` exists and is instantiated with `new` inside the handler."
@@ -131,14 +131,14 @@ scenarios:
       - ".claude/rules/efcore-migrations.md"
       - ".agents/skills/dotnet-efcore-guidelines/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.Domain/**/*.cs"
-      - "Explore.Persistence/Configurations/**/*.cs"
-      - "Explore.Persistence/Migrations/**/*.cs"
-      - "Explore.Persistence/ExploreDbContext.cs"
+      - "src/Explore.Domain/**/*.cs"
+      - "src/Explore.Persistence/Configurations/**/*.cs"
+      - "src/Explore.Persistence/Migrations/**/*.cs"
+      - "src/Explore.Persistence/ExploreDbContext.cs"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - "Entity has no default values in the domain class (no `= DateTimeOffset.UtcNow` etc.)."
       - "Entity configuration uses `uuidv7()` as the PK default."
@@ -150,11 +150,11 @@ scenarios:
   - id: update-repository-query
     intent_id: update-repository-query
     summary: |
-      Add a new filter to `EventQuerySpecification` preserving tenant isolation and AsNoTracking.
+      Add a new filter to `BlogQuerySpecification` preserving tenant isolation and AsNoTracking.
     prompt: |
-      Add a `WithCategorySlug(string slug)` method to `EventQuerySpecification`. The method
-      must return a new `EventQuerySpecification` instance (immutable fluent builder).
-      Update the event-list query handler to pass the slug through from the request.
+      Add a `WithSlug(string slug)` method to `BlogQuerySpecification`. The method must return
+      a new `BlogQuerySpecification` instance (immutable fluent builder). Update the blog query
+      handler to pass the slug through from the request.
     expected_must_reads:
       - "AGENTS.md"
       - "docs/QUICK_REFERENCE.md"
@@ -163,15 +163,15 @@ scenarios:
       - ".agents/skills/cqrs-mediatr-guidelines/SKILL.md"
       - ".agents/skills/dotnet-efcore-guidelines/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.Application/Features/**/*.cs"
-      - "Explore.Persistence/Repositories/**/*.cs"
-      - "Explore.Persistence/Specifications/**/*.cs"
+      - "src/Explore.Application/Features/**/Queries/**/*.cs"
+      - "src/Explore.Application/Specifications/**/*.cs"
+      - "src/Explore.Persistence/Repositories/**/*.cs"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
-      - "`WithCategorySlug` returns a NEW specification instance (immutability preserved)."
+      - "`WithSlug` returns a NEW specification instance (immutability preserved)."
       - "Specification is composed into the handler via `.With*()` chain."
       - "Repository uses `AsNoTracking()` on the read path."
       - "Tenant query filter is NOT disabled anywhere in the new path."
@@ -182,8 +182,8 @@ scenarios:
     summary: |
       Gate a MudBlazor v9 Edit button by HAL `_links` presence, not role inspection.
     prompt: |
-      In the event detail Blazor page, render an "Edit" MudButton only when the event DTO's
-      `_links` contains an `edit` entry. The button opens a MudDialog via `DialogService.ShowAsync<EditEventDialog>`.
+      In the blog management page, render an "Edit" MudButton only when the blog summary's
+      `_links` contains an `edit` entry. Use the existing blog editor route for navigation.
       Do NOT gate by role, claim, or `RoleHelper.CanManage`.
     expected_must_reads:
       - "AGENTS.md"
@@ -193,21 +193,21 @@ scenarios:
       - ".agents/skills/blazor-ui-conventions/SKILL.md"
       - ".agents/skills/auth-patterns/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.Blazor.Client/**/*.razor"
-      - "Explore.Blazor.Client/**/*.razor.cs"
-      - "Explore.Blazor.Client/**/*.razor.css"
+      - "src/Explore.Blazor.Client/**/*.razor"
+      - "src/Explore.Blazor.Client/**/*.razor.cs"
+      - "src/Explore.Blazor.Client/**/*.razor.css"
     expected_paths_forbidden:
-      - "Explore.Application/**"
-      - "Explore.Persistence/**"
-      - "Explore.API/**"
+      - "src/Explore.Application/**"
+      - "src/Explore.Persistence/**"
+      - "src/Explore.API/**"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
-      - 'Button rendering is guarded by `@if (Event.HasHalLink("edit"))` or equivalent helper.'
+      - 'Button rendering is guarded by `@if (item.HasLink("edit"))` or equivalent helper.'
       - "No reference to `IsInRole`, `User.Claims`, or `RoleHelper.CanManage` in the component."
-      - "Dialog invocation uses v9 `ShowAsync<T>()` (not `Show<T>()`)."
+      - "The button navigates through the existing blog editor route instead of inventing a second editing flow."
       - "Component uses BEM-scoped CSS in the matching `.razor.css` file."
 
   - id: bff-auth-bug
@@ -221,18 +221,18 @@ scenarios:
     expected_must_reads:
       - "AGENTS.md"
       - "docs/QUICK_REFERENCE.md"
-      - "docs/SECURITY-MODEL."
+      - "docs/SECURITY-MODEL.md"
       - "docs/AUTHORIZATION.md"
       - ".claude/rules/blazor-server.md"
       - ".agents/skills/auth-patterns/SKILL.md"
       - ".agents/skills/blazor-bff-patterns/SKILL.md"
     expected_paths_in_scope:
-      - "Explore.Blazor/**/*.cs"
-      - "Explore.API/**/*.cs"
+      - "src/Explore.Blazor/**/*.cs"
+      - "src/Explore.API/**/*.cs"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - "UserId extraction uses the exact fallback chain `sub` → `nameidentifier` → `sid`."
       - "Missing UserId still returns 401 (not silently succeeds)."
@@ -257,11 +257,11 @@ scenarios:
       - ".agents/skills/auth-patterns/SKILL.md"
     expected_paths_in_scope:
       - "cerbos/**/*.yaml"
-      - "Event.Architecture.Tests/**/*AuthorizationParityTests*.cs"
+      - "tests/Event.Architecture.Tests/**/*AuthorizationParityTests*.cs"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - "New Cerbos resource policy YAML validates against Cerbos schema."
       - "`read` is allowed for anonymous callers."
@@ -285,7 +285,9 @@ scenarios:
       - "docs/SECURITY-MODEL.md"
       - "docs/SECRETS.md"
       - "docs/CONFIGURATION.md"
-      - "docs/SELF_HOSTING.md"
+      - "docs/GETTING_STARTED.md"
+      - "docs/OPERATIONS.md"
+      - "docs/PRODUCTION_OPERATIONS.md"
       - ".claude/rules/api-controllers.md"
       - ".claude/rules/blazor-server.md"
       - ".agents/skills/auth-patterns/SKILL.md"
@@ -294,25 +296,27 @@ scenarios:
     expected_paths_in_scope:
       - "docker-compose.yml"
       - "docker/**"
-      - "Explore.Application/Contracts/Services/**/*.cs"
-      - "Explore.Application/DTOs/Onboarding/**/*.cs"
-      - "Explore.Application/Features/InstanceOnboarding/**/*.cs"
-      - "Explore.Infrastructure/Services/**/*.cs"
-      - "Explore.API/Controllers/**/*Onboarding*.cs"
-      - "Explore.Blazor/**/*.cs"
-      - "Explore.Blazor.Client/**/*.razor"
-      - "docs/SELF_HOSTING.md"
+      - "src/Explore.Application/Contracts/Services/**/*.cs"
+      - "src/Explore.Application/DTOs/Onboarding/**/*.cs"
+      - "src/Explore.Application/Features/InstanceOnboarding/**/*.cs"
+      - "src/Explore.Infrastructure/Services/**/*.cs"
+      - "src/Explore.API/Controllers/**/*Onboarding*.cs"
+      - "src/Explore.Blazor/**/*.cs"
+      - "src/Explore.Blazor.Client/**/*.razor"
+      - "docs/GETTING_STARTED.md"
+      - "docs/OPERATIONS.md"
+      - "docs/PRODUCTION_OPERATIONS.md"
       - "docs/CONFIGURATION.md"
       - "docs/SECRETS.md"
       - "docs/TROUBLESHOOTING.md"
     expected_verification_commands:
       - "dotnet build --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet"
-      - "dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Application.UnitTests/Event.Application.UnitTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Explore.Blazor.IntegrationTests/Explore.Blazor.IntegrationTests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Explore.Blazor.Client.Tests/Explore.Blazor.Client.Tests.csproj --configuration Release --verbosity quiet"
+      - "dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet"
     acceptance_criteria:
       - "Application owns DTOs, commands, validators, and service contracts; Infrastructure owns provider HTTP/Admin API details."
       - "The one-time admin credential is passed only through the active request/job and is never persisted or returned."
@@ -341,9 +345,7 @@ scenarios:
       - "docs/SECURITY-MODEL.md"
       - "docs/API.md"
       - "docs/BLAZOR.md"
-      - "dev/active/webhook-delivery-redesign/webhook-delivery-redesign-context.md"
-      - "dev/active/webhook-delivery-redesign/webhook-delivery-redesign-plan.md"
-      - "dev/active/webhook-delivery-redesign/webhook-delivery-redesign-tasks.md"
+      - "dev/report/EVENT_REFERENCE_ALIGNMENT.md"
       - ".claude/rules/domain.md"
       - ".claude/rules/application-layer.md"
       - ".claude/rules/efcore-persistence.md"
@@ -364,12 +366,10 @@ scenarios:
       - "src/Explore.API/**/*Webhook*.cs"
       - "src/Explore.Blazor/**/*Webhook*.cs"
       - "src/Explore.Blazor.Client/**/*Webhook*"
-      - "src/Explore.Blazor.Client/Clients/EventApiClient.g.cs"
+      - "src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs"
       - "tests/**/*Webhook*.cs"
-      - "schemas/openapi_islamu-event.json"
-      - "schemas/islamu-event.md"
+      - "schemas/openapi_islamu.json"
       - "docs/WEBHOOKS.md"
-      - "dev/active/webhook-delivery-redesign/**"
     expected_paths_forbidden:
       - "dev/next/**"
       - "dev/report/**"

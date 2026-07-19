@@ -13,9 +13,10 @@ public sealed class AiAgentContractInventoryGeneratorTests
     {
         var markdown = new AiAgentContractInventoryGenerator().GenerateMarkdown();
 
-        markdown.Should().Contain("Create event draft");
-        markdown.Should().Contain("HumanConfirmationRequired");
-        markdown.Should().Contain("create-event");
+        markdown.Should().Contain("Tool Inventory");
+        markdown.Should().Contain("Registry catalog visibility is advisory");
+        markdown.Should().NotContain("Create event draft");
+        markdown.Should().NotContain("create-event");
         markdown.Should().Contain("execution authority");
     }
 

@@ -14,16 +14,16 @@ Use this skill when creating or changing `.agents/skills/*` so the result is a c
 ## When to Load
 - Keywords: create a skill, write a skill, skill resources, agentic engineering, context engineering, agent-context skill.
 - Intent IDs: `create-agent-context-skill`.
-- File patterns: `.agents/skills/**`, `.Codex/contract/intents.yaml`, `Event.Architecture.Tests/AgentContext*Tests.cs`, `dev/active/**` workstreams that plan a skill.
+- File patterns: `.agents/skills/**`, `.claude/contract/intents.yaml`, `dev/active/**` workstreams that plan a skill.
 - A plan or handoff says implementation knowledge should become reusable agent guidance.
 - A skill is becoming long, vague, under-resourced, or hard to verify.
 
 ## When NOT to Load
 - Not for ordinary application-code work unless the task changes agent instructions or skill files.
-- Not for generic documentation edits that do not affect `.agents/skills`, `.Codex/contract`, or agent-context tests.
+- Not for generic documentation edits that do not affect `.agents/skills` or `.claude/contract`.
 - Not for creating external opencode configuration outside this repository.
 - Not for adding a runtime feature where a domain, CQRS, auth, Blazor, or persistence skill is the primary rule source.
-- Not for bypassing schema failures by adding skip-list exceptions.
+- Not for bypassing schema requirements instead of correcting the skill.
 
 ## Must-Read Docs
 - [../../../AGENTS.md](../../../AGENTS.md)
@@ -41,7 +41,7 @@ Use this skill when creating or changing `.agents/skills/*` so the result is a c
 
 ## Top 5 Invariants
 1. `SKILL.md` is a compact routing and invariant file, while deep explanations, templates, checklists, and domain material live in `resources/*.md`.
-2. Every new skill folder name must match frontmatter `name`, satisfy the required section order, and avoid `AgentContextSchemaTests.SkipSchemaMigration` exceptions.
+2. Every new skill folder name must match frontmatter `name` and satisfy the required section order without exceptions.
 3. The skill must preserve evidence boundaries by separating verified repository facts, source-derived framework claims, assumptions, and future validation needs.
 4. Must-read links, resource indexes, and verification hooks must let a future agent reproduce the workflow without relying on prior chat context.
 5. Context updates belong in `dev/active/*` when the skill work is substantial, especially before handoff, compaction, or switching tasks.
@@ -60,7 +60,7 @@ Skill authoring loop:
 2. Read AGENTS.md, _SKILL_SCHEMA.md, active plan/context/tasks, and source material.
 3. Draft SKILL.md as a short router with exactly five invariants and five anti-patterns.
 4. Move depth into resources/index.md and focused resource files.
-5. Run architecture schema/link tests and update dev docs before handoff.
+5. Run manual schema/link review and update dev docs before handoff.
 ```
 
 ```text
@@ -69,8 +69,8 @@ This skill provides workflow guidance grounded in the listed sources. It does no
 ```
 
 ## Verification Hooks
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet`
-- `git diff --check -- .Codex/contract/intents.yaml .agents/skills Event.Architecture.Tests/AgentContextLinkTests.cs`
+- `/docs-lint`
+- `git diff --check -- .claude/contract/intents.yaml .agents/skills`
 
 ## Related Skills
 - [../agentic-research/SKILL.md](../agentic-research/SKILL.md)

@@ -1,11 +1,10 @@
 <!-- ABOUTME: Canonical schema every SKILL.md in this repo must satisfy. -->
-<!-- ABOUTME: Enforced by Event.Architecture.Tests.AgentContextSchemaTests. -->
+<!-- ABOUTME: Defines authoring and manual review requirements for project skills. -->
 
 # Skill Schema (Authoritative)
 
 > Every `.agents/skills/*/SKILL.md` MUST conform to this schema.
-> `AgentContextSchemaTests` validates structure at build time.
-> Skills that intentionally skip migration must be listed in the test's `SkipSchemaMigration` set.
+> Authors and reviewers validate structure, links, and length before merge.
 
 ## 1. File Location
 
@@ -28,7 +27,7 @@ priority: critical | high | medium | low
 ---
 ```
 
-All five fields are **required**. `AgentContextSchemaTests` asserts presence and validates `type`/`enforcement`/`priority` enums.
+All five fields are **required**. Review `type`, `enforcement`, and `priority` against the documented enums.
 
 ## 3. Required Sections (in order)
 
@@ -46,7 +45,7 @@ Bulleted list. Explicit negatives to prevent context bloat. Example: "Not for pu
 
 ### `## Must-Read Docs`
 
-Links only. No prose. Relative paths from repo root (`docs/ARCHITECTURE.md`, `docs/QUICK_REFERENCE.md`, etc.). Every link MUST resolve (`AgentContextLinkTests` verifies).
+Links only. No prose. Relative paths from repo root (`docs/ARCHITECTURE.md`, `docs/QUICK_REFERENCE.md`, etc.). Every link MUST resolve during review.
 
 ### `## Top 5 Invariants`
 
@@ -80,24 +79,20 @@ Bulleted cross-reference to sibling skills. Minimum 1 entry. Use relative paths.
 - ASCII diagrams (per `docs/DOCUMENTATION_STYLE_GUIDE.md`).
 - "Why clean architecture matters" prose or similar meta-content.
 
-## 6. Enforcement
+## 6. Review Checklist
 
-`Event.Architecture.Tests.AgentContextSchemaTests` checks:
+Authors and reviewers check:
 - YAML frontmatter present with all 5 required fields.
 - All 8 required sections present in the documented order.
 - `Top 5 Invariants` and `Top 5 Anti-Patterns` each contain exactly 5 numbered items.
-- Must-Read Docs links resolve (via `AgentContextLinkTests`).
+- Must-Read Docs links resolve.
 - Total line count ≤ 250.
-
-Skills listed in the test's `SkipSchemaMigration` set are grandfathered but flagged as migration debt.
 
 ## 7. Migration Debt (v1)
 
-All skills are schema-enforced unless their folder name appears in `AgentContextSchemaTests.SkipSchemaMigration`.
-
-New skills MUST NOT be added to the skip list. If a new skill needs more depth than the line cap allows, keep `SKILL.md` compact and move the detail into `resources/*.md`.
-
-`AgentContextLinkTests` also checks links for all schema-enforced skills and their resource files, so every resource link must resolve before the architecture tests pass.
+Existing skills that predate this schema are migration debt until reviewed. New skills must conform;
+if a skill needs more depth than the line cap allows, keep `SKILL.md` compact and move detail into
+`resources/*.md`. Resolve every resource link before merge.
 
 ## Related
 

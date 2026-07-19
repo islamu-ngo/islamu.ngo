@@ -105,7 +105,7 @@ try
 
     // Build Context JSON
     string jsonContent = $@"{{
-  ""Project"": ""ISLAMU Event"",
+  ""Project"": ""ISLAMU Website"",
   ""Stack"": "".NET 10 + Blazor + Aspire"",
   ""RootPath"": ""{safeRootDir}"",
   ""ActiveLayers"": {{

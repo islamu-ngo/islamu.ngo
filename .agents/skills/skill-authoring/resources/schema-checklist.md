@@ -1,5 +1,5 @@
 <!-- ABOUTME: Concrete checklist for writing schema-compliant SKILL.md files. -->
-<!-- ABOUTME: Mirrors _SKILL_SCHEMA.md and AgentContextSchemaTests expectations. -->
+<!-- ABOUTME: Mirrors _SKILL_SCHEMA.md authoring and manual review expectations. -->
 
 # Schema Checklist
 

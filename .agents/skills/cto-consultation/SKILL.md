@@ -61,7 +61,7 @@ Consultation output shape:
 2. Current repo facts
 3. Options
 4. Recommendation
-5. Enterprise/self-hosting impact
+5. First-party operations/product impact
 6. Implementation path
 7. Verification and documentation impact
 ```
@@ -72,9 +72,8 @@ TickerQ should remain a default internal scheduler for Basic Dispatch Mode, whil
 ```
 
 ## Verification Hooks
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.AgentContextSchemaTests`
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.AgentContextLinkTests`
-- `dotnet build --configuration Release --verbosity quiet`
+- `/docs-lint`
+- `git diff --check -- .agents/skills/cto-consultation`
 
 ## Related Skills
 - [../agentic-research/SKILL.md](../agentic-research/SKILL.md)

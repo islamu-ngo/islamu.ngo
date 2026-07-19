@@ -68,9 +68,8 @@ The target architecture is reasonable, but I would not approve this as one works
 ```
 
 ## Verification Hooks
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.AgentContextSchemaTests`
-- `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet --filter FullyQualifiedName~Event.Architecture.Tests.AgentContextLinkTests`
-- `dotnet build --configuration Release --verbosity quiet`
+- `/docs-lint`
+- `git diff --check -- .agents/skills/senior-cto-feedback`
 
 ## Related Skills
 - [../cto-consultation/SKILL.md](../cto-consultation/SKILL.md)

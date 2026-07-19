@@ -148,8 +148,7 @@ intents:
     minimum_tests:
       - Event.Persistence.IntegrationTests
       - Event.Architecture.Tests
-    docs_to_update:
-      - schemas/islamu-event.md
+    docs_to_update: []
     unique_acceptance:
       - "Migration is idempotent and reversible"
       - "HasData seed synchronized with enum values"
@@ -172,13 +171,15 @@ intents:
     load_rules:
       - .claude/rules/efcore-persistence.md
     paths_in_scope:
+      - "src/Explore.Application/Features/**/Queries/**/*.cs"
+      - "src/Explore.Application/Specifications/**/*.cs"
       - "src/Explore.Persistence/Repositories/**/*.cs"
     minimum_tests:
       - Event.Persistence.IntegrationTests
       - Event.Architecture.Tests
     docs_to_update: []
     unique_acceptance:
-      - "EventQuerySpecification mutations create new instances"
+      - "BlogQuerySpecification mutations create new instances"
       - "Navigation loading is explicit"
     forbidden_without_approval:
       - "IgnoreQueryFilters() without a test proving safety"
@@ -201,6 +202,8 @@ intents:
       - .claude/rules/blazor-client.md
     paths_in_scope:
       - "src/Explore.Blazor.Client/**/*.razor"
+      - "src/Explore.Blazor.Client/**/*.razor.cs"
+      - "src/Explore.Blazor.Client/**/*.razor.css"
     minimum_tests:
       - Explore.Blazor.Client.Tests
     docs_to_update: []
@@ -355,7 +358,9 @@ intents:
       - docs/SECURITY-MODEL.md
       - docs/SECRETS.md
       - docs/CONFIGURATION.md
-      - docs/SELF_HOSTING.md
+      - docs/GETTING_STARTED.md
+      - docs/OPERATIONS.md
+      - docs/PRODUCTION_OPERATIONS.md
       - docs/TESTING.md
     load_skills:
       - auth-patterns
@@ -381,9 +386,12 @@ intents:
       - "src/Explore.Blazor/**/*.cs"
       - "src/Explore.Blazor.Client/**/*.razor"
       - "src/Explore.Blazor.Client/Services/**/*.cs"
-      - "Event.*Tests/**/*.cs"
-      - "Explore.*Tests/**/*.cs"
+      - "tests/Event.*Tests/**/*.cs"
+      - "tests/Explore.*Tests/**/*.cs"
       - "docs/CONFIGURATION.md"
+      - "docs/GETTING_STARTED.md"
+      - "docs/OPERATIONS.md"
+      - "docs/PRODUCTION_OPERATIONS.md"
       - "docs/SECRETS.md"
       - "docs/TROUBLESHOOTING.md"
       - "dev/active/**"
@@ -395,6 +403,9 @@ intents:
       - Event.Architecture.Tests
     docs_to_update:
       - docs/CONFIGURATION.md
+      - docs/GETTING_STARTED.md
+      - docs/OPERATIONS.md
+      - docs/PRODUCTION_OPERATIONS.md
       - docs/SECRETS.md
       - docs/TROUBLESHOOTING.md
     unique_acceptance:
@@ -447,13 +458,86 @@ intents:
       - .claude/contract/intents.yaml
       - .agents/skills/_SKILL_SCHEMA.md
     unique_acceptance:
-      - "New SKILL.md satisfies the skill schema without adding a schema-test skip exception"
+      - "New SKILL.md satisfies the skill schema without adding an undocumented schema exception"
       - "Every resource linked from SKILL.md or resources/index.md exists and has two ABOUTME lines"
       - "The skill states activation boundaries, anti-patterns, verification hooks, and output contract clearly enough for another agent to use without rereading the originating chat"
     forbidden_without_approval:
-      - "Adding a new skill to AgentContextSchemaTests.SkipSchemaMigration"
+      - "Bypassing the current skill schema or adding an undocumented schema exception"
       - "Creating a skill that claims authority beyond its evidence or domain scope"
       - "Inlining long framework material in SKILL.md instead of resource files"
+    related_agents:
+      - architect-agent
+      - librarian-agent
+      - quality-verifier-agent
+
+  - id: bootstrap-sibling-app
+    title: "Bootstrap a sibling application from a read-only reference repository"
+    category: cross-cutting
+    triggers:
+      - "bootstrap a sibling app"
+      - "bootstrap sibling application"
+      - "import sibling app from reference repository"
+      - "import from a read-only reference repo"
+      - "copy patterns from sibling repository"
+      - "create app from pinned source repository"
+    must_read_docs:
+      - AGENTS.md
+      - docs/QUICK_REFERENCE.md
+      - docs/GOVERNANCE.md
+      - docs/ARCHITECTURE.md
+      - docs/CODEBASE_STRUCTURE.md
+    load_skills:
+      - agentic-research
+      - clean-architecture-rules
+    load_rules:
+      - .claude/rules/domain.md
+      - .claude/rules/application-layer.md
+      - .claude/rules/efcore-persistence.md
+      - .claude/rules/efcore-migrations.md
+      - .claude/rules/api-controllers.md
+      - .claude/rules/api-hateoas.md
+      - .claude/rules/blazor-server.md
+      - .claude/rules/blazor-client.md
+      - .claude/rules/tests.md
+    paths_in_scope:
+      - "AGENTS.md"
+      - "src/**"
+      - "tests/**"
+      - "docs/**"
+      - "schemas/**"
+      - "docker/**"
+      - ".github/**"
+      - "dev/**"
+      - ".ci/**"
+      - ".claude/contract/intents.yaml"
+      - ".env.example"
+      - "compose*.yaml"
+      - "*.slnx"
+      - "Directory.Build.props"
+      - "Directory.Build.targets"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "docker-compose.yml"
+      - "README.md"
+      - "LICENSE"
+    minimum_tests:
+      - Event.Architecture.Tests
+    docs_to_update:
+      - docs/GOVERNANCE.md
+      - docs/ARCHITECTURE.md
+      - docs/CODEBASE_STRUCTURE.md
+    unique_acceptance:
+      - "Immutable source provenance records every reference repository with remote URL, branch or tag, and pinned full commit SHA before any copied pattern is adapted"
+      - "Reference repositories are mounted or cloned read-only and are never treated as build inputs, runtime dependencies, package sources, submodules, or deployment artifacts"
+      - "Bootstrapped code is owned by this repository after import; no runtime or build coupling to source repositories remains"
+      - "An explicit divergence and ownership ledger records copied, adapted, deleted, and intentionally divergent areas with the owning follow-up workstream"
+      - "Event.Architecture.Tests passes and proves the resulting repository still satisfies the architecture verification baseline"
+    forbidden_without_approval:
+      - "Editing, formatting, committing to, rebasing, or otherwise mutating any source or reference repository used for bootstrap evidence"
+      - "Copying secrets, credentials, private tenant data, private user identifiers, production URLs, or repository-specific private identifiers from source repositories"
+      - "Replacing, squashing, rewriting, or force-updating this repository's history to imitate the source repository history"
+      - "Adding compatibility aliases, redirects, shim APIs, duplicate DTO names, or legacy behavior unless a concrete current consumer requires them"
+      - "Publishing Control Plane configuration, plans, tenant settings, commercial metadata, or operational state without a recorded approval and publication ledger entry"
     related_agents:
       - architect-agent
       - librarian-agent
@@ -551,9 +635,7 @@ intents:
       - docs/OUTBOX_PATTERN.md
       - docs/OPERATIONS.md
       - docs/TESTING.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-context.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-plan.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-tasks.md
+      - dev/report/EVENT_REFERENCE_ALIGNMENT.md
     load_skills:
       - clean-architecture-rules
       - cqrs-mediatr-guidelines
@@ -603,24 +685,22 @@ intents:
       - "src/Explore.Blazor/**/*Webhook*.cs"
       - "src/Explore.Blazor/Program.cs"
       - "src/Explore.Blazor.Client/**/*Webhook*"
-      - "src/Explore.Blazor.Client/Clients/EventApiClient.g.cs"
+      - "src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs"
       - "src/Explore.AppHost/AppHost.cs"
       - "src/Explore.AppHost/Properties/launchSettings.json"
       - "cerbos/policies/islamuevent_webhook.yaml"
       - "tests/**/*Webhook*.cs"
       - "tests/**/Webhooks/**/*.cs"
-      - "schemas/openapi_islamu-event.json"
-      - "schemas/islamu-event.md"
+      - "schemas/openapi_islamu.json"
       - "docs/API.md"
       - "docs/API_CHANGELOG.md"
       - "docs/BLAZOR.md"
       - "docs/WEBHOOKS.md"
       - "docs/OPERATIONS.md"
       - "docs/CONFIGURATION.md"
-      - "docs/SELF_HOSTING.md"
+      - "docs/PRODUCTION_OPERATIONS.md"
       - "docs/BACKUP_RESTORE_UPGRADE.md"
       - "docs/TROUBLESHOOTING.md"
-      - "dev/active/webhook-delivery-redesign/**"
     paths_forbidden:
       - ".claude/settings*.json"
       - ".design-sync/**"
@@ -647,13 +727,9 @@ intents:
       - docs/WEBHOOKS.md
       - docs/OPERATIONS.md
       - docs/CONFIGURATION.md
-      - docs/SELF_HOSTING.md
+      - docs/PRODUCTION_OPERATIONS.md
       - docs/BACKUP_RESTORE_UPGRADE.md
       - docs/TROUBLESHOOTING.md
-      - schemas/islamu-event.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-context.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-plan.md
-      - dev/active/webhook-delivery-redesign/webhook-delivery-redesign-tasks.md
     unique_acceptance:
       - "PostgreSQL exact bytes, SHA-256, and provenance are the sole payload, signing, idempotency, and transmission authority; parsed JSON is never authoritative"
       - "Inbound acceptance, effect receipt or durable external outbox, attempt evidence, and settlement preserve one transaction boundary with verified tenant ownership"

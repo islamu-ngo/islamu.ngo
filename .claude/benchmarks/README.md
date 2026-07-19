@@ -17,7 +17,7 @@ Last Updated: 2026-04-24
 |---|---|
 | [`cold-start-tasks.yaml`](cold-start-tasks.yaml) | 8 canonical scenarios with acceptance criteria and expected intent classification |
 
-The YAML structure is enforced by `AgentContextIntentManifestTests`; a dedicated schema may be introduced in a future iteration.
+Review the YAML structure when editing benchmark scenarios; no architecture test validates this file.
 
 ---
 

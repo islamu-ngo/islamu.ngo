@@ -27,7 +27,7 @@ Escalate or ask for approval when the skill would:
 - Interpret contested expert material without a qualified reviewer.
 - Convert a single implementation example into a universal rule.
 - Use private source material in a public-facing output.
-- Change agent-context tests or contracts in a way that weakens enforcement.
+- Change agent-context contracts in a way that weakens their authoring requirements.
 
 ## Evidence In Final Responses
 

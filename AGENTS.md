@@ -79,6 +79,7 @@ Every change must answer these eight questions **before editing any file**:
 | New request | [`.claude/contract/intents.yaml`](.claude/contract/intents.yaml) — find `triggers` |
 | Known path | [`.claude/rules/`](.claude/rules/) — find matching `paths` |
 | Pattern/Skill | [`.agents/skills/`](.agents/skills/) — load relevant `SKILL.md` |
+| Sibling bootstrap / alignment decision | [`dev/report/EVENT_REFERENCE_ALIGNMENT.md`](dev/report/EVENT_REFERENCE_ALIGNMENT.md) — check living ledger before reopening retained/deleted/adapted Event or Control Plane divergences |
 | Build/Test | [`docs/OPERATIONS.md#verification-policy`](docs/OPERATIONS.md) |
 | UI Workflow | [`docs/BLAZOR_DEV_WORKFLOW.md`](docs/BLAZOR_DEV_WORKFLOW.md) |
 | Agent Ops | [`docs/OPERATIONS.md#ai-agent-operational-rules`](docs/OPERATIONS.md) |
@@ -127,18 +128,7 @@ The final summary must be medium-sized and technically specific. Include the arc
 
 ---
 
-## 10. Enforcement
-
-Context integrity is enforced by `Event.Architecture.Tests/`:
-- `AgentContextSchemaTests` — Validates rule/skill/agent structure.
-- `AgentContextIntentManifestTests` — Validates `intents.yaml`.
-- `AgentContextDuplicationTests` — Prevents rule overlap.
-
-If these fail, the context system is broken. Fix it.
-
----
-
-## 11. Tool-Specific Bootloaders
+## 10. Tool-Specific Bootloaders
 
 | Tool | Entry File |
 |---|---|

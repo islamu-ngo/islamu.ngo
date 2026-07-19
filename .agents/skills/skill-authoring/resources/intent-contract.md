@@ -5,7 +5,7 @@
 
 ## Intent ID
 
-Use `create-agent-context-skill` when a task creates or materially updates project skills, skill resources, agent-context tests, or the intent routing that loads those skills.
+Use `create-agent-context-skill` when a task creates or materially updates project skills, skill resources, or the intent routing that loads those skills.
 
 ## Files In Scope
 

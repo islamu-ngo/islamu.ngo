@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-// C# Script to verify compilation for ISLAMU Event (.NET 10)
+// C# Script to verify compilation for the first-party ISLAMU website (.NET 10)
 // NON-BLOCKING MODE: Reports errors without stopping Claude.
 
 Console.WriteLine("🏗️  Checking compilation...");

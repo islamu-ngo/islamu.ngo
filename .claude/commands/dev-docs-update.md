@@ -290,11 +290,8 @@ Run, at minimum:
 rtk git diff --check -- <updated-dev-doc-files>
 ```
 
-If agent-context docs, slash commands, rules, skills, or journal format changed, also run the architecture/context test project:
-
-```bash
-dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet
-```
+If agent-context docs, slash commands, rules, skills, or journal format changed, run `/docs-lint`,
+inspect schema compatibility and referenced paths, and record the manual review in the handoff.
 
 If implementation files changed in the same session and validation has not yet run, record the exact commands still needed in the handoff and tasks file. Do not pretend validation passed.
 

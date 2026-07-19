@@ -1,5 +1,5 @@
 <!-- ABOUTME: Schema for path-scoped rule files under .claude/rules/. -->
-<!-- ABOUTME: Defines the frontmatter, sections, and validation expectations enforced by architecture tests. -->
+<!-- ABOUTME: Defines the frontmatter, sections, and manual review expectations for rule authors. -->
 
 # Rule File Schema
 
@@ -37,9 +37,10 @@ Path-scoped rules are concise supplements to the intent contract. Claude Code au
 - Source rows from canonical docs and skills.
 - Cross-reference `docs/QUICK_REFERENCE.md`; do not paste large invariant blocks into rule files.
 
-## Validation Rules
+## Review Rules
 
-`AgentContextSchemaTests` checks that rule files in `.claude/rules/` have the required frontmatter and expected markdown structure. `AgentContextLinkTests` checks every linked doc path. `AgentContextIntentManifestTests` separately validates intent ids and test project names referenced here.
+Authors and reviewers verify the required frontmatter and section order, resolve every linked path,
+and confirm intent ids and test project names against the current repository.
 
 ## Authoring Limits
 

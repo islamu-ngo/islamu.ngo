@@ -61,7 +61,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
     public Task<BffKeycloakFixture.TokenSet> GetTestAdminTokensAsync(CancellationToken cancellationToken = default)
         => _keycloak.GetTestAdminTokensAsync(cancellationToken);
 
-    public IEventApiClient CreateApiClient(
+    public IIslamuApiClient CreateApiClient(
         string accessToken,
         string? tenantSlug = null,
         bool includeSetupSecret = false)
@@ -79,7 +79,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
         }
 
         _apiHttpClients.Add(httpClient);
-        return new EventApiClient(httpClient);
+        return new IslamuApiClient(httpClient);
     }
 
     public async Task InitializeAsync()
@@ -208,9 +208,9 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
             resource.WithEnvironment("Infisical__ProjectId", string.Empty);
             resource.WithEnvironment("Infisical__ClientId", string.Empty);
             resource.WithEnvironment("Infisical__ClientSecret", string.Empty);
-            resource.WithEnvironment("Keycloak__Audience", "islamu-event-api");
-            resource.WithEnvironment("Keycloak__ValidAudiences__0", "islamu-event-api");
-            resource.WithEnvironment("Keycloak__ValidAudiences__1", "islamu-event-blazor");
+            resource.WithEnvironment("Keycloak__Audience", "islamu-ngo-api");
+            resource.WithEnvironment("Keycloak__ValidAudiences__0", "islamu-ngo-api");
+            resource.WithEnvironment("Keycloak__ValidAudiences__1", "islamu-ngo-blazor");
             resource.WithEnvironment("KeycloakBootstrap__AllowLocalUrls", "true");
         }
     }

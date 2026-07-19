@@ -130,7 +130,7 @@ public sealed class EventBffKeycloakAuthenticationOptions
     private static string DefaultClientId(EventBffHostProfile profile) =>
         profile == EventBffHostProfile.ControlPlane
             ? string.Empty
-            : "islamu-event-blazor";
+            : "islamu-ngo-blazor";
 
     private static string DefaultCookieName(EventBffHostProfile profile, IHostEnvironment environment)
     {
@@ -138,7 +138,7 @@ public sealed class EventBffKeycloakAuthenticationOptions
         {
             return profile == EventBffHostProfile.ControlPlane
                 ? "event-control-plane-bff-dev"
-                : "islamu-event-public-dev";
+                : "islamu-ngo-public-dev";
         }
 
         return profile == EventBffHostProfile.ControlPlane

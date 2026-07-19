@@ -74,10 +74,10 @@ public static class ConfigurationExtensions
             ? $"{keycloakAuthority}/.well-known/openid-configuration"
             : null;
         var keycloakClientId = !string.IsNullOrWhiteSpace(rawKeycloakClientId)
-            ? rawKeycloakClientId
-            : keycloakAuthority is null
-                ? null
-                : "islamu-event-blazor";
+                ? rawKeycloakClientId
+                : keycloakAuthority is null
+                    ? null
+                    : "islamu-ngo-blazor";
         // Preserve the operator's raw input (bare host:port or full URL). Normalization happens only
         // at gRPC channel creation time so we don't surface a misleading scheme back to the UI/storage.
         var cerbosGrpcEndpoint = ReadFirst(config, "Cerbos:GrpcEndpoint", "CERBOS_GRPC_ENDPOINT")?.Trim();
@@ -203,7 +203,7 @@ public static class ConfigurationExtensions
         TrySet(mappedConfig, config, "Keycloak:MetadataAddress", metadataAddress);
         TrySet(mappedConfig, config, "Keycloak:ClientId", keycloakClientId);
         TrySet(mappedConfig, config, "Keycloak:ClientSecret", rawKeycloakClientSecret);
-        TrySet(mappedConfig, config, "Keycloak:Audience", "islamu-event-api");
+        TrySet(mappedConfig, config, "Keycloak:Audience", "islamu-ngo-api");
         TrySet(mappedConfig, config, "Keycloak:RequireHttpsMetadata", "true");
 
         // S3

@@ -260,6 +260,68 @@
       "implicitFlowEnabled": false,
       "protocol": "openid-connect",
       "defaultClientScopes": ["openid", "profile", "email", "web-origins"]
+    },
+    {
+      "clientId": "islamu-ngo-blazor",
+      "name": "ISLAMU NGO Blazor (BFF) — Test",
+      "description": "Confidential OIDC client for ISLAMU NGO Blazor Server BFF integration tests.",
+      "enabled": true,
+      "consentRequired": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "test-ngo-blazor-secret",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "fullScopeAllowed": false,
+      "protocol": "openid-connect",
+      "redirectUris": ["*"],
+      "webOrigins": ["+"],
+      "defaultClientScopes": [
+        "openid",
+        "profile",
+        "email",
+        "web-origins",
+        "acr"
+      ],
+      "optionalClientScopes": ["offline_access", "address", "phone"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+",
+        "use.refresh.tokens": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "islamu-ngo-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "islamu-ngo-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "islamu-ngo-api",
+      "name": "ISLAMU NGO API (Resource Server) — Test",
+      "description": "Resource server audience target for ISLAMU NGO integration tests.",
+      "enabled": true,
+      "consentRequired": false,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "protocol": "openid-connect",
+      "defaultClientScopes": ["openid", "profile", "email", "web-origins"]
     }
   ],
   "users": [

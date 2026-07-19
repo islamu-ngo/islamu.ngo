@@ -2,7 +2,6 @@
 // ABOUTME: Adds Infisical as configuration source and maps Infisical secret names to .NET config keys.
 
 using Explore.Blazor.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Explore.Blazor.Extensions;
 
@@ -124,7 +123,7 @@ public static class ConfigurationExtensions
         var keycloakClientId = rawKeycloakClientId;
         if (string.IsNullOrWhiteSpace(keycloakClientId) && !string.IsNullOrWhiteSpace(keycloakAuthority))
         {
-            keycloakClientId = "islamu-event-blazor";
+            keycloakClientId = "islamu-ngo-blazor";
         }
 
         var metadataAddress = string.IsNullOrWhiteSpace(keycloakAuthority)

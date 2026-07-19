@@ -16,7 +16,7 @@ public class KeycloakRealmDesiredStateBuilder : IKeycloakRealmDesiredStateBuilde
     }
 
     public static KeycloakRealmDesiredStateBuilder CreateDefault() =>
-        new([new EventKeycloakIdentityContractContributor()]);
+        new([new IslamuKeycloakIdentityContractContributor()]);
 
     public KeycloakRealmDesiredStateDto Build(KeycloakRealmDesiredStateBuildRequestDto request)
     {

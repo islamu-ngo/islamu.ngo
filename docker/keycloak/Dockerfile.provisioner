@@ -1,0 +1,8 @@
+# ABOUTME: Builds the ISLAMU NGO Keycloak client provisioner image.
+# ABOUTME: Pins the Keycloak admin CLI runtime and copies only the owns-only provisioner script.
+
+FROM quay.io/keycloak/keycloak:26.5.2
+
+COPY --chmod=0555 provision-islamu-ngo-client.sh /opt/islamu-ngo/bin/provision-islamu-ngo-client.sh
+
+ENTRYPOINT ["/bin/bash", "/opt/islamu-ngo/bin/provision-islamu-ngo-client.sh"]

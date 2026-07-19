@@ -20,6 +20,7 @@ public class ErrorPagesTests : BlazorTestContext
         await AssertPageSourceContainsNoIndex("NotFound.razor");
         await Assert.That(component.FindAll("h1").Count).IsEqualTo(1);
         await Assert.That(component.FindAll("a[href='/']").Count).IsEqualTo(1);
+        await Assert.That(component.FindAll("a[href='/blog']").Count).IsEqualTo(1);
     }
 
     [Test]

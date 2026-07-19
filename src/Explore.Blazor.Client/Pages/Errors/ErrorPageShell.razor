@@ -29,6 +29,13 @@
                         @PrimaryText
                     </MudButton>
 
+                    @if (ShowSearch)
+                    {
+                        <MudButton Elevation="0" Href="/blog" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Search">
+                            Explore ISLAMU
+                        </MudButton>
+                    }
+
                     @if (!string.IsNullOrWhiteSpace(SecondaryHref) && !string.IsNullOrWhiteSpace(SecondaryText))
                     {
                         <MudButton Elevation="0" Href="@SecondaryHref" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@SecondaryIcon">
@@ -79,5 +86,8 @@
 
     [Parameter]
     public string? SecondaryIcon { get; set; }
+
+    [Parameter]
+    public bool ShowSearch { get; set; }
 
 }

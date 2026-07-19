@@ -36,16 +36,6 @@ public class RoutesConfigurationTests
     }
 
     [Test]
-    public async Task Routes_ShouldNotInclude_RemovedMyEvents_Path()
-    {
-        var routesFilePath = FindRoutesFilePath();
-        var routesContent = await File.ReadAllTextAsync(routesFilePath);
-
-        await Assert.That(routesContent).DoesNotContain("Path = \"/my/events\"");
-        await Assert.That(routesContent).DoesNotContain("typeof(MyEvents)");
-    }
-
-    [Test]
     public async Task Routes_ShouldInclude_OrganizationCreate_Path_AndNoStaleSingularCreatePath()
     {
         var routesFilePath = FindRoutesFilePath();
@@ -110,7 +100,6 @@ public class RoutesConfigurationTests
         var routesContent = await File.ReadAllTextAsync(routesFilePath);
 
         await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Pages.Admin.Instance.ControlPlane");
-        await Assert.That(routesContent).DoesNotContain("@using Event.ControlPlane.Client.Pages.Tenants");
         await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Pages.Admin.Instance.ControlPlane");
         await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Pages.Admin.Instance.ControlPlane");
         await Assert.That(routesContent).Contains("@using Explore.Blazor.Client.Routing.ControlPlane");

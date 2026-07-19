@@ -778,7 +778,7 @@ public class MainLayoutTests : IDisposable
     }
 
     [Test]
-    public async Task OnFirstRender_NoCommunityGuidelinesContent_HidesCommunityGuidelinesLink()
+    public async Task OnFirstRender_NoCommunityGuidelinesContent_KeepsCommunityGuidelinesLink()
     {
         PublicExperienceSettingsDto settings = new PublicExperienceSettingsBuilder()
             .WithCommunityGuidelines(string.Empty);
@@ -786,13 +786,12 @@ public class MainLayoutTests : IDisposable
 
         var cut = RenderLayout();
 
-        // Wait for settings to load, re-render, and community guidelines link to disappear
         cut.WaitForAssertion(() =>
         {
             var sideNav = cut.Find("[data-testid='app-side-nav']");
             var links = sideNav.QuerySelectorAll("a[href='/community-guidelines']");
-            if (links.Count > 0)
-                throw new InvalidOperationException("Expected community guidelines link to be hidden");
+            if (links.Count != 1)
+                throw new InvalidOperationException("Expected one community guidelines link");
         });
 
         await Task.CompletedTask;

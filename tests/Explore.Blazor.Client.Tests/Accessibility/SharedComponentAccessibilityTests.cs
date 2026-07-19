@@ -132,10 +132,10 @@ public class SharedComponentAccessibilityTests : IDisposable
         // Act
         var cut = _ctx.RenderMudComponent<ImageUpload>(p =>
             p.Add(x => x.PreviewUrl, "/api/storageobject/00000000-0000-0000-0000-000000000001/public")
-             .Add(x => x.Alt, "Event banner preview"));
+             .Add(x => x.Alt, "Blog cover preview"));
 
         // Assert
-        await Assert.That(cut.Markup).Contains("alt=\"Event banner preview\"");
+        await Assert.That(cut.Markup).Contains("alt=\"Blog cover preview\"");
     }
 
     #endregion

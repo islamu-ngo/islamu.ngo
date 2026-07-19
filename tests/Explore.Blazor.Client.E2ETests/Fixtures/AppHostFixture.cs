@@ -332,7 +332,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
         var onboarding = await api.CompleteInstanceOnboardingAsync(new CompleteInstanceOnboardingRequest
         {
             DeploymentMode = DeploymentMode.SingleTenant,
-            InstanceName = "ISLAMU Event E2E"
+            InstanceName = "ISLAMU E2E"
         });
         EnsureSuccess(onboarding, "completing E2E instance onboarding");
 
@@ -345,7 +345,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
             Port = _mailpit.SmtpPort,
             Security = "None",
             FromAddress = "noreply@registration-e2e.test",
-            FromName = "ISLAMU Event E2E",
+            FromName = "ISLAMU E2E",
             TimeoutSeconds = 10
         });
         EnsureSuccess(smtp, "configuring E2E SMTP");
@@ -357,6 +357,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
         var configuration = IsDebugBuild() ? "Debug" : "Release";
         var assemblyPath = Path.Combine(
             repositoryRoot,
+            "src",
             "Explore.AppHost",
             "bin",
             configuration,
@@ -372,7 +373,7 @@ public sealed class AppHostFixture : IAsyncInitializer, IAsyncDisposable
         var current = new DirectoryInfo(startPath);
         while (current is not null)
         {
-            if (File.Exists(Path.Combine(current.FullName, "Event.slnx")) ||
+            if (File.Exists(Path.Combine(current.FullName, "Explore.slnx")) ||
                 Directory.Exists(Path.Combine(current.FullName, ".git")))
             {
                 return current.FullName;

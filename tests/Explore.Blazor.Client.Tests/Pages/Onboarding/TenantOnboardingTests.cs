@@ -159,9 +159,9 @@ public sealed class TenantOnboardingTests : IDisposable
                 throw new InvalidOperationException("Tenant onboarding must render exactly one h1.");
             }
 
-            if (cut.FindAll("input[disabled]").Count < 4)
+            if (cut.FindAll("input[disabled]").Count != 3)
             {
-                throw new InvalidOperationException("Server-locked policy inputs must remain disabled.");
+                throw new InvalidOperationException("All three server-locked policy inputs must remain disabled.");
             }
         });
 

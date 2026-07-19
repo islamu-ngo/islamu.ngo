@@ -224,7 +224,7 @@ public sealed class TenantSupportAccessEvidenceSectionTests : IDisposable
             TargetTenantId = _tenantId,
             OccurredAtUtc = DateTimeOffset.UtcNow,
             EventTypeName = eventTypeName,
-            RouteName = "ListTenantEvents",
+            RouteName = "GetPublishedBlogs",
             Action = "read",
             Outcome = "allowed",
             HttpStatusCode = 200,

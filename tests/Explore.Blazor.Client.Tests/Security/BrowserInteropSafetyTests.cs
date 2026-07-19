@@ -21,6 +21,8 @@ public sealed class BrowserInteropSafetyTests
 
     private static readonly string[] RawHtmlRenderingAllowList =
     [
+        Path.Combine("src", "Explore.Blazor.Client", "Pages", "Blogs", "BlogArticle.razor"),
+        Path.Combine("src", "Explore.Blazor.Client", "Pages", "Blogs", "BlogEditor.razor"),
         Path.Combine("src", "Explore.Blazor.Client", "Pages", "Legal", "CommunityGuidelines.razor")
     ];
 

@@ -17,20 +17,20 @@ public class RuntimeRenderPolicyServiceTests
     }
 
     [Test]
-    public async Task ResolveForPathAsync_UsesPublicSeoOverride_WhenAdvancedOverridesEnabled()
+    public async Task ResolveForPathAsync_UsesOperationalOverride_ForOrganizationRoutes()
     {
         _publicExperienceService.GetCachedSettingsAsync().Returns(new PublicExperienceSettingsDto
         {
             EnableAdvancedRenderPolicyOverrides = true,
             GlobalRenderMode = "InteractiveServer",
             GlobalPrerenderEnabled = false,
-            PublicSeoRenderMode = "InteractiveServer",
-            PublicSeoPrerenderEnabled = true
+            OperationalRenderMode = "InteractiveServer",
+            OperationalPrerenderEnabled = true
         });
 
         var result = await _service.ResolveForPathAsync("/organizations");
 
-        await Assert.That(result.RouteGroup).IsEqualTo(RuntimeRouteGroup.PublicSeo);
+        await Assert.That(result.RouteGroup).IsEqualTo(RuntimeRouteGroup.Operational);
         await Assert.That(result.RenderMode).IsEqualTo("InteractiveServer");
         await Assert.That(result.PrerenderEnabled).IsTrue();
     }

@@ -6,7 +6,7 @@ namespace Explore.Blazor.Client.Tests.Services;
 public sealed class StartupRoutingServiceTests
 {
     [Test]
-    public async Task GetRootDecisionAsync_ReturnsPublicHome_ForAuthenticatedNonAdminInMultiTenant()
+    public async Task GetRootDecisionAsync_ReturnsPublicLanding_ForAuthenticatedNonAdminWhenHomeIsLandingPage()
     {
         var instanceOnboarding = Substitute.For<IInstanceOnboardingService>();
         instanceOnboarding.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
@@ -22,7 +22,7 @@ public sealed class StartupRoutingServiceTests
 
         var decision = await service.GetRootDecisionAsync();
 
-        await Assert.That(decision).IsEqualTo(StartupRouteDecision.PublicHome);
+        await Assert.That(decision).IsEqualTo(StartupRouteDecision.PublicLanding);
     }
 
     [Test]

@@ -45,7 +45,7 @@ Promote an entry when **any** of the following is true:
    **Promoted → docs/QUICK_REFERENCE.md §<section>** (PR #NNN, YYYY-MM-DD)
    ```
 3. **Update cross-references** in any agent/skill/rule that referenced the journal entry.
-4. **Run `Event.Architecture.Tests.AgentContextLinkTests`** to verify no dead links remain.
+4. **Run `/docs-lint`** and inspect every changed reference to verify no dead links remain.
 
 The journal entry itself is **never deleted**. It is durable evidence of when and why the canonical rule came to exist.
 

@@ -1,5 +1,5 @@
 <!-- ABOUTME: Canonical template for a new journal finding. Append to journal.md, do not edit this template in place. -->
-<!-- ABOUTME: Matches the format validated by AgentContextSchemaTests (date prefix + required fields). -->
+<!-- ABOUTME: Defines the canonical journal format with a date prefix and required fields. -->
 
 [YYYY-MM-DD Europe/Brussels] — <Short descriptive title (≤ 70 chars)>
 

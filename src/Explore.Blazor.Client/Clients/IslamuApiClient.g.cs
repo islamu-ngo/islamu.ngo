@@ -2358,7 +2358,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<TriggerManagedRegistrationResult> TriggerManagementRegistrationAsync(string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<TriggerManagedRegistrationResultDto> TriggerManagementRegistrationAsync(string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -2385,7 +2385,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ManagementUpgradePreflightDto> EvaluateManagementUpgradePreflightAsync(ManagementUpgradePreflightRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ManagementUpgradePreflightDto> EvaluateManagementUpgradePreflightAsync(ManagementUpgradePreflightRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -2396,7 +2396,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ManagementUpgradePostflightDto> VerifyManagementUpgradePostflightAsync(ManagementUpgradePostflightRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ManagementUpgradePostflightDto> VerifyManagementUpgradePostflightAsync(ManagementUpgradePostflightRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -2407,7 +2407,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ManagementTenantProvisioningPreflightDto> EvaluateManagedTenantProvisioningPreflightAsync(ManagementTenantProvisioningRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ManagementTenantProvisioningPreflightDto> EvaluateManagedTenantProvisioningPreflightAsync(ManagementTenantProvisioningRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -2418,7 +2418,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>Accepted</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task<ManagementTenantProvisioningOperationDto> ScheduleManagedTenantProvisioningAsync(ManagementTenantProvisioningRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task<ManagementTenantProvisioningOperationDto> ScheduleManagedTenantProvisioningAsync(ManagementTenantProvisioningRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -2451,7 +2451,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>No Content</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        System.Threading.Tasks.Task RotateManagedControlPlaneCredentialAsync(RotateManagedControlPlaneCredentialRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+        System.Threading.Tasks.Task RotateManagedControlPlaneCredentialAsync(RotateManagedControlPlaneCredentialRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -29734,7 +29734,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<TriggerManagedRegistrationResult> TriggerManagementRegistrationAsync(string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<TriggerManagedRegistrationResultDto> TriggerManagementRegistrationAsync(string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -29785,7 +29785,7 @@ namespace Explore.Blazor.Client.Clients
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 200)
                         {
-                            var objectResponse_ = await ReadObjectResponseAsync<TriggerManagedRegistrationResult>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            var objectResponse_ = await ReadObjectResponseAsync<TriggerManagedRegistrationResultDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
                                 throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -29795,7 +29795,7 @@ namespace Explore.Blazor.Client.Clients
                         else
                         if (status_ == 202)
                         {
-                            var objectResponse_ = await ReadObjectResponseAsync<TriggerManagedRegistrationResult>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            var objectResponse_ = await ReadObjectResponseAsync<TriggerManagedRegistrationResultDto>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
                                 throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -30017,7 +30017,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ManagementUpgradePreflightDto> EvaluateManagementUpgradePreflightAsync(ManagementUpgradePreflightRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<ManagementUpgradePreflightDto> EvaluateManagementUpgradePreflightAsync(ManagementUpgradePreflightRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -30140,7 +30140,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ManagementUpgradePostflightDto> VerifyManagementUpgradePostflightAsync(ManagementUpgradePostflightRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<ManagementUpgradePostflightDto> VerifyManagementUpgradePostflightAsync(ManagementUpgradePostflightRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -30263,7 +30263,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ManagementTenantProvisioningPreflightDto> EvaluateManagedTenantProvisioningPreflightAsync(ManagementTenantProvisioningRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<ManagementTenantProvisioningPreflightDto> EvaluateManagedTenantProvisioningPreflightAsync(ManagementTenantProvisioningRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -30406,7 +30406,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>Accepted</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ManagementTenantProvisioningOperationDto> ScheduleManagedTenantProvisioningAsync(ManagementTenantProvisioningRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<ManagementTenantProvisioningOperationDto> ScheduleManagedTenantProvisioningAsync(ManagementTenantProvisioningRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -30811,7 +30811,7 @@ namespace Explore.Blazor.Client.Clients
         /// </remarks>
         /// <returns>No Content</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task RotateManagedControlPlaneCredentialAsync(RotateManagedControlPlaneCredentialRequest body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task RotateManagedControlPlaneCredentialAsync(RotateManagedControlPlaneCredentialRequestDto body, string? api_version = null, string? x_Api_Version = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -58178,9 +58178,6 @@ namespace Explore.Blazor.Client.Clients
         [System.Text.Json.Serialization.JsonConverter(typeof(DateFormatConverter))]
         public System.DateTimeOffset? LastSessionDate { get; set; } = default!;
 
-        [System.Text.Json.Serialization.JsonPropertyName("eventStatus")]
-        public string? EventStatus { get; set; } = default!;
-
         [System.Text.Json.Serialization.JsonPropertyName("visibility")]
         public string? Visibility { get; set; } = default!;
 
@@ -63505,7 +63502,7 @@ namespace Explore.Blazor.Client.Clients
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ManagementTenantProvisioningRequest
+    public partial class ManagementTenantProvisioningRequestDto
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
@@ -63670,7 +63667,7 @@ namespace Explore.Blazor.Client.Clients
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ManagementUpgradePostflightRequest
+    public partial class ManagementUpgradePostflightRequestDto
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("expectedEventVersion")]
@@ -63756,7 +63753,7 @@ namespace Explore.Blazor.Client.Clients
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ManagementUpgradePreflightRequest
+    public partial class ManagementUpgradePreflightRequestDto
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("targetEventVersion")]
@@ -66091,7 +66088,7 @@ namespace Explore.Blazor.Client.Clients
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class RotateManagedControlPlaneCredentialRequest
+    public partial class RotateManagedControlPlaneCredentialRequestDto
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("keyId")]
@@ -68341,7 +68338,7 @@ namespace Explore.Blazor.Client.Clients
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.3.0 (NJsonSchema v11.5.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class TriggerManagedRegistrationResult
+    public partial class TriggerManagedRegistrationResultDto
     {
 
         [System.Text.Json.Serialization.JsonPropertyName("success")]

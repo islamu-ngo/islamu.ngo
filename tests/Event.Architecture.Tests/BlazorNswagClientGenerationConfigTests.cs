@@ -42,7 +42,7 @@ public sealed class BlazorNswagClientGenerationConfigTests
         await Assert.That(csharpClient.GetProperty("output").GetString()).IsEqualTo("Clients/IslamuApiClient.g.cs");
 
         var project = XDocument.Parse(projectText);
-        var properties = project.Descendants().Where(element => element.Parent?.Name.LocalName == "PropertyGroup").ToList();
+        var properties = project.Descendants().Where(element => element.Name.LocalName == "PropertyGroup").ToList();
         var target = project.Descendants().Single(element => element.Name.LocalName == "Target" && element.Attribute("Name")?.Value == "GenerateIslamuApiClient");
         var targetXml = target.ToString(SaveOptions.DisableFormatting);
         var exec = target.Descendants().Single(element => element.Name.LocalName == "Exec");

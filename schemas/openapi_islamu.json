@@ -22171,17 +22171,17 @@
             "content": {
               "text/plain; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               },
               "application/json; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               },
               "text/json; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               }
             }
@@ -22191,17 +22191,17 @@
             "content": {
               "text/plain; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               },
               "application/json; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               },
               "text/json; v=0.1": {
                 "schema": {
-                  "$ref": "#/components/schemas/TriggerManagedRegistrationResult"
+                  "$ref": "#/components/schemas/TriggerManagedRegistrationResultDto"
                 }
               }
             }
@@ -22385,17 +22385,17 @@
           "content": {
             "application/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePreflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePreflightRequestDto"
               }
             },
             "text/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePreflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePreflightRequestDto"
               }
             },
             "application/*+json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePreflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePreflightRequestDto"
               }
             }
           },
@@ -22519,17 +22519,17 @@
           "content": {
             "application/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePostflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePostflightRequestDto"
               }
             },
             "text/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePostflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePostflightRequestDto"
               }
             },
             "application/*+json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementUpgradePostflightRequest"
+                "$ref": "#/components/schemas/ManagementUpgradePostflightRequestDto"
               }
             }
           },
@@ -22653,17 +22653,17 @@
           "content": {
             "application/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             },
             "text/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             },
             "application/*+json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             }
           },
@@ -22828,17 +22828,17 @@
           "content": {
             "application/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             },
             "text/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             },
             "application/*+json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementTenantProvisioningRequest"
+                "$ref": "#/components/schemas/ManagementTenantProvisioningRequestDto"
               }
             }
           },
@@ -23290,17 +23290,17 @@
           "content": {
             "application/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequest"
+                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequestDto"
               }
             },
             "text/json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequest"
+                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequestDto"
               }
             },
             "application/*+json; v=0.1": {
               "schema": {
-                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequest"
+                "$ref": "#/components/schemas/RotateManagedControlPlaneCredentialRequestDto"
               }
             }
           },
@@ -48713,7 +48713,6 @@
           "summary",
           "firstSessionDate",
           "lastSessionDate",
-          "eventStatus",
           "visibility",
           "format"
         ],
@@ -48748,12 +48747,6 @@
               "string"
             ],
             "format": "date"
-          },
-          "eventStatus": {
-            "type": [
-              "null",
-              "string"
-            ]
           },
           "visibility": {
             "type": [
@@ -55832,7 +55825,7 @@
         },
         "additionalProperties": false
       },
-      "ManagementTenantProvisioningRequest": {
+      "ManagementTenantProvisioningRequestDto": {
         "required": [
           "externalRequestId",
           "externalCustomerReference",
@@ -56037,7 +56030,7 @@
           }
         }
       },
-      "ManagementUpgradePostflightRequest": {
+      "ManagementUpgradePostflightRequestDto": {
         "required": [
           "expectedEventVersion",
           "expectedManagementApiVersion"
@@ -56123,7 +56116,7 @@
           }
         }
       },
-      "ManagementUpgradePreflightRequest": {
+      "ManagementUpgradePreflightRequestDto": {
         "required": [
           "targetEventVersion",
           "targetManagementApiVersion"
@@ -58490,7 +58483,7 @@
           }
         }
       },
-      "RotateManagedControlPlaneCredentialRequest": {
+      "RotateManagedControlPlaneCredentialRequestDto": {
         "required": [
           "keyId",
           "secretHash",
@@ -60806,7 +60799,7 @@
           }
         }
       },
-      "TriggerManagedRegistrationResult": {
+      "TriggerManagedRegistrationResultDto": {
         "required": [
           "success",
           "state",

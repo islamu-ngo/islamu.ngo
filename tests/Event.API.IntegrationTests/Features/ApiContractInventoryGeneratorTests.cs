@@ -185,7 +185,7 @@ public sealed class ApiContractInventoryGeneratorTests
         sb.AppendLine();
         sb.AppendLine($"**Source:** `schemas/openapi_islamu.json`");
         sb.AppendLine($"**Governed by:** [GOVERNANCE.md#api-contract-rules](GOVERNANCE.md#api-contract-rules)");
-        sb.AppendLine("**Regenerate:** `dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter \"/*/*/*/ApiContractInventory_Generate_WritesMarkdownToDocs\"`");
+        sb.AppendLine("**Regenerate:** `dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter \"/*/*/ApiContractInventoryGeneratorTests/ApiContractInventory_Generate_WritesMarkdownToDocs\"`");
         sb.AppendLine();
         sb.AppendLine("## Summary");
         sb.AppendLine();

@@ -108,7 +108,7 @@ jobs:
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
               - 'global.json'
-              - 'Explore.sln'
+              - 'Explore.slnx'
 
             api:
               - 'src/Explore.API/**'
@@ -123,7 +123,7 @@ jobs:
               - 'Directory.Build.props'
               - 'Directory.Packages.props'
               - 'global.json'
-              - 'Explore.sln'
+              - 'Explore.slnx'
 
       - name: Check if both changed
         id: check-both
@@ -146,11 +146,11 @@ jobs:
           MATRIX_JSON="[]"
 
           if [ "$API_CHANGED" == "true" ]; then
-            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-event-api", "dockerfile": "src/Explore.API/Dockerfile", "context": "."}]')
+            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-ngo-api", "dockerfile": "src/Explore.API/Dockerfile", "context": "."}]')
           fi
 
           if [ "$UI_CHANGED" == "true" ]; then
-            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-event-ui", "dockerfile": "src/Explore.Blazor/Dockerfile", "context": "."}]')
+            MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '. + [{"image-name": "islamu-ngo-ui", "dockerfile": "src/Explore.Blazor/Dockerfile", "context": "."}]')
           fi
 
           echo "matrix=$(echo "$MATRIX_JSON" | tr -d '\n')" >> "$GITHUB_OUTPUT"
@@ -224,12 +224,12 @@ jobs:
       - name: Resolve API deploy image evidence
         id: api-evidence
         if: ${{ needs.detect-changes.outputs.api == 'true' }}
-        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-api dev-
+        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-ngo-api dev-
 
       - name: Resolve UI deploy image evidence
         id: ui-evidence
         if: ${{ needs.detect-changes.outputs.ui == 'true' }}
-        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-ui dev-
+        run: dotnet run .ci/scripts/resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-ngo-ui dev-
 
       - name: Trigger Coolify Deployment (API - Staging)
         if: ${{ needs.detect-changes.outputs.api == 'true' }}
@@ -242,7 +242,7 @@ jobs:
           smoke-base-url: ${{ vars.STAGING_API_URL }}
           registry: atcr.io
           registry-user: amirakrari.bsky.social
-          image-name: islamu-event-api
+          image-name: islamu-ngo-api
           immutable-tag-prefix: dev-
           expected-image-digest: ${{ steps.api-evidence.outputs.expected-image-digest }}
           promotion-evidence-path: ${{ steps.api-evidence.outputs.promotion-evidence-path }}
@@ -260,7 +260,7 @@ jobs:
           smoke-base-url: ${{ vars.STAGING_UI_URL }}
           registry: atcr.io
           registry-user: amirakrari.bsky.social
-          image-name: islamu-event-ui
+          image-name: islamu-ngo-ui
           immutable-tag-prefix: dev-
           expected-image-digest: ${{ steps.ui-evidence.outputs.expected-image-digest }}
           promotion-evidence-path: ${{ steps.ui-evidence.outputs.promotion-evidence-path }}

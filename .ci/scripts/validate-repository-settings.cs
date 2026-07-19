@@ -37,7 +37,7 @@ using var http = new HttpClient
 {
     BaseAddress = new Uri("https://api.github.com/", UriKind.Absolute)
 };
-http.DefaultRequestHeaders.UserAgent.ParseAdd("islamu-event-ci-settings-validator");
+http.DefaultRequestHeaders.UserAgent.ParseAdd("islamu-ngo-ci-settings-validator");
 http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");

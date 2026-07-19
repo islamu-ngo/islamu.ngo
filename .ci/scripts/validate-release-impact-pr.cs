@@ -198,11 +198,15 @@ static HashSet<string> ClassifyRequiredCategories(IEnumerable<string> changedFil
             categories.Add("configuration");
         }
 
-        if (path.Contains("schemas/openapi_islamu-event.json", StringComparison.Ordinal)
+        if (path.Contains("schemas/openapi_islamu.json", StringComparison.Ordinal)
             || path.Contains("api_changelog", StringComparison.Ordinal)
             || path.Contains("api_contract", StringComparison.Ordinal)
-            || path.Contains("eventapiclient.g.cs", StringComparison.Ordinal)
-            || path.Contains("explore.api/controllers", StringComparison.Ordinal))
+            || path.Contains("islamuapiclient.g.cs", StringComparison.Ordinal)
+            || path.Contains("src/explore.api", StringComparison.Ordinal)
+            || path.Contains("src/explore.application", StringComparison.Ordinal)
+            || path.Contains("src/explore.domain", StringComparison.Ordinal)
+            || path.Contains("tests/event.api.integrationtests", StringComparison.Ordinal)
+            || path.Contains("src/explore.blazor.client", StringComparison.Ordinal))
         {
             categories.Add("openapi");
         }
@@ -271,6 +275,6 @@ static class ReleaseImpactPolicy
         ["migration"] = "Migration/data/rollback impact documented",
         ["configuration"] = "Configuration/secrets/deployment impact documented",
         ["openapi"] = "OpenAPI/client contract impact documented",
-        ["operator"] = "Operator/self-hosting/release-note impact documented",
+        ["operator"] = "First-party operations/release-note impact documented",
     };
 }

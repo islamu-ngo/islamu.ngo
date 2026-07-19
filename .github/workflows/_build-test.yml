@@ -69,7 +69,7 @@ jobs:
           RestorePackagesWithLockFile: "false"
         run: |
           mkdir -p artifacts/dependencies
-          dotnet list Explore.sln package --vulnerable --include-transitive --format json --output-version 1 --no-restore > artifacts/dependencies/nuget-vulnerabilities.json
+          dotnet list Explore.slnx package --vulnerable --include-transitive --format json --output-version 1 --no-restore > artifacts/dependencies/nuget-vulnerabilities.json
           rm -f .ci/scripts/packages.lock.json
           NUGET_VULNERABILITY_SUMMARY_PATH="artifacts/dependencies/nuget-vulnerability-summary.md" dotnet run .ci/scripts/validate-nuget-vulnerabilities.cs -- artifacts/dependencies/nuget-vulnerabilities.json
 
@@ -117,6 +117,11 @@ jobs:
         id: test_infrastructure
         run: dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration "$DOTNET_CONFIGURATION" --no-build --verbosity minimal -- --report-trx --report-trx-filename Explore.Infrastructure.Tests.trx --treenode-filter "/*/*/*/*[Category!=Runtime]" --minimum-expected-tests 1
 
+      - name: Unit Tests — Diagnostic
+        if: ${{ inputs.run-fast-tests }}
+        id: test_diagnostic
+        run: dotnet test --project tests/Explore.Diagnostic.UnitTests/Explore.Diagnostic.UnitTests.csproj --configuration "$DOTNET_CONFIGURATION" --no-build --verbosity minimal -- --report-trx --report-trx-filename Explore.Diagnostic.UnitTests.trx
+
       - name: Blazor Client Tests
         if: ${{ inputs.run-fast-tests }}
         id: test_blazor_client
@@ -147,6 +152,7 @@ jobs:
           ARCHITECTURE_OUTCOME: ${{ steps.test_architecture.outcome }}
           SECRETS_OUTCOME: ${{ steps.test_secrets.outcome }}
           INFRASTRUCTURE_OUTCOME: ${{ steps.test_infrastructure.outcome }}
+          DIAGNOSTIC_OUTCOME: ${{ steps.test_diagnostic.outcome }}
           BLAZOR_CLIENT_OUTCOME: ${{ steps.test_blazor_client.outcome }}
           BLAZOR_INTEGRATION_OUTCOME: ${{ steps.test_blazor_integration.outcome }}
         run: |
@@ -163,6 +169,7 @@ jobs:
             echo "| Event.Architecture.Tests | ${ARCHITECTURE_OUTCOME:-not-run} |"
             echo "| Explore.Secrets.UnitTests | ${SECRETS_OUTCOME:-not-run} |"
             echo "| Explore.Infrastructure.Tests | ${INFRASTRUCTURE_OUTCOME:-not-run} |"
+            echo "| Explore.Diagnostic.UnitTests | ${DIAGNOSTIC_OUTCOME:-not-run} |"
             echo "| Explore.Blazor.Client.Tests | ${BLAZOR_CLIENT_OUTCOME:-not-run} |"
             echo "| Explore.Blazor.IntegrationTests | ${BLAZOR_INTEGRATION_OUTCOME:-not-run} |"
             echo

@@ -78,10 +78,10 @@ static void ValidateDeployWorkflow(string path, string environmentName, string i
     }
 
     var text = File.ReadAllText(path);
-    RequireContains(text, "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4", path, "must download retained container build evidence with pinned download-artifact", failures);
+    RequireContains(text, "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1", path, "must download retained container build evidence with pinned download-artifact", failures);
     RequireContains(text, "pattern: container-build-*", path, "must download all container-build evidence artifacts", failures);
-    RequireContains(text, $"resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-api {immutablePrefix}", path, "must resolve API immutable tag/digest evidence", failures);
-    RequireContains(text, $"resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-event-ui {immutablePrefix}", path, "must resolve UI immutable tag/digest evidence", failures);
+    RequireContains(text, $"resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-ngo-api {immutablePrefix}", path, "must resolve API immutable tag/digest evidence", failures);
+    RequireContains(text, $"resolve-deploy-image-evidence.cs -- artifacts/container-build islamu-ngo-ui {immutablePrefix}", path, "must resolve UI immutable tag/digest evidence", failures);
     RequireContains(text, "uses: ./.ci/actions/deploy-coolify", path, "must call the shared local Coolify deploy action", failures);
     RequireCount(text, "uses: ./.ci/actions/deploy-coolify", 2, path, "must call deploy action for API and UI", failures);
     RequireContains(text, $"environment-name: {environmentName}", path, "must pass environment name to deploy action", failures);

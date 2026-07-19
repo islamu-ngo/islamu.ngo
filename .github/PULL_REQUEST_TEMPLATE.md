@@ -25,7 +25,7 @@ Details:
 Paste exact commands and results. Run projects individually; do not use solution-level `dotnet test`.
 
 - [ ] Build: `dotnet build --configuration Release --verbosity quiet`
-- [ ] Architecture/docs checks: `dotnet test --project Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet`
+- [ ] Architecture/docs checks: `dotnet test --project tests/Event.Architecture.Tests/Event.Architecture.Tests.csproj --configuration Release --verbosity quiet`
 - [ ] Related project tests:
 
 ## UI / Screenshots

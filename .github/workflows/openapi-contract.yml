@@ -59,7 +59,8 @@ jobs:
             base_sha="HEAD~1"
           fi
 
-          relevant_files="$(printf '%s\n' "$changed_files" | grep -E '^(Explore\.API/.*\.(cs|csproj|json)$|Explore\.Application/.*\.cs$|Explore\.Domain/.*\.cs$|Event\.API\.IntegrationTests/.*\.(cs|csproj)$|Explore\.Blazor\.Client/(nswag\.json|Explore\.Blazor\.Client\.csproj|Clients/EventApiClient\.g\.cs)$|schemas/openapi_islamu-event\.json$|docs/API_CONTRACT_INVENTORY\.md$|docs/API_CONTRACT_TEST_DEBT\.md$|docs/API_CHANGELOG\.md$|Directory\.Packages\.props$|global\.json$|\.ci/spectral\.yaml$|\.ci/scripts/validate-api-contract-skip-inventory\.cs$|\.github/workflows/openapi-contract\.yml$)' || true)"
+          changed_files="$(git diff --name-only "$base_sha" "$GITHUB_SHA" || true)"
+          relevant_files="$(printf '%s\n' "$changed_files" | grep -E '^(src/Explore\.API/.*\.(cs|csproj|json)$|src/Explore\.Application/.*\.cs$|src/Explore\.Domain/.*\.cs$|tests/Event\.API\.IntegrationTests/.*\.(cs|csproj)$|src/Explore\.Blazor\.Client/(nswag\.json|Explore\.Blazor\.Client\.csproj|Clients/IslamuApiClient\.g\.cs)$|schemas/openapi_islamu\.json$|docs/API_CONTRACT_INVENTORY\.md$|docs/API_CONTRACT_TEST_DEBT\.md$|docs/API_CHANGELOG\.md$|Directory\.Packages\.props$|global\.json$|\.ci/spectral\.yaml$|\.ci/scripts/validate-api-contract-skip-inventory\.cs$|\.github/workflows/openapi-contract\.yml$)' || true)"
 
           if [ -n "$relevant_files" ]; then
             echo "relevant=true" >> "$GITHUB_OUTPUT"
@@ -132,17 +133,24 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/openapi-contract
 
-          git diff -- schemas/openapi_islamu-event.json docs/API_CONTRACT_INVENTORY.md src/Explore.Blazor.Client/Clients/EventApiClient.g.cs > artifacts/openapi-contract/generated-contract.diff
-          cp schemas/openapi_islamu-event.json artifacts/openapi-contract/openapi.json
+          governed_artifacts=(
+            schemas/openapi_islamu.json
+            docs/API_CONTRACT_INVENTORY.md
+            src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs
+          )
+          git diff -- "${governed_artifacts[@]}" > artifacts/openapi-contract/generated-contract.diff
+          generated_status="$(git status --short -- "${governed_artifacts[@]}")"
+          printf '%s\n' "$generated_status" > artifacts/openapi-contract/generated-contract.status
+          cp schemas/openapi_islamu.json artifacts/openapi-contract/openapi.json
           cp docs/API_CONTRACT_INVENTORY.md artifacts/openapi-contract/API_CONTRACT_INVENTORY.md
-          cp src/Explore.Blazor.Client/Clients/EventApiClient.g.cs artifacts/openapi-contract/EventApiClient.g.cs
+          cp src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs artifacts/openapi-contract/IslamuApiClient.g.cs
 
           if [ -e schemas/openapi.json ] || [ -e src/schemas/openapi_event-api.json ]; then
             echo "Unexpected legacy OpenAPI artifacts exist!" >&2
             exit 1
           fi
 
-          if git diff --quiet -- schemas/openapi_islamu-event.json docs/API_CONTRACT_INVENTORY.md src/Explore.Blazor.Client/Clients/EventApiClient.g.cs; then
+          if [ -z "$generated_status" ]; then
             {
               echo "## OpenAPI Contract Drift"
               echo
@@ -154,9 +162,9 @@ jobs:
               echo
               echo "Generated OpenAPI artifacts are stale. Build Explore.API and Explore.Blazor.Client locally, then commit:"
               echo
-              echo "- \`schemas/openapi_islamu-event.json\`"
+              echo "- \`schemas/openapi_islamu.json\`"
               echo "- \`docs/API_CONTRACT_INVENTORY.md\`"
-              echo "- \`src/Explore.Blazor.Client/Clients/EventApiClient.g.cs\`"
+              echo "- \`src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs\`"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
@@ -194,15 +202,23 @@ jobs:
             base_sha="HEAD~1"
           fi
 
-          if ! git show "${base_sha}:schemas/openapi_islamu-event.json" > artifacts/openapi-contract/base-openapi.json 2>/dev/null; then
-            if ! git show "${base_sha}:schemas/openapi.json" > artifacts/openapi-contract/base-openapi.json 2>/dev/null; then
+          if ! git show "${base_sha}:schemas/openapi_islamu.json" > artifacts/openapi-contract/base-openapi.json 2>/dev/null; then
+            if ! git show "${base_sha}:schemas/openapi_islamu-event.json" > artifacts/openapi-contract/base-openapi.json 2>/dev/null; then # prior-branch legacy comparison fallback only
+              if ! git show "${base_sha}:schemas/openapi.json" > artifacts/openapi-contract/base-openapi.json 2>/dev/null; then
+                {
+                  echo "## Advisory OpenAPI Breaking-Change Report"
+                  echo
+                  echo "Base OpenAPI artifact was not available at \`${base_sha}\`; advisory oasdiff report was skipped."
+                } >> "$GITHUB_STEP_SUMMARY"
+                printf 'Base OpenAPI artifact was not available at %s.\n' "$base_sha" > artifacts/openapi-contract/oasdiff-breaking.md
+                exit 0
+              fi
+            else
               {
                 echo "## Advisory OpenAPI Breaking-Change Report"
                 echo
-                echo "Base OpenAPI artifact was not available at \`${base_sha}\`; advisory oasdiff report was skipped."
+                echo "Using prior-branch legacy base schema path only for comparison against \`${base_sha}\`."
               } >> "$GITHUB_STEP_SUMMARY"
-              printf 'Base OpenAPI artifact was not available at %s.\n' "$base_sha" > artifacts/openapi-contract/oasdiff-breaking.md
-              exit 0
             fi
           fi
 
@@ -217,12 +233,13 @@ jobs:
             enforce_changelog=false
           fi
 
+          set +e
           .tools/oasdiff/oasdiff breaking \
             --allow-external-refs=false \
             --fail-on ERR \
             --format markdown \
             artifacts/openapi-contract/base-openapi.json \
-            schemas/openapi_islamu-event.json \
+            schemas/openapi_islamu.json \
             > artifacts/openapi-contract/oasdiff-breaking.md
           markdown_exit=$?
 
@@ -231,7 +248,7 @@ jobs:
             --fail-on ERR \
             --format json \
             artifacts/openapi-contract/base-openapi.json \
-            schemas/openapi_islamu-event.json \
+            schemas/openapi_islamu.json \
             > artifacts/openapi-contract/oasdiff-breaking.json
           json_exit=$?
           set -e
@@ -270,8 +287,9 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/openapi-contract
 
+          set +e
           npx --yes "@stoplight/spectral-cli@${SPECTRAL_VERSION}" lint \
-            schemas/openapi_islamu-event.json \
+            schemas/openapi_islamu.json \
             --quiet \
             --ruleset .ci/spectral.yaml \
             --format json \
@@ -279,7 +297,7 @@ jobs:
           json_exit=$?
 
           npx --yes "@stoplight/spectral-cli@${SPECTRAL_VERSION}" lint \
-            schemas/openapi_islamu-event.json \
+            schemas/openapi_islamu.json \
             --quiet \
             --ruleset .ci/spectral.yaml \
             --format markdown \
@@ -316,14 +334,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff -- schemas/openapi_islamu-event.json docs/API_CONTRACT_INVENTORY.md src/Explore.Blazor.Client/Clients/EventApiClient.g.cs > artifacts/openapi-contract/determinism.diff
+          governed_artifacts=(
+            schemas/openapi_islamu.json
+            docs/API_CONTRACT_INVENTORY.md
+            src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs
+          )
+          git diff -- "${governed_artifacts[@]}" > artifacts/openapi-contract/determinism.diff
+          deterministic_status="$(git status --short -- "${governed_artifacts[@]}")"
+          printf '%s\n' "$deterministic_status" > artifacts/openapi-contract/determinism.status
 
           if [ -e schemas/openapi.json ] || [ -e src/schemas/openapi_event-api.json ]; then
-            echo "Unexpected legacy OpenAPI artifacts exist after deterministic rebuild: schemas/openapi.json or src/schemas/openapi_event-api.json" >&2
+            echo "Unexpected legacy OpenAPI artifacts exist after deterministic rebuild." >&2
             exit 1
           fi
 
-          if git diff --quiet -- schemas/openapi_islamu-event.json docs/API_CONTRACT_INVENTORY.md src/Explore.Blazor.Client/Clients/EventApiClient.g.cs; then
+          if [ -z "$deterministic_status" ]; then
             {
               echo "## OpenAPI Determinism"
               echo

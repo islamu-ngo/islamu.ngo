@@ -1,3 +1,6 @@
+// ABOUTME: Client service for organization membership, invitation, role, and removal operations.
+// ABOUTME: Preserves collection HAL affordances from the generated API client for UI action gating.
+
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.Client.Helpers;
 using Microsoft.Extensions.Logging;
@@ -179,4 +182,3 @@ public class OrganizationMemberService : IOrganizationMemberService
         }
     }
 }
-

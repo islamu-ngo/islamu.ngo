@@ -1,3 +1,6 @@
+// ABOUTME: Lookup service for retrieving language collections and individual language records.
+// ABOUTME: Keeps Blazor components isolated behind the generated ISLAMU API client contract.
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Explore.Blazor.Client.Clients;

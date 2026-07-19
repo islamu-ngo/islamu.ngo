@@ -1,3 +1,6 @@
+// ABOUTME: Client service for retrieving and creating organization reviews through the generated API client.
+// ABOUTME: Returns safe read fallbacks while preserving write failures for the calling UI to handle.
+
 using System.Net.Http.Json;
 using Explore.Blazor.Client.Clients;
 using Microsoft.Extensions.Logging;
@@ -84,4 +87,3 @@ public class OrganizationReviewService : IOrganizationReviewService
         }
     }
 }
-

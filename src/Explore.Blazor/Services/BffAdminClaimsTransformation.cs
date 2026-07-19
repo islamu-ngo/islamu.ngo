@@ -1,5 +1,5 @@
 // ABOUTME: BFF-side admin claims enrichment service that resolves admin authority from the API.
-// Bridges the gap between the API's DB-first admin context and the Blazor client's claim-based checks.
+// ABOUTME: Bridges the API's DB-first admin context to session-boundary cookie claim enrichment.
 // This service enriches the cookie principal at session boundaries instead of using per-request claims transformation.
 
 using System.Net.Http.Headers;

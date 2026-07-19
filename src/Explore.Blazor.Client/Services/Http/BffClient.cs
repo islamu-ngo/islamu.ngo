@@ -1,3 +1,6 @@
+// ABOUTME: Typed HTTP client for JSON reads and mutating requests through the Blazor BFF.
+// ABOUTME: Delegates transport, authentication, and antiforgery handling to the configured HttpClient pipeline.
+
 using System.Net.Http;
 using System.Net.Http.Json;
 

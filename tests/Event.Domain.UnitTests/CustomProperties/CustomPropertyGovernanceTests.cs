@@ -50,14 +50,14 @@ public class CustomPropertyGovernanceTests
     }
 
     [Test]
-    public async Task IsReservedLayer2Semantic_ShouldMatchKnownTypedSectorSemantics()
+    public async Task IsReservedLayer2Semantic_ShouldNotReserveRemovedEventSemantics()
     {
-        var reserved = CustomPropertySemanticReservations.IsReservedLayer2Semantic("sector.islamic", "madhab_id");
-        var tenantReserved = CustomPropertySemanticReservations.IsReservedLayer2Semantic("tenant.local", "madhab_id");
-        var notReserved = CustomPropertySemanticReservations.IsReservedLayer2Semantic("tenant.local", "prayer_notes");
+        var removedSectorSemantic = CustomPropertySemanticReservations.IsReservedLayer2Semantic("sector.islamic", "madhab_id");
+        var tenantReuseOfRemovedKey = CustomPropertySemanticReservations.IsReservedLayer2Semantic("tenant.local", "madhab_id");
+        var tenantCustomProperty = CustomPropertySemanticReservations.IsReservedLayer2Semantic("tenant.local", "prayer_notes");
 
-        await Assert.That(reserved).IsTrue();
-        await Assert.That(tenantReserved).IsTrue();
-        await Assert.That(notReserved).IsFalse();
+        await Assert.That(removedSectorSemantic).IsFalse();
+        await Assert.That(tenantReuseOfRemovedKey).IsFalse();
+        await Assert.That(tenantCustomProperty).IsFalse();
     }
 }

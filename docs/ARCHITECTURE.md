@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** Architecture
 > **Last Verified:** 2026-07-19
-> **Source Anchors:** `Explore.slnx`, `src/Explore.Domain/Blog.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Persistence/Repositories/BlogRepository.cs`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`
+> **Source Anchors:** `Explore.slnx`, `src/Explore.Domain/Blog.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Persistence/Repositories/BlogRepository.cs`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Routes.razor`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
 
 ## System Profile
 
@@ -70,7 +70,7 @@ Blog reader/editor
 The Blog implementation includes:
 
 - `Blog`, `BlogCategory`, and `BlogTag` domain entities;
-- CQRS queries and commands under `Explore.Application/Features/Blogs/`;
+- CQRS queries and commands under `src/Explore.Application/Features/Blogs/`;
 - tenant-scoped repository/specification and EF configurations;
 - anonymous published reads plus authenticated management/write API routes;
 - HAL links for self, collection, management, create, edit, publish, unpublish, and delete;
@@ -88,8 +88,7 @@ typed list of implemented routes:
 
 - Discover: Home, Blog
 - About ISLAMU: About, Contact
-- Community: Community Guidelines
-- Policies: Privacy, Terms
+- Community: Community guidelines
 
 Desktop navigation uses button disclosures and a dismissible panel. Mobile navigation uses a
 temporary MudBlazor drawer with native `details` sections. The component observes viewport changes,
@@ -125,8 +124,9 @@ See [SEO.md](SEO.md) and [RENDER_POLICIES.md](RENDER_POLICIES.md).
 
 Source-backed infrastructure still includes Organizations, Groups, notifications, storage,
 transactional outboxes, account-authority email, Listmonk integration, webhooks, support access,
-ATProto/PDS federation hooks, and Osprey coordinator client/orchestration assets. These are technical platform
-capabilities. They do not restore Event product routes or create public product promises.
+ATProto/PDS federation hooks, and Osprey coordinator client/orchestration assets. These are
+technical platform capabilities. They do not restore Event product routes or create public product
+promises.
 
 Webhooks keep their catalog, consumer, endpoint, incoming-callback, delivery, retry, and provider
 binding layers. Federation keeps current ATProto/PDS callers. Preserve their dedicated docs while
@@ -134,15 +134,17 @@ their source remains.
 
 ## Generated Contract Boundary
 
-Generation configuration exists:
+Current generated contract evidence is checked in:
 
-- API Release build target: `schemas/openapi_islamu.json`
+- OpenAPI schema: `schemas/openapi_islamu.json` with 309 paths and 420 operations
+- generated inventory: `docs/API_CONTRACT_INVENTORY.md` with the same 309-path/420-operation count
 - Blazor NSwag config: `src/Explore.Blazor.Client/nswag.json`
-- configured client output: `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`
+- generated client: `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`
 
-The schema and generated client files were absent from the inspected worktree on 2026-07-18.
-Configuration is not generated evidence; do not describe either output as available until it is
-created and verified by the owning lane.
+The API Release build owns schema generation, the Blazor NSwag configuration owns client
+generation, and the inventory is derived from the checked-in schema. Treat those artifacts as one
+contract boundary: regenerate them through their owning commands and verify their counts instead
+of hand-editing generated output.
 
 ## Event Removal Boundary
 

@@ -1,5 +1,5 @@
 <!-- ABOUTME: Source-grounded map of the first-party ISLAMU website repository. -->
-<!-- ABOUTME: Shows current projects, Blog/navigation ownership, retained integrations, and absent generated outputs. -->
+<!-- ABOUTME: Shows current projects, Blog/navigation ownership, retained integrations, and generated contracts. -->
 
 # Codebase Structure
 
@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** Architecture
 > **Last Verified:** 2026-07-19
-> **Source Anchors:** `Explore.slnx`, `src/`, `tests/`, `dev/report/EVENT_REFERENCE_ALIGNMENT.md`
+> **Source Anchors:** `Explore.slnx`, `src/`, `tests/`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `.github/workflows/openapi-contract.yml`, `dev/report/EVENT_REFERENCE_ALIGNMENT.md`
 
 ## Naming Boundary
 
@@ -121,18 +121,22 @@ product residue.
 
 ## Generated Contract Status
 
-The following configuration exists:
+The generated contract boundary is checked in:
 
-- `src/Explore.API/Explore.API.csproj` configures Release OpenAPI generation;
+- `src/Explore.API/Explore.API.csproj` generates `schemas/openapi_islamu.json` in Release;
+- the schema and `docs/API_CONTRACT_INVENTORY.md` both report 309 paths and 420 operations;
 - `src/Explore.Blazor.Client/nswag.json` configures `IslamuApiClient`; and
-- `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj` runs NSwag before compile.
+- `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj` generates the checked-in
+  `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` before compile.
 
-The configured outputs `schemas/openapi_islamu.json` and
-`src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` were absent on 2026-07-18. Do not list
-them as repository files until generation produces them.
+The last owning-lane run before the current unrelated worktree edits was green for generation,
+stable invariants, inventory/client regeneration, and drift at these counts. This documentation
+update rechecked artifact presence, ownership, and counts only; it does not claim a fresh full
+contract-gate result for the final combined worktree. Regenerate these files through their owners;
+do not hand-edit them.
 
-Provider schemas that do exist under `schemas/` are Weblate, Tolgee, and Listmonk contracts; they
-are separate from the website API contract.
+Weblate, Tolgee, and Listmonk provider schemas under `schemas/` remain separate from the website API
+contract.
 
 ## Non-Code Structure
 

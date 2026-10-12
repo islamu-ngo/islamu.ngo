@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** Product | Platform/Ops
 > **Last Verified:** 2026-07-19
-> **Source Anchors:** `dev/report/EVENT_REFERENCE_ALIGNMENT.md`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`
+> **Source Anchors:** `dev/report/EVENT_REFERENCE_ALIGNMENT.md`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.Blazor.Client/Pages/Blogs/`, `src/Explore.Blazor.Client/Layout/SiteMegaMenu.razor.cs`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, `.github/workflows/openapi-contract.yml`
 
 ## Product
 
@@ -70,10 +70,18 @@ current retain/adapt/delete decisions.
 
 ## Contract Generation Status
 
-The API and Blazor projects contain OpenAPI/NSwag generation configuration for
-`schemas/openapi_islamu.json` and `Clients/IslamuApiClient.g.cs`. Neither generated file was present
-in the inspected worktree on 2026-07-18. Do not claim a checked-in schema or generated client exists
-until the owning build/generation lane creates and verifies it.
+The API and Blazor projects own a checked-in generated contract set:
+
+- `schemas/openapi_islamu.json` and `docs/API_CONTRACT_INVENTORY.md`, both reporting 309 paths and
+  420 operations; and
+- `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, generated from that schema through the
+  Blazor NSwag target.
+
+The last owning-lane run before the current unrelated worktree edits was green for generation,
+stable invariants, inventory/client regeneration, and drift at these counts. This documentation
+update rechecked artifact presence, ownership, and counts only; it does not claim a fresh full
+contract-gate result for the final combined worktree. Generated artifacts must be regenerated
+through their owners, never hand-edited.
 
 ## Planned, Not Publicly Available
 

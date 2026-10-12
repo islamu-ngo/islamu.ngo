@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** API
 > **Last Verified:** 2026-07-19
-> **Source Anchors:** `src/Explore.API/Program.cs`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.API/Hateoas/Policies/BlogLinkPolicy.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Blazor.Client/nswag.json`
+> **Source Anchors:** `src/Explore.API/Program.cs`, `src/Explore.API/Explore.API.csproj`, `src/Explore.API/Controllers/BlogController.cs`, `src/Explore.API/Controllers/SitemapController.cs`, `src/Explore.API/Hateoas/Policies/BlogLinkPolicy.cs`, `src/Explore.Application/Features/Blogs/`, `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj`, `src/Explore.Blazor.Client/nswag.json`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `.github/workflows/openapi-contract.yml`
 
 ## Scope
 
@@ -157,16 +157,22 @@ product workstream.
 
 ## OpenAPI And Client Generation Status
 
-The generation pipeline is configured but its outputs are not currently present:
+The governed generated contract set is checked in:
 
-| Artifact | Configured owner | Inspection state on 2026-07-18 |
+| Artifact | Owning generation step | Current inspected state |
 |---|---|---|
-| `schemas/openapi_islamu.json` | Release build of `src/Explore.API/Explore.API.csproj` | Absent |
-| `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` | NSwag target in `Explore.Blazor.Client.csproj` | Absent |
+| `schemas/openapi_islamu.json` | Release build of `src/Explore.API/Explore.API.csproj` | Present; 309 paths and 420 operations |
+| `docs/API_CONTRACT_INVENTORY.md` | `ApiContractInventory_Generate_WritesMarkdownToDocs` | Present; matches 309 paths and 420 operations |
+| `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` | `GenerateIslamuApiClient` in `Explore.Blazor.Client.csproj` | Present canonical NSwag client |
 
-`src/Explore.Blazor.Client/nswag.json` exists and targets `IIslamuApiClient`/`IslamuApiClient`, but a
-configuration file is not a generated contract. Do not hand-create or hand-edit either output.
-Build the API first, then run the client generation target in the owning code/generation lane.
+`src/Explore.Blazor.Client/nswag.json` targets `IIslamuApiClient`/`IslamuApiClient`. Build the API
+first, then run the inventory and client generation steps through their owning targets. Do not
+hand-create or hand-edit generated contract artifacts.
+
+The last owning-lane run before the current unrelated worktree edits was green for generation,
+stable invariants, inventory/client regeneration, and drift at these counts. This documentation
+update rechecked artifact presence, ownership, and counts only; it does not claim a fresh full
+contract-gate result for the final combined worktree.
 
 The legacy `openapi_islamu-event.json`, `islamu-event.md`, and `EventApiClient.g.cs` identities are
 forbidden by `Phase10EventResidueGuardrailsTests`.

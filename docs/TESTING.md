@@ -1,5 +1,5 @@
 <!-- ABOUTME: Current test strategy and project map for the first-party ISLAMU website. -->
-<!-- ABOUTME: Covers TUnit commands, Blog/navigation coverage, Event-removal guardrails, and docs-only verification. -->
+<!-- ABOUTME: Covers TUnit commands, runtime lanes, generated contracts, residue guardrails, and docs verification. -->
 
 # Testing
 
@@ -7,7 +7,7 @@
 > **Status:** Active
 > **Owner:** Quality
 > **Last Verified:** 2026-07-19
-> **Source Anchors:** `Explore.slnx`, `tests/`, `.github/workflows/_build-test.yml`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixVersionConformanceTests.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixManagedConformanceTests.cs`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
+> **Source Anchors:** `Explore.slnx`, `tests/`, `.github/workflows/_build-test.yml`, `.github/workflows/openapi-contract.yml`, `src/Explore.API/Explore.API.csproj`, `src/Explore.Blazor.Client/Explore.Blazor.Client.csproj`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixVersionConformanceTests.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/Webhooks/SvixManagedConformanceTests.cs`, `tests/Event.Architecture.Tests/Phase10EventResidueGuardrailsTests.cs`
 
 ## Framework And Command Rules
 
@@ -110,8 +110,8 @@ The coverage shape includes lifecycle invariants, validators, CQRS handlers, rep
 public/editor API boundaries, HAL affordances, sitemap inclusion, public/editor pages, generated
 client service adaptation, and Markdown sanitization.
 
-Source-file presence is not a pass result. This docs lane was explicitly limited to read/search and
-`git diff --check`; it did not execute these suites.
+Source-file presence is not a pass result. Documentation-only changes use the proportional docs
+checks below; implementation claims require current output from the owning test projects.
 
 ## Navigation Coverage
 
@@ -138,14 +138,22 @@ Do not weaken or delete this guardrail to make stale source compile.
 
 ## API Contract Generation Checks
 
-The configured canonical outputs are:
+The governed generated contract set is checked in:
 
-- `schemas/openapi_islamu.json`
-- `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`
+| Artifact | Owning generation step | Current inspected state |
+|---|---|---|
+| `schemas/openapi_islamu.json` | Release build of `src/Explore.API/Explore.API.csproj` | Present; 309 paths and 420 operations |
+| `docs/API_CONTRACT_INVENTORY.md` | `ApiContractInventory_Generate_WritesMarkdownToDocs` | Present; matches 309 paths and 420 operations |
+| `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs` | `GenerateIslamuApiClient` in `Explore.Blazor.Client.csproj` | Present canonical NSwag client |
 
-Both were absent during the 2026-07-18 documentation inspection. OpenAPI/client generation and
-drift checks cannot be claimed green until the owning lane generates those artifacts and runs its
-contract workflow. Generated files must not be hand-edited.
+`OpenAPI Contract Guard` regenerates the schema, runs stable OpenAPI invariants, regenerates the
+inventory and NSwag client, and fails when any governed artifact drifts. Generated artifacts must
+not be hand-edited.
+
+The last owning-lane run before the current unrelated worktree edits was green for generation,
+stable invariants, inventory/client regeneration, and drift at these counts. This documentation
+update rechecked artifact presence, ownership, and counts only; it does not claim a fresh full
+contract-gate result for the final combined worktree.
 
 ## Architecture Expectations
 

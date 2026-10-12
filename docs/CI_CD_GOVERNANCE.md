@@ -1,13 +1,13 @@
-ABOUTME: Governance reference for GitHub Actions checks, branch protection, environments, and CI/CD evidence.
-ABOUTME: Separates repository settings from workflow YAML so required gates stay auditable and maintainable.
+<!-- ABOUTME: Governance reference for GitHub Actions checks, branch protection, environments, and CI/CD evidence. -->
+<!-- ABOUTME: Separates repository settings from workflow YAML so required gates stay auditable and maintainable. -->
 
 # CI/CD Governance
 
 > **Audience:** Maintainers | Release operators | Contributors | AI agents
-> **Status:** Implemented + repository-settings required
+> **Status:** Active
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-18
-> **Source Anchors:** `.ci/`, `.github/workflows/`, `.github/dependabot.yml`, `docs/TESTING.md`, `docs/GOVERNANCE.md`, `docs/OPERATIONS.md`, `docs/RELEASE_CHECKLIST.md`
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `.ci/`, `.github/workflows/`, `.github/dependabot.yml`, `.github/workflows/openapi-contract.yml`, `schemas/openapi_islamu.json`, `docs/API_CONTRACT_INVENTORY.md`, `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, `docs/TESTING.md`, `docs/GOVERNANCE.md`, `docs/OPERATIONS.md`, `docs/RELEASE_CHECKLIST.md`
 
 This page is the source of truth for CI/CD governance. `.ci/` owns shared CI/CD implementation such as reusable scripts, policy validators, evidence writers, the OpenAPI Spectral ruleset, local composite actions, and mirror-provider CI/CD definitions. GitHub-native workflow discovery files stay in `.github/workflows/` because GitHub Actions requires that path.
 
@@ -71,7 +71,10 @@ Create GitHub Environments named exactly:
 - `staging`
 - `production`
 
-Configure environment secrets and variables as described in [CONFIGURATION.md](CONFIGURATION.md#deployment-cicd-secrets). Production must require reviewer approval and should restrict deployments to `main` and version tags. Staging can deploy automatically from `develop` unless the release process requires review.
+Keep runtime values within the ownership boundaries in [CONFIGURATION.md](CONFIGURATION.md), and
+configure environment secrets and variables in GitHub with values redacted from evidence.
+Production must require reviewer approval and should restrict deployments to `main` and version
+tags. Staging can deploy automatically from `develop` unless the release process requires review.
 
 Workflow YAML references the environments, but reviewers, branch restrictions, wait timers, and environment-scoped secrets are GitHub settings.
 
@@ -208,7 +211,12 @@ Do not promote E2E, stress, security, or runtime lanes to required status while 
 - `docs/API_CONTRACT_INVENTORY.md`, written from that schema by `ApiContractInventoryGeneratorTests`; and
 - `src/Explore.Blazor.Client/Clients/IslamuApiClient.g.cs`, emitted by the `GenerateIslamuApiClient` NSwag target.
 
-The generated set is currently incomplete until build generation runs: the schema and NSwag client are absent, while the checked-in inventory remains generator-owned output and must be refreshed from the generated schema. Do not create placeholders or hand-edit the inventory to substitute for generation.
+The generated set is complete and checked in: the schema and inventory both report 309 paths and
+420 operations, and the canonical NSwag client is present. The last owning-lane run before the
+current unrelated worktree edits was green for generation, stable invariants, inventory/client
+regeneration, and drift at these counts. This documentation update rechecked artifact presence,
+ownership, and counts only; it does not claim a fresh full contract-gate result for the final
+combined worktree. Do not create placeholders or hand-edit generated artifacts.
 
 The guard also runs `.ci/scripts/validate-api-contract-skip-inventory.cs` against [API_CONTRACT_TEST_DEBT.md](API_CONTRACT_TEST_DEBT.md). Any skipped integration test whose code skip reason includes `Category: API contract` must be listed in that inventory with a source file, owner, and removal condition. This keeps deferred route-name/HATEOAS contract enforcement visible while the owning `api-contract-stabilization` work finishes.
 
@@ -286,7 +294,9 @@ Generated files are reviewed product artifacts, not disposable output.
 | Container evidence checksum manifest | `_container-build.yml` via `.ci/scripts/write-artifact-checksums.cs` | SHA-256 integrity manifest for retained digest, OCI, Trivy, and related container evidence artifacts. |
 | Deployment summaries | `.ci/actions/deploy-coolify` via Coolify deploy jobs | Environment, component, commit SHA, expected immutable image tag, expected image digest, promotion evidence path, webhook result, smoke-check result, whether smoke was required, deployment-freeze state, override reason, workflow run, rollback note. |
 
-Never hand-edit the governed OpenAPI schema, API contract inventory, or NSwag client. Regenerate them through the workflow-compatible commands in [TROUBLESHOOTING.md](TROUBLESHOOTING.md#openapi--nswag-drift).
+Never hand-edit the governed OpenAPI schema, API contract inventory, or NSwag client. Regenerate
+them through their owning targets, then follow the approved `OpenAPI Contract Guard` rerun path in
+[CI/CD runbooks](CI_CD_RUNBOOKS.md#gate-runbooks).
 
 ## Artifact Retention Policy
 

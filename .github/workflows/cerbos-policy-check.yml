@@ -30,7 +30,7 @@ jobs:
       run-policies: ${{ steps.changes.outputs.run-policies }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -117,7 +117,7 @@ jobs:
 
       - name: Setup Cerbos
         if: ${{ steps.changes.outputs.run-policies == 'true' }}
-        uses: cerbos/cerbos-setup-action@f8061b1f07da2d185acd233dedaa5d5eadb99214 # v1
+        uses: cerbos/cerbos-setup-action@d1418d9ea5db17f419a48e992edff39b01bd0756 # v1
         with:
           version: "v0.53.0"
 
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload Cerbos Policy Evidence
         if: ${{ always() && steps.changes.outputs.run-policies == 'true' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cerbos-policy-evidence
           path: artifacts/cerbos-policy/**
@@ -156,7 +156,7 @@ jobs:
       name: production
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 1
@@ -226,7 +226,7 @@ jobs:
 
       - name: Upload Cerbos Publish Evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: cerbos-policy-publish-evidence
           path: artifacts/cerbos-policy-publish/**

@@ -199,7 +199,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task AppShell_LinksWhiteLabelManifest()
+    public async Task AppShell_LinksConfigurableBrandManifest()
     {
         var response = await _client.GetAsync("/");
 
@@ -213,7 +213,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task ManifestWebManifest_ReturnsDbBackedWhiteLabelInstallMetadata()
+    public async Task ManifestWebManifest_ReturnsDbBackedBrandInstallMetadata()
     {
         var apiClient = Substitute.For<IIslamuApiClient>();
         apiClient.GetPublicExperienceShellAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -221,7 +221,7 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
             {
                 Home = new PublicExperienceHomeDto
                 {
-                    BrandDisplayName = "Community Events",
+                    BrandDisplayName = "Community Network",
                     BrandLogoUrl = "https://cdn.example.test/logo.png",
                     BrandFaviconUrl = "https://cdn.example.test/favicon.svg"
                 }
@@ -241,14 +241,14 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
-        body.Should().NotContain("ISLAMU");
         body.Should().NotContain("Icon_landingpage.png");
         using var document = JsonDocument.Parse(body);
         var root = document.RootElement;
 
-        root.GetProperty("name").GetString().Should().Be("Community Events");
+        root.GetProperty("name").GetString().Should().Be("Community Network");
         root.GetProperty("short_name").GetString().Should().Be("Community");
-        root.GetProperty("description").GetString().Should().Be("Discover and register for events.");
+        root.GetProperty("description").GetString().Should().Be(
+            "Visit the first-party ISLAMU website and community platform.");
         root.GetProperty("start_url").GetString().Should().Be("/");
         root.GetProperty("scope").GetString().Should().Be("/");
         root.GetProperty("display").GetString().Should().Be("standalone");

@@ -1,5 +1,5 @@
-// ABOUTME: White-label manifest endpoint that projects public branding into install metadata.
-// ABOUTME: Keeps browser manifest values DB-backed when branding settings are available.
+// ABOUTME: Install manifest endpoint that projects configurable public branding into browser metadata.
+// ABOUTME: Keeps brand names and icons DB-backed while preserving the first-party ISLAMU description.
 
 namespace Explore.Blazor.Extensions;
 

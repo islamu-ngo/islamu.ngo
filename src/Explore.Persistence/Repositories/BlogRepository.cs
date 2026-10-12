@@ -135,7 +135,7 @@ public class BlogRepository : IBlogRepository
         }
     }
 
-    private static void ReconcileCategoryLinks(Blog persisted, IEnumerable<Guid> categoryIds)
+    private void ReconcileCategoryLinks(Blog persisted, IEnumerable<Guid> categoryIds)
     {
         var desired = categoryIds.ToHashSet();
 
@@ -147,11 +147,13 @@ public class BlogRepository : IBlogRepository
         var existing = persisted.CategoryLinks.Select(link => link.CategoryId).ToHashSet();
         foreach (var categoryId in desired.Except(existing))
         {
-            persisted.CategoryLinks.Add(BlogCategory.Create(persisted.TenantId, persisted.Id, categoryId));
+            var link = BlogCategory.Create(persisted.TenantId, persisted.Id, categoryId);
+            persisted.CategoryLinks.Add(link);
+            _dbContext.Entry(link).State = EntityState.Added;
         }
     }
 
-    private static void ReconcileTagLinks(Blog persisted, IEnumerable<Guid> tagIds)
+    private void ReconcileTagLinks(Blog persisted, IEnumerable<Guid> tagIds)
     {
         var desired = tagIds.ToHashSet();
 
@@ -163,7 +165,9 @@ public class BlogRepository : IBlogRepository
         var existing = persisted.TagLinks.Select(link => link.TagId).ToHashSet();
         foreach (var tagId in desired.Except(existing))
         {
-            persisted.TagLinks.Add(BlogTag.Create(persisted.TenantId, persisted.Id, tagId));
+            var link = BlogTag.Create(persisted.TenantId, persisted.Id, tagId);
+            persisted.TagLinks.Add(link);
+            _dbContext.Entry(link).State = EntityState.Added;
         }
     }
 }

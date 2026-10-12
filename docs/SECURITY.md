@@ -4,7 +4,7 @@ ABOUTME: Points readers to the maintained security model while preserving docume
 # Security
 
 > **Audience:** Operators | Contributors | AI agents
-> **Status:** Mixed
+> **Status:** Active
 > **Owner:** Security
 > **Last Verified:** 2026-05-12
 > **Source Anchors:** `docs/SECURITY-MODEL.md`, `src/Explore.Blazor/Extensions/YarpProxyExtensions.cs`, `src/Explore.Blazor/Services/CircuitTokenStore.cs`, `src/Explore.Blazor/Extensions/BffStorageEndpoints.cs`, `src/Explore.Blazor/Extensions/BffPreferenceEndpoints.cs`

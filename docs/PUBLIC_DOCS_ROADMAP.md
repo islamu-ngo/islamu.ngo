@@ -4,7 +4,7 @@
 # Public Documentation Policy
 
 > **Audience:** Contributors | First-party operators | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-07-15
 > **Source Anchors:** `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/index.md`, `README.md`

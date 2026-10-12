@@ -4,7 +4,7 @@
 # Privacy Data Inventory
 
 > **Audience:** Product and content owners | Security | First-party operators | Contributors
-> **Status:** Mixed
+> **Status:** Active
 > **Owner:** Security
 > **Last Verified:** 2026-07-15
 > **Source Anchors:** `src/Explore.Domain/Settings/Definitions/AnalyticsSettingDefinitions.cs`, `src/Explore.Infrastructure/Analytics/`, `src/Explore.Blazor/Services/ServerCookieConsentInterop.cs`, `src/Explore.Blazor.Client/Services/CookieConsentStateService.cs`, `src/Explore.Blazor/Services/ExploreBffCookieSessionHandler.cs`, `src/Explore.Infrastructure/Mail/`, `src/Explore.Infrastructure/EmailDispatchDrainService.cs`, `src/Explore.Infrastructure/Integrations/Listmonk/`, `docs/CONFIGURATION.md`, `docs/EMAIL_NOTIFICATIONS.md`, `docs/SECRETS.md`

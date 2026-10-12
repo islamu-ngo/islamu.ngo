@@ -6,7 +6,7 @@
 | Field | Value |
 |---|---|
 | Audience | Operators/maintainers |
-| Status | Draft until execution evidence exists |
+| Status | Draft |
 | Owner | Operations |
 | Last Verified | 2026-07-18 |
 | Source Anchors | `compose.production.yaml`; `docker/production-validation/validate-production-environment.sh`; `docker/keycloak/provision-islamu-ngo-client.sh`; `docker/healthcheck.sh`; `src/Event.MigrationService/Dockerfile`; `src/Explore.ServiceDefaults/Extensions.cs`; `docs/OPERATIONS.md`; `docs/BACKUP_RESTORE_UPGRADE.md`; `docs/CONFIGURATION.md`; `docs/SECRETS.md`; `docs/LOCALIZATION.md`; `docs/EMAIL_NOTIFICATIONS.md`; `docs/SECURITY-MODEL.md` |

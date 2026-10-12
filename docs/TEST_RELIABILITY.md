@@ -4,7 +4,7 @@ ABOUTME: Keeps scheduled and manual lanes advisory until reliability evidence su
 # Test Reliability
 
 > **Audience:** Maintainers | Release operators | Contributors | AI agents
-> **Status:** Implemented tracking policy
+> **Status:** Active
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-01 Europe/Brussels
 > **Source Anchors:** `.github/workflows/e2e.yml`, `tests/Event.API.IntegrationTests/Features/`, `tests/Explore.Blazor.Client.E2ETests/Flows/SmokeTests.cs`

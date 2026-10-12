@@ -4,7 +4,7 @@
 # Release Checklist
 
 > **Audience:** Contributors | First-party operators | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-07-16
 > **Source Anchors:** `docs/BACKUP_RESTORE_UPGRADE.md`, `docs/CONTRIBUTING.md`, `docs/TESTING.md`, `.github/workflows/test.yml`

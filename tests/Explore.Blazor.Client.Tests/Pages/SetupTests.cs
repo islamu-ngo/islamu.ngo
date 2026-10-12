@@ -235,7 +235,7 @@ public class SetupTests : IDisposable
             SetupTimedOut = true,
             InstanceStartedAt = DateTime.UtcNow.AddMinutes(-70),
             SetupSecretState = "Expired",
-            SetupSecretGuidance = "The generated setup secret has expired. Restart the application and use the newly logged setup secret."
+            SetupSecretGuidance = "SETUP_SECRET is not configured. Configure it through the deployment secret source and restart the application."
         });
         SetupBffJsModule();
 
@@ -246,7 +246,7 @@ public class SetupTests : IDisposable
         // Assert
         cut.WaitForAssertion(() =>
         {
-            if (!cut.Markup.Contains("generated setup secret has expired", StringComparison.OrdinalIgnoreCase))
+            if (!cut.Markup.Contains("SETUP_SECRET is not configured", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Expected setup timeout message was not rendered.");
             }
@@ -283,7 +283,7 @@ public class SetupTests : IDisposable
     }
 
     [Test]
-    public async Task Setup_WhenGeneratedSecretActive_ShowsStartupLogGuidance()
+    public async Task Setup_WhenSecretIsUnconfigured_ShowsDeploymentGuidance()
     {
         // Arrange
         _instanceOnboardingService.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
@@ -291,8 +291,8 @@ public class SetupTests : IDisposable
             IsCompleted = false,
             IsAuthenticated = false,
             IsSetupModeActive = true,
-            SetupSecretState = "Generated",
-            SetupSecretGuidance = "Use the generated setup secret from the API startup logs. Generated secrets expire 60 minutes after startup."
+            SetupSecretState = "Unconfigured",
+            SetupSecretGuidance = "SETUP_SECRET is not configured. Configure it through the deployment secret source and restart the application."
         });
         SetupBffJsModule();
 
@@ -303,7 +303,7 @@ public class SetupTests : IDisposable
         // Assert
         cut.WaitForAssertion(() =>
         {
-            if (!cut.Markup.Contains("generated setup secret from the API startup logs", StringComparison.OrdinalIgnoreCase))
+            if (!cut.Markup.Contains("deployment secret source", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Expected generated setup-secret guidance was not rendered.");
             }

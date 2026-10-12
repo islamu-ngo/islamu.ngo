@@ -55,7 +55,7 @@ public sealed class GetOnboardingPreflightQueryHandler(
 
         if (setupSecretProvider.IsTimedOut)
         {
-            AddBlocking(result, "setup_secret", "Setup secret", OnboardingPreflightCheckStatus.Fail, "The generated setup secret window has expired.", "Set SETUP_SECRET and restart the app, or restart to generate a fresh development setup secret.");
+            AddBlocking(result, "setup_secret", "Setup secret", OnboardingPreflightCheckStatus.Fail, "The setup-secret window has expired.", "Set SETUP_SECRET through the deployment secret source and restart the application.");
             return;
         }
 

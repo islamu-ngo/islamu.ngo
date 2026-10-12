@@ -80,14 +80,14 @@ public class GetInstanceOnboardingStatusQueryHandler : IRequestHandler<GetInstan
             response.SetupSecretState = "Expired";
             response.SetupSecretGuidance = response.SetupSecretFromEnvironment
                 ? "The configured SETUP_SECRET is still authoritative, but this setup session has timed out. Restart the application to reopen setup mode."
-                : "The generated setup secret has expired. Restart the application and use the newly logged setup secret.";
+                : "SETUP_SECRET is not configured. Configure it through the deployment secret source and restart the application.";
             return;
         }
 
         if (!response.IsSetupModeActive)
         {
             response.SetupSecretState = "Unavailable";
-            response.SetupSecretGuidance = "Setup mode is not active. If onboarding is incomplete, restart the application and check startup logs.";
+            response.SetupSecretGuidance = "Setup mode is not active. If onboarding is incomplete, configure SETUP_SECRET and restart the application.";
             return;
         }
 
@@ -98,8 +98,8 @@ public class GetInstanceOnboardingStatusQueryHandler : IRequestHandler<GetInstan
             return;
         }
 
-        response.SetupSecretState = "Generated";
-        response.SetupSecretGuidance = "Use the generated setup secret from the API startup logs. Generated secrets expire 60 minutes after startup.";
+        response.SetupSecretState = "Unconfigured";
+        response.SetupSecretGuidance = "SETUP_SECRET is not configured. Configure it through the deployment secret source and restart the application.";
     }
 
     private static string DeserializeString(string? rawValue, string defaultValue)

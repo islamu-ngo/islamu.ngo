@@ -25,5 +25,4 @@ internal sealed class BenchmarkSetupSecretProvider : ISetupSecretProvider
     {
     }
 
-    public string? GetSecretForLogging() => null;
 }

@@ -495,15 +495,15 @@
     private Severity GetSetupSecretGuidanceSeverity() => _setupSecretState switch
     {
         "Environment" => Severity.Info,
-        "Generated" => Severity.Warning,
+        "Unconfigured" => Severity.Warning,
         _ => Severity.Info
     };
 
     private string GetSetupSecretHint() => _setupSecretState switch
     {
         "Environment" => "Check the SETUP_SECRET environment variable configured for this deployment.",
-        "Generated" => "Check the API server startup logs for the generated setup secret.",
-        _ => "Check the SETUP_SECRET environment variable or API server logs."
+        "Unconfigured" => "Configure SETUP_SECRET through the deployment secret source and restart the application.",
+        _ => "Check the SETUP_SECRET value configured for this deployment."
     };
 
     public void Dispose()

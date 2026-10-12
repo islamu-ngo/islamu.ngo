@@ -135,6 +135,25 @@ public sealed class ProductionComposeArchitectureTests
     }
 
     [Test]
+    public async Task SetupSecret_MustNeverBeExposedThroughStartupLoggingOrProviderContract()
+    {
+        var program = await File.ReadAllTextAsync(ContextSystemHelpers.RepoPath("Explore.API", "Program.cs"));
+        var providerContract = await File.ReadAllTextAsync(
+            ContextSystemHelpers.RepoPath(
+                "Explore.Application",
+                "Contracts",
+                "Services",
+                "ISetupSecretProvider.cs"));
+
+        await Assert.That(program).DoesNotContain("GetSecretForLogging");
+        await Assert.That(program).DoesNotContain("Secret: {SetupSecret}");
+        await Assert.That(program).DoesNotContain("Setup secret: {secretForLog}");
+        await Assert.That(program).Contains(
+            "Configure SETUP_SECRET through the deployment secret source and restart before using /setup.");
+        await Assert.That(providerContract).DoesNotContain("GetSecretForLogging");
+    }
+
+    [Test]
     public async Task ProductionCompose_MustApplyRuntimeContainerHardening()
     {
         var compose = await ReadProductionComposeAsync();

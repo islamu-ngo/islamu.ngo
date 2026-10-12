@@ -1,5 +1,5 @@
 // ABOUTME: Unit tests for SetupSecretProvider covering secret source, validation, setup mode, and lock behavior.
-// ABOUTME: Verifies bootstrap-state gating and internal logging-secret access through InternalsVisibleTo.
+// ABOUTME: Verifies bootstrap-state gating without exposing generated secret material.
 
 using Explore.Application.Contracts.Persistence;
 using Explore.Domain;
@@ -12,6 +12,8 @@ namespace Explore.Infrastructure.Tests.Infrastructure;
 
 public class SetupSecretProviderTests
 {
+    private const string TestSecret = "test-setup-secret";
+
     [Test]
     public async Task Constructor_EnvSecretPresent_UsesEnvironmentValue()
     {
@@ -26,13 +28,15 @@ public class SetupSecretProviderTests
     }
 
     [Test]
-    public async Task Constructor_EnvSecretMissing_AutoGenerates32CharSecret()
+    public async Task Constructor_EnvSecretMissing_GeneratesUnexposedSecretAndFailsClosed()
     {
-        var provider = CreateProvider();
+        var provider = new SetupSecretProvider(
+            new ConfigurationBuilder().Build(),
+            CreateScopeFactory(null));
 
         await Assert.That(provider.IsSetupSecretRequired).IsEqualTo(true);
         await Assert.That(provider.IsFromEnvironmentVariable).IsEqualTo(false);
-        await Assert.That(provider.GetSecretForLogging().Length).IsEqualTo(32);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(false);
     }
 
     [Test]
@@ -41,21 +45,24 @@ public class SetupSecretProviderTests
         var provider = CreateProvider();
 
         await Assert.That(provider.IsSetupSecretRequired).IsEqualTo(true);
-        await Assert.That(provider.ValidateSecret(provider.GetSecretForLogging())).IsEqualTo(true);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(true);
     }
 
     [Test]
     public async Task Constructor_SetupSecretRequiredFalseWithoutTrustedProvisioning_FailsClosedAsRequired()
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["SETUP_SECRET_REQUIRED"] = "false" })
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SETUP_SECRET"] = TestSecret,
+                ["SETUP_SECRET_REQUIRED"] = "false"
+            })
             .Build();
         var provider = new SetupSecretProvider(configuration, CreateScopeFactory(null));
 
         await Assert.That(provider.IsSetupSecretRequired).IsEqualTo(true);
         await Assert.That(provider.IsTrustedManagedProvisioningConfigured).IsEqualTo(false);
-        await Assert.That(provider.GetSecretForLogging()).IsNotNullOrEmpty();
-        await Assert.That(provider.ValidateSecret(provider.GetSecretForLogging())).IsEqualTo(true);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(true);
     }
 
     [Test]
@@ -75,7 +82,6 @@ public class SetupSecretProviderTests
 
         await Assert.That(provider.IsSetupSecretRequired).IsEqualTo(false);
         await Assert.That(provider.IsTrustedManagedProvisioningConfigured).IsEqualTo(true);
-        await Assert.That(provider.GetSecretForLogging()).IsNull();
         await Assert.That(provider.ValidateSecret(null)).IsEqualTo(false);
         await Assert.That(provider.ValidateSecret("anything")).IsEqualTo(false);
     }
@@ -84,9 +90,8 @@ public class SetupSecretProviderTests
     public async Task ValidateSecret_CorrectSecret_ReturnsTrue()
     {
         var provider = CreateProvider();
-        var secret = provider.GetSecretForLogging();
 
-        await Assert.That(provider.ValidateSecret(secret)).IsEqualTo(true);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(true);
     }
 
     [Test]
@@ -110,11 +115,10 @@ public class SetupSecretProviderTests
     public async Task ValidateSecret_AfterLock_ReturnsFalse()
     {
         var provider = CreateProvider();
-        var secret = provider.GetSecretForLogging();
 
         provider.Lock();
 
-        await Assert.That(provider.ValidateSecret(secret)).IsEqualTo(false);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(false);
     }
 
     [Test]
@@ -166,29 +170,20 @@ public class SetupSecretProviderTests
     {
         var provider = CreateProvider(new InstanceBootstrapState { IsCompleted = false });
         await provider.InitializeAsync();
-        var secret = provider.GetSecretForLogging();
 
         await Assert.That(provider.IsSetupModeActive).IsEqualTo(true);
 
         provider.Lock();
 
         await Assert.That(provider.IsSetupModeActive).IsEqualTo(false);
-        await Assert.That(provider.ValidateSecret(secret)).IsEqualTo(false);
-    }
-
-    [Test]
-    public async Task GetSecretForLogging_ReturnsSecretValue()
-    {
-        var provider = CreateProvider();
-        var secret = provider.GetSecretForLogging();
-
-        await Assert.That(secret).IsNotNullOrEmpty();
-        await Assert.That(provider.ValidateSecret(secret)).IsEqualTo(true);
+        await Assert.That(provider.ValidateSecret(TestSecret)).IsEqualTo(false);
     }
 
     private static SetupSecretProvider CreateProvider(InstanceBootstrapState? state = null)
     {
-        var configuration = new ConfigurationBuilder().Build();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["SETUP_SECRET"] = TestSecret })
+            .Build();
         var scopeFactory = CreateScopeFactory(state);
         return new SetupSecretProvider(configuration, scopeFactory);
     }

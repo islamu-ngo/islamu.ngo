@@ -22,7 +22,7 @@ public class GetInstanceOnboardingStatusQueryHandlerTests
     private readonly IDeploymentModeProvider _deploymentModeProvider = Substitute.For<IDeploymentModeProvider>();
 
     [Test]
-    public async Task Handle_WhenGeneratedSetupSecretActive_ReturnsStartupLogGuidance()
+    public async Task Handle_WhenSetupSecretIsUnconfigured_ReturnsDeploymentGuidance()
     {
         _bootstrapRepository.GetCurrent(Arg.Any<CancellationToken>()).Returns((Explore.Domain.InstanceBootstrapState?)null);
         _deploymentModeProvider.GetConfiguredOnboardingModeAsync(Arg.Any<CancellationToken>()).Returns(DeploymentMode.SingleTenant);
@@ -33,8 +33,8 @@ public class GetInstanceOnboardingStatusQueryHandlerTests
         using var cancellationSource = new CancellationTokenSource();
         var result = await CreateHandler().Handle(new GetInstanceOnboardingStatusQuery(), cancellationSource.Token);
 
-        await Assert.That(result.SetupSecretState).IsEqualTo("Generated");
-        await Assert.That(result.SetupSecretGuidance).Contains("startup logs");
+        await Assert.That(result.SetupSecretState).IsEqualTo("Unconfigured");
+        await Assert.That(result.SetupSecretGuidance).Contains("deployment secret source");
         await _bootstrapRepository.Received(1).GetCurrent(cancellationSource.Token);
     }
 
@@ -53,7 +53,7 @@ public class GetInstanceOnboardingStatusQueryHandlerTests
     }
 
     [Test]
-    public async Task Handle_WhenGeneratedSetupSecretExpired_ReturnsRestartGuidance()
+    public async Task Handle_WhenUnconfiguredSetupSecretExpires_ReturnsConfigurationGuidance()
     {
         _deploymentModeProvider.GetConfiguredOnboardingModeAsync(Arg.Any<CancellationToken>()).Returns(DeploymentMode.SingleTenant);
         _setupSecretProvider.IsSetupModeActive.Returns(false);
@@ -63,7 +63,7 @@ public class GetInstanceOnboardingStatusQueryHandlerTests
         var result = await CreateHandler().Handle(new GetInstanceOnboardingStatusQuery(), CancellationToken.None);
 
         await Assert.That(result.SetupSecretState).IsEqualTo("Expired");
-        await Assert.That(result.SetupSecretGuidance).Contains("newly logged setup secret");
+        await Assert.That(result.SetupSecretGuidance).Contains("deployment secret source");
     }
 
     private GetInstanceOnboardingStatusQueryHandler CreateHandler() =>

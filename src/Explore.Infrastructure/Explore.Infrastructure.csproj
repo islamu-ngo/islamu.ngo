@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Allow API and test projects to access internal startup-only methods (e.g., GetSecretForLogging) -->
+  <!-- Allow API and tests to exercise internal infrastructure seams. -->
   <ItemGroup>
     <InternalsVisibleTo Include="Explore.API" />
     <InternalsVisibleTo Include="Explore.Infrastructure.Tests" />

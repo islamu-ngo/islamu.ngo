@@ -3,13 +3,13 @@
 # Secrets are loaded at runtime via AddSecretManagement() - no CLI needed
 # Supports zero-downtime deployments with Coolify
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:7644f992230d35cf230017189d4038c0ae0f7388b13f4f7ae1900a155bafb597 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 9090
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:ea8bde36c11b6e7eec2656d0e59101d4462f6bd630730f2c8201ed0572b295d5 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG USE_COMMERCIAL_LUCKYPENNY_LIBS=false
 WORKDIR /src

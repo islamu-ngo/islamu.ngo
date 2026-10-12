@@ -1,6 +1,7 @@
 // ABOUTME: Component tests for Setup page setup-secret restoration and validation behavior.
 // ABOUTME: Verifies status display, secret input, provider quick actions, and BFF JS interop integration.
 
+using Explore.Blazor.Client.Models;
 using Explore.Blazor.Client.Models.Responses;
 using Explore.Blazor.Client.Pages;
 
@@ -113,6 +114,48 @@ public class SetupTests : IDisposable
                 throw new InvalidOperationException("Expected stale setup secret warning was not rendered.");
             }
         });
+    }
+
+    [Test]
+    public async Task Setup_UsesOneSemanticHeadingForItsSingleFormSection()
+    {
+        _instanceOnboardingService.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
+        {
+            IsCompleted = false,
+            IsAuthenticated = false
+        });
+        SetupBffJsModule();
+
+        var cut = _ctx.Render<DynamicComponent>(parameters =>
+            parameters.Add(x => x.Type, GetPageComponentType("Setup")));
+        cut.WaitForElement("h1");
+
+        var headingTags = cut.FindAll("h1, h2, h3, h4, h5, h6")
+            .Select(element => element.TagName)
+            .ToArray();
+        await Assert.That(headingTags).IsEquivalentTo(["H1"]);
+    }
+
+    [Test]
+    public async Task Setup_ArabicShellMirrorsCompositionButKeepsEnglishFallbackCopyAutomatic()
+    {
+        _instanceOnboardingService.GetStatusAsync().Returns(new InstanceOnboardingStatusDto
+        {
+            IsCompleted = false,
+            IsAuthenticated = false
+        });
+        SetupBffJsModule();
+
+        var cut = _ctx.Render<CascadingValue<LanguageContext>>(parameters => parameters
+            .Add(component => component.Name, "Language")
+            .Add(component => component.Value, LanguageContext.ForLanguage("ar"))
+            .AddChildContent<DynamicComponent>(child => child
+                .Add(component => component.Type, GetPageComponentType("Setup"))));
+        cut.WaitForElement(".setup-page");
+
+        await Assert.That(cut.Find(".setup-page").GetAttribute("dir")).IsEqualTo("rtl");
+        await Assert.That(cut.Find(".setup-left-content").GetAttribute("dir")).IsEqualTo("auto");
+        await Assert.That(cut.Find(".setup-form-container").GetAttribute("dir")).IsEqualTo("auto");
     }
 
     [Test]
@@ -305,7 +348,7 @@ public class SetupTests : IDisposable
         {
             if (!cut.Markup.Contains("deployment secret source", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Expected generated setup-secret guidance was not rendered.");
+                throw new InvalidOperationException("Expected unconfigured setup-secret guidance was not rendered.");
             }
         });
     }

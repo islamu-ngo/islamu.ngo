@@ -2,9 +2,14 @@
 /* ABOUTME: Uses clip-path for the 45-degree angle between branding and form panels. */
 
 .setup-page {
+    --setup-brand-start: #172554;
+    --setup-brand-middle: #1e3a8a;
+    --setup-brand-end: #1d4ed8;
+    --setup-brand-text: var(--isl-overlay-text);
+    --setup-brand-divider: color-mix(in srgb, var(--setup-brand-text) 70%, transparent);
     display: flex;
     min-height: 100vh;
-    width: 100vw;
+    inline-size: 100vw;
     margin: 0;
     padding: 0;
     position: relative;
@@ -14,11 +19,10 @@
 /* Left branding panel with diagonal edge */
 .setup-left-panel {
     position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 58%;
-    background: linear-gradient(160deg, #1E40AF 0%, #3B82F6 60%, #60A5FA 100%);
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 58%;
+    background: linear-gradient(160deg, var(--setup-brand-start) 0%, var(--setup-brand-middle) 60%, var(--setup-brand-end) 100%);
     clip-path: polygon(0 0, 100% 0, 72% 100%, 0% 100%);
     z-index: 1;
     display: flex;
@@ -26,62 +30,62 @@
 }
 
 .setup-left-content {
-    padding: 3rem 4rem;
-    padding-right: 20%;
-    max-width: 600px;
+    padding: var(--isl-space-10) var(--isl-space-16);
+    padding-inline-end: 20%;
+    max-inline-size: 37.5rem;
 }
 
 ::deep .setup-title {
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: var(--setup-brand-text) !important;
     font-weight: 300 !important;
     letter-spacing: -0.02em;
 }
 
 ::deep .setup-title-brand {
-    color: #fff !important;
+    color: var(--setup-brand-text) !important;
     font-weight: 700 !important;
     letter-spacing: -0.03em;
     line-height: 1.1 !important;
 }
 
 ::deep .setup-subtitle {
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: var(--setup-brand-text) !important;
     font-weight: 400 !important;
 }
 
 ::deep .setup-divider {
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    width: 60px;
+    border-color: var(--setup-brand-divider) !important;
+    inline-size: 3.75rem;
 }
 
 ::deep .setup-feature-icon {
-    color: rgba(255, 255, 255, 0.9) !important;
-    margin-top: 2px;
+    color: var(--setup-brand-text) !important;
+    margin-block-start: 0.125rem;
     flex-shrink: 0;
 }
 
 ::deep .setup-feature-text {
-    color: rgba(255, 255, 255, 0.85) !important;
-    font-size: 0.9rem !important;
-    line-height: 1.5 !important;
+    color: var(--setup-brand-text) !important;
+    font-size: var(--isl-typography-body2-size) !important;
+    line-height: var(--isl-typography-body2-line-height) !important;
 }
 
 /* Right form panel */
 .setup-right-panel {
-    margin-left: auto;
-    width: 50%;
+    margin-inline-start: auto;
+    inline-size: 50%;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: var(--isl-space-8);
     z-index: 2;
     background: var(--mud-palette-background);
 }
 
 .setup-form-container {
-    width: 100%;
-    max-width: 420px;
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
     text-align: center;
 }
 
@@ -91,8 +95,12 @@
 }
 
 .setup-form-width {
-    width: 100%;
-    text-align: left;
+    inline-size: 100%;
+    text-align: start;
+}
+
+.setup-page:dir(rtl) .setup-left-panel {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 28% 100%);
 }
 
 /* Responsive: stack vertically on small screens */
@@ -103,26 +111,29 @@
 
     .setup-left-panel {
         position: relative;
-        width: 100%;
+        inline-size: 100%;
         clip-path: polygon(0 0, 100% 0, 100% 85%, 0% 100%);
         min-height: 340px;
     }
 
     .setup-left-content {
-        padding: 2rem;
-        padding-right: 2rem;
-        padding-bottom: 4rem;
-        max-width: 100%;
+        padding: var(--isl-space-8);
+        padding-block-end: var(--isl-space-16);
+        max-inline-size: 100%;
     }
 
     .setup-right-panel {
-        width: 100%;
-        margin-left: 0;
-        margin-top: -3.5rem;
-        padding: 2rem;
-        padding-top: 1.5rem;
+        inline-size: 100%;
+        margin-inline-start: 0;
+        margin-block-start: -3.5rem;
+        padding: var(--isl-space-8);
+        padding-block-start: var(--isl-space-6);
         min-height: auto;
         background: transparent;
+    }
+
+    .setup-page:dir(rtl) .setup-left-panel {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
     }
 }
 
@@ -132,8 +143,8 @@
     }
 
     .setup-left-content {
-        padding: 1.5rem;
-        padding-bottom: 3.5rem;
+        padding: var(--isl-space-6);
+        padding-block-end: 3.5rem;
     }
 
     ::deep .setup-title {
@@ -149,8 +160,8 @@
     }
 
     .setup-right-panel {
-        padding: 1.5rem;
-        padding-top: 1rem;
-        margin-top: -2.5rem;
+        padding: var(--isl-space-6);
+        padding-block-start: var(--isl-space-4);
+        margin-block-start: -2.5rem;
     }
 }

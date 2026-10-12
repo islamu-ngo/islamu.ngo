@@ -11,17 +11,18 @@
 @inject ILogger<Setup> Logger
 @using Microsoft.JSInterop
 @using Microsoft.Extensions.Logging
+@using Explore.Blazor.Client.Models
 @using Explore.Blazor.Client.Models.Responses
 
 <PageTitle>Setup Access</PageTitle>
 
-<div class="setup-page">
+<div class="setup-page" dir="@SetupDirection">
     @* Left branding panel *@
     <div class="setup-left-panel">
-        <div class="setup-left-content">
-            <MudText Typo="Typo.h3" Class="setup-title mb-2">Welcome to</MudText>
-            <MudText Typo="Typo.h2" Class="setup-title-brand mb-6">ISLAMU</MudText>
-            <MudText Typo="Typo.h6" Class="setup-subtitle mb-6">Website and community platform</MudText>
+        <div class="setup-left-content" dir="auto">
+            <MudText Typo="Typo.h3" HtmlTag="p" Class="setup-title mb-2">Welcome to</MudText>
+            <MudText Typo="Typo.h2" HtmlTag="p" Class="setup-title-brand mb-6">ISLAMU</MudText>
+            <MudText Typo="Typo.h6" HtmlTag="p" Class="setup-subtitle mb-6">Website and community platform</MudText>
 
             <MudDivider Class="setup-divider mb-6" />
 
@@ -56,7 +57,7 @@
 
     @* Right form panel *@
     <div class="setup-right-panel">
-        <div class="setup-form-container">
+        <div class="setup-form-container" dir="auto">
             <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="setup-form-icon mb-4" />
             <MudText Typo="Typo.h4" HtmlTag="h1" Class="mb-1">Setup Access</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
@@ -196,6 +197,11 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "Language")]
+    private LanguageContext? Language { get; set; }
+
+    private string SetupDirection => Language?.EffectiveIsRtl == true ? "rtl" : "ltr";
+
     private bool _isLoading = true;
     private bool _isValidating;
     private bool _isAuthenticated;

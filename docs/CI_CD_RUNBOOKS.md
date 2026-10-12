@@ -4,7 +4,7 @@
 # CI/CD Runbooks
 
 > **Audience:** Maintainers | Operators | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-01
 > **Source Anchors:** `docs/CI_CD_GOVERNANCE.md`, `docs/RELEASE_CHECKLIST.md`, `.github/workflows/`

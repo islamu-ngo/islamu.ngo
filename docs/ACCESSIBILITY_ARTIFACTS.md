@@ -4,7 +4,7 @@
 # Accessibility Artifacts
 
 > **Audience:** First-party operators | Contributors | AI agents
-> **Status:** Mixed
+> **Status:** Active
 > **Owner:** Frontend
 > **Last Verified:** 2026-07-16
 > **Source Anchors:** `docs/ACCESSIBILITY.md`, `docs/TESTING.md`, `tests/Event.Architecture.Tests/AccessibilityConventionTests.cs`, `tests/Explore.Blazor.Client.Tests/Accessibility/SharedComponentAccessibilityTests.cs`

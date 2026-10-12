@@ -4,7 +4,7 @@ ABOUTME: Optimized for concise, implementation-accurate docs that are easy for j
 # Documentation Style Guide
 
 > **Audience:** Contributors | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-05-06
 > **Source Anchors:** `docs/DOCUMENTATION_ARCHITECTURE.md`, `docs/index.md`

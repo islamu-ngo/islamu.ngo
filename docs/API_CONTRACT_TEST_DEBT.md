@@ -4,7 +4,7 @@
 # API Contract Test Debt
 
 > **Audience:** API maintainers | Release reviewers | AI agents
-> **Status:** Active debt inventory
+> **Status:** Active
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-06-01
 > **Source Anchors:** `tests/Event.API.IntegrationTests/Features/RouteNameCoverageTests.cs`, `.github/workflows/openapi-contract.yml`

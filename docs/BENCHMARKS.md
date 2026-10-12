@@ -4,7 +4,7 @@ ABOUTME: Defines run commands, interpretation rules, and limits so benchmark res
 # Benchmarks
 
 > **Audience:** Contributors | Operators | AI agents
-> **Status:** Mixed
+> **Status:** Active
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-05-28
 > **Source Anchors:** `tests/Event.Benchmarks/`, `tests/Event.Benchmarks/Configuration/BenchmarkConfig.cs`, `tests/Event.Benchmarks/Program.cs`, `Directory.Packages.props`, `.claude/benchmarks/README.md`

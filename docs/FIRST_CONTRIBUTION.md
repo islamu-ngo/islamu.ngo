@@ -4,7 +4,7 @@ ABOUTME: Links to canonical contributing and testing docs without duplicating go
 # First Contribution
 
 > **Audience:** Contributors | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-05-06
 > **Source Anchors:** `docs/CONTRIBUTING.md`, `docs/TESTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/`

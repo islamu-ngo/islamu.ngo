@@ -4,7 +4,7 @@
 # Dock Layout
 
 > **Audience:** Contributors | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Frontend
 > **Last Verified:** 2026-05-21
 > **Source Anchors:** `src/Explore.Blazor.Client/Services/Docking/`, `src/Explore.Blazor.Client/Components/Docking/`, `src/Explore.Blazor.Client/Layout/MainLayout.razor`, `src/Explore.Blazor.Client/Layout/MainLayout.razor.cs`, `src/Explore.Blazor.Client/Layout/MainLayout.razor.css`, `src/Explore.Blazor.Client/Components/Shell/ShellDockPanels.cs`, `src/Explore.Blazor.Client/Components/Shell/AiAssistantRail.razor`, `src/Explore.Blazor.Client/Components/Shell/AppSideNav.razor.cs`, `src/Explore.Blazor.Client/Services/Interop/LocalStorageDockLayoutPersistence.cs`, `src/Explore.Blazor.Client/wwwroot/js/dock-layout-persistence.js`, `tests/Explore.Blazor.Client.Tests/Services/Docking/`, `tests/Explore.Blazor.Client.Tests/Components/Docking/`, `tests/Explore.Blazor.Client.Tests/Layout/DockRegistrationTests.cs`, `tests/Event.Architecture.Tests/DockLayoutArchitectureTests.cs`

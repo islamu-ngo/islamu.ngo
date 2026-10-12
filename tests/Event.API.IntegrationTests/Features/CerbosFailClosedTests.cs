@@ -86,7 +86,7 @@ public class CerbosFailClosedTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task RegularUser_DeniedEventView_WhenCerbosDown()
+    public async Task RegularUser_DeniedTenantCreation_WhenCerbosDown()
     {
         var token = await _keycloak.TokenClient.GetUserTokenAsync();
         using var request = CreateAuthorizedRequest(HttpMethod.Post, "/api/tenant", token, CreateTenantJson());
@@ -94,7 +94,7 @@ public class CerbosFailClosedTests : IAsyncDisposable
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden,
-            "even read-only operations must be denied when Cerbos is down");
+            "tenant creation must be denied when Cerbos is down");
     }
 
     [Test]

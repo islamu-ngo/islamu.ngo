@@ -711,7 +711,6 @@ public class CerbosPolicyContractTests : IDisposable
         yield return "islamuevent_actor";
         yield return "islamuevent_group";
         yield return "islamuevent_group_member";
-        yield return "islamuevent_instance_setting";
         yield return "islamuevent_organization_review";
         yield return "islamuevent_notification";
         yield return "islamuevent_custom_property_definition";

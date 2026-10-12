@@ -1,15 +1,18 @@
 // ABOUTME: Authorization pipeline integration tests using real Keycloak JWTs and real Cerbos PDP decisions.
-// ABOUTME: Validates that different user roles get different authorization results from the Cerbos container.
+// ABOUTME: Validates role decisions plus no-tenant host-level control-plane authorization against the Cerbos container.
 
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Event.Api.IntegrationTests.Fixtures;
+using Explore.Domain;
 using Explore.Application.Authorization;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Domain.Enums;
+using Explore.Persistence;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using TUnit.Core;
 
 namespace Event.Api.IntegrationTests.Features;
@@ -69,6 +72,7 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
                 isInstanceAdmin: true,
                 tenantMemberships: new Dictionary<string, string>(),
                 orgMemberships: new Dictionary<string, string>()));
+        SeedCompletedMultiTenantMode(_instanceAdminControlPlaneFactory);
         _instanceAdminControlPlaneClient = _instanceAdminControlPlaneFactory.CreateClient();
 
         var regularUserProvider = new RoleAwareCerbosProvider(
@@ -92,6 +96,7 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
                 isInstanceAdmin: false,
                 tenantMemberships: new Dictionary<string, string>(),
                 orgMemberships: new Dictionary<string, string>()));
+        SeedCompletedMultiTenantMode(_regularUserControlPlaneFactory);
         _regularUserControlPlaneClient = _regularUserControlPlaneFactory.CreateClient();
 
         var tenantAdminProvider = new RoleAwareCerbosProvider(
@@ -293,8 +298,8 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
             actions: ["create", "update", "delete"]);
 
-        ownTenantMutations.Values.Should().OnlyContain(v => v == "EFFECT_DENY",
-            "tenant admin should be denied direct organization mutations in own tenant (delegated to org admins)");
+        ownTenantMutations.Values.Should().OnlyContain(v => v == "EFFECT_ALLOW",
+            "tenant admins manage organizations within their own tenant");
 
         var otherTenantResult = await CheckCerbosDecision(
             isInstanceAdmin: false,
@@ -317,9 +322,10 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             orgMemberships: new Dictionary<string, string> { ["org-1"] = "admin" },
             resourceKind: ResourceKinds.Organization,
             resourceAttrs: new { tenantId = "tenant-1", organizationId = "org-1" },
-            actions: ["view", "create", "update"]);
+            actions: ["view", "update"]);
 
-        ownOrgResult.Values.Should().OnlyContain(v => v == "EFFECT_ALLOW");
+        ownOrgResult.Values.Should().OnlyContain(v => v == "EFFECT_ALLOW",
+            "organization admins manage an existing organization they administer");
 
         var otherOrgResult = await CheckCerbosDecision(
             isInstanceAdmin: false,
@@ -353,6 +359,22 @@ public class AuthorizationPipelineIntegrationTests : IAsyncDisposable
             AuthorizationProviderOverride = authorizationProvider,
             DeploymentMode = DeploymentMode.MultiTenant
         };
+
+    private static void SeedCompletedMultiTenantMode(SecurityWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
+        dbContext.Database.EnsureCreated();
+        dbContext.InstanceBootstrapStates.Add(new InstanceBootstrapState
+        {
+            Id = Guid.CreateVersion7(),
+            IsCompleted = true,
+            CreatedAt = DateTime.UtcNow,
+            CompletedAt = DateTime.UtcNow,
+            SelectedDeploymentMode = DeploymentMode.MultiTenant.ToString()
+        });
+        dbContext.SaveChanges();
+    }
 
     private async Task<Dictionary<string, string>> CheckCerbosDecision(
         bool isInstanceAdmin,

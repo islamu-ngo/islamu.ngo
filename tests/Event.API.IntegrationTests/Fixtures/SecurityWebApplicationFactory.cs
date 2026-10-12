@@ -1,5 +1,5 @@
 // ABOUTME: WebApplicationFactory that uses real JWT Bearer validation against a containerized Keycloak.
-// ABOUTME: Does NOT use TestAuthHandler — tokens must come from the Keycloak container's OIDC endpoint.
+// ABOUTME: Uses real Keycloak tokens and keeps injected authorization providers alive for the test host lifetime.
 
 using System.Net.Security;
 using System.Net.Sockets;
@@ -73,6 +73,7 @@ public class SecurityWebApplicationFactory : WebApplicationFactory<Program>
                 ["Deployment:Mode"] = DeploymentMode.ToString(),
                 ["Deployment:DefaultTenantId"] = PlatformDefaults.DefaultTenantId.ToString(),
                 ["Testing:HostProfile"] = TestHostProfile.Security,
+                ["Testing:DisableDeploymentModeCache"] = "true",
                 ["Cerbos:GrpcEndpoint"] = _cerbosGrpcEndpoint,
             };
 
@@ -134,7 +135,7 @@ public class SecurityWebApplicationFactory : WebApplicationFactory<Program>
             if (AuthorizationProviderOverride is not null)
             {
                 services.RemoveAll<IAuthorizationProvider>();
-                services.AddScoped(_ => AuthorizationProviderOverride);
+                services.AddSingleton(_ => AuthorizationProviderOverride);
             }
         });
     }

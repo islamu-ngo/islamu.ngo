@@ -71,7 +71,7 @@ public class AuthorizationProductionGuardrailTests
         using var factory = new NoAuthConfigWebApplicationFactory();
         var client = factory.CreateClient();
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/organizations/my");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/organization/my");
 
         var response = await client.SendAsync(request);
 

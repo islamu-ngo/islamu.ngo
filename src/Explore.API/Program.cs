@@ -109,6 +109,7 @@ builder.Services.AddApiCaching();
 builder.Services.AddScoped<IIncomingWebhookVerifier, SvixIncomingWebhookVerifier>();
 builder.Services.AddScoped<IIncomingWebhookVerifierRegistry, IncomingWebhookVerifierRegistry>();
 builder.Services.AddScoped<IIncomingWebhookIntakeService, IncomingWebhookIntakeService>();
+builder.Services.AddScoped<IManagedEventHealthProbe, ManagedEventHealthProbe>();
 
 builder.Services.AddRouting(options =>
 {

@@ -124,8 +124,9 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
+        var tenantPreference = CreateTenantPreference(tenant.Id, true);
         context.NotificationChannelPreferences.AddRange(
-            CreateTenantPreference(tenant.Id, true),
+            tenantPreference,
             CreateUserPreference(tenant.Id, user.Id, false));
         await context.SaveChangesAsync();
 
@@ -138,11 +139,7 @@ public class NotificationPreferenceMatrixPersistenceTests(PostgreSqlContainerFix
             NotificationPreferenceCategoryCodes.OrganizationUpdates,
             NotificationPreferenceChannelCodes.Email));
 
-        context.NotificationChannelPreferences.Add(CreateTenantPreference(
-            tenant.Id,
-            true,
-            isLocked: true,
-            NotificationPreferenceCategoryCodes.OrganizationUpdates));
+        tenantPreference.IsLocked = true;
         context.NotificationPreferenceProfiles.Add(new NotificationPreferenceProfile
         {
             TenantId = tenant.Id,

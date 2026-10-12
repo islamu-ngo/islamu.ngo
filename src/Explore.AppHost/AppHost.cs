@@ -668,6 +668,8 @@ static IResourceBuilder<ProjectResource> ConfigureLocalPlatformApi(
     var cerbosAdminUsername = ConfiguredValue(configuration, "CERBOS_ADMIN_USERNAME", "cerbos");
     var cerbosAdminPassword = ConfiguredValue(configuration, "CERBOS_ADMIN_PASSWORD", "cerbos");
     var cerbosAdminPasswordHash = ConfiguredValue(configuration, "CERBOS_ADMIN_PASSWORD_HASH", LocalCerbosAdminPasswordHash);
+    var svixAuthToken = configuration["WEBHOOKS_SVIX_AUTH_TOKEN"];
+    var webhookProvider = configuration["WEBHOOKS_PROVIDER"] ?? (string.IsNullOrWhiteSpace(svixAuthToken) ? "Local" : "Svix");
     var keycloakBaseUrl = EndpointUrl(resources.Keycloak, "http", "/auth");
     var keycloakAuthority = EndpointUrl(resources.Keycloak, "http", $"/auth/realms/{keycloakRealm}");
     var keycloakMetadataAddress = EndpointUrl(
@@ -723,14 +725,14 @@ static IResourceBuilder<ProjectResource> ConfigureLocalPlatformApi(
         .WithEnvironment("Reporting__Coop__AllowLocalProviderEndpoints", configuration["REPORTING_COOP_ALLOW_LOCAL_PROVIDER_ENDPOINTS"] ?? "true")
         .WithEnvironment("Reporting__Coop__WebhookSecret", configuration["REPORTING_COOP_WEBHOOK_SECRET"] ?? "local-dev-coop-webhook-secret")
         .WithEnvironment("Webhooks__Enabled", configuration["WEBHOOKS_ENABLED"] ?? "true")
-        .WithEnvironment("Webhooks__Provider", configuration["WEBHOOKS_PROVIDER"] ?? "Svix")
+        .WithEnvironment("Webhooks__Provider", webhookProvider)
         .WithEnvironment("Webhooks__Svix__BaseUrl", svixEndpoint)
         .WithEnvironment("Webhooks__Svix__Environment", SvixConformanceProfileRegistry.SelfHostedEnvironment)
         .WithEnvironment("Webhooks__Svix__ProviderVersion", SvixConformanceProfileRegistry.SelfHostedProviderVersion)
         .WithEnvironment("Webhooks__Svix__CapabilityPolicyVersion", SvixConformanceProfileRegistry.SelfHostedCapabilityPolicyVersion)
         .WithEnvironment("Webhooks__Svix__AuthTokenSecretRef", "webhooks.svix.auth_token")
         .WithEnvironment("Webhooks__Svix__OperationalWebhookSecretRef", "webhooks.svix.operational_webhook_secret")
-        .WithEnvironment("WEBHOOKS_SVIX_AUTH_TOKEN", configuration["WEBHOOKS_SVIX_AUTH_TOKEN"] ?? string.Empty)
+        .WithEnvironment("WEBHOOKS_SVIX_AUTH_TOKEN", svixAuthToken ?? string.Empty)
         .WithEnvironment("WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET", configuration["WEBHOOKS_SVIX_OPERATIONAL_WEBHOOK_SECRET"] ?? string.Empty);
 
     api = resources.Coop is not null

@@ -127,6 +127,18 @@ public sealed class AspireLocalInfrastructureArchitectureTests
     }
 
     [Test]
+    public async Task LocalWebhookProvider_MustStayReadyWithoutOptionalSvixCredentials()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+        var envExample = await File.ReadAllTextAsync(Path.Combine(RepoRoot, ".env.example"));
+
+        await Assert.That(appHost).Contains("var svixAuthToken = configuration[\"WEBHOOKS_SVIX_AUTH_TOKEN\"];");
+        await Assert.That(appHost).Contains(
+            "configuration[\"WEBHOOKS_PROVIDER\"] ?? (string.IsNullOrWhiteSpace(svixAuthToken) ? \"Local\" : \"Svix\")");
+        await Assert.That(envExample).Contains("WEBHOOKS_PROVIDER=Local");
+    }
+
+    [Test]
     public async Task LocalProjects_MustWaitForNgoProvisionerCompletion()
     {
         var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));

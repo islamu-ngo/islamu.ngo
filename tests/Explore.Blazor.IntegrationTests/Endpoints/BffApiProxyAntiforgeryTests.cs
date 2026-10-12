@@ -1,5 +1,5 @@
-// ABOUTME: Regression tests for antiforgery enforcement on cookie-authenticated BFF API proxy mutations.
-// ABOUTME: Proves WebPush generated-client routes reject missing CSRF tokens while safe reads still proxy.
+// ABOUTME: Regression tests for cookie-authenticated BFF API proxy security and public infrastructure routes.
+// ABOUTME: Proves unsafe WebPush writes require CSRF tokens while safe API and sitemap reads still proxy.
 
 using System.Net;
 using Explore.Blazor.IntegrationTests.Fixtures;
@@ -46,6 +46,16 @@ public sealed class BffApiProxyAntiforgeryTests : IAsyncDisposable
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadAsStringAsync()).Should().Contain("publicKey");
+    }
+
+    [Test]
+    public async Task SitemapXml_Get_ProxiesToApi()
+    {
+        using var response = await _client.GetAsync("/sitemap.xml");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/xml");
+        (await response.Content.ReadAsStringAsync()).Should().Contain("https://example.test/about");
     }
 
     [Test]
@@ -157,6 +167,11 @@ public sealed class BffApiProxyAntiforgeryTests : IAsyncDisposable
             builder.WebHost.UseKestrel().UseUrls("http://127.0.0.1:0");
 
             _app = builder.Build();
+            _app.MapGet(
+                "/sitemap.xml",
+                () => Results.Content(
+                    "<urlset><url><loc>https://example.test/about</loc></url></urlset>",
+                    "application/xml"));
             _app.MapGet("/api/notification/web-push/config", () => Results.Json(new { publicKey = "test-public-key" }));
             _app.MapPost("/api/notification/web-push/subscriptions", () => Results.Json(new { status = "subscribed" }, statusCode: StatusCodes.Status201Created));
             _app.MapDelete("/api/notification/web-push/subscriptions/{subscriptionId:guid}", () => Results.Json(new { status = "unsubscribed" }));

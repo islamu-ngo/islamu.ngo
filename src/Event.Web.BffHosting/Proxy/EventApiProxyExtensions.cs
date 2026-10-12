@@ -55,6 +55,12 @@ public static class EventApiProxyExtensions
             },
             new RouteConfig
             {
+                RouteId = "event-api-sitemap",
+                ClusterId = "event-api",
+                Match = new RouteMatch { Path = "/sitemap.xml", Methods = [HttpMethods.Get] }
+            },
+            new RouteConfig
+            {
                 RouteId = "event-api",
                 ClusterId = "event-api",
                 Match = new RouteMatch { Path = "/api/{**catchall}" }

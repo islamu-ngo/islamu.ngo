@@ -1,4 +1,4 @@
-// ABOUTME: Locks public Keycloak exports to preserved legacy and current NGO client identifiers.
+// ABOUTME: Locks Keycloak exports to their preserved production and current NGO test client identities.
 // ABOUTME: Rejects private Control Plane identifiers with bounded, secret-free diagnostics.
 
 using System.Text.Json;
@@ -8,13 +8,14 @@ namespace Event.Architecture.Tests;
 public sealed class KeycloakRealmOwnershipTests
 {
     private static readonly string RepoRoot = ResolveRepoRoot();
-    private static readonly string[] ExpectedClientIds =
+    private static readonly string[] ExpectedExportClientIds =
     [
         "islamu-event-blazor",
         "islamu-event-api",
         "islamu-ngo-blazor",
         "islamu-ngo-api"
     ];
+    private static readonly string[] ExpectedTestClientIds = ["islamu-ngo-blazor", "islamu-ngo-api"];
 
     private static readonly string[] ReservedIdentifiers =
     [
@@ -49,31 +50,38 @@ public sealed class KeycloakRealmOwnershipTests
 
         await Assert.That(root.GetProperty("realm").GetString()).IsEqualTo("ISLAMU");
 
+        var isTestRealm = relativePath.EndsWith(".test.json", StringComparison.Ordinal);
+        var expectedClientIds = isTestRealm ? ExpectedTestClientIds : ExpectedExportClientIds;
         var clientIds = root.GetProperty("clients")
             .EnumerateArray()
             .Select(client => client.GetProperty("clientId").GetString() ?? string.Empty)
             .ToArray();
-        await Assert.That(clientIds.Length).IsEqualTo(ExpectedClientIds.Length);
-        await Assert.That(clientIds).IsEquivalentTo(ExpectedClientIds)
-            .Because($"{relativePath} must contain exactly the preserved legacy clients plus current NGO clients.");
+        await Assert.That(clientIds.Length).IsEqualTo(expectedClientIds.Length);
+        await Assert.That(clientIds).IsEquivalentTo(expectedClientIds)
+            .Because($"{relativePath} must contain exactly its governed client identities.");
 
-        await AssertAudienceMapperAsync(
-            root,
-            ownerClientId: "islamu-event-blazor",
-            mapperName: "islamu-event-api-audience",
-            audienceClientId: "islamu-event-api");
+        if (!isTestRealm)
+        {
+            await AssertAudienceMapperAsync(
+                root,
+                ownerClientId: "islamu-event-blazor",
+                mapperName: "islamu-event-api-audience",
+                audienceClientId: "islamu-event-api");
+            await Assert.That(ClientHasMapper(root, "islamu-event-api", "islamu-event-api-audience")).IsFalse();
+        }
+
         await AssertAudienceMapperAsync(
             root,
             ownerClientId: "islamu-ngo-blazor",
             mapperName: "islamu-ngo-api-audience",
             audienceClientId: "islamu-ngo-api");
-        await Assert.That(ClientHasMapper(root, "islamu-event-api", "islamu-event-api-audience")).IsFalse();
         await Assert.That(ClientHasMapper(root, "islamu-ngo-api", "islamu-ngo-api-audience")).IsFalse();
 
         var ngoBlazorClient = GetClient(root, "islamu-ngo-blazor");
         await Assert.That(ngoBlazorClient.GetProperty("publicClient").GetBoolean()).IsFalse();
         await Assert.That(ngoBlazorClient.GetProperty("standardFlowEnabled").GetBoolean()).IsTrue();
-        await Assert.That(ngoBlazorClient.GetProperty("directAccessGrantsEnabled").GetBoolean()).IsFalse();
+        await Assert.That(ngoBlazorClient.GetProperty("directAccessGrantsEnabled").GetBoolean())
+            .IsEqualTo(isTestRealm);
         await Assert.That(ngoBlazorClient.GetProperty("serviceAccountsEnabled").GetBoolean()).IsFalse();
         await Assert.That(ngoBlazorClient.GetProperty("attributes").GetProperty("pkce.code.challenge.method").GetString()).IsEqualTo("S256");
 
@@ -117,7 +125,20 @@ public sealed class KeycloakRealmOwnershipTests
         await Assert.That(source).Contains("umask 077");
         await Assert.That(source).Contains("mktemp");
         await Assert.That(source).Contains("mktemp -d");
-        await Assert.That(source).Contains("--config \"$KCADM_CONFIG\"");
+        var kcFunction = ExtractShellFunction(source, "kc");
+        await Assert.That(kcFunction).Contains("local command=\"$1\"");
+        await Assert.That(kcFunction).Contains("shift");
+        await Assert.That(kcFunction).Contains("\"$KCADM\" \"$command\" --config \"$KCADM_CONFIG\" \"$@\"");
+        await Assert.That(kcFunction).DoesNotContain("\"$KCADM\" --config");
+        var authenticateFunction = ExtractShellFunction(source, "authenticate");
+        await Assert.That(authenticateFunction).Contains("\"$KCADM\" config credentials --config \"$KCADM_CONFIG\"");
+        await Assert.That(authenticateFunction).DoesNotContain("kc config credentials");
+        var ensureMapperFunction = ExtractShellFunction(source, "ensure_mapper");
+        await Assert.That(ensureMapperFunction).Contains("\"included.client.audience\":\"");
+        await Assert.That(ensureMapperFunction).Contains("\"id.token.claim\":\"false\"");
+        await Assert.That(ensureMapperFunction).Contains("\"access.token.claim\":\"true\"");
+        await Assert.That(ensureMapperFunction).Contains("-s \"config=$mapper_config\"");
+        await Assert.That(ensureMapperFunction).DoesNotContain("-s config.included.client.audience");
         await Assert.That(source).Contains("KEYCLOAK_ADMIN_REALM");
         await Assert.That(source).Contains("KEYCLOAK_ALLOW_INSECURE_HTTP");
         await Assert.That(source).Contains("KC_CLI_CLIENT_SECRET");

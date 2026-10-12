@@ -8,6 +8,7 @@ public sealed class AspireLocalInfrastructureArchitectureTests
     private static readonly string RepoRoot = ResolveRepoRoot();
     private const string LocalKeycloakAdminPassword = "local-keycloak-admin-fixture";
     private const string LocalNgoBffClientSecret = "islamu-ngo-blazor-local-secret";
+    private const string LocalSetupSecret = "islamu-ngo-local-setup-secret";
 
     [Test]
     public async Task LocalLite_MustRunMigrationServiceBeforeApiAndBlazorWithoutLocalInfra()
@@ -107,6 +108,22 @@ public sealed class AspireLocalInfrastructureArchitectureTests
         await Assert.That(envExample).Contains($"KEYCLOAK_ISLAMU_NGO_BLAZOR_CLIENT_SECRET={LocalNgoBffClientSecret}");
         await Assert.That(envExample).DoesNotContain("KEYCLOAK_ADMIN_PASSWORD=admin");
         await Assert.That(envExample).DoesNotContain("islamu-ngo-blazor-secret");
+    }
+
+    [Test]
+    public async Task LocalSetupSecretFixture_MustStayAlignedAndReachApiAndBff()
+    {
+        var appHost = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "src", "Explore.AppHost", "AppHost.cs"));
+        var envExample = await File.ReadAllTextAsync(Path.Combine(RepoRoot, ".env.example"));
+
+        await Assert.That(appHost).Contains($"LocalSetupSecret = \"{LocalSetupSecret}\"");
+        await Assert.That(appHost).Contains(
+            "ConfiguredValue(builder.Configuration, \"SETUP_SECRET\", LocalSetupSecret)");
+        await Assert.That(
+                appHost.Split(".WithEnvironment(\"SETUP_SECRET\", localSetupSecret)", StringSplitOptions.None).Length - 1)
+            .IsEqualTo(2);
+        await Assert.That(envExample).Contains($"SETUP_SECRET={LocalSetupSecret}");
+        await Assert.That(envExample).DoesNotContain("writes it to API startup logs");
     }
 
     [Test]

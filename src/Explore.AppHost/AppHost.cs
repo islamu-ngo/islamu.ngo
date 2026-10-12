@@ -12,6 +12,7 @@ const string LocalCerbosAdminPasswordHash =
     "JDJiJDEwJGxUWWVjblZpTlRseTZvUkhQS3Y5U2VKZGpwZzdqWkFRcGV2S2Ezbkxpbk55bDF5U1dEZVkyCg==";
 const string LocalKeycloakAdminPassword = "local-keycloak-admin-fixture";
 const string LocalNgoBffClientSecret = "islamu-ngo-blazor-local-secret";
+const string LocalSetupSecret = "islamu-ngo-local-setup-secret";
 
 var repositoryRoot = FindRepositoryRoot(Directory.GetCurrentDirectory());
 var dotenvPath = Path.Combine(repositoryRoot, ".env");
@@ -19,6 +20,7 @@ if (File.Exists(dotenvPath))
     Env.NoClobber().Load(dotenvPath);
 var builder = DistributedApplication.CreateBuilder(args);
 var runMode = AspireRunModeExtensions.Parse(builder.Configuration["ISLAMU_ASPIRE_MODE"]);
+var localSetupSecret = ConfiguredValue(builder.Configuration, "SETUP_SECRET", LocalSetupSecret);
 var appHostConfigRoot = Path.Combine(repositoryRoot, "src", "Explore.AppHost", "Config");
 var cerbosPolicyPackagePath = Path.Combine(repositoryRoot, "cerbos", "policies");
 var cerbosConfigPath = Path.Combine(repositoryRoot, "cerbos", "config", ".cerbos.yaml");
@@ -110,6 +112,7 @@ var exploreAPI = WithProfileSecretMode(
         runMode,
         builder.Configuration)
     .WithEnvironment("HttpsRedirection__Enabled", "false")
+    .WithEnvironment("SETUP_SECRET", localSetupSecret)
     .WithEnvironment("CONTROL_PLANE_PUBLIC_ORIGIN", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:17002"))
     .WithEnvironment("Cerbos__PolicyPackagePath", cerbosPolicyPackagePath)
     .WithEnvironment("Storage__Local__RootPath", localStorageRootPath)
@@ -188,6 +191,7 @@ var exploreBlazor = WithProfileSecretMode(
         builder.Configuration)
     .WithReference(exploreAPI)
     .WaitFor(exploreAPI)
+    .WithEnvironment("SETUP_SECRET", localSetupSecret)
     .WithEnvironment("Bff__AdminHosts__0", ConfiguredValue(builder.Configuration, "CONTROL_PLANE_PUBLIC_ORIGIN", "http://admin.localhost:17002"))
     .WithEnvironment("Storage__Local__RootPath", localStorageRootPath);
 

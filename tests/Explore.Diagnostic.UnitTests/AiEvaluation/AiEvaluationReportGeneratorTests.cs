@@ -39,17 +39,12 @@ public sealed class AiEvaluationReportGeneratorTests
     }
 
     [Test]
-    public void GenerateIncludesDeterministicMcpProposalFlowEvaluation()
+    public void GenerateExcludesRetiredMcpProposalFlowEvaluation()
     {
         var report = new AiEvaluationReportGenerator(() => FixedNow).Generate();
 
-        var scenario = report.Results.Single(result => result.Code == "ai.eval.mcp-proposal-flow");
-
-        scenario.Status.Should().Be(AiEvaluationStatus.Pass);
-        scenario.Dimension.Should().Be(AiEvaluationDimension.McpProposalFlow);
-        scenario.Summary.Should().Contain("event-management");
-        scenario.Summary.Should().Contain("confirmation-before-side-effects");
-        scenario.Recommendation.Should().Contain("discovery and proposals");
+        report.Results.Should().NotContain(result => result.Code == "ai.eval.mcp-proposal-flow");
+        report.Results.Should().NotContain(result => result.Summary.Contains("event-management", StringComparison.Ordinal));
     }
 
     [Test]

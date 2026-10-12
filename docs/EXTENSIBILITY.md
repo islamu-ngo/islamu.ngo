@@ -1,12 +1,12 @@
 <!-- ABOUTME: Documents current internal extension seams: modules, Organization/Group custom properties, TMS providers, and API keys. -->
-<!-- ABOUTME: Separates source-backed compile-time extension points from deleted Event and speculative plugin/product promises. -->
+<!-- ABOUTME: Separates source-backed compile-time extension points from speculative plugin/product promises. -->
 
 # Extensibility
 
 > **Audience:** Contributors | Platform maintainers
 > **Status:** Active
 > **Owner:** Architecture
-> **Last Verified:** 2026-07-18
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `src/Explore.Domain/Modules/`, `src/Explore.API/Controllers/ModuleController.cs`, `src/Explore.Infrastructure/Services/ModuleService.cs`, `src/Explore.Domain/CustomPropertyDefinition.cs`, `src/Explore.Infrastructure/Localization/RuntimeTranslationProvider.cs`, `src/Explore.API/Controllers/ExternalApiKeyController.cs`
 
 ## Boundary
@@ -22,15 +22,13 @@ Current extensibility consists of:
 3. a runtime-selected translation-management provider behind one interface; and
 4. scoped external API keys for approved machine callers.
 
-Deleted Event, EventSession, sector-aspect, Event-template, Event-custom-property, projection,
-strategy, route, and UI types are not extension points.
+Removed product-specific types, routes, projections, and UI models are not extension points.
 
 ## Modules
 
 `ModuleDefinition` is the global catalog and `TenantCapability` records tenant enablement. The
 current seed creates only `Mod_Core`. Source still contains optional Islamic/Tech capability
-flags, but no current seed definition or deleted Event sector model makes those flags a product
-feature.
+flags, but no current seed definition or checked-in consumer makes those flags a product feature.
 
 `ModuleController` exposes:
 
@@ -52,7 +50,7 @@ operator UI, and tests; registering a key alone is insufficient.
 
 ## Organization And Group Custom Properties
 
-The surviving Layer 3 model is:
+The current shared EAV model is:
 
 - `CustomPropertyDefinition`: tenant-scoped namespace/key, target entity type, value type,
   validation, exposure/governance flags, audit fields, concurrency stamp, and soft delete;
@@ -102,13 +100,13 @@ override tenant resolution, or bypass local/Cerbos authorization. See
 
 - no runtime assembly/package loading;
 - no remote MCP tool import or execution;
-- no Event compatibility aliases or deleted Event routes;
+- no compatibility aliases or routes for removed product surfaces;
 - no pricing-tier or quota product promise; and
 - no guarantee that dormant constants, schema URLs, or UI flags have an implemented consumer.
 
 ## Related
 
-- [CUSTOM_PROPERTIES.md](CUSTOM_PROPERTIES.md)
+- [Custom properties](CUSTOM_PROPERTIES.md) — current Organization/Group shared EAV boundary
 - [MULTI_TENANCY.md](MULTI_TENANCY.md)
 - [LOCALIZATION.md](LOCALIZATION.md)
 - [ADMIN_HIERARCHY.md](ADMIN_HIERARCHY.md)

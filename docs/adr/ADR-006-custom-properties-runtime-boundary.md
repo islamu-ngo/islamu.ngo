@@ -1,33 +1,44 @@
-ABOUTME: Decision record for keeping Layer 3 custom properties bounded to existing resources.
-ABOUTME: Rejects using EAV custom properties as a generic runtime schema engine.
+<!-- ABOUTME: Decision record for keeping shared custom properties bounded to existing resources. -->
+<!-- ABOUTME: Preserves historical product examples while rejecting a generic runtime schema engine. -->
 
 # ADR-006: Custom Properties Runtime Boundary
 
-- **Status:** Accepted
-- **Date:** 2026-05
-- **Deciders:** Core team
+> **Audience:** Contributors | Maintainers | AI agents
+> **Status:** Active
+> **Decision Status:** Accepted
+> **Owner:** Architecture
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `src/Explore.Domain/CustomPropertyDefinition.cs`, `src/Explore.Domain/References/ReferenceTypeRegistry.cs`, `docs/CUSTOM_PROPERTIES.md`
+> **Decision Date:** 2026-05
+> **Deciders:** Core team
 
-## Current Boundary (2026-07-18)
+## Current Boundary (2026-07-19)
 
-The decision to keep surviving custom properties bounded to first-class resources remains active.
+The decision to keep shared Organization/Group custom properties bounded to first-class resources
+remains active.
 References below to Event/EventSession extension fields, template sync, and projection coordination
 are historical examples from the removed Event product; they are not current ISLAMU capabilities.
-Current source authority is the surviving `CustomPropertyDefinition`, `CustomPropertyOption`, and
+Current source authority is the `CustomPropertyDefinition`, `CustomPropertyOption`, and
 `CustomPropertyValue` model plus its governance/API boundaries.
 
-## Context
+## Historical Record
+
+The sections below preserve the original product context and decision language. They are historical
+evidence, not a current capability list.
+
+### Original Context
 
 The custom-property system gives tenants governed extension fields for existing platform resources such as events and event sessions. The implementation now supports namespaced machine identity, typed values, options, projections, template instantiation, explicit sync, governance flags, quotas, tenant isolation, and lifecycle controls.
 
 That capability creates a product boundary risk: EAV can be stretched from “custom fields on known aggregates” into a no-code runtime schema engine with user-defined entity types, arbitrary relationships, uniqueness rules, formulas, workflow policies, and schema migrations. Letting Layer 3 drift into that role would make custom properties a hidden parallel domain model and would undermine the repository’s Layer 1 / Layer 2 / Layer 3 architecture.
 
-## Decision
+### Original Decision
 
 Keep EAV custom properties bounded to custom fields on existing first-class resources.
 
 Layer 3 may extend existing aggregates with tenant-local fields, but it must not define new canonical product entities or replace typed domain schema.
 
-### Allowed Layer 3 Use
+#### Allowed Layer 3 Use
 
 - Tenant-specific or organizer-specific fields on existing resources.
 - Option/text/number/boolean/date/url values validated by governed metadata.
@@ -35,7 +46,7 @@ Layer 3 may extend existing aggregates with tenant-local fields, but it must not
 - Template-driven instantiation and explicit sync for event and event-session custom fields.
 - Governance reporting to identify custom fields that are candidates for promotion.
 
-### Not Allowed In Layer 3
+#### Not Allowed In Layer 3
 
 - User-defined entity types.
 - Arbitrary relationships between custom objects.
@@ -45,15 +56,15 @@ Layer 3 may extend existing aggregates with tenant-local fields, but it must not
 - Tenant-authored schema migrations.
 - Authorization, moderation, ranking, or policy-critical semantics that bypass typed Layer 1 or Layer 2 models.
 
-### Promotion Rule
+#### Promotion Rule
 
 If a custom property becomes sector-standard, discovery-critical, policy-critical, moderation-critical, or interoperability-critical, it must be promoted to typed Layer 2 schema or a governed first-class projection. It must not remain only as Layer 3 EAV data.
 
-### Future Runtime Schema Engine
+#### Future Runtime Schema Engine
 
 If the product needs user-defined entities, relationships, formulas, or schema migrations, that work requires a separate Runtime Schema Engine plan and architecture decision. It must not mutate the custom-property layer into a generic relational engine.
 
-## Consequences
+### Original Consequences
 
 1. The current custom-property closure plan can finish as a bounded hardening effort rather than an open-ended no-code database platform.
 2. Clean Architecture remains stable because Domain entities keep explicit ownership and custom properties stay an extension layer.
@@ -63,6 +74,7 @@ If the product needs user-defined entities, relationships, formulas, or schema m
 
 ## Related
 
-- [CUSTOM_PROPERTIES.md](../CUSTOM_PROPERTIES.md) — Layer 3 governance and lifecycle rules.
-- [ARCHITECTURE.md](../ARCHITECTURE.md) — Layer 1 / Layer 2 / Layer 3 architecture.
-- [LEXICONS.md](../LEXICONS.md) — canonical and extension publication contracts.
+- [CUSTOM_PROPERTIES.md](../CUSTOM_PROPERTIES.md) — current Organization/Group shared EAV boundary.
+- [ARCHITECTURE.md](../ARCHITECTURE.md) — current Clean Architecture and request flow.
+- [LEXICONS.md](../LEXICONS.md) — current federation collection/lexicon boundary; it does not
+  activate the historical identifiers in this ADR.

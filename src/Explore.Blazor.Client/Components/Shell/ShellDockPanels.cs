@@ -17,7 +17,7 @@ public static class ShellDockPanels
         DockMode.Docked,
         Title: "Navigation",
         AriaLabel: "Sidebar navigation",
-        DefaultWidth: 280,
+        DefaultWidth: 240,
         MinWidth: 240,
         MaxWidth: 360,
         Order: 10,

@@ -183,7 +183,7 @@
     --isl-button-ring: color-mix(in oklch, var(--isl-color-primary) 30%, transparent);
 
     /* ── Dock Panels ── */
-    --isl-dock-shell-start-width: 280px;
+    --isl-dock-shell-start-width: 240px;
     --isl-dock-shell-start-collapsed-width: 72px;
     --isl-dock-shell-ai-width: 360px;
     --isl-dock-workspace-end-width: 320px;

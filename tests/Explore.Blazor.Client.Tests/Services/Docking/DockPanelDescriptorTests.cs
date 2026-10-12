@@ -1,12 +1,19 @@
 // ABOUTME: Contract tests for dock panel descriptor metadata and validation rules.
 // ABOUTME: Guards responsive policy defaults so dock behavior stays explicit and safe.
 
+using Explore.Blazor.Client.Components.Shell;
 using Explore.Blazor.Client.Services.Docking;
 
 namespace Explore.Blazor.Client.Tests.Services.Docking;
 
 public sealed class DockPanelDescriptorTests
 {
+    [Test]
+    public async Task ShellNavigation_DefaultWidth_PreservesTabletContentSpace()
+    {
+        await Assert.That(ShellDockPanels.LeftNav.DefaultWidth).IsEqualTo(240);
+    }
+
     [Test]
     public async Task Validate_UsesSafePolicyDefaultsWhenDescriptorOmitsPolicyMetadata()
     {

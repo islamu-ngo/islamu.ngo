@@ -293,7 +293,9 @@ cleanup() {
 trap cleanup EXIT
 
 kc() {
-  "$KCADM" --config "$KCADM_CONFIG" "$@"
+  local command="$1"
+  shift
+  "$KCADM" "$command" --config "$KCADM_CONFIG" "$@"
 }
 
 exact_resource_uuid() {
@@ -453,11 +455,13 @@ ensure_bff_client() {
 ensure_mapper() {
   local client_id="$1"
   local client_uuid_value
+  local mapper_config
   local uuid
 
   client_uuid_value="$(client_uuid "$client_id")"
   require_non_empty "client uuid for $client_id" "$client_uuid_value"
   uuid="$(mapper_uuid "$client_id" "$KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME")"
+  printf -v mapper_config '{"included.client.audience":"%s","id.token.claim":"false","access.token.claim":"true"}' "$KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID"
 
   if [ -z "$uuid" ]; then
     if ! kc create "clients/$client_uuid_value/protocol-mappers/models" -r "$KEYCLOAK_REALM" \
@@ -465,9 +469,7 @@ ensure_mapper() {
       -s protocol=openid-connect \
       -s protocolMapper=oidc-audience-mapper \
       -s consentRequired=false \
-      -s "config.included.client.audience=$KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID" \
-      -s config.id.token.claim=false \
-      -s config.access.token.claim=true >/dev/null; then
+      -s "config=$mapper_config" >/dev/null; then
       log "Audience mapper create failed; re-querying exact owned mapper in case it was created_by_concurrent_run."
     fi
     uuid="$(mapper_uuid "$client_id" "$KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME")"
@@ -479,9 +481,7 @@ ensure_mapper() {
     -s protocol=openid-connect \
     -s protocolMapper=oidc-audience-mapper \
     -s consentRequired=false \
-    -s "config.included.client.audience=$KEYCLOAK_ISLAMU_NGO_API_CLIENT_ID" \
-    -s config.id.token.claim=false \
-    -s config.access.token.claim=true >/dev/null
+    -s "config=$mapper_config" >/dev/null
   log "Reconciled audience mapper '$KEYCLOAK_ISLAMU_NGO_AUDIENCE_MAPPER_NAME' on '$client_id'."
 }
 
@@ -489,7 +489,7 @@ authenticate() {
   if [ -n "$KEYCLOAK_ADMIN_SERVICE_CLIENT_ID" ] || [ -n "$KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET" ]; then
     require_non_empty "KEYCLOAK_ADMIN_SERVICE_CLIENT_ID" "$KEYCLOAK_ADMIN_SERVICE_CLIENT_ID"
     validate_secret "KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET" "$KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET"
-    KC_CLI_CLIENT_SECRET="$KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET" kc config credentials \
+    KC_CLI_CLIENT_SECRET="$KEYCLOAK_ADMIN_SERVICE_CLIENT_SECRET" "$KCADM" config credentials --config "$KCADM_CONFIG" \
       --server "$KEYCLOAK_INTERNAL_URL" \
       --realm "$KEYCLOAK_ADMIN_REALM" \
       --client "$KEYCLOAK_ADMIN_SERVICE_CLIENT_ID" >/dev/null
@@ -498,7 +498,7 @@ authenticate() {
 
   require_non_empty "KEYCLOAK_ADMIN" "$KEYCLOAK_ADMIN"
   validate_secret "KEYCLOAK_ADMIN_PASSWORD" "$KEYCLOAK_ADMIN_PASSWORD"
-  KC_CLI_PASSWORD="$KEYCLOAK_ADMIN_PASSWORD" kc config credentials \
+  KC_CLI_PASSWORD="$KEYCLOAK_ADMIN_PASSWORD" "$KCADM" config credentials --config "$KCADM_CONFIG" \
     --server "$KEYCLOAK_INTERNAL_URL" \
     --realm "$KEYCLOAK_ADMIN_REALM" \
     --user "$KEYCLOAK_ADMIN" >/dev/null

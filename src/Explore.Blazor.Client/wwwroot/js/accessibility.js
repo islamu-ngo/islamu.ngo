@@ -77,8 +77,8 @@ export function saveActiveElement() {
  */
 export function restoreFocus(fallbackSelector) {
     requestAnimationFrame(() => {
-        if (_savedFocusElement && document.contains(_savedFocusElement)) {
-            _savedFocusElement.focus();
+        if (_savedFocusElement && _savedFocusElement !== document.body && document.contains(_savedFocusElement)) {
+            _savedFocusElement.focus({ preventScroll: true });
             _savedFocusElement = null;
             return;
         }
@@ -88,14 +88,14 @@ export function restoreFocus(fallbackSelector) {
         if (fallbackSelector) {
             const fallback = document.querySelector(fallbackSelector);
             if (fallback) {
-                fallback.focus();
+                fallback.focus({ preventScroll: true });
                 return;
             }
         }
 
         const main = document.getElementById('main-content');
         if (main) {
-            main.focus();
+            main.focus({ preventScroll: true });
             return;
         }
 
@@ -112,6 +112,10 @@ export function focusOnNavigate() {
     // Double-rAF: first frame Blazor commits DOM, second frame we focus.
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+            if (!window.location.hash) {
+                window.scrollTo(0, 0);
+            }
+
             const h1 = document.querySelector('h1');
             if (h1) {
                 if (h1.tabIndex < 0 && !h1.hasAttribute('tabindex')) {

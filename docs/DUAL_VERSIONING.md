@@ -4,7 +4,7 @@
 # Dual-Versioning Strategy
 
 > **Audience:** Contributors | Maintainers | First-party operators
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Platform/Ops
 > **Last Verified:** 2026-07-16
 > **Source Anchors:** `Directory.Packages.props`, `Directory.Build.props`, `.github/workflows/_build-test.yml`, `.github/workflows/_container-build.yml`

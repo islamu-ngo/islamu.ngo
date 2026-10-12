@@ -1,113 +1,86 @@
-ABOUTME: Canonical decision document for ATProto-compatible NSID lexicon hierarchy and evolution.
-ABOUTME: Covers EAV extensions, sector profiles, and aggregate read models.
+<!-- ABOUTME: Documents the current federation collection-identity and lexicon boundary. -->
+<!-- ABOUTME: Separates opaque ATProto record metadata from unimplemented ISLAMU schema promises. -->
 
-# Lexicon Decisions and NSID Hierarchy
+# Federation Collection And Lexicon Boundary
 
-Last Updated: 2026-04-24
+> **Audience:** Contributors | Integrators | AI agents
+> **Status:** Active
+> **Owner:** Architecture/API
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `docs/FEDERATION.md`, `src/Explore.Domain/AtprotoRecord.cs`, `src/Explore.Domain/Federation/PdsSyncOutbox.cs`, `src/Explore.Application/DTOs/AtprotoRecord/Validators/CreateAtprotoRecordDtoValidator.cs`, `src/Explore.Infrastructure/Services/Federation/PdsService.cs`, `src/Explore.API/BackgroundServices/PdsSyncWorker.cs`
 
-## Purpose
+## Current Truth
 
-This document defines the canonical NSID (Namespaced Identifier) hierarchy used to represent the platform's multi-layered event data model in an ATProto-compatible format. These lexicons provide stable semantic keys for data projections, aggregate read models, and interoperability surfaces.
+There is no checked-in ISLAMU-owned lexicon registry, schema bundle, generated lexicon model, or
+stable `im.islamu.*` compatibility contract in current source.
 
-The NSID system serves as the source of truth for:
-- Mapping runtime EAV custom properties to stable machine-readable keys.
-- Defining the boundaries between universal core fields, typed sector profiles, and local extensions.
-- Guiding the evolution of data schemas using add-only discipline.
+The federation foundation stores and transports record identity supplied to it:
 
-**Explicitly Out of Scope:**
-- ATProto PDS (Personal Data Server) publication.
-- bridgy-fed wiring or ActivityPub federation.
-- Outbox or publication machinery.
-- Cross-tenant aggregate views.
-- Materialized views (rejected in favor of live projections and keyless entities).
-- `$extensions` ATProto pattern (not yet standardized upstream).
-- Lexicon code generation pipelines.
+| Field | Current meaning |
+|---|---|
+| `Did` | Actor DID that owns or identifies the remote record |
+| `Collection` | Opaque collection identifier passed to the configured PDS |
+| `RecordKey` | Record key inside that collection |
+| `Cid` | Optional content identifier returned or indexed for the record |
+| `Uri` | Optional record URI |
+| `Payload` | JSON payload carried by outbound `PdsSyncOutbox` create/update work |
 
-## Canonical NSID Hierarchy
+`AtprotoRecord` persists DID, collection, key, CID, URI, and indexed timestamp. The create DTO
+requires DID, collection, and record key and applies bounded lengths; it does not prove NSID syntax
+or validate an ISLAMU schema.
 
-The platform uses a 3-layer architecture represented by the following NSID taxonomy:
+`PdsSyncOutbox` adds operation, payload, target host, source correlation, retry, and terminal state.
+`PdsSyncWorker` passes due rows to `PdsService`, which calls `com.atproto.repo.putRecord` or
+`com.atproto.repo.deleteRecord` on the configured PDS.
 
-| NSID | Layer | Domain Entity | Status |
-|---|---|---|---|
-| `im.islamu.event.core.v1` | 1 | `Event` | Stable |
-| `im.islamu.eventsession.core.v1` | 1 | `EventSession` | Stable |
-| `im.islamu.event.islamic.v1` | 2 | `EventIslamicAspect` | Stable |
-| `im.islamu.event.tech.v1` | 2 | `EventTechAspect` | Stable |
-| `im.islamu.eventsession.islamic.v1` | 2 | `EventSessionIslamicAspect` | Stable |
-| `im.islamu.event.extension.v1` | 3 | `EventCustomPropertyProjection` | Stable |
-| `im.islamu.eventsession.extension.v1` | 3 | `EventSessionCustomPropertyProjection` | Stable |
-| `im.islamu.event.withSessions.v1` | Agg | `EventWithSessionsView` | Stable |
-| `im.islamu.event.temp.*` | 0 | (Various) | Experimental |
+## Authority Boundary
 
-### Layer Descriptions
+The configured remote PDS is authoritative for whether a collection identifier and record payload
+are accepted. Local persistence or a successful internal CRUD request does not establish:
 
-1.  **Layer 1 (Core)**: Universal fields shared by all events and sessions (e.g., Title, StartTime, Organizer).
-2.  **Layer 2 (Sector Profiles)**: First-class typed schema for domain-specific aspects (e.g., Islamic madhab, Tech skill levels).
-3.  **Layer 3 (Extensions)**: Local tenant-specific custom properties projected into a stable facet format.
-4.  **Aggregate View**: A composed read model merging core, sector, and extension data into a single projection.
+- an ISLAMU lexicon standard;
+- public ATProto protocol conformance;
+- a hosted PDS or AppView;
+- cross-version schema compatibility;
+- discovery, search, ranking, or federation availability; or
+- a public product projection.
 
-## Evolution Rules (Add-Only Lexicon Evolution)
+The platform must treat collection names and record payloads as untrusted integration data at
+network, logging, and authorization boundaries. Credentials and target hosts come from approved
+configuration, never from an untrusted record body.
 
-To maintain backward compatibility and interoperability, the platform enforces "Add-Only" evolution for stable lexicons (Rule 14):
+## Adding An Owned Lexicon
 
-1.  **Immutability of Constraints**: NEVER tighten existing field constraints (e.g., making an optional field required or shrinking a maximum length) within the same major-version NSID.
-2.  **Safe Additions**: New optional fields may be added to an existing NSID at any time.
-3.  **Breaking Changes**: Any breaking change (field deletion, renaming, or constraint tightening) requires a new major-version NSID (e.g., `im.islamu.event.core.v2`). The previous version must remain available and frozen.
-4.  **Experimental Promotion**: Experimental lexicons in the `im.islamu.event.temp.*` namespace must be promoted to a stable versioned NSID before being relied upon by production discovery paths.
-5.  **Field Retirement**: Fields are retired by adding an `IsRetired` or `is_deprecated` flag. Physical deletion is forbidden to preserve historical data provenance.
+An ISLAMU-owned lexicon becomes active only after the same change supplies:
 
-## NSID Versioning Discipline
+1. a versioned schema file with an identified owner;
+2. generated or typed source models and validation;
+3. explicit authentication, authorization, tenant, and DID-custody rules;
+4. create, update, deletion, replay, and failure semantics;
+5. interoperability and protocol tests against the configured PDS;
+6. privacy and data-retention review; and
+7. rollout and rollback instructions.
 
-Decisions to version an NSID follow this classification tree:
+Until those artifacts exist, do not reserve a namespace, mark an identifier stable, publish an
+add-only promise, or use a hypothetical lexicon as a database/domain design authority.
 
-- **Is the change additive?** (New optional field) → Update existing NSID version (revision only).
-- **Is the change breaking?** (Renaming, tightening, deletion) → Create new major version NSID.
-- **Rollout Control**: Use feature flags (e.g., `custom_properties.projection_discovery_enabled`) to control the adoption of new lexicon projections per tenant.
-- **Safety Rails**: Quota settings (Rule 16) prevent extension abuse and ensure performance stability.
+## Evolution Rules After Activation
 
-## Lexicon to Projection / Aggregate-View Mapping
+If a lexicon is introduced later, its owner must define compatibility rules in the schema itself.
+At minimum:
 
-| NSID | Domain Entity | EF Configuration | Projection Table | DTO | CQRS Query |
-|---|---|---|---|---|---|
-| `im.islamu.event.core.v1` | `Event` | `EventConfiguration` | `events` | `EventDto` | `GetEventDetailQuery` |
-| `im.islamu.eventsession.core.v1` | `EventSession` | `EventSessionConfiguration` | `event_sessions` | `EventSessionDto` | `GetEventSessionDetailQuery` |
-| `im.islamu.event.islamic.v1` | `EventIslamicAspect` | `EventIslamicAspectConfiguration` | `event_islamic_aspects` | `EventIslamicAspectDto` | (Part of Event query) |
-| `im.islamu.event.tech.v1` | `EventTechAspect` | `EventTechAspectConfiguration` | `event_tech_aspects` | `EventTechAspectDto` | (Part of Event query) |
-| `im.islamu.event.extension.v1` | `EventCustomPropertyProjection` | `EventCustomPropertyProjectionConfiguration` | `event_custom_property_projections` | `EventCustomPropertyProjectionDto` | `GetEventListQuery` |
-| `im.islamu.event.withSessions.v1` | `EventWithSessionsView` | `EventWithSessionsViewConfiguration` | `vw_event_with_sessions` | `EventWithSessionsViewDto` | `GetEventWithSessionsAggregateViewQuery` |
+- additive optional fields may remain within an explicitly versioned compatibility line;
+- deletion, renaming, requiredness changes, or tighter constraints require a reviewed breaking
+  version decision;
+- experimental identifiers must be clearly labeled and must not be used as stable public keys;
+- generated models and protocol fixtures must be regenerated from the schema; and
+- old versions remain supported only when an active consumer and explicit compatibility window
+  justify them.
 
-## Promotion Criteria (Atlassian 4 Questions)
+These are governance requirements for a future owned contract, not evidence that one exists now.
 
-Layer 3 custom properties earn promotion to Layer 2 or Layer 1 based on the Atlassian 4-Question Framework (Rule 12). Promotion is considered if 2 or more answers are **Yes**:
+## Related
 
-1.  **Cross-tenant reporting required?**: Is the attribute aggregated or reported across multiple tenants?
-2.  **Automation / AI consumer required?**: Do automated systems (LLMs, recommendation engines) depend on this field?
-3.  **Search / filter affordance needed?**: Is the field required for discovery filters or search facets on public surfaces?
-4.  **Long-term stability intended?**: Is the attribute expected to remain semantically stable for ≥ 2 years?
-
-**Promotion Procedure**:
-- Candidates are identified via the property governance admin surface.
-- Promoted fields are implemented as first-class typed columns in Layer 2 aspects or Layer 1 core.
-- Data migration is performed from EAV storage to the new typed home.
-
-## Experimental (`im.islamu.event.temp.*`) Namespace Guidelines
-
-The `temp.*` namespace is reserved for rapid iteration and unstable schemas:
-
-- **Registration**: Register a temp lexicon in `dev/active/` documentation before use.
-- **Expiration**: Temp lexicons should expire or be promoted to stable within 6 months.
-- **Graduation Checklist**:
-  - Semantic stability achieved.
-  - Test coverage complete (Unit + Integration).
-  - Documentation updated in this registry.
-  - Versioned rename to stable NSID.
-- **Isolation**: NEVER deploy `temp.*` lexicons to public federation channels or external publication targets.
-
-## References
-
-- [AGENTS.md](../AGENTS.md) — agent contract.
-- [QUICK_REFERENCE.md](QUICK_REFERENCE.md) — hard invariants.
-- [GOVERNANCE.md](GOVERNANCE.md) — governance + decision frameworks.
-- [ARCHITECTURE.md](ARCHITECTURE.md) — layering + request flow.
-- `dev/active/eav-custom-properties/` — EAV plan and context.
-- [ATProto NSID Specification](https://atproto.com/specs/nsid) — upstream format definition.
+- [Federation](FEDERATION.md)
+- [Architecture](ARCHITECTURE.md)
+- [API conventions](API.md)

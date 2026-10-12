@@ -154,7 +154,7 @@
 
 /* Element: site-footer__copyright */
 ::deep .site-footer__copyright {
-    color: var(--mud-palette-text-disabled);
+    color: var(--mud-palette-text-secondary);
     font-size: 0.875rem;
 }
 

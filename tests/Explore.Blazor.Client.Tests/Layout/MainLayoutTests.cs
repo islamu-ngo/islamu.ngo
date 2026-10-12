@@ -179,6 +179,7 @@ public class MainLayoutTests : IDisposable
         var main = cut.Find("main#main-content");
 
         await Assert.That(main.GetAttribute("tabindex")).IsEqualTo("-1");
+        await Assert.That(main.GetAttribute("dir")).IsEqualTo("auto");
     }
 
     [Test]
@@ -207,6 +208,9 @@ public class MainLayoutTests : IDisposable
             _ = cut.Find("header.main-layout__header");
             _ = cut.Find("nav[aria-label='Sidebar navigation']");
             _ = cut.Find("footer.site-footer");
+            var copyright = cut.Find(".site-footer__copyright").TextContent.Trim();
+            if (copyright != $"© {DateTime.Now.Year} ISLAMU. All rights reserved.")
+                throw new InvalidOperationException("Expected the public footer to use the ISLAMU copyright fallback.");
             _ = cut.Find("#aria-live-polite[aria-live='polite'][aria-atomic='true']");
             _ = cut.Find("#aria-live-assertive[aria-live='assertive'][aria-atomic='true']");
         });

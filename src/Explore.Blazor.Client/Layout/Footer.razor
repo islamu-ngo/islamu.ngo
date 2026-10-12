@@ -6,7 +6,7 @@
 
 @if (_footerEnabled)
 {
-    <div class="site-footer-root">
+    <div class="site-footer-root" dir="auto">
     <footer class="site-footer">
         <MudContainer MaxWidth="MaxWidth.Large" Class="site-footer__container">
             @switch (_template)
@@ -70,7 +70,7 @@
 }
 
 @code {
-    private string _brandDisplayName = string.Empty;
+    private string _brandDisplayName = "ISLAMU";
     private string _brandLogoUrl = string.Empty;
     private string _template = "standard-3-col";
     private bool _footerEnabled = true;
@@ -78,7 +78,7 @@
     private string _descriptionText = string.Empty;
     private bool _showSocialLinks = true;
     private List<FooterSocialLinkDto> _socialLinks = [];
-    private string _copyrightText = string.Empty;
+    private string _copyrightText = $"© {DateTime.Now.Year} ISLAMU. All rights reserved.";
     private bool _showCookieSettingsLink = true;
     private List<FooterLinkGroupDto> _linkGroups = [];
     private bool _showCommunityGuidelinesLink = true;
@@ -89,7 +89,9 @@
         if (settings is null)
             return;
 
-        _brandDisplayName = settings.BrandDisplayName ?? string.Empty;
+        _brandDisplayName = string.IsNullOrWhiteSpace(settings.BrandDisplayName)
+            ? "ISLAMU"
+            : settings.BrandDisplayName;
         _brandLogoUrl = settings.BrandLogoUrl ?? string.Empty;
 
         var footer = settings.FooterConfig;

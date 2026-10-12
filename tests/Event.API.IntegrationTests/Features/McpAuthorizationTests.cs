@@ -28,20 +28,6 @@ public sealed class McpAuthorizationTests
         .Prepend("propose_ai_tool_action")
         .ToArray();
 
-    private static readonly string[] EventManagementReadToolNames =
-    [
-        "list_my_events",
-        "get_event_creation_context",
-        "get_event_publish_readiness",
-        "get_event_program_management_context",
-        "get_event_custom_properties_context",
-        "get_event_registrations_context",
-        "get_event_team_context",
-        "get_event_template_catalog_context",
-        "get_event_template_sync_context",
-        "get_event_session_template_sync_context"
-    ];
-
     [Test]
     public async Task McpEndpoint_WhenRuntimeGovernanceDisabled_ReturnsNotFound()
     {
@@ -89,9 +75,7 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
@@ -123,9 +107,7 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
@@ -143,8 +125,7 @@ public sealed class McpAuthorizationTests
         response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized);
         response.StatusCode.Should().NotBe(HttpStatusCode.Forbidden);
         var toolNames = await ReadToolNamesAsync(response);
-        AssertEventManagementReadsDiscoverable(toolNames);
-        AssertProposalToolsDiscoverable(toolNames, includeGeneric: false);
+        AssertProposalDiscovery(toolNames);
     }
 
     [Test]
@@ -164,9 +145,7 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
@@ -202,9 +181,7 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
@@ -247,7 +224,7 @@ public sealed class McpAuthorizationTests
     }
 
     [Test]
-    public async Task McpEndpoint_WithMcpReadOnlyApiKey_CannotDiscoverPrivateEventReadsOrProposalTools()
+    public async Task McpEndpoint_WithMcpReadOnlyApiKey_DiscoversAnonymousRegistryOnlyAndRejectsUnknownTools()
     {
         const string keyId = "mcp-read-only-key";
         const string secret = "mcp-read-only-secret";
@@ -278,26 +255,24 @@ public sealed class McpAuthorizationTests
 
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(listResponse);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
 
-        using var eventReadCallRequest = CreateMcpToolCallRequest("list_my_events", new { });
-        eventReadCallRequest.Headers.Add("X-API-Key", rawApiKey);
+        using var unknownToolCallRequest = CreateMcpToolCallRequest("unsupported_tool", new { });
+        unknownToolCallRequest.Headers.Add("X-API-Key", rawApiKey);
 
-        var eventReadCallResponse = await client.SendAsync(eventReadCallRequest);
+        var unknownToolCallResponse = await client.SendAsync(unknownToolCallRequest);
 
-        eventReadCallResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        using var eventReadErrorDocument = await ReadJsonRpcDocumentAsync(eventReadCallResponse);
-        eventReadErrorDocument.RootElement.TryGetProperty("error", out _).Should().BeTrue(eventReadErrorDocument.RootElement.GetRawText());
-        eventReadErrorDocument.RootElement.GetRawText().Should().NotContain(rawApiKey);
+        unknownToolCallResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var unknownToolErrorDocument = await ReadJsonRpcDocumentAsync(unknownToolCallResponse);
+        unknownToolErrorDocument.RootElement.TryGetProperty("error", out _).Should().BeTrue(unknownToolErrorDocument.RootElement.GetRawText());
+        unknownToolErrorDocument.RootElement.GetRawText().Should().NotContain(rawApiKey);
     }
 
     [Test]
-    public async Task McpEndpoint_WithMcpReadAndEventReadApiKey_CanDiscoverEventManagementReadsButNotProposalTools()
+    public async Task McpEndpoint_WithMcpReadAndOrganizationReadApiKey_DiscoversAnonymousRegistryOnly()
     {
-        const string keyId = "mcp-event-read-key";
-        const string secret = "mcp-event-read-secret";
+        const string keyId = "mcp-organization-read-key";
+        const string secret = "mcp-organization-read-secret";
         var rawApiKey = ApiKeyHashing.FormatPersistedApiKey(keyId, secret);
 
         await using var factory = new ExternalApiPhase0WebApplicationFactory
@@ -325,9 +300,7 @@ public sealed class McpAuthorizationTests
 
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(listResponse);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsDiscoverable(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
@@ -362,13 +335,11 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsHidden(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
     }
 
     [Test]
-    public async Task McpEndpoint_WithInstanceAdminApiKeyWithoutMcpPropose_CannotDiscoverOrCallProposalTools()
+    public async Task McpEndpoint_WithInstanceAdminApiKeyWithoutMcpPropose_CannotDiscoverOrCallGenericProposalTool()
     {
         const string keyId = "mcp-instance-admin-no-propose-key";
         const string secret = "mcp-instance-admin-no-propose-secret";
@@ -399,19 +370,14 @@ public sealed class McpAuthorizationTests
 
         listResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(listResponse);
-        AssertEventManagementReadsDiscoverable(toolNames);
-        AssertProposalToolsHidden(toolNames);
+        AssertAnonymousDiscoveryOnly(toolNames);
 
-        using var callRequest = CreateMcpToolCallRequest("propose_heavy_moderate_event", new
+        using var callRequest = CreateMcpToolCallRequest("propose_ai_tool_action", new
         {
             conversationId = Guid.CreateVersion7(),
-            eventId = Guid.CreateVersion7(),
-            expectedConcurrencyStamp = Guid.CreateVersion7(),
-            managementContextHasModerateHeavy = true,
-            reasonCode = "policy-review",
-            destructiveSummary = "Restrict event visibility until platform policy review completes.",
-            confirmationPhrase = "HEAVY_MODERATE_EVENT",
-            acknowledgedConsequences = true
+            toolName = "UnsupportedTool",
+            payloadJson = "{}",
+            summary = "Authorization boundary probe"
         });
         callRequest.Headers.Add("X-API-Key", rawApiKey);
 
@@ -633,9 +599,7 @@ public sealed class McpAuthorizationTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var toolNames = await ReadToolNamesAsync(response);
-        toolNames.Should().Contain("list_ai_tool_contracts");
-        AssertEventManagementReadsDiscoverable(toolNames);
-        AssertProposalToolsDiscoverable(toolNames);
+        AssertProposalDiscovery(toolNames);
     }
 
     [Test]
@@ -673,43 +637,12 @@ public sealed class McpAuthorizationTests
     private static HttpRequestMessage CreateMcpRequest()
         => CreateMcpListRequest("tools/list");
 
-    private static void AssertProposalToolsHidden(IReadOnlyList<string> toolNames)
-    {
-        foreach (var toolName in ProposalToolNames)
-        {
-            toolNames.Should().NotContain(toolName);
-        }
-    }
+    private static void AssertAnonymousDiscoveryOnly(IReadOnlyList<string> toolNames)
+        => toolNames.Should().BeEquivalentTo(["list_ai_tool_contracts"]);
 
-    private static void AssertEventManagementReadsHidden(IReadOnlyList<string> toolNames)
-    {
-        foreach (var toolName in EventManagementReadToolNames)
-        {
-            toolNames.Should().NotContain(toolName);
-        }
-    }
-
-    private static void AssertEventManagementReadsDiscoverable(IReadOnlyList<string> toolNames)
-    {
-        foreach (var toolName in EventManagementReadToolNames)
-        {
-            toolNames.Should().Contain(toolName);
-        }
-    }
-
-    private static void AssertProposalToolsDiscoverable(
-        IReadOnlyList<string> toolNames,
-        bool includeGeneric = true)
-    {
-        var expectedNames = includeGeneric
-            ? ProposalToolNames
-            : ProjectedProposalToolNames;
-
-        foreach (var toolName in expectedNames)
-        {
-            toolNames.Should().Contain(toolName);
-        }
-    }
+    private static void AssertProposalDiscovery(IReadOnlyList<string> toolNames)
+        => toolNames.Should().BeEquivalentTo(
+            ProposalToolNames.Prepend("list_ai_tool_contracts"));
 
     private static HttpRequestMessage CreateMcpListRequest(string method)
     {

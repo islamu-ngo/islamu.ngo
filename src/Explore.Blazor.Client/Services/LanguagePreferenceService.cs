@@ -1,30 +1,26 @@
-// ABOUTME: Client-side wrapper around POST /bff/language with CultureRegistry validation.
-// ABOUTME: Validates input against the allowlist before any HTTP call; logs and swallows transport errors.
+// ABOUTME: Browser-side wrapper around POST /bff/language with CultureRegistry validation.
+// ABOUTME: Uses browser fetch through JS interop so preference cookies reach the user's browser in every render mode.
 
 using Explore.Blazor.Client.Contracts.Services;
 using Explore.Blazor.Client.Localization;
+using Explore.Blazor.Client.Services.Interop;
 using Microsoft.Extensions.Logging;
-using Refit;
 
 namespace Explore.Blazor.Client.Services;
-
-public interface ILanguagePreferenceApi
-{
-    [Post("/bff/language")]
-    Task<IApiResponse> SetLanguageAsync([Query] string lang, CancellationToken cancellationToken);
-}
 
 /// <summary>
 /// Default <see cref="ILanguagePreferenceService"/> implementation.
 /// </summary>
 public sealed class LanguagePreferenceService : ILanguagePreferenceService
 {
-    private readonly ILanguagePreferenceApi _api;
+    private readonly LanguagePreferenceInterop _browserInterop;
     private readonly ILogger<LanguagePreferenceService> _logger;
 
-    public LanguagePreferenceService(ILanguagePreferenceApi api, ILogger<LanguagePreferenceService> logger)
+    public LanguagePreferenceService(
+        LanguagePreferenceInterop browserInterop,
+        ILogger<LanguagePreferenceService> logger)
     {
-        _api = api;
+        _browserInterop = browserInterop;
         _logger = logger;
     }
 
@@ -40,13 +36,13 @@ public sealed class LanguagePreferenceService : ILanguagePreferenceService
 
         try
         {
-            var response = await _api.SetLanguageAsync(entry.Code, ct);
+            var response = await _browserInterop.PersistAsync(entry.Code, ct);
 
-            if (!response.IsSuccessStatusCode)
+            if (!response.Ok)
             {
                 _logger.LogWarning(
                     "[LOCALIZATION] /bff/language returned {Status} for code {Code}",
-                    (int)response.StatusCode, entry.Code);
+                    response.Status, entry.Code);
                 return false;
             }
 

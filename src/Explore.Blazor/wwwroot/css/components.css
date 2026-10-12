@@ -39,6 +39,11 @@
     padding-block-end: var(--isl-space-6) !important;
 }
 
+.language-picker-snackbar {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
 /* Shell panels are application chrome, not page content. Keep them pinned
    below the sticky header while the center workspace scrolls normally. */
 .dock-side-host--shell {

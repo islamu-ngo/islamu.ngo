@@ -115,7 +115,10 @@
         _currentLang = languageCode;
 
         var entry = LanguageContext.ForLanguage(languageCode);
-        Snackbar.Add($"Language changed to {entry.LanguageName}", Severity.Success);
+        Snackbar.Add(
+            $"Language changed to {entry.LanguageName}",
+            Severity.Success,
+            options => options.SnackbarTypeClass = "language-picker-snackbar");
     }
 
     private string GetAriaLabel()

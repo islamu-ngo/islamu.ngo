@@ -69,6 +69,10 @@ export async function deleteSetupSecret() {
     return await _bffMutate('DELETE', '/bff/setup-secret');
 }
 
+export async function persistLanguagePreference(languageCode) {
+    return await _bffMutate('POST', '/bff/language?lang=' + encodeURIComponent(languageCode));
+}
+
 /**
  * Get the current setup secret status (persisted? valid?).
  * @returns {Promise<{hasPersistedSecret: boolean, isValid: boolean, error: string|null}>}

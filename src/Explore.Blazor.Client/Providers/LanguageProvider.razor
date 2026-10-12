@@ -47,16 +47,9 @@
 
         try
         {
-            // Try persisted state first (WASM picking up server prerender value)
-            string? lang = null;
-            if (PersistentState.TryTakeFromJson<string>(PersistenceKey, out var persisted) && !string.IsNullOrWhiteSpace(persisted))
-            {
-                lang = persisted;
-                Logger.LogInformation("[LANGUAGE] Restored language from PersistentComponentState: {Language}", lang);
-            }
-
-            // Fall back to cookie if no persisted state
-            lang ??= await JSRuntime.InvokeAsync<string?>("localization.getLanguageCookie");
+            PersistentState.TryTakeFromJson<string>(PersistenceKey, out var persisted);
+            var lang = await JSRuntime.InvokeAsync<string?>("localization.getLanguageCookie");
+            lang ??= string.IsNullOrWhiteSpace(persisted) ? null : persisted;
             lang ??= "en";
 
             var cookieDir = await JSRuntime.InvokeAsync<string?>("localization.getDirectionCookie");

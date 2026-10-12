@@ -16,6 +16,7 @@ using Explore.Blazor.Client.Contracts.Services.Organizations;
 using Explore.Blazor.Client.Contracts.Services.SupportAccess;
 using Explore.Blazor.Client.Contracts.Services.Webhooks;
 using Explore.Blazor.Client.Services;
+using Explore.Blazor.Client.Services.Interop;
 using Explore.Blazor.Client.Services.Accessibility;
 using Explore.Blazor.Client.Services.Ai;
 using Explore.Blazor.Client.Services.Blogs;
@@ -118,8 +119,7 @@ public static class ServiceCollectionExtensions
 
         // Localization
         services.AddScoped<ITranslationService, TranslationService>();
-        services.AddBffRefitClient<ILanguagePreferenceApi>(configureBffRefitClient)
-            .ConfigureBffRefitClient(configureBffRefitClientBuilder);
+        services.AddScoped<LanguagePreferenceInterop>();
         services.AddScoped<ILanguagePreferenceService, LanguagePreferenceService>();
         services.AddTransient<MudBlazor.MudLocalizer, MudBlazorLocalizer>();
 

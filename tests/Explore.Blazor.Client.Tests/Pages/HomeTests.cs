@@ -82,6 +82,21 @@ public class HomeTests : IDisposable
     }
 
     [Test]
+    public async Task Home_AnonymousLandingPage_UsesSequentialHeadingLevels()
+    {
+        _ctx.SetAnonymousUser();
+        SetupLandingPageServices();
+
+        var cut = _ctx.RenderMudComponent<Home>();
+        cut.WaitForState(() => !cut.Markup.Contains("mud-skeleton", StringComparison.OrdinalIgnoreCase), TimeSpan.FromSeconds(2));
+
+        var headingTags = cut.FindAll("h1, h2, h3, h4, h5, h6")
+            .Select(element => element.TagName)
+            .ToArray();
+        await Assert.That(headingTags).IsEquivalentTo(["H1", "H2", "H2", "H2", "H2"]);
+    }
+
+    [Test]
     public async Task Home_ShowsOrganizationCentricShell_WhenPrimaryOrganizationIsAvailable()
     {
         // Arrange

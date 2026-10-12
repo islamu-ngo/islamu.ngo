@@ -44,6 +44,7 @@ public sealed class CommunityGuidelinesTests : IDisposable
         });
 
         var content = cut.Find(".community-guidelines-content");
+        await Assert.That(cut.Find(".mud-container").ClassList).Contains("mud-container-maxwidth-sm");
         await Assert.That(content.TextContent).Contains("<script>alert(1)</script>");
         await Assert.That(content.TextContent).Contains("<img src=x onerror=alert(1)>");
         await Assert.That(content.InnerHtml).Contains("&lt;script&gt;alert(1)&lt;/script&gt;");

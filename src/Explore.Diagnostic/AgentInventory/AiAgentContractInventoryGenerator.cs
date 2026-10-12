@@ -85,7 +85,7 @@ public sealed class AiAgentContractInventoryGenerator
             builder.AppendLine();
         }
 
-        return builder.ToString();
+        return builder.ToString().TrimEnd() + Environment.NewLine;
     }
 
     private static string ExtractManualNotes(string? existingMarkdown)

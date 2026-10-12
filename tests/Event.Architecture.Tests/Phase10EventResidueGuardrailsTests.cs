@@ -122,6 +122,8 @@ public sealed class Phase10EventResidueGuardrailsTests
         @"\bschemas/openapi_islamu-event\.json\b",
         @"\bschemas/islamu-event\.md\b",
         @"\bislamu-event\.md\b",
+        @"\bevents:(?:read|write)\b",
+        @"\bregistrations:(?:read|write)\b",
         @"Explore\.Domain\.Event\b",
     ];
 

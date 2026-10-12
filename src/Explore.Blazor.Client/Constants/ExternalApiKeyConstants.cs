@@ -11,8 +11,6 @@ public static class ExternalApiKeyConstants
 {
     public static readonly IReadOnlyList<ScopeDefinition> AvailableScopes =
     [
-        new("events:read", "Events", "Read event data"),
-        new("events:write", "Events", "Create and update events"),
         new("organizations:read", "Organizations", "Read organization data"),
         new("organizations:write", "Organizations", "Create and update organizations"),
         new("groups:read", "Groups", "Read group data"),
@@ -20,7 +18,8 @@ public static class ExternalApiKeyConstants
         new("users:read", "Users", "Read user profiles"),
         new("users:write", "Users", "Update user data"),
         new("lookups:read", "Lookups", "Read lookup/reference data"),
-        new("registrations:write", "Registrations", "Manage event registrations"),
+        new("mcp:read", "AI Assistant", "Read AI assistant resources"),
+        new("mcp:propose", "AI Assistant", "Propose AI assistant actions"),
         new("api-keys:manage", "API Keys", "Manage API keys"),
         new("admin:tenant", "Administration", "Tenant administration"),
         new("admin:instance", "Administration", "Instance-wide administration"),
@@ -32,11 +31,11 @@ public static class ExternalApiKeyConstants
     /// </summary>
     private static readonly Dictionary<int, HashSet<string>> ScopeCeilings = new()
     {
-        [1] = ["events:read", "events:write", "users:read", "users:write", "lookups:read", "registrations:write", "api-keys:manage"], // User
-        [2] = ["events:read", "events:write", "users:read", "users:write", "lookups:read", "registrations:write", "api-keys:manage", "organizations:read", "organizations:write"], // Organization
-        [3] = ["events:read", "events:write", "users:read", "users:write", "lookups:read", "registrations:write", "api-keys:manage", "groups:read", "groups:write"], // Group
-        [4] = ["events:read", "events:write", "users:read", "users:write", "lookups:read", "registrations:write", "api-keys:manage", "organizations:read", "organizations:write", "groups:read", "groups:write", "admin:tenant"], // Tenant
-        [5] = ["events:read", "events:write", "users:read", "users:write", "lookups:read", "registrations:write", "api-keys:manage", "organizations:read", "organizations:write", "groups:read", "groups:write", "admin:tenant", "admin:instance"], // InstanceAdmin
+        [1] = ["users:read", "users:write", "lookups:read", "mcp:read", "mcp:propose", "api-keys:manage"], // User
+        [2] = ["users:read", "users:write", "lookups:read", "mcp:read", "mcp:propose", "api-keys:manage", "organizations:read", "organizations:write"], // Organization
+        [3] = ["users:read", "users:write", "lookups:read", "mcp:read", "mcp:propose", "api-keys:manage", "groups:read", "groups:write"], // Group
+        [4] = ["users:read", "users:write", "lookups:read", "mcp:read", "mcp:propose", "api-keys:manage", "organizations:read", "organizations:write", "groups:read", "groups:write", "admin:tenant"], // Tenant
+        [5] = ["users:read", "users:write", "lookups:read", "mcp:read", "mcp:propose", "api-keys:manage", "organizations:read", "organizations:write", "groups:read", "groups:write", "admin:tenant", "admin:instance"], // InstanceAdmin
     };
 
     /// <summary>Returns scope definitions allowed for the given owner type.</summary>

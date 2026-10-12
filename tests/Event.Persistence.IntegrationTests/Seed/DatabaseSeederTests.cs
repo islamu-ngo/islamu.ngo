@@ -49,7 +49,8 @@ public class DatabaseSeederTests(PostgreSqlContainerFixture fixture)
                 ["MAIL_SMTP_PORT"] = "1025",
                 ["MAIL_SMTP_ENCRYPTION"] = "None",
                 ["MAIL_SMTP_FROM_ADDRESS"] = "noreply@localhost",
-                ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Website Dev"
+                ["MAIL_SMTP_FROM_NAME"] = "ISLAMU Website Dev",
+                ["ISLAMU_ASPIRE_MODE"] = "DefaultLocal"
             })
             .Build();
 
@@ -77,8 +78,10 @@ public class DatabaseSeederTests(PostgreSqlContainerFixture fixture)
                 foreach (var setting in smtpSettings)
                 {
                     setting.Value = setting.SettingKey == GovernanceSettingKeys.Email.SmtpPort
-                        ? "587"
-                        : "\"\"";
+                        ? "34963"
+                        : setting.SettingKey == GovernanceSettingKeys.Email.SmtpHost
+                            ? "\"localhost\""
+                            : "\"\"";
                 }
 
                 await resetContext.SaveChangesAsync();

@@ -1,5 +1,5 @@
 // ABOUTME: Resolves tenant identity authoritatively inside the API host from trusted forwarded context.
-// ABOUTME: Uses slug and host hints to set the shared tenant accessor before application code touches tenant-scoped data.
+// ABOUTME: Exempts explicit host-administration routes and otherwise resolves slug or host hints before tenant-scoped data access.
 
 using Explore.API.Authentication;
 using Explore.API.Configuration;
@@ -168,6 +168,7 @@ public sealed class ApiTenantResolutionMiddleware
     {
         return path.StartsWithSegments("/api/InstanceOnboarding", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/api/System", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWithSegments("/api/admin/control-plane", StringComparison.OrdinalIgnoreCase)
             || string.Equals(
                 path.Value,
                 "/api/instance/settings/resolver-config",

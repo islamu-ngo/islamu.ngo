@@ -1,5 +1,5 @@
 // ABOUTME: Completes split-phase tenant handling after authentication for API-key callers and mismatch checks.
-// ABOUTME: Sets tenant context from authenticated machine principals and fail-closes when tenant hints conflict.
+// ABOUTME: Binds machine principals, permits explicit host-admin routes, and fail-closes when tenant hints conflict.
 
 using Explore.API.Authentication;
 using Explore.API.Configuration;
@@ -291,6 +291,7 @@ public sealed class ApiTenantPostAuthenticationMiddleware
     {
         return path.StartsWithSegments("/api/InstanceOnboarding", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/api/System", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWithSegments("/api/admin/control-plane", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/api/instance/settings", StringComparison.OrdinalIgnoreCase)
             || path.StartsWithSegments("/api/managed-provider-provisioning", StringComparison.OrdinalIgnoreCase);
     }

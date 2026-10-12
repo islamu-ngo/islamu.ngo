@@ -2,6 +2,7 @@
 // ABOUTME: No crash, no fake login, provider list empty, auth status not authenticated.
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Explore.Blazor.Client.Clients;
 using Explore.Blazor.IntegrationTests.Fixtures;
 using Explore.Blazor.Services;
@@ -146,6 +147,25 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
         csp.Should().Contain("base-uri 'self'");
         csp.Should().Contain("object-src 'none'");
         csp.Should().Contain("form-action 'self'");
+    }
+
+    [Test]
+    public async Task StaticPages_UseTheResponseCspNonceForTheImportMap()
+    {
+        var response = await _client.GetAsync("/");
+
+        response.Headers.TryGetValues("Content-Security-Policy", out var values).Should().BeTrue();
+        var csp = values.Should().ContainSingle().Subject;
+        var nonce = Regex.Match(csp, "'nonce-(?<value>[^']+)'", RegexOptions.CultureInvariant)
+            .Groups["value"]
+            .Value;
+        nonce.Should().NotBeNullOrWhiteSpace("the response policy must authorize its generated import map");
+
+        var body = await response.Content.ReadAsStringAsync();
+        var decodedBody = System.Net.WebUtility.HtmlDecode(body);
+        decodedBody.Should().Contain($"<script type=\"importmap\" nonce=\"{nonce}\">");
+        decodedBody.Should().NotContain("http-equiv=\"Content-Security-Policy\"",
+            "the response header is the single enforceable CSP source");
     }
 
     [Test]

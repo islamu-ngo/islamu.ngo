@@ -4,6 +4,7 @@
 using Explore.Blazor.Client.Services;
 using Explore.Blazor.Middleware;
 using Explore.Blazor.Services;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -13,11 +14,13 @@ namespace Explore.Blazor.Extensions;
 
 public static class MiddlewareExtensions
 {
-    private const string ContentSecurityPolicy =
+    public const string ContentSecurityPolicyNonceItemKey = "Explore.Blazor.ContentSecurityPolicyNonce";
+
+    private static string BuildContentSecurityPolicy(string nonce) =>
         "default-src 'self'; " +
         "img-src 'self' data: https: blob:; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "script-src 'self' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0='; " +
+        $"script-src 'self' 'unsafe-hashes' 'sha256-qnHnQs7NjQNHHNYv/I9cW+I62HzDJjbnyS/OFzqlix0=' 'nonce-{nonce}'; " +
         "connect-src 'self' https: http: ws: wss:; " +
         "font-src 'self' https://fonts.gstatic.com; " +
         "frame-ancestors 'none'; " +
@@ -165,10 +168,13 @@ public static class MiddlewareExtensions
 
     private static async Task AddBffSecurityHeadersAsync(HttpContext context, Func<Task> next)
     {
+        var nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        context.Items[ContentSecurityPolicyNonceItemKey] = nonce;
+
         context.Response.OnStarting(() =>
         {
             var headers = context.Response.Headers;
-            headers[HeaderNames.ContentSecurityPolicy] = ContentSecurityPolicy;
+            headers[HeaderNames.ContentSecurityPolicy] = BuildContentSecurityPolicy(nonce);
             headers[HeaderNames.XFrameOptions] = "DENY";
             headers[HeaderNames.XContentTypeOptions] = "nosniff";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";

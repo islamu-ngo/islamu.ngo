@@ -1,10 +1,13 @@
+<!-- ABOUTME: Builds the shared Razor component library and exposes its browser assets at host-root paths. -->
+<!-- ABOUTME: Generates the typed ISLAMU API client from the canonical OpenAPI schema before compilation. -->
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <StaticWebAssetProjectMode>Root</StaticWebAssetProjectMode>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <NswagSchema>$(MSBuildProjectDirectory)/../../schemas/openapi_islamu.json</NswagSchema>
     <NswagConfig>$(MSBuildProjectDirectory)/nswag.json</NswagConfig>
     <NswagClientOutput>$(MSBuildProjectDirectory)/Clients/IslamuApiClient.g.cs</NswagClientOutput>

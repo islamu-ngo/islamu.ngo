@@ -169,6 +169,22 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
     }
 
     [Test]
+    public async Task ClientStaticModules_AreServedFromBrowserContractPaths()
+    {
+        string[] paths = ["/js/localization.js", "/js/bff.js"];
+
+        foreach (var path in paths)
+        {
+            var response = await _client.GetAsync(path);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, path);
+            response.Content.Headers.ContentType?.MediaType.Should().Be("text/javascript", path);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().NotContain("<!DOCTYPE html>", path);
+        }
+    }
+
+    [Test]
     public async Task LaunchRoutes_CarryBrowserSecurityHeaders()
     {
         string[] paths = ["/", "/errors/404", "/css/layers.css"];
@@ -191,6 +207,8 @@ public class BffNoKeycloakResilienceTests : IAsyncDisposable
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("rel=\"manifest\" href=\"manifest.webmanifest\"");
         body.Should().Contain("name=\"theme-color\" content=\"#2563eb\"");
+        body.Should().Contain("Explore.Blazor.Client.styles",
+            "the root-mounted Razor library keeps its scoped component styles in a separate bundle");
         body.Should().NotContain("Icon_landingpage.png");
     }
 

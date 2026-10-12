@@ -5,9 +5,6 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Event.Api.IntegrationTests.Fixtures;
-using Event.Api.IntegrationTests.Seeds;
-using Explore.Persistence;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Event.Api.IntegrationTests.Features;
 
@@ -20,25 +17,18 @@ namespace Event.Api.IntegrationTests.Features;
 [NotInParallel("StressDb")]
 public class StressRateLimitingTests(StressApiFixture fixture)
 {
+    private const string AuthenticatedProbeUrl = "/api/features/my-flags";
     private readonly StressApiFixture _fixture = fixture;
 
     [Test]
     public async Task AuthenticatedEndpoint_RepeatedRequests_ShouldNotReturnServerErrors()
     {
-        await _fixture.ResetDatabaseAsync();
-
-        await using var scope = _fixture.Factory.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
-        var tenant = await TenantScenarioSeed.SeedActiveTenantWithUserAsync(db);
-
         var userId = Guid.NewGuid();
         var observedStatuses = new List<HttpStatusCode>();
 
-        var url = $"/api/admin/custom-property-projections/status?tenantId={tenant.TenantId}";
-
         for (var i = 0; i < 10; i++)
         {
-            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, url, userId);
+            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, AuthenticatedProbeUrl, userId);
 
             var response = await _fixture.Client.SendAsync(request);
             observedStatuses.Add(response.StatusCode);
@@ -55,20 +45,12 @@ public class StressRateLimitingTests(StressApiFixture fixture)
     [Test]
     public async Task RateLimited_ShouldReturnRetryAfterHeader()
     {
-        await _fixture.ResetDatabaseAsync();
-
-        await using var scope = _fixture.Factory.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
-        var tenant = await TenantScenarioSeed.SeedActiveTenantWithUserAsync(db);
-
         var userId = Guid.NewGuid();
         HttpResponseMessage? rateLimitedResponse = null;
 
-        var url = $"/api/admin/custom-property-projections/status?tenantId={tenant.TenantId}";
-
         for (var i = 0; i < 10; i++)
         {
-            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, url, userId);
+            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, AuthenticatedProbeUrl, userId);
 
             var response = await _fixture.Client.SendAsync(request);
 
@@ -93,20 +75,12 @@ public class StressRateLimitingTests(StressApiFixture fixture)
     [Test]
     public async Task RateLimited_ShouldReturnProblemDetailsBody()
     {
-        await _fixture.ResetDatabaseAsync();
-
-        await using var scope = _fixture.Factory.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<ExploreDbContext>();
-        var tenant = await TenantScenarioSeed.SeedActiveTenantWithUserAsync(db);
-
         var userId = Guid.NewGuid();
         HttpResponseMessage? rateLimitedResponse = null;
 
-        var url = $"/api/admin/custom-property-projections/status?tenantId={tenant.TenantId}";
-
         for (var i = 0; i < 10; i++)
         {
-            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, url, userId);
+            var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, AuthenticatedProbeUrl, userId);
 
             var response = await _fixture.Client.SendAsync(request);
 

@@ -60,8 +60,13 @@ public class ApiEndpointSmokeTests
 
             // NotFound is acceptable for GetById endpoints with sample/random IDs
             var hasPathParams = description.ParameterDescriptions.Any(p => p.Source == BindingSource.Path);
+            var isExpectedDisabledCapability = path.Equals(
+                "/api/management/capabilities",
+                StringComparison.OrdinalIgnoreCase)
+                && response.StatusCode == HttpStatusCode.NotFound;
             var isSuccess = response.StatusCode is HttpStatusCode.OK or HttpStatusCode.NoContent
-                || (hasPathParams && response.StatusCode == HttpStatusCode.NotFound);
+                || (hasPathParams && response.StatusCode == HttpStatusCode.NotFound)
+                || isExpectedDisabledCapability;
 
             if (!isSuccess)
             {

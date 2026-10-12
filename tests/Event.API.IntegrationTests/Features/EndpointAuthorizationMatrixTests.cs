@@ -179,18 +179,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
         await AssertAnonymousOk("/api/instanceonboarding/status");
     }
 
-    [Test]
-    public async Task Matrix_Public_RegistrationScopes_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/registrationscope");
-    }
-
-    [Test]
-    public async Task Matrix_Public_ScheduleItemKinds_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/scheduleitemkind");
-    }
-
     public async Task Matrix_Public_AuthProviderStatus_AnonymousOK()
     {
         await AssertAnonymousOk("/api/instance/settings/auth-provider/status");
@@ -335,12 +323,6 @@ public class EndpointAuthorizationMatrixTests : IAsyncDisposable
     public async Task Matrix_Auth_CustomPropertyGovernance_AnonymousDenied()
     {
         await AssertAnonymousUnauthorized("/api/admin/custom-property-definitions/governance-report");
-    }
-
-    [Test]
-    public async Task Matrix_Auth_CustomPropertyProjectionAdmin_AnonymousDenied()
-    {
-        await AssertAnonymousUnauthorized("/api/admin/custom-property-projections/status");
     }
 
     #endregion

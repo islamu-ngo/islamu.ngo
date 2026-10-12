@@ -206,7 +206,7 @@ public sealed class BlogHateoasTests
     [Test]
     public async Task BlogHalOpenApiCatalog_ContainsBlogDtoSchemas()
     {
-        var apiAssembly = typeof(LinkRelations).Assembly;
+        var apiAssembly = typeof(RouteNames).Assembly;
         var catalogType = apiAssembly.GetType("Explore.API.OpenApi.HalOpenApiSchemaCatalog", throwOnError: true)!;
 
         var registered = (IReadOnlyList<Type>)catalogType.GetProperty("RegisteredDtoTypes")!.GetValue(null)!;

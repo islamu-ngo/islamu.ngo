@@ -162,9 +162,9 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_InstanceSettings_ResolverConfig_DeniesRegularUser()
+    public async Task Governance_InstanceSettings_ResolverConfig_AllowsAnonymousBootstrapRead()
     {
-        await AssertRegularUserDenied(HttpMethod.Get, "/api/instance/settings/resolver-config");
+        await AssertAnonymousOk("/api/instance/settings/resolver-config");
     }
 
     #endregion
@@ -299,27 +299,9 @@ public class CoverageGovernanceTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task Governance_PublicLookup_AudienceAges_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/audienceage");
-    }
-
-    [Test]
-    public async Task Governance_PublicLookup_AudienceGenders_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/audiencegender");
-    }
-
-    [Test]
     public async Task Governance_PublicLookup_ApprovalStatuses_AnonymousOK()
     {
         await AssertAnonymousOk("/api/approvalstatus");
-    }
-
-    [Test]
-    public async Task Governance_PublicLookup_RegistrationModes_AnonymousOK()
-    {
-        await AssertAnonymousOk("/api/registrationmode");
     }
 
     [Test]

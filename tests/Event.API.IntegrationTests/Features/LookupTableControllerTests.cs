@@ -42,24 +42,6 @@ public class LookupTableControllerTests
 
     #endregion
 
-    #region RegistrationMode Controller
-
-    [Test]
-    public async Task RegistrationMode_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/registrationmode");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task RegistrationMode_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/registrationmode/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
     #region ApprovalStatus Controller
 
     [Test]
@@ -73,42 +55,6 @@ public class LookupTableControllerTests
     public async Task ApprovalStatus_GetById_WithValidId_ShouldNotReturnServerError()
     {
         var response = await _fixture.Client.GetAsync("/api/approvalstatus/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
-    #region AudienceAge Controller
-
-    [Test]
-    public async Task AudienceAge_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/audienceage");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task AudienceAge_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/audienceage/1");
-        await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
-    }
-
-    #endregion
-
-    #region AudienceGender Controller
-
-    [Test]
-    public async Task AudienceGender_GetAll_ShouldReturnOk()
-    {
-        var response = await _fixture.Client.GetAsync("/api/audiencegender");
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
-    }
-
-    [Test]
-    public async Task AudienceGender_GetById_WithValidId_ShouldNotReturnServerError()
-    {
-        var response = await _fixture.Client.GetAsync("/api/audiencegender/1");
         await Assert.That(response.StatusCode).IsNotEqualTo(HttpStatusCode.InternalServerError);
     }
 

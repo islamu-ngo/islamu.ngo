@@ -4,22 +4,23 @@
 # Contribution Legal Governance Decision
 
 > **Audience:** Maintainers | Legal reviewers | Contributors | AI agents
-> **Status:** CLA v2.0 workflow implemented; agreement remains pending legal review and repository settings verification
+> **Status:** Draft
+> **Approval:** CLA v2.0 workflow designed locally; legal approval, publication, signature storage, and repository enforcement remain pending
 > **Owner:** Platform/Ops | Contributor Experience | Legal reviewer
-> **Last Verified:** 2026-07-15
+> **Last Verified:** 2026-07-19
 > **Source Anchors:** `docs/CI_CD_GOVERNANCE.md`, `docs/CONTRIBUTING.md`, `legal/CLA.md`, `.github/workflows/cla.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
 
-This document records the legal contribution gate decision and automation threat model. The active agreement is [CLA.md](../../legal/CLA.md).
+This document records the proposed legal contribution gate and automation threat model. The draft agreement under review is [CLA.md](../../legal/CLA.md).
 
 ## Current Decision
 
 | Question | Current Answer |
 |---|---|
-| Legal posture | CLA only. Every non-bot contributor must sign the ISLAMU CLA v2.0. |
+| Legal posture | Proposed CLA-only gate. Every non-bot contributor would sign the ISLAMU CLA v2.0 after legal approval and rollout. |
 | Inbound scope | Broad copyright and patent license grant to the ISLAMU project steward so the website and related project materials can be maintained, provided, sublicensed, or relicensed under alternative terms for legitimate sustainability, nonprofit, humanitarian, public-sector, procurement-restricted, hosted-service, or social-impact needs. |
-| Enforcing workflow | `.github/workflows/cla.yml` validates pull request and issue-comment metadata with `contributor-assistant/github-action`, pinned to a full commit SHA. |
-| Approved legal document | `legal/CLA.md` is the active CLA v2.0 operational draft, pending final legal review. |
-| Signature storage | Same-repository signature JSON at `signatures/v2.0/cla.json` on `develop`, plus GitHub PR/comment audit trail. Earlier v1.0 records remain historical evidence only. |
+| Enforcing workflow | `.github/workflows/cla.yml` is the locally configured metadata-only workflow using `contributor-assistant/github-action`, pinned to a full commit SHA. It is not present on the current GitHub default branch and therefore does not enforce contributions remotely. |
+| Legal document | `legal/CLA.md` is the proposed CLA v2.0 operational draft, pending final legal review and owner approval. |
+| Signature storage | Proposed same-repository JSON at `signatures/v2.0/cla.json` on `develop`, plus the GitHub PR/comment audit trail. GitHub currently has no `develop` branch, and neither the current local tree nor the default branch contains v1.0 signature evidence; continuity requires owner/legal confirmation before rollout. |
 | Token model | Default `GITHUB_TOKEN` with explicit write scopes for same-repository signature storage, pull-request comments, issue comments, and statuses. |
 | Bot allowlist | Explicit only: `dependabot[bot]` and `github-actions[bot]`. Broad patterns such as `bot*` are not approved. |
 
@@ -86,14 +87,17 @@ Repository rule:
 
 ## Required Approval Checklist
 
-- [x] Project owner chooses CLA only.
+- [ ] Repository owner confirms the proposed CLA-only posture.
 - [x] Inbound copyright and patent scope is documented in `legal/CLA.md`.
 - [x] Actual agreement text exists at `legal/CLA.md`.
 - [x] Signature storage location, access model, retention period, and privacy note are documented as repository signature JSON plus GitHub PR/comment audit trail.
 - [x] Automation token model is explicit `GITHUB_TOKEN` permissions scoped to the CLA Assistant workflow's signature, comment, and status operations.
 - [x] Bot allowlist is explicit and contains only known trusted bots.
-- [x] Archived-action risk is accepted only for the pinned `contributor-assistant/github-action` CLA workflow and tracked as a migration risk; the SHA pin prevents silent action drift.
+- [x] Archived-action risk is documented for the pinned `contributor-assistant/github-action` CLA workflow; the SHA pin prevents silent action drift.
 - [x] `pull_request_target` threat model is implemented as metadata-only validation of the trusted base branch.
+- [ ] Legal reviewer approves CLA v2.0 text, signature evidence/retention treatment, and archived-action risk.
+- [ ] Repository owner approves the signature-storage branch and publishes the workflow to the default branch.
+- [ ] The configured signature branch/path is created and a non-production pull request proves the complete signing/recheck/status flow.
 - [ ] Branch protection status-check requirement is added only after the workflow is stable.
 
 ## Threat Model Requirements For Future Automation
@@ -111,7 +115,7 @@ Repository rule:
 
 ## Current Contributor Instructions
 
-Every non-bot contributor must sign the ISLAMU CLA in [CLA.md](../../legal/CLA.md) by posting the exact CLA v2.0 signature comment on the pull request.
+Once the CLA is approved and the workflow is published, every non-bot contributor must sign the ISLAMU CLA in [CLA.md](../../legal/CLA.md) by posting the exact CLA v2.0 signature comment on the pull request. Until then, maintainers must not treat the draft or the absent remote check as signature evidence.
 
 Required pull request comment:
 

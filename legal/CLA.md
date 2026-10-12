@@ -113,20 +113,20 @@ Courts located in Brussels, Belgium shall have jurisdiction, unless mandatory la
 
 ## How To Sign
 
-Every non-bot contributor to a pull request must sign this CLA by posting the following exact comment on the pull request:
+Once this draft is legally approved and its workflow is enabled, every non-bot contributor to a pull request must sign this CLA by posting the following exact comment on the pull request:
 
 ```text
 I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
 ```
 
-The ISLAMU CLA workflow (powered by [cla-assistant/github-action][cla-action-link], pinned at `contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08 # v2.6.1`) records each signature in `signatures/v2.0/cla.json` on the `develop` branch. The recorded entry stores the contributor's GitHub username, user ID, the pull request number, the signing comment ID and body, and an ISO-8601 timestamp.
+The configured ISLAMU CLA workflow (powered by [cla-assistant/github-action][cla-action-link], pinned at `contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08 # v2.6.1`) is intended to record each signature in `signatures/v2.0/cla.json` on the `develop` branch. The recorded entry would store the contributor's GitHub username, user ID, the pull request number, the signing comment ID and body, and an ISO-8601 timestamp. The workflow and signature branch must be approved, published, and verified before this draft is enforced.
 
-Version 2.0 replaces the Event-specific v1.0 agreement. Earlier signatures remain in `signatures/v1.0/cla.json`, but contributors must sign v2.0 for new contributions. Future versions use a new version segment and require a new signature.
+Version 2.0 is intended to replace the Event-specific v1.0 agreement. No `signatures/v1.0/cla.json` file is present in the current repository tree or GitHub default branch. The owner and legal reviewer must establish whether any historical signature evidence exists elsewhere and approve its treatment before v2.0 enforcement; it must not be silently discarded or represented as repository evidence. Future versions use a new version segment and require a new signature.
 
 To re-run the CLA check after signing, post a comment containing only `recheck`.
 
-The CLA workflow runs on `pull_request_target` and `issue_comment` events only. It does not checkout, build, test, cache, restore packages, or execute pull-request head code.
+The configured CLA workflow is limited to `pull_request_target` and `issue_comment` events. It does not checkout, build, test, cache, restore packages, or execute pull-request head code.
 
-The CLA workflow uses explicit `GITHUB_TOKEN` permissions for signature storage, pull-request comments, issue comments, and commit statuses. It must not receive deployment, package, OIDC, registry, or secret-bearing credentials for pull-request head code.
+The configured CLA workflow uses explicit `GITHUB_TOKEN` permissions for signature storage, pull-request comments, issue comments, and commit statuses. It must not receive deployment, package, OIDC, registry, or secret-bearing credentials for pull-request head code.
 
 [cla-action-link]: https://github.com/contributor-assistant/github-action

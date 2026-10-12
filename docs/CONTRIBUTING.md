@@ -4,7 +4,7 @@
 # Contributing
 
 > **Audience:** Contributors | AI agents
-> **Status:** Implemented
+> **Status:** Active
 > **Owner:** Contributor Experience
 > **Last Verified:** 2026-07-19
 > **Source Anchors:** `docs/FIRST_CONTRIBUTION.md`, `docs/TESTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/`, `dev/HANDOFF_TEMPLATE.md`
@@ -64,11 +64,11 @@ Before opening a PR:
 
 ## Contributor Legal Status
 
-Every non-bot contributor must sign the [ISLAMU Contributor License Agreement v2.0](../legal/CLA.md) by posting this exact comment on the pull request:
+Once the draft agreement is legally approved and its workflow is enabled, every non-bot contributor must sign the [ISLAMU Contributor License Agreement v2.0](../legal/CLA.md) by posting this exact comment on the pull request:
 
 > I have read and agree to the ISLAMU Contributor License Agreement v2.0, and I confirm that I have the right to submit my contribution under it.
 
-The `Contributor License Agreement` workflow records v2.0 signatures in `signatures/v2.0/cla.json` on the `develop` branch. Historical v1.0 records remain historical; they do not replace v2.0 acceptance. The workflow uses `pull_request_target` and `issue_comment` metadata only; it must not checkout, build, test, cache, restore packages, or execute pull-request head code.
+The locally configured `Contributor License Agreement` workflow is intended to record v2.0 signatures in `signatures/v2.0/cla.json` on the `develop` branch. It uses `pull_request_target` and `issue_comment` metadata only; it must not checkout, build, test, cache, restore packages, or execute pull-request head code. The current GitHub repository has neither that workflow on its default branch nor a `develop` branch, and no v1.0 signature file was found. Until legal approval and repository rollout are complete, maintainers must not merge an external contribution on the assumption that this draft CLA is enforced.
 
 ## Branch And Commit
 

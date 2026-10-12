@@ -501,6 +501,41 @@ public sealed class DockHostTests : IDisposable
     }
 
     [Test]
+    public async Task DockOverlayHost_ConcurrentInitialRenders_LockScrollOnlyOnce()
+    {
+        var inspectorPanelId = new DockPanelId("workspace.concurrent-initial-render");
+        var lockStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseLock = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var scrollManager = Substitute.For<IScrollManager>();
+#pragma warning disable CA2012 // NSubstitute setup captures the ValueTask without awaiting it.
+        scrollManager.LockScrollAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(_ =>
+        {
+            lockStarted.TrySetResult();
+            return new ValueTask(releaseLock.Task);
+        });
+        scrollManager.UnlockScrollAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(ValueTask.CompletedTask);
+#pragma warning restore CA2012
+        _ctx.Services.AddSingleton(scrollManager);
+        _dockLayoutState.Register(
+            CreateDescriptor(inspectorPanelId, DockScope.Workspace, DockSide.End, DockMode.Inspector, order: 10),
+            CreateContent("Concurrent initial render panel"));
+        _dockLayoutState.Open(inspectorPanelId);
+
+        var renderTask = Task.Run(() => _ctx.Render<DockOverlayHost>(parameters => parameters
+            .Add(component => component.Scope, DockScope.Workspace)));
+
+        await lockStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        _dockLayoutState.Refresh();
+        await Task.Delay(50);
+        releaseLock.TrySetResult();
+        var cut = await renderTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+        cut.WaitForAssertion(() =>
+            scrollManager.Received(1).LockScrollAsync("body", "scroll-locked").GetAwaiter().GetResult(),
+            timeout: TimeSpan.FromSeconds(2));
+    }
+
+    [Test]
     public async Task DockOverlayHost_OpeningOverlay_EnablesFocusTrapForTemporaryChromeOnly()
     {
         var inspectorPanelId = new DockPanelId("workspace.inspector-focus-trap");

@@ -114,24 +114,48 @@
 
         if (ShouldLockScroll && !_scrollLocked)
         {
-            await ScrollManager.LockScrollAsync(BodyElementId, ScrollLockClass);
             _scrollLocked = true;
+            try
+            {
+                await ScrollManager.LockScrollAsync(BodyElementId, ScrollLockClass);
+            }
+            catch
+            {
+                _scrollLocked = false;
+                throw;
+            }
         }
         else if (!ShouldLockScroll && _scrollLocked)
         {
-            await ScrollManager.UnlockScrollAsync(BodyElementId, ScrollLockClass);
             _scrollLocked = false;
+            try
+            {
+                await ScrollManager.UnlockScrollAsync(BodyElementId, ScrollLockClass);
+            }
+            catch
+            {
+                _scrollLocked = true;
+                throw;
+            }
         }
 
         if (activeOverlayOpen && !_overlayLifecycleActive)
         {
-            await ActivateOverlayAsync();
             _overlayLifecycleActive = true;
+            try
+            {
+                await ActivateOverlayAsync();
+            }
+            catch
+            {
+                _overlayLifecycleActive = false;
+                throw;
+            }
         }
         else if (!renderedOverlayOpen && _overlayLifecycleActive)
         {
-            await DeactivateOverlayAsync();
             _overlayLifecycleActive = false;
+            await DeactivateOverlayAsync();
         }
     }
 
@@ -234,8 +258,8 @@
 
             if (_overlayLifecycleActive)
             {
-                await DeactivateOverlayAsync();
                 _overlayLifecycleActive = false;
+                await DeactivateOverlayAsync();
             }
         }
 
@@ -257,8 +281,16 @@
     {
         if (_scrollLocked)
         {
-            await ScrollManager.UnlockScrollAsync(BodyElementId, ScrollLockClass);
             _scrollLocked = false;
+            try
+            {
+                await ScrollManager.UnlockScrollAsync(BodyElementId, ScrollLockClass);
+            }
+            catch
+            {
+                _scrollLocked = true;
+                throw;
+            }
         }
 
         if (_focusSaved)

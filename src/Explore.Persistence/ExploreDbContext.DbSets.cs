@@ -92,6 +92,7 @@ public partial class ExploreDbContext
     public DbSet<CustomPropertyDefinition> CustomPropertyDefinitions { get; set; }
     public DbSet<CustomPropertyOption> CustomPropertyOptions { get; set; }
     public DbSet<CustomPropertyValue> CustomPropertyValues { get; set; }
+    public DbSet<Madhab> Madhabs { get; set; }
     public DbSet<VisibilityType> VisibilityTypes { get; set; }
     public DbSet<Language> Languages { get; set; }
     public DbSet<ApprovalStatus> ApprovalStatuses { get; set; }

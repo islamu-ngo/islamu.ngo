@@ -65,6 +65,7 @@ public static class LookupTableSeeder
         await SeedDidCustodyTypesAsync(context, cancellationToken);
         await SeedFileTypesAsync(context, cancellationToken);
         await SeedLanguagesAsync(context, cancellationToken);
+        await SeedMadhabsAsync(context, cancellationToken);
         await SeedModuleDefinitionsAsync(context, cancellationToken);
         await SeedOrganizationPositionsAsync(context, cancellationToken);
         await SeedGroupPositionsAsync(context, cancellationToken);
@@ -872,6 +873,18 @@ public static class LookupTableSeeder
             new Language { Id = 10, MasterCode = "DE", FullName = "German", Description = "German language" },
             new Language { Id = 11, MasterCode = "NL", FullName = "Dutch", Description = "Dutch language" },
             new Language { Id = 12, MasterCode = "ES", FullName = "Spanish", Description = "Spanish language" });
+        await context.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedMadhabsAsync(ExploreDbContext context, CancellationToken ct)
+    {
+        if (await context.Madhabs.AnyAsync(ct)) return;
+
+        context.Madhabs.AddRange(
+            new Madhab { Id = (int)MadhabEnum.Hanafi, MasterCode = "HANAFI", FullName = "Hanafi", Description = "Hanafi school of Islamic jurisprudence" },
+            new Madhab { Id = (int)MadhabEnum.Maliki, MasterCode = "MALIKI", FullName = "Maliki", Description = "Maliki school of Islamic jurisprudence" },
+            new Madhab { Id = (int)MadhabEnum.Shafii, MasterCode = "SHAFII", FullName = "Shafi'i", Description = "Shafi'i school of Islamic jurisprudence" },
+            new Madhab { Id = (int)MadhabEnum.Hanbali, MasterCode = "HANBALI", FullName = "Hanbali", Description = "Hanbali school of Islamic jurisprudence" });
         await context.SaveChangesAsync(ct);
     }
 

@@ -121,6 +121,7 @@ public static class PersistenceServicesRegistration
         // Lookup Table Repositories
         services.AddScoped<IApprovalStatusRepository, ApprovalStatusRepository>();
         services.AddScoped<IVisibilityTypeRepository, VisibilityTypeRepository>();
+        services.AddScoped<IMadhabRepository, MadhabRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
         services.AddScoped<IOrganizationPositionRepository, OrganizationPositionRepository>();
         services.AddScoped<IGroupPositionRepository, GroupPositionRepository>();

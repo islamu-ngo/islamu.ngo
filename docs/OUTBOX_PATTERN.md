@@ -1,163 +1,137 @@
-ABOUTME: Transactional outbox pattern implementation for reliable event delivery with at-least-once semantics.
-ABOUTME: Covers OutboxMessage entity, processor lifecycle, retry/dead-letter strategy, and configuration.
+<!-- ABOUTME: Documents the current generic and specialized durable-work boundaries. -->
+<!-- ABOUTME: Covers managed provisioning dispatch, retries, email, webhooks, federation, and integrations. -->
 
 # Outbox Pattern
 
-The transactional outbox ensures domain state changes and event publication are atomic. Events are persisted in the same database transaction as business data, then dispatched asynchronously by a background processor.
+> **Audience:** Contributors | Operators | AI agents
+> **Status:** Active
+> **Owner:** Platform/Architecture
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `src/Explore.Domain/OutboxMessage.cs`, `src/Explore.Persistence/Repositories/OutboxRepository.cs`, `src/Explore.Infrastructure/Messaging/CompositeOutboxMessageDispatcher.cs`, `src/Explore.API/BackgroundServices/OutboxProcessor.cs`, `src/Explore.Application/Features/Management/Handlers/ManagedTenantProvisioningHandlers.cs`, `src/Explore.Domain/EmailDispatchOutbox.cs`, `src/Explore.Infrastructure/EmailDispatchDrainService.cs`, `src/Explore.Domain/Federation/PdsSyncOutbox.cs`, `src/Explore.API/BackgroundServices/PdsSyncWorker.cs`, `src/Explore.Infrastructure/IntegrationSyncDrainService.cs`, `src/Explore.API/Controllers/WebhooksController.cs`
 
-## Why Outbox
+## Current Boundary
 
-The dual-write problem occurs when a service must update its database and publish a message — either can fail independently. The outbox pattern eliminates this by making event creation part of the business transaction. The outbox table becomes the source of truth for pending events.
+The repository uses durable PostgreSQL state for work that must survive process failure. There is
+one generic `OutboxMessage` processor and several specialized state machines. They share the
+at-least-once principle, but they are not interchangeable and do not share one dispatcher.
 
-Delivery guarantee: **at-least-once**. Consumers must be idempotent.
+The current generic `OutboxMessage` producer and dispatcher route are limited to managed tenant
+provisioning. No content publication, moderation, reporting, or subscriber-fanout message is
+registered in `CompositeOutboxMessageDispatcher`.
 
-## Domain Model
+## Generic Outbox
 
-### OutboxMessage Entity
+`OutboxMessage` stores:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `Id` | `Guid` (UUID v7) | Auto-generated via `uuidv7()` |
-| `AggregateType` | `string(200)` | Source aggregate (e.g., `Event`, `Actor`) |
-| `AggregateId` | `Guid` | Source aggregate ID |
-| `EventType` | `string(200)` | Event name (e.g., `EventCreated`) |
-| `Payload` | `string?` (JSONB) | Serialized event data |
-| `Status` | `OutboxMessageStatus` | Current lifecycle state |
-| `CreatedAt` | `DateTime` | When the message was created |
-| `ProcessedAt` | `DateTime?` | When processing completed |
-| `RetryCount` | `int` | Number of dispatch attempts |
-| `LastError` | `string?(2000)` | Last failure reason |
-| `NextRetryAt` | `DateTime?` | Scheduled next attempt |
-| `MaxRetries` | `int` (default 10) | Maximum retry attempts |
-| `DeadLetteredAt` | `DateTime?` | When dead-lettered |
+- UUIDv7 identity;
+- source aggregate type and Guid;
+- a generic `EventType` discriminator;
+- optional JSONB payload;
+- `Pending`, `Processing`, `Completed`, `Failed`, or `DeadLettered` status;
+- creation/completion timestamps; and
+- retry, lease, bounded error, and dead-letter state.
 
-### Status Lifecycle
+`EventType` is a technical dispatch discriminator. It is not a product entity type.
 
-```
-Pending → Processing → Completed
-                    ↘ Failed → (retry) → Processing
-                              ↘ DeadLettered
-```
+### Processing Flow
 
-| Status | Value | Meaning |
-|--------|-------|---------|
-| `Pending` | 1 | Awaiting first dispatch attempt |
-| `Processing` | 2 | Currently being dispatched (optimistic lock held) |
-| `Completed` | 3 | Successfully dispatched |
-| `Failed` | 4 | Dispatch failed, may be retried |
-| `DeadLettered` | 5 | Exceeded max retries, requires manual intervention |
+~~~text
+business transaction creates durable OutboxMessage
+  -> OutboxProcessor polls due rows
+  -> OutboxRepository atomically claims a processing lease
+  -> CompositeOutboxMessageDispatcher invokes the registered consumer
+  -> repository records completion or schedules bounded retry
+  -> exhausted rows are dead-lettered and reconciled by the owning consumer
+~~~
 
-## Repository Interface
+The repository can reclaim expired processing leases, preventing a crashed worker from leaving a
+row permanently stuck. Completion and failure transitions include the lease timestamp in their
+predicate so a stale worker cannot overwrite a replacement claim.
 
-`IOutboxRepository` provides:
+Delivery is at least once. A consumer may complete its side effect before the completion update is
+persisted, so every dispatcher must be idempotent.
 
-| Method | Description |
-|--------|-------------|
-| `Create` | Insert new outbox message |
-| `GetPendingBatch(batchSize, ct)` | Fetch pending messages ordered by creation |
-| `TryMarkAsProcessing(id, ct)` | Optimistic concurrency lock — returns `bool` |
-| `MarkAsCompleted(id, ct)` | Set status to Completed with timestamp |
-| `MarkAsFailed(id, error, isRetryable, retryDelay, maxRetries, ct)` | Record failure and schedule retry |
-| `GetFailedEntries(limit, ct)` | Retrieve Failed and DeadLettered for monitoring |
-| `DeleteCompletedOlderThan(cutoff, ct)` | Cleanup old completed messages |
+### Current Route
 
-`TryMarkAsProcessing` uses optimistic concurrency — only one processor instance can claim a message. This enables safe multi-instance deployment without distributed locks.
+`ManagedTenantProvisioningOutboxEvents.ProcessRequested` is the only registered generic route.
+The provisioning request persists an `OutboxMessage` for its
+`ManagedTenantProvisioningOperation`; the dispatcher sends
+`ProcessManagedTenantProvisioningOperationCommand` through MediatR.
 
-## Dispatcher Interface
+Dead-letter reconciliation sends `ReconcileManagedTenantProvisioningDeadLetterCommand`. Unknown
+discriminators fail closed so they retry and dead-letter instead of being silently acknowledged.
 
-`IOutboxMessageDispatcher` defines a single method:
+### Retry And Operations
 
-```csharp
-Task DispatchAsync(OutboxMessage message, CancellationToken ct);
-```
+`OutboxProcessorSettings` controls enablement, polling interval, batch size, retry-delay base/cap,
+and verbose logging. The worker uses exponential backoff. The row's `MaxRetries` is authoritative
+for exhaustion; managed provisioning currently writes ten attempts.
 
-The current general dispatcher implementation is `CompositeOutboxMessageDispatcher`. It routes internal application messages such as `EventPublishedNotificationFanoutRequested`, moderation fanout messages, and report provider sync messages to their Infrastructure dispatchers. Unknown or retired event types fail closed by throwing so the processor can retry or dead-letter the row.
+`OutboxRepository.GetFailedEntries` exposes `Failed` and `DeadLettered` rows for inspection, while
+completed rows can be deleted by retention cleanup. Dead-letter state must remain visible until its
+owner has reconciled the affected business operation.
 
-Dispatchers must be **idempotent** — the same message may be dispatched more than once if the processor crashes after dispatch but before marking completion.
+## Specialized Durable State
 
-## OutboxProcessor (Background Service)
+Specialized tables exist when a workflow needs fields or transitions that do not fit the generic
+message shape:
 
-The processor runs as a hosted `BackgroundService` with a configurable polling loop:
+| State machine | Current responsibility |
+|---|---|
+| `EmailDispatchOutbox` | Tenant-scoped email intent, attempts, receipts, parking/dead-letter state, and optional RabbitMQ pointer metadata |
+| `WebPushDispatchOutbox` | Browser-push attempt and expiry state for registered subscriptions |
+| `PdsSyncOutbox` | DID, collection, record key, payload, host, and retry state for outbound PDS synchronization |
+| `IntegrationSyncOutbox` | Provider/resource payload snapshots and retry state for native integration drains |
+| `PolicyChangeOutbox` | Persisted governance-policy propagation state |
 
-1. Poll for pending messages in batches
-2. Attempt `TryMarkAsProcessing` on each (optimistic lock)
-3. Call `IOutboxMessageDispatcher.DispatchAsync`
-4. On success: `MarkAsCompleted`
-5. On failure: `MarkAsFailed` with retry scheduling
+The existence of a table, repository, or drain worker does not prove that every product workflow
+currently enqueues it. Callers must identify a checked-in producer before documenting an active
+end-to-end flow.
 
-### Retry Strategy
+### Email
 
-Exponential backoff with a cap:
+`EmailDispatchOutbox` is the durable source of truth for direct SMTP delivery. The shared drain
+service claims due rows, restores tenant context, sends through the approved email abstraction,
+and records bounded attempts and receipts. TickerQ is the default trigger; a hosted processor can
+trigger the same drain, and optional RabbitMQ mode publishes pointer-only messages after the
+PostgreSQL row exists.
 
-```
-delay = InitialRetryDelaySeconds × 2^retryCount
-capped at MaxRetryDelaySeconds
-```
+Broker acknowledgement must follow the PostgreSQL state transition. RabbitMQ is transport, not
+the durable email ledger. See [Email notifications](EMAIL_NOTIFICATIONS.md).
 
-After `MaxRetryCount` exhausted → status becomes `DeadLettered` with `DeadLetteredAt` timestamp. Dead-lettered messages remain in the database indefinitely for manual review.
+### Federation And Native Integrations
 
-## Configuration
+`PdsSyncWorker` drains `PdsSyncOutbox` through `PdsService`. `IntegrationSyncDrainService` drains
+`IntegrationSyncOutbox` through the selected native integration service. These state machines keep
+their own claim, retry, and terminal fields and do not pass through
+`CompositeOutboxMessageDispatcher`.
 
-Section: `OutboxProcessor`
+### Webhooks
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `Enabled` | `true` | Enable/disable the processor |
-| `PollingIntervalSeconds` | `5` | Seconds between poll cycles |
-| `BatchSize` | `100` | Messages per batch |
-| `MaxRetryCount` | `5` | Retries before dead-letter |
-| `InitialRetryDelaySeconds` | `1` | Base delay for first retry |
-| `MaxRetryDelaySeconds` | `3600` | Maximum delay cap (1 hour) |
-| `VerboseLogging` | `false` | Detailed per-message logging |
+Webhook delivery uses its own catalog and durable message, plan-snapshot, target-snapshot,
+attempt, publication, incoming-message, effect-receipt, and redrive tables. Those records preserve
+delivery provenance and retry state; they are not generic `OutboxMessage` rows. See
+[Webhooks](WEBHOOKS.md).
 
-## Database Indexes
+## Non-Negotiable Rules
 
-| Index | Columns | Purpose |
-|-------|---------|---------|
-| WorkerPoll | `Status`, `NextRetryAt`, `CreatedAt` | Efficient pending batch queries |
-| Aggregate | `AggregateType`, `AggregateId` | Lookup by source entity |
-| Dedup | `AggregateType`, `AggregateId`, `EventType`, `CreatedAt` | Deduplication support |
-
-## DI Registration
-
-- `Infrastructure` registers `OutboxProcessorSettings` and `CompositeOutboxMessageDispatcher`
-- `Persistence` registers `OutboxRepository`
-- `API` registers `OutboxProcessor` as a hosted service
-- `DbContext` has `DbSet<OutboxMessage>`
-
-## Specialized Variants
-
-The outbox pattern is also used for domain-specific event flows:
-
-| Variant | Purpose | Additional Fields |
-|---------|---------|-------------------|
-| `PolicyChangeOutbox` | Settings/policy change propagation | `SettingScope` |
-| `PdsSyncOutbox` | AT Protocol federation sync | `Did`, `Collection`, `RecordKey`, `PdsHost` |
-| `EmailDispatchOutbox` | Basic Dispatch Mode email delivery state plus optional RabbitMQ pointer-publish metadata | `TenantId`, `PublishEventId`, `Kind`, `SourceType`, `SourceId`, recipient/subject/body snapshots, `AttemptCount`, `NextAttemptAt`, `SentAt`, `UnknownAt`, `DeadLetteredAt`, `ParkedAt`, `CorrelationId`, `RabbitMqLastPublishedAt`, `RabbitMqLastPublishAttemptAt`, `RabbitMqPublishAttemptCount`, `RabbitMqLastPublishFailureCategory` |
-| `IntegrationSyncOutbox` | External integration synchronization intent for Listmonk and future providers | `TenantId`, `Provider`, `ResourceType`, `ResourceId`, payload snapshot, `AttemptCount`, `NextAttemptAt`, `LastAttemptAt`, `SucceededAt`, `DeadLetteredAt`, failure details |
-
-`EmailDispatchOutbox` is a specialized durable-intent table, not a TickerQ job table or RabbitMQ queue mirror. Registration confirmation creates an outbox row in the registration transaction. The default TickerQ `email-dispatch-drain` job triggers the shared drain service, which claims due rows, rebinds tenant context, calls the approved SMTP abstraction, records attempts/receipts, and advances delivery state. `EmailDispatchProcessor` remains a hosted-service fallback trigger over that same service. Optional RabbitMQ Dispatch Mode shares this PostgreSQL state machine: `EmailDispatchRabbitMqPointerPublisherService` publishes pointer-only messages after durable rows exist, and the manual-ack consumer calls the same drain service before settling broker deliveries.
-
-Event publication uses the general `OutboxMessage` table for internal actor-subscription notification fanout. The `EventPublishedNotificationFanoutRequested` row drives fanout; the retired external `EventPublished` MQContract route is no longer produced. The fanout service records resumable progress in `NotificationFanoutRun` and uses deterministic `Notification.DeduplicationKey` values so outbox retries do not create duplicate inbox rows.
-
-Event moderation uses the same general `OutboxMessage` table for attendee fanout. Light moderation writes `EventLightModeratedNotificationFanoutRequested`, which may include event context because the event content is preserved. Heavy redaction writes `EventHeavyRedactedNotificationFanoutRequested`, which omits event id, title, slug, URL, image URI, object key, and original content from the payload; the fanout service resolves the event id from the safe moderation record only for recipient lookup. Heavy attendee notifications are generic, linkless in-app rows.
-
-Event reporting uses the general `OutboxMessage` table for provider synchronization. Report intake writes `EventReportProviderSyncRequested` with safe report/case metadata only. `CompositeOutboxMessageDispatcher` routes that message to `ReportProviderSyncDispatcher`, which derives a stable idempotency key from the outbox message id, calls the runtime moderation provider after commit, and persists local `EventReportExternalLink` / `EventReportSignal` outcomes. Retryable provider failures throw after recording bounded local failure metadata so the existing outbox retry/dead-letter policy remains authoritative.
-
-Listmonk registration sync uses `IntegrationSyncOutbox`. Registration handlers enqueue durable Listmonk subscriber intent only after consent/settings qualify; they do not call Listmonk directly. `IntegrationSyncDrainService` claims due rows after commit, rebinds tenant context, calls the generated Listmonk client through Infrastructure services, and advances attempt/success/dead-letter state.
-
-Non-negotiable boundary: handlers, controllers, automation executors, sequence processors, and domain services may create durable outbox intent only. They must not send SMTP, publish RabbitMQ, or schedule TickerQ jobs directly.
-
-## Monitoring
-
-- `GetFailedEntries` returns both `Failed` and `DeadLettered` messages for dashboards
-- Verbose logging reveals per-message dispatch details
-- Notification fanout metrics are emitted on the `Explore.Business` meter as `explore.notifications.fanout_runs` and `explore.notifications.fanout_subscribers` with bounded tags only
-- Health check integration available via outbox processor status
+- Persist durable intent before making the external side effect.
+- Keep the intent in the same owning transaction as its business state when atomicity is required.
+- Make consumers idempotent and treat delivery as at least once.
+- Claim work atomically and prevent stale workers from overwriting newer claims.
+- Bound retries, errors, logs, metric dimensions, and payload snapshots.
+- Preserve tenant context without accepting tenant identity from an untrusted payload.
+- Do not perform SMTP, broker publication, webhook delivery, or remote PDS calls inside a domain
+  mutation handler unless that handler owns an explicit after-commit boundary.
+- Do not route specialized state through the generic dispatcher merely because both are called
+  outboxes.
 
 ## Related
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — background services and system design
-- [DOMAIN.md](DOMAIN.md) — OutboxMessage entity definition
-- [ADR-002](adr/ADR-002-outbox-pattern.md) — architectural decision record
-- [OPERATIONS.md](OPERATIONS.md) — monitoring and observability
+- [Architecture](ARCHITECTURE.md)
+- [Domain model](DOMAIN.md)
+- [Email notifications](EMAIL_NOTIFICATIONS.md)
+- [Federation](FEDERATION.md)
+- [Webhooks](WEBHOOKS.md)
+- [ADR-002: Outbox Pattern](adr/ADR-002-outbox-pattern.md)
+- [Operations](OPERATIONS.md)

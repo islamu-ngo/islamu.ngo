@@ -1,142 +1,177 @@
-ABOUTME: Documents implemented in-app notification lifecycle, inbox UI, and API boundaries.
-ABOUTME: Separates durable in-app notifications, browser Web Push refresh delivery, and SMTP email boundaries.
+<!-- ABOUTME: Documents current in-app notification, preference, Web Push, and ownership boundaries. -->
+<!-- ABOUTME: Separates inbox state from actor subscriptions, account-authority email, and delivery queues. -->
 
 # Notifications
 
-> **Audience:** Admins | Integrators | Contributors
-> **Status:** Implemented
-> **Owner:** Product/Admin
-> **Last Verified:** 2026-07-02
-> **Source Anchors:** `src/Explore.Application/Features/Notifications/`, `src/Explore.Application/Services/NotificationRefreshStreamService.cs`, `src/Explore.API/Controllers/NotificationController.cs`, `src/Explore.API/Controllers/ActorSubscriptionController.cs`, `src/Explore.Blazor.Client/Services/Interop/NotificationRefreshStreamClient.cs`, `src/Explore.Blazor.Client/Layout/NotificationBell.razor.cs`, `src/Explore.Blazor.Client/Helpers/NotificationNavigationHelper.cs`, `src/Explore.Blazor.Client/Pages/Notifications/Notifications.razor`, `docs/EMAIL_NOTIFICATIONS.md`
+> **Audience:** Contributors | Operators | Integrators | AI agents
+> **Status:** Active
+> **Owner:** Product/Platform
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `src/Explore.Domain/Notification.cs`, `src/Explore.Domain/NotificationIntent.cs`, `src/Explore.Application/Features/Notifications/`, `src/Explore.Application/Notifications/DefaultNotificationOrchestrator.cs`, `src/Explore.Application/Notifications/NotificationRoutingOptions.cs`, `src/Explore.Application/Services/NotificationRefreshStreamService.cs`, `src/Explore.Application/Services/DefaultAccountAuthorityLifecycleEmailService.cs`, `src/Explore.Infrastructure/Services/Keycloak/KeycloakAccountAuthorityLifecycleEmailService.cs`, `src/Explore.API/Controllers/NotificationController.cs`, `src/Explore.API/Controllers/ActorSubscriptionController.cs`, `src/Explore.Blazor.Client/Helpers/NotificationNavigationHelper.cs`, `src/Explore.Blazor.Client/Pages/Notifications/Notifications.razor`, `src/Explore.Infrastructure/WebPush/WebPushDispatchDrainService.cs`
 
-Notifications are authenticated, user-owned, tenant-scoped in-app records. They power the notification bell, notification panel, and full inbox page. Event-published actor-subscription fanout and event-moderation attendee fanout are implemented through the transactional outbox and create durable in-app `Notification` rows. The SSE stream is a one-way refresh hint for unread count/inbox state; it does not replace durable notification rows, list/detail APIs, SMTP email delivery, push delivery, or external delivery receipts.
+## Current Boundary
 
-## Lifecycle
+The repository has three related but distinct models:
 
-| State Or Action | Implemented Behavior |
+1. `Notification` is a durable, user-owned in-app inbox row.
+2. `NotificationIntent` records routing ownership and safe local audit for notification requests.
+3. Email and Web Push use dedicated durable delivery state rather than treating an inbox row as a
+   transport message.
+
+The inbox API, UI, preference matrix, browser-push enrollment, and delivery infrastructure are
+implemented. Current application source does not contain a producer that turns actor
+subscriptions or content publication into `Notification` rows, and it does not enqueue Web Push
+automatically from an in-app notification. Do not describe those missing connections as live
+fanout.
+
+## In-App Inbox
+
+`Notification` rows are authenticated, tenant-scoped, and owned by one user. They retain lookup
+metadata for type, scope, reason, and optional Organization/Group/User entity context, together
+with read, archive, snooze, audit, and soft-delete state.
+
+| Operation | Current state |
 |---|---|
-| Create / store | Notification records store tenant, user, scope, type, reason, entity, actor context, read/archive/snooze state, and soft-delete state. |
-| Actor subscription fanout | Event publication writes an internal `EventPublishedNotificationFanoutRequested` outbox message. The fanout service scans active organization/group actor subscriptions and creates durable in-app notification rows for active tenant-local subscribers. |
-| Moderation attendee fanout | Light moderation writes `EventLightModeratedNotificationFanoutRequested`; heavy redaction writes `EventHeavyRedactedNotificationFanoutRequested`. Both scan event registration intents and create durable in-app rows for registered users. |
-| Deduplication | Fanout notifications use deterministic `Notification.DeduplicationKey` values so outbox retries and duplicate dispatches do not create duplicate inbox rows. Moderation fanout keys include tenant, moderation record, and recipient. |
-| Fanout progress | `NotificationFanoutRun` records source event or moderation-record metadata, cursor, status, and aggregate counts so fanout can be retried and inspected without storing recipient PII. |
-| List | User-scoped list retrieval supports paging and filters from the API and full inbox UI. |
-| Detail | Detail retrieval is ownership-checked for the current user. |
-| Unread count | API and bell use unread count for the badge. |
-| Real-time refresh hint | Authenticated SSE at `GET /api/notification/stream` emits minimal unread-count refresh hints; it does not carry notification bodies or replace list/detail APIs. |
-| Browser Web Push | Authenticated users explicitly enroll one browser device. A durable dispatch outbox sends VAPID-authenticated, encrypted, generic refresh payloads and removes stale subscriptions on push-service `404`/`410` responses. |
-| Mark read | Single notification read and bulk mark-all-read are implemented. |
-| Archive | Archive and unarchive are implemented. |
-| Snooze | Snooze and unsnooze are implemented with a `snoozedUntil` value. |
-| Delete | Delete is implemented as soft delete, not permanent deletion. |
+| Paginated list and filters | Implemented |
+| Ownership-checked detail | Implemented |
+| Unread count | Implemented |
+| Mark one or all read | Implemented |
+| Archive/unarchive | Implemented |
+| Snooze/unsnooze | Implemented |
+| Soft delete | Implemented |
+| Mark unread | Not implemented |
+| Automatic subscription/content fanout | Not implemented |
 
-There is no implemented mark-unread endpoint. Do not document read state as reversible unless source adds that operation.
+List filters use the API field names, including `notificationTypeId`, `notificationScopeId`, and
+`notificationReasonId`. The notification repository always applies current-user ownership to
+inbox reads and mutations.
 
 ## API Surface
 
-All notification endpoints require an authenticated user. Handler and repository logic enforce current-user ownership; there is no separate admin role requirement for a user's own inbox.
+All inbox endpoints require authentication:
 
 | Action | Endpoint |
 |---|---|
-| List notifications | `GET /api/notification` |
-| Get notification detail | `GET /api/notification/{id}` |
-| Get unread count | `GET /api/notification/unread-count` |
-| Stream refresh hints | `GET /api/notification/stream` (`text/event-stream`) |
-| Mark one read | `PATCH /api/notification/{id}/read` |
+| List | `GET /api/notification` |
+| Detail | `GET /api/notification/{id}` |
+| Unread count | `GET /api/notification/unread-count` |
+| Refresh stream | `GET /api/notification/stream` |
+| Mark read | `PATCH /api/notification/{id}/read` |
 | Mark all read | `POST /api/notification/read-all` |
-| Archive or unarchive | `PATCH /api/notification/{id}/archive?archive=true|false` |
-| Snooze or unsnooze | `PATCH /api/notification/{id}/snooze?snoozedUntil=...` |
+| Archive/unarchive | `PATCH /api/notification/{id}/archive?archive=true|false` |
+| Snooze/unsnooze | `PATCH /api/notification/{id}/snooze?snoozedUntil=...` |
 | Soft delete | `DELETE /api/notification/{id}` |
-| Current-user preference matrix | `GET /api/notification/preferences/me` |
-| Save current-user preferences | `PUT /api/notification/preferences/me` |
-| Set current-user mute | `PUT /api/notification/preferences/me/mute` |
-| Get public Web Push configuration | `GET /api/notification/web-push/config` |
-| Get current browser subscription status | `GET /api/notification/web-push/subscription?deviceIdentifier=...` |
-| Subscribe current browser | `POST /api/notification/web-push/subscriptions` |
-| Unsubscribe current browser | `DELETE /api/notification/web-push/subscriptions/{subscriptionId}` |
-| Organization preference matrix | `GET|PUT /api/organization/{id}/notification-preferences` and `PUT /api/organization/{id}/notification-preferences/mute` |
-| Group preference matrix | `GET|PUT /api/group/{id}/notification-preferences` and `PUT /api/group/{id}/notification-preferences/mute` |
+| Current-user preferences | `GET|PUT /api/notification/preferences/me` |
+| Current-user mute | `PUT /api/notification/preferences/me/mute` |
+| Public Web Push config | `GET /api/notification/web-push/config` |
+| Current browser subscription | `GET /api/notification/web-push/subscription?deviceIdentifier=...` |
+| Register browser subscription | `POST /api/notification/web-push/subscriptions` |
+| Remove browser subscription | `DELETE /api/notification/web-push/subscriptions/{subscriptionId}` |
 
-When documenting filters, use the source API names. For notification type filtering, use `notificationTypeId`; do not copy stale shorthand such as `type` unless the controller changes.
+Organization and Group preference matrices are exposed on their owning resource controllers.
+Preference responses are HAL resources; Blazor renders save, mute, subscribe, and unsubscribe
+actions only when the server emits the matching relation.
 
-Actor-subscription state and mutations are separate authenticated endpoints under `/api/actor-subscriptions`. The API exposes current-user subscription state, subscribe, unsubscribe, and notification-level update flows. UI affordances for subscription actions must be gated from HAL `_links` on actor, event organizer, and actor-subscription resources; clients must not infer those actions from local roles or claims.
+## UI And Navigation
 
-Notification preference responses are HAL resources. The Blazor matrix renders `save` and `set-mute` actions only when the server emits those links.
+The notification bell, panel, and full inbox page read durable inbox state. Opening the panel does
+not mark rows read. The inbox supports paging, filters, item actions, and bulk mark-read.
 
-## UI Behavior
+`NotificationNavigationHelper` currently maps only:
 
-| Surface | Behavior |
-|---|---|
-| Notification bell | Shows unread badge, listens for SSE refresh hints, keeps polling as fallback, and opens the panel without marking notifications read just because the panel opened. |
-| Notification panel | Shows scope tabs, loads more items, supports item actions, and links to the full inbox. |
-| Full inbox page | Supports filters for reason, unread-only, archived-only, and snoozed-only; includes mark-all-read. |
-| Notification item | Displays scope/type/reason presentation and navigates to known entity URLs when mappable. |
-| Preference matrix | Lets authorized users choose Email and In-App channels by category for current-user, organization, and group scopes; the current-user matrix also exposes Push enrollment when the browser and server support it. Required categories remain locked by server metadata; global mute suppresses non-essential delivery without deleting saved choices. |
-| Browser Web Push | Current-user settings show an explicit Enable action only when the server emits the HAL affordance. Denied permission is terminal until the user changes browser settings; Disable unsubscribes the browser and deactivates the owned server row. |
+- Organization notifications to `/organization/profile/{id}`; and
+- Group notifications to `/group/profile/{id}`.
 
-Clicking a notification item navigates only when the item can be mapped to a supported route: events use `/events/{id}`, organizations use `/organization/profile/{id}`, and groups use `/group/profile/{id}`. Unsupported entity types, including event sessions without a dedicated route, should not be routed to guessed URLs. The item click itself is not the read-state operation; read state is handled by explicit user actions and read endpoints.
+Unknown or unsupported entity types produce no guessed deep link. Item navigation is separate from
+the explicit read-state operation.
 
-## Event Moderation Fanout
+## Refresh Stream
 
-Light moderation and heavy redaction deliberately use different notification contracts.
+`GET /api/notification/stream` is an authenticated `text/event-stream` endpoint. It emits bounded
+`notification-refresh` hints containing unread-count state, reason, and generation time.
 
-| Moderation Kind | Outbox Payload | Created Notification |
-|---|---|---|
-| Light moderation | `EventLightModeratedNotificationFanoutRequested` contains tenant id, event id, moderation record id, event title, source actor id, and moderation time. | Uses `EventUpdated`, links to the event entity, and may include the event title because the event content is preserved. |
-| Heavy redaction | `EventHeavyRedactedNotificationFanoutRequested` contains tenant id, moderation record id, source actor id, and redaction time. It does not contain event id, title, slug, URL, image URI, object key, or original content. | Uses `General`, has no `NotificationEntityTypeId`, no `EntityId`, no `SourceActorId`, no recipient context actor, and generic copy only. |
+The stream is a refresh signal, not delivery truth. Notification bodies and lifecycle state always
+come from the authenticated list/detail APIs. The bell keeps polling as a fallback. Responses are
+non-cacheable and disable proxy buffering.
 
-Heavy fanout resolves the event id internally from the safe `EventModerationRecord` using an explicit tenant/id repository lookup, then scans registration intents for recipients. The event id is used only for recipient lookup and fanout-run progress. It is not written into attendee-facing notification title/body/entity fields, and the notification item has no route because `NotificationNavigationHelper` only navigates when entity metadata is present.
+## Actor Subscriptions
 
-Event-report intake, triage, assignment, decision capture, provider sync, and provider callbacks do not create user notifications by themselves. Notifications are created only when an `EventReportDecision` is executed through the existing light moderation or heavy redaction command path. Report-driven enforcement links `EventModerationRecord.SourceReportId` and `SourceReportDecisionId` for auditability, but notification payloads still follow the same light/heavy contracts above and must not include reporter text, report IDs, provider payloads, provider case IDs, or reviewer notes.
+`ActorSubscription` persists the current tenant user's relationship to an Organization or Group
+actor. Its API supports list, per-actor state, subscribe, notification-level update, and
+unsubscribe. Unsubscribe preserves the durable row by changing status; optimistic concurrency
+protects later changes.
 
-Moderation fanout is in-app only. It does not call SMTP, push providers, or external brokers for attendee delivery. It resolves notification preferences through the required trust-safety category before creating attendee inbox rows, so category requiredness stays centralized in the preference resolver.
+Organization and Group profile buttons are gated by actor and subscription HAL relations. The
+subscription is preference state only until a source-backed producer defines what occurrence
+creates a notification, how it is deduplicated, and which delivery policy applies.
 
-## SSE Refresh Hints
+## Preference Matrix
 
-`GET /api/notification/stream` is an authenticated `text/event-stream` endpoint. It emits `notification-refresh` events with a minimal payload: `UnreadCount`, `HasUnread`, bounded `Reason`, and `GeneratedAt`.
+Preference categories and channels are normalized lookup rows. Current-user, Organization, and
+Group matrices store scoped channel choices and global mute state. Required categories remain
+server-governed and cannot be disabled through client-only logic.
 
-The browser client uses same-origin cookies through `EventSource`. The API response disables request timeout, sends `Cache-Control: no-store`, and sets `X-Accel-Buffering: no` so reverse proxies do not buffer the stream. The existing 60-second bell polling remains the fallback. Treat SSE as a refresh hint only; notification content and read/archive/snooze state still come from the authenticated notification APIs.
+The matrix describes allowed delivery choices. It does not create an inbox producer or transport
+workflow by itself.
 
-## Browser Web Push Safety
+## Web Push Boundary
 
-Web Push carries generic refresh/navigation hints only. Durable authenticated `Notification` rows remain the content and state source of truth; payloads do not contain notification titles, bodies, email addresses, tenant data, or access tokens.
+Authenticated users can explicitly register or remove one browser subscription. The server stores
+bounded Push API key material, applies ownership checks, and exposes enrollment only through HAL.
+The browser UI treats denied permission as terminal until the user changes browser settings.
 
-Flood prevention is layered:
+`WebPushDispatchOutbox`, its repository, drain service, and processor provide durable transport
+infrastructure. Delivery uses generic refresh/navigation payloads, bounded TTL, topic coalescing,
+same-origin navigation validation, and stale-subscription removal on push-service `404`/`410`.
 
-- The server sets a bounded `TTL` for every send and stops retries when the dispatch expires.
-- The Web Push `Topic` header coalesces pending refresh messages for the same subscription/category at the push service.
-- The service worker uses one stable notification `tag` with `renotify: false` so already displayed app notifications replace instead of repeatedly alerting.
-- A visible same-origin window receives a refresh message and no OS popup.
-- If three app notifications are already displayed, the service worker closes them and shows one generic summary.
-- Subscription writes accept only bounded HTTPS endpoints and correctly sized Push API key material. The delivery adapter re-resolves endpoint hosts, blocks private/loopback/link-local/metadata destinations, and refuses redirects before sending, so browser-supplied endpoints cannot become an SSRF path.
+Current source has no application producer that enqueues `WebPushDispatchOutbox` from a
+`Notification`. Therefore enrollment and drain infrastructure must not be described as automatic
+push delivery for inbox rows.
 
-`Topic` and `tag` are deliberately separate: `Topic` controls queued transport delivery; `tag` controls displayed OS notification replacement. The service worker validates navigation as a same-origin relative path and focuses an existing app window before opening a new one.
+## Notification Intent And Account Authority
+
+`DefaultNotificationOrchestrator` resolves ownership before recording a durable
+`NotificationIntent`. Intents contain normalized category, owner, recipient, status, template key,
+deduplication key, safe payload reference/hash, correlation, and optional user identity. They do
+not store message bodies or credentials.
+
+Current routing rules are explicit:
+
+- identity-lifecycle email belongs to the configured account authority;
+- provider-internal work may be delegated to an external workflow provider; and
+- product-lifecycle, platform-operations, and marketing categories remain disabled until an owner
+  is implemented.
+
+The registered account-authority lifecycle service exposes email-verification, password-reset,
+and email-update-verification requests. When called, it records local intent/delegation rows for
+safe audit correlation and leaves credential-token generation and provider execution with the
+account authority. No checked-in application handler or controller currently invokes that
+service, so these registered components are not yet a live end-to-end product workflow. This
+audit model is separate from the in-app `Notification` inbox.
 
 ## Email Boundary
 
-In-app notifications are separate from SMTP email delivery:
+Direct application email uses `EmailDispatchOutbox`, attempts, receipts, and tenant control state.
+Account-authority lifecycle email is modeled as provider-owned delegation, with no current
+application caller. Neither mechanism is created by merely persisting an in-app `Notification`
+row.
 
-- The notification feature does not call `IEmailService` or the SMTP implementation.
-- Actor-subscription fanout creates in-app `Notification` rows only; it does not send email digests or SMTP messages.
-- Light and heavy moderation attendee fanout create in-app `Notification` rows only; they do not send SMTP messages.
-- Actor-subscription and registration fallback fanout consult the in-app preference matrix before creating non-required `Notification` rows. Disabled non-required categories skip row creation after dedupe checks and before persistence.
-- Event-report intake, report workflow actions, provider sync, and provider callbacks do not send SMTP messages and do not create in-app notifications unless they execute an existing moderation command.
-- `docs/EMAIL_NOTIFICATIONS.md` documents direct SMTP delivery, including preference-based skip behavior for direct `EmailDispatchOutbox` rows, and explicitly states notification-to-email fanout is not implemented.
-- Do not claim email digests, SMTP delivery, external delivery tracking, or email unsubscribe behavior for in-app notifications.
+Do not claim notification-to-email fanout, email digests, or transport receipts for inbox rows.
+See [Email notifications](EMAIL_NOTIFICATIONS.md) for SMTP and account-authority details.
 
 ## Unsupported Claims To Avoid
 
-- Permanent deletion.
+- Permanent inbox deletion.
 - Mark-as-unread.
-- Email fanout from notification records.
+- Automatic actor-subscription or content fanout.
+- Automatic email or Web Push delivery from inbox rows.
 - Public user-to-user actor subscriptions.
-- SSE as delivery truth or as a replacement for notification list/detail APIs.
-- External delivery receipts or delivery tracking.
-- Event-session deep links unless a matching route is implemented.
+- SSE as content delivery or state authority.
+- Entity deep links beyond the routes registered by `NotificationNavigationHelper`.
 
-## Related Documentation
+## Related
 
-- [EMAIL_NOTIFICATIONS.md](EMAIL_NOTIFICATIONS.md) - SMTP email delivery boundary.
-- [API.md](API.md) - API conventions and error shape.
-- [API_COOKBOOK.md](API_COOKBOOK.md) - task-first integration patterns.
-- [AUTHORIZATION_PATTERNS.md](AUTHORIZATION_PATTERNS.md) - authorization pipeline patterns.
+- [Email notifications](EMAIL_NOTIFICATIONS.md)
+- [Outbox pattern](OUTBOX_PATTERN.md)
+- [API conventions](API.md)
+- [Authorization](AUTHORIZATION.md)

@@ -1,158 +1,203 @@
-<!-- ABOUTME: Documents implemented durable SMTP delivery and local Mailpit testing for the website chassis. -->
-<!-- ABOUTME: Separates source-backed email behavior from planned waitlist, newsletter, and contact workflows. -->
+<!-- ABOUTME: Documents current direct SMTP dispatch and account-authority lifecycle email boundaries. -->
+<!-- ABOUTME: Separates durable email delivery from the in-app inbox and unimplemented public workflows. -->
 
 # Email And Notifications
 
 > **Audience:** First-party operators | Product owners | Contributors
-> **Status:** Mixed
+> **Status:** Active
 > **Owner:** Platform/Ops
-> **Last Verified:** 2026-07-15
-> **Source Anchors:** `src/Explore.Infrastructure/Mail/`, `src/Explore.Infrastructure/EmailDispatchDrainService.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/EmailDispatchDrainMailpitTests.cs`, `tests/Explore.Infrastructure.Tests/Infrastructure/SmtpEmailServiceMailpitTests.cs`, `src/Explore.Persistence/Seed/DatabaseSeeder.cs`, `src/Explore.AppHost/AppHost.cs`, `docker-compose.yml`, `src/Explore.Domain/Settings/Definitions/EmailSettingDefinitions.cs`, `src/Explore.API/HealthChecks/SmtpHealthCheck.cs`, `docs/CONFIGURATION.md`, `docs/SECRETS.md`
+> **Last Verified:** 2026-07-19
+> **Source Anchors:** `src/Explore.Domain/EmailDispatchOutbox.cs`, `src/Explore.Application/Features/ManagedProviderProvisioning/Handlers/Commands/EnsureManagedProviderClientProvisionedCommandHandler.cs`, `src/Explore.Infrastructure/EmailDispatchDrainService.cs`, `src/Explore.Infrastructure/Mail/SmtpEmailService.cs`, `src/Explore.Application/Services/DefaultAccountAuthorityLifecycleEmailService.cs`, `src/Explore.Infrastructure/Services/Keycloak/KeycloakAccountAuthorityLifecycleEmailService.cs`, `src/Explore.API/Controllers/EmailDispatchAdminController.cs`, `src/Explore.API/Controllers/InstanceSettingsController.cs`, `src/Explore.API/HealthChecks/SmtpHealthCheck.cs`, `src/Explore.AppHost/AppHost.cs`, `docker-compose.yml`
 
-Email delivery is implemented through a durable outbox drained to SMTP. In-app notifications are a separate authenticated inbox feature. Event-specific fanout below documents current imported source and is removed with its code-owning slice; it is not a target website capability.
+## Current Boundary
 
-Waitlists, newsletters, contact forms, and new transactional messages are directionally approved Engage-horizon capabilities, not implemented public features. Each requires a separate workstream with purpose, consent evidence, unsubscribe/deletion behavior, content ownership, abuse controls, and provider configuration before any form or CTA is published. Listmonk's existing adapter is reusable infrastructure, not proof that such a workflow exists.
+The repository defines two email mechanisms with different owners:
 
-## What Is Implemented
+1. Direct application email has a checked-in producer that persists an `EmailDispatchOutbox` row
+   and drains it to SMTP.
+2. Identity-lifecycle email has a registered account-authority service and Keycloak adapter, but
+   no checked-in application caller currently invokes that service.
 
-| Area | Implemented Behavior |
+These mechanisms are separate from the durable in-app `Notification` inbox. Persisting an inbox row,
+changing an actor subscription, or enabling a preference does not enqueue email.
+
+## Capability Matrix
+
+| Capability | Current state |
 |---|---|
-| SMTP sending | `SmtpEmailService` sends one message through MailKit `SmtpClient` using resolved tenant-aware SMTP configuration. |
-| SMTP testing | `SmtpEmailService.TestConnectionAsync` and instance settings endpoints can test SMTP connectivity. |
-| Resilience | `EmailResiliencePipelines` retries transient SMTP failures with exponential backoff and jitter. |
-| Admin settings | Instance admins can read, update, and test SMTP settings in the instance admin settings surface. |
-| Health check | `SmtpHealthCheck` participates in readiness as the `smtp` health check. |
-| In-app notifications | Notification controller/client paths handle inbox actions such as read, archive, snooze, and delete separately from SMTP. Actor-subscription fanout and moderation attendee fanout create in-app rows only. |
-| Notification preference matrix | Current-user, organization, and group preference matrices gate non-required in-app fanout and direct email dispatch before provider handoff. |
+| Tenant-aware SMTP configuration and send | Implemented with MailKit |
+| SMTP connection test and readiness check | Implemented |
+| Durable direct-email attempts, receipts, retry, dead-letter, parking, and replay | Implemented |
+| Tenant pause/resume and sanitized operator status API | Implemented |
+| Optional RabbitMQ pointer transport | Implemented; PostgreSQL remains authoritative |
+| Managed-tenant administrator invitation email | Implemented and currently the only checked-in direct-email producer |
+| Account-authority verification, password-reset, and email-update service/adapter | Implemented and registered; no checked-in application caller |
+| In-app notification inbox and preferences | Implemented separately; see [Notifications](NOTIFICATIONS.md) |
+| Automatic email from inbox rows, actor subscriptions, or content publication | Not implemented |
+| Waitlist, newsletter, contact-form, digest, or general marketing email | Not implemented |
 
-User-facing notification preferences are implemented for the direct dispatch and in-app fanout paths described here. They do not create general notification-to-email fanout: actor-subscription and moderation fanout still write durable in-app notifications only, and direct SMTP delivery still comes from explicit `EmailDispatchOutbox` workflows.
+Do not infer a product workflow from an adapter, table, controller, or background worker alone.
+An end-to-end email claim requires a checked-in application producer.
 
-## SMTP Settings
+## Direct Application Email
 
-The email settings model is defined by `EmailSettingDefinitions` and grouped by `EmailSettingGroup`.
+`EmailDispatchOutbox` is the durable source of truth before SMTP handoff. Its current enum contains
+only `TenantAdministratorInvitation`. Managed-provider provisioning creates that row when an
+administrator invitation was requested, snapshotting the tenant, recipient, subject, bodies,
+source operation, user, and correlation identifier.
+
+The delivery flow is:
+
+~~~text
+managed provisioning transaction creates EmailDispatchOutbox
+  -> TickerQ (default) or hosted-service fallback invokes EmailDispatchDrainService
+  -> drain claims the row and restores tenant context
+  -> legacy category preference and notification matrix email preference are resolved
+  -> disabled ProductAnnouncements delivery is durably marked Skipped
+  -> SmtpEmailService sends through MailKit
+  -> PostgreSQL records the attempt, receipt, and terminal or retry state
+~~~
+
+The drain also supports per-tenant pause, processing-lease recovery, bounded retries,
+dead-lettering, unknown-outcome review, operator parking, and replay. The email adapter applies a
+Polly resilience pipeline to transient SMTP failures.
+
+When a recipient and mapped category are present, the drain can add signed one-click unsubscribe
+headers and body links. The current administrator-invitation kind maps to
+`ProductAnnouncements`; both its legacy category preference and its matrix email channel are
+checked before provider handoff.
+
+### Optional RabbitMQ Mode
+
+RabbitMQ carries a pointer to the already-persisted email row; it does not carry the recipient,
+subject, or body as the delivery ledger. The consumer resolves the PostgreSQL row, delegates to
+the same drain, and acknowledges the broker message only after durable outcome handling.
+
+Basic dispatch does not require RabbitMQ. Broker health is reported separately so disabled
+RabbitMQ does not make the PostgreSQL/TickerQ path unhealthy.
+
+## Account-Authority Lifecycle Email
+
+Credential-token email does not belong in `EmailDispatchOutbox`. The registered
+account-authority lifecycle service exposes requests for:
+
+- email verification;
+- password reset; and
+- email-update verification.
+
+When called, notification orchestration first records a bounded local intent and, when configured,
+a delegation row containing safe correlation and provider references rather than message bodies
+or credentials. The Keycloak adapter then requests the corresponding required-action email.
+Keycloak owns credential-token generation, template execution, and delivery.
+
+No checked-in application handler or controller currently calls
+`IAccountAuthorityLifecycleEmailService`. Therefore the service, adapter, and audit model are
+implemented infrastructure, not proof of a live website verification, reset, or email-update
+workflow.
+
+Product-lifecycle, platform-operations, and marketing notification ownership remains disabled in
+the current routing options. The existence of the lifecycle abstraction must not be described as
+a general transactional-email service.
+
+## SMTP Configuration
+
+`SmtpConfigResolver` reads cascading tenant-aware settings and caches resolved configuration per
+tenant for five minutes. It returns no configuration when required values such as host or sender
+address are missing.
 
 | Setting | Purpose |
 |---|---|
-| `email.smtp_host` | SMTP host. Required with from-address for resolved config. |
-| `email.smtp_port` | SMTP port. |
-| `email.smtp_security` | SMTP security mode mapped by the SMTP service. |
-| `email.from_address` | Default sender address. Required with host for resolved config. |
-| `email.from_name` | Default sender display name. |
-| `email.smtp_timeout_seconds` | SMTP connection/send timeout. |
-| `email.smtp_skip_cert_validation` | Certificate validation bypass for controlled environments only. |
-| `email.smtp_username` | Sensitive SMTP username. |
-| `email.smtp_password` | Sensitive SMTP password. |
+| `email.smtp_host` | SMTP host |
+| `email.smtp_port` | SMTP port |
+| `email.smtp_security` | `None`, `StartTls`, `SslOnConnect`, or `Auto` |
+| `email.from_address` | Default sender address |
+| `email.from_name` | Default sender display name |
+| `email.smtp_timeout_seconds` | Connection and send timeout |
+| `email.smtp_skip_cert_validation` | Controlled-development certificate bypass only |
+| `email.smtp_username` | Sensitive SMTP username |
+| `email.smtp_password` | Sensitive SMTP password |
 
-`SmtpConfigResolver` reads the cascading settings model and caches resolved configuration per tenant for five minutes. It returns no SMTP configuration when required values such as host or from-address are missing.
+The raw SMTP message model supports `To`, `Cc`, `Bcc`, `ReplyTo`, custom headers, HTML and plain-
+text bodies, attachments, and inline images. `SmtpEmailService` creates a new MailKit client per
+send because the client is not thread-safe.
 
-Local Aspire and Compose runs start Mailpit for email capture. Aspire exposes SMTP on `localhost:11025` and the UI at `http://localhost:18025`; Compose containers use SMTP host `mailpit` and port `1025`. Development database seeding uses `MAIL_SMTP_*`, then `SMTP_*` aliases, then these Mailpit defaults when no SMTP host has been configured.
+### Secret Handling
 
-## Secret Handling
+The username and password definitions are marked sensitive. Treat them as secrets in logs,
+exports, support bundles, screenshots, fixtures, and issue reports. Follow [Secrets](SECRETS.md)
+for provider and redaction rules and [Configuration](CONFIGURATION.md) for persisted-setting
+boundaries. Do not claim a stronger storage guarantee than those source-backed documents provide.
 
-`email.smtp_username` and `email.smtp_password` are sensitive settings. Treat them as secrets in reviews, logs, exports, support bundles, and screenshots.
+## Administration And Health
 
-- Use [SECRETS.md](SECRETS.md) for provider setup and redaction expectations.
-- Use [CONFIGURATION.md](CONFIGURATION.md) for runtime configuration and persisted settings boundaries.
-- Do not document plaintext SMTP credentials in sample files or issue reports.
-- If SMTP settings are restored after a backup, validate the connection before reopening workflows that depend on email.
+Instance administrators manage SMTP in
+`src/Explore.Blazor.Client/Pages/Admin/Instance/Components/InstanceSmtpSection.razor`. The
+authenticated instance-settings API reads, updates, and tests the active SMTP configuration at
+`/api/instance/settings/smtp` and `/api/instance/settings/smtp/test`.
 
-The docs should not claim more about email-secret encryption than the source proves. The implementation marks the credentials sensitive and routes them through the settings/secrets model.
+The authenticated email-dispatch operator API exposes sanitized status plus tenant pause/resume
+and row park/replay actions under `/api/admin/email-dispatch`. Status responses omit recipient,
+subject, bodies, and raw provider errors. Clients must render write actions from HAL affordances,
+not local role guesses.
 
-## Sending Boundary
+Readiness reports two distinct concerns:
 
-`SmtpEmailService` supports the message shape represented by the infrastructure email models:
+- `smtp` tests configured SMTP connectivity; missing configuration is degraded and connection
+  failure is unhealthy.
+- `email-dispatch` reports scheduler configuration, due backlog, retry rows, stale processing
+  leases, and dead-letter counts without exposing message content.
 
-- `To`, `Cc`, and `Bcc` recipients.
-- `ReplyTo`.
-- Custom headers.
-- HTML and plain-text body content.
-- Attachments and inline images.
+## Local Mail Capture
 
-The service creates a new SMTP client per send. It does not document a queue, background dispatcher, delivery tracking, bounce processor, or unsubscribe workflow in the SMTP send path.
+Aspire and Compose start Mailpit for development:
 
-## Basic Dispatch Test Evidence
+| Runtime | SMTP endpoint | Browser UI |
+|---|---|---|
+| Aspire host | `localhost:11025` | `http://localhost:18025` |
+| Compose service network | `mailpit:1025` | Host port `18025` |
 
-Basic Dispatch uses `EmailDispatchDrainService` as the scheduler-neutral boundary. TickerQ, hosted-service fallback, and future transports must delegate to this drain instead of sending SMTP directly from handlers or controllers.
+Development seeding reads `MAIL_SMTP_*`, then `SMTP_*` aliases, and otherwise uses Mailpit defaults
+when no usable SMTP host is configured. These are local conveniences, not production defaults.
 
-| Behavior | Evidence |
-|---|---|
-| Direct SMTP provider handoff | `SmtpEmailServiceMailpitTests` sends through MailKit to Mailpit and verifies recipient, sender, subject, text body, HTML body, connection success, and result-field redaction for sentinel body/secret values. |
-| SMTP settings resolution | `SmtpConfigResolverTests` verifies tenant `SettingContext` propagation, per-tenant cache separation, missing required settings, defaults, and cache invalidation. |
-| Pending outbox drain | `EmailDispatchDrainMailpitTests` starts with a pending `EmailDispatchOutbox`, runs `ProcessBatchAsync`, sends through real SMTP to Mailpit, and records `Sent` outbox state plus succeeded attempt and completed receipt state. |
-| Duplicate claim protection | `EmailDispatchDrainMailpitTests` races two `ProcessSingleAsync` consumers for one outbox row and verifies exactly one Mailpit message, one attempt, and one completed receipt. |
-| Failure outcomes | `EmailDispatchDrainServiceTests` covers retry-scheduled SMTP failures, exhausted dead-letter outcomes, timeout-like unknown outcomes, legacy recipient preference skips, matrix preference skips, tenant pause before SMTP handoff, and stale-processing recovery. |
-| Tenant pause/resume and operator actions | `EmailDispatchTenantControlRepositoryTests`, `EmailDispatchAdminControllerTests`, and `EmailDispatchAdminHateoasTests` cover PostgreSQL pause/resume state, API problem mapping, write-route policies, and HAL replay/park affordance rules. |
-| Scheduler triggers | `EmailDispatchTickerQJobsTests` and `EmailDispatchProcessorTests` prove TickerQ and hosted-service fallback paths call the same scheduler-neutral drain service instead of owning SMTP, RabbitMQ, or payload logic. |
-| Readiness states | `EmailDispatchHealthCheckTests` covers Basic Dispatch enabled, intentionally disabled, `Mode=Disabled`, TickerQ scheduler disabled, and HostedService states. `EmailDispatchRabbitMqHealthCheckTests` covers RabbitMQ disabled, healthy-enabled, and unhealthy transport states independently from Basic Dispatch. |
-| RabbitMQ runtime fixture | `RabbitMqContainerFixtureTests` starts a Testcontainers RabbitMQ management image, verifies an AMQP connection string, and reads bounded management overview diagnostics for later live transport tests. |
-| RabbitMQ live topology and publish outcomes | `RabbitMqEmailDispatchTransportLiveTests` enables the real transport against the fixture, declares dispatch/DLX/parking topology, verifies durable direct exchanges and queues through the management API, verifies dispatch queue DLX arguments, confirms readiness is healthy, confirms routable pointer publishes, returns `mandatory_return` for an unbound routing key, and reads the live broker payload to prove only pointer fields are serialized. |
-| RabbitMQ live consumer | `RabbitMqEmailDispatchConsumerMailpitTests` starts the manual-ack consumer, publishes a valid pointer, drains the durable outbox through real SMTP to Mailpit, persists `Sent` attempt/receipt state, and waits for RabbitMQ ready/unacknowledged counters to reach zero after the durable outcome. The same class proves malformed JSON and valid pointers without a durable outbox reject to the DLQ without sending Mailpit email. |
-| RabbitMQ DLQ replay and parking | `RabbitMqEmailDispatchDeadLetterReplayLiveTests` starts the replay worker, resets a dead-lettered durable row before republishing to the dispatch queue, ACKs the original DLQ delivery, and parks missing-outbox payloads to the parking queue. |
+## In-App Notification Boundary
 
-Focused commands:
+The notification inbox supports authenticated list, detail, unread count, read, archive, snooze,
+delete, refresh hints, and preference operations. Actor subscriptions persist preference state.
+Current source has no producer that turns actor subscriptions or content publication into inbox
+rows, and no producer that turns inbox rows into direct email or Web Push work.
 
-```bash
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=Email]" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/*/*[Category=RabbitMQ]" --minimum-expected-tests 1
-dotnet test --project tests/Event.Persistence.IntegrationTests/Event.Persistence.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTenantControlRepositoryTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchAdminControllerTests/*|/*/*/EmailDispatchAdminHateoasTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchTickerQJobsTests/*|/*/*/EmailDispatchProcessorTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Event.API.IntegrationTests/Event.API.IntegrationTests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchHealthCheckTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/EmailDispatchRabbitMqHealthCheckTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqContainerFixtureTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchTransportLiveTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchConsumerMailpitTests/*" --minimum-expected-tests 1
-dotnet test --project tests/Explore.Infrastructure.Tests/Explore.Infrastructure.Tests.csproj --configuration Release --verbosity quiet -- --treenode-filter "/*/*/RabbitMqEmailDispatchDeadLetterReplayLiveTests/*" --minimum-expected-tests 1
-```
+See [Notifications](NOTIFICATIONS.md) for the complete inbox, preference, Web Push, and ownership
+boundary. See [Outbox pattern](OUTBOX_PATTERN.md) for the distinction between generic outbox work
+and specialized delivery state.
 
-## Admin Workflow
+## Unsupported Claims To Avoid
 
-Instance administrators manage SMTP from the instance settings surface:
-
-1. Open the instance admin settings page.
-2. Review SMTP host, port, security, sender, timeout, and credential fields.
-3. Save the settings.
-4. Run the SMTP connection test.
-5. Check readiness health if the connection test or mail send fails.
-
-The admin UI source is `Explore.Blazor.Client/Pages/Admin/Instance/Components/InstanceSmtpSection.razor`, and the API source is `Explore.API/Controllers/InstanceSettingsController.cs`.
-
-## In-App Notifications Boundary
-
-In-app notifications are implemented through notification controller/client/repository paths, not through SMTP delivery.
-
-| Capability | Boundary |
-|---|---|
-| Read/archive/snooze/delete notification inbox items | In-app notification feature. |
-| SMTP send | `IEmailService` / `SmtpEmailService`. |
-| User, organization, and group notification preferences | Implemented as matrix category/channel choices resolved before non-required in-app fanout rows and before direct SMTP provider handoff. |
-| Actor-subscription fanout | Implemented only as durable in-app `Notification` row creation through the outbox fanout path, gated by the in-app preference channel before row creation. |
-| Event moderation attendee fanout | Implemented only as durable in-app `Notification` row creation through the outbox fanout path. Heavy moderation uses generic, linkless in-app copy and still does not send email. Trust-safety requiredness is resolved through the preference matrix. |
-| Notification-to-email fanout | Not implemented in the inspected notification path; no SMTP call is made by actor-subscription or moderation fanout. |
-
-`EmailDispatchDrainService` preserves tenant pause, processing claims, receipt claims, legacy unsubscribe checks, retry/dead-letter handling, and operator park/replay behavior. When the matrix disables a non-required email category, the drain marks the durable row and receipt as `Skipped` with failure category `recipient_notification_preference_disabled` before SMTP handoff.
-
-Keep the future notifications doc focused on in-app notification behavior when that doc is created, and link back here only for SMTP delivery boundaries.
+- Automatic actor-subscription or content-publication email fanout.
+- Automatic email delivery from an in-app notification.
+- Email digests or transport receipts attached to inbox rows.
+- A public waitlist, newsletter, contact form, or marketing workflow.
+- RabbitMQ as the durable email source of truth.
+- Direct application ownership of account-authority credential tokens.
+- A live account-lifecycle email workflow based only on the registered service and adapter.
 
 ## Troubleshooting
 
-| Symptom | First Checks |
+| Symptom | First checks |
 |---|---|
-| SMTP health is degraded or unhealthy | Verify host, port, security mode, credentials, and network reachability. |
-| Connection test fails | Run the instance SMTP test and check API logs from `SmtpEmailService.TestConnectionAsync`. |
-| Settings update appears ignored | Wait for the resolver cache window or re-run the settings/test path that invalidates SMTP configuration for the current tenant. |
-| Sends time out | Check `email.smtp_timeout_seconds`, firewall rules, and provider throttling. |
-| TLS/certificate failures | Verify security mode and only use `email.smtp_skip_cert_validation` for controlled non-production scenarios. |
-| Local development mail does not arrive | Open Mailpit at `http://localhost:18025` and confirm `email.smtp_host`/`email.smtp_port` resolve to `localhost:11025` for Aspire or `mailpit:1025` for Compose. |
-| RabbitMQ dispatch health is unhealthy | Confirm `EmailDispatchRabbitMq:Enabled` is intentional, then check broker connectivity, topology names, parking queue settings, and bounded transport logs. Basic Dispatch can stay healthy without RabbitMQ when broker dispatch is disabled. |
-| RabbitMQ DLQ grows | Inspect the HAL-gated EmailDispatch admin status before replay. Malformed or missing durable pointers should park or remain in DLQ evidence; replayable rows must reset durable state before republish. |
-
-Local development seeding can provide Mailpit values when SMTP host is empty or still set to the retired `mailpit.openislamu.org` seed. Treat those as development conveniences, not production defaults.
+| SMTP readiness is degraded or unhealthy | Verify host, port, security mode, credentials, sender address, and network reachability |
+| Connection test fails | Run the instance SMTP test and inspect sanitized `SmtpEmailService.TestConnectionAsync` logs |
+| A direct-email row is skipped | Check the legacy category preference and matrix `ProductAnnouncements` email choice for its user |
+| A row remains pending | Check tenant pause state, scheduler mode, due time, and processing health |
+| Retry or dead-letter counts grow | Inspect sanitized operator status; replay only when the HAL action is present and the side effect is safe |
+| Local email is absent | Verify the runtime endpoint and inspect Mailpit at `http://localhost:18025` |
+| RabbitMQ health is unhealthy | Confirm broker mode is intentional, then inspect connectivity, topology, dead-letter, and parking state |
 
 ## Related Documentation
 
-- [CONFIGURATION.md](CONFIGURATION.md) - configuration and settings boundaries.
-- [SECRETS.md](SECRETS.md) - secret-provider and sensitive value handling.
-- [ADMIN_GUIDE.md](ADMIN_GUIDE.md) - instance admin SMTP workflow.
-- [OPERATIONS.md](OPERATIONS.md) - health/readiness context.
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - symptom-first operator triage.
+- [Notifications](NOTIFICATIONS.md)
+- [Outbox pattern](OUTBOX_PATTERN.md)
+- [Configuration](CONFIGURATION.md)
+- [Secrets](SECRETS.md)
+- [Admin guide](ADMIN_GUIDE.md)
+- [Operations](OPERATIONS.md)
+- [Troubleshooting](TROUBLESHOOTING.md)

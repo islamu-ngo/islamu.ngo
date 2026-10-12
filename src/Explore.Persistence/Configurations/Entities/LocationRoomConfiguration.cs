@@ -21,6 +21,8 @@ public class LocationRoomConfiguration : IEntityTypeConfiguration<LocationRoom>
         builder.Property(r => r.Description)
             .HasMaxLength(2000);
 
+        builder.Property(r => r.ConcurrencyStamp).IsConcurrencyToken();
+
         builder.HasKey(r => r.Id)
             .HasName("pk_location_rooms");
 

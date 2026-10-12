@@ -92,52 +92,53 @@ public class IncomingWebhookMessageRepository : IIncomingWebhookMessageRepositor
                 $"Lease owner cannot exceed {IncomingWebhookMessage.MaxLeaseOwnerLength} characters.");
         }
         var leaseExpiresAt = request.ClaimedAt.Add(request.LeaseDuration);
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        if (_dbContext.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+        return await new EfCoreUnitOfWork(_dbContext).ExecuteInTransactionAsync(async ct =>
         {
-            await _dbContext.Database.ExecuteSqlRawAsync(
-                "SELECT pg_advisory_xact_lock(hashtext({0}))",
-                ["incoming-webhook-claim"],
-                cancellationToken);
-        }
-
-        var candidates = await _dbContext.IncomingWebhookMessages
-            .IgnoreTenantFilter(TenantFilterBypassReasons.WebhookWorkerCrossTenantQueue)
-            .Where(message =>
-                ((message.StatusId == (int)IncomingWebhookMessageStatus.Verified ||
-                  message.StatusId == (int)IncomingWebhookMessageStatus.RetryDue) &&
-                 (message.NextAttemptAt == null || message.NextAttemptAt <= request.ClaimedAt)) ||
-                (message.StatusId == (int)IncomingWebhookMessageStatus.Processing &&
-                 message.ProcessingLeaseExpiresAt != null &&
-                 message.ProcessingLeaseExpiresAt <= request.ClaimedAt))
-            .OrderBy(message => message.NextAttemptAt ?? message.ReceivedAt)
-            .ThenBy(message => message.ReceivedAt)
-            .ThenBy(message => message.Id)
-            .Take(request.BatchSize)
-            .ToListAsync(cancellationToken);
-
-        var claims = new List<IncomingWebhookClaim>(candidates.Count);
-        foreach (var message in candidates)
-        {
-            if (message.Status == IncomingWebhookMessageStatus.Processing)
+            if (_dbContext.Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
             {
-                message.RecoverExpiredClaim(request.ClaimedAt);
+                await _dbContext.Database.ExecuteSqlRawAsync(
+                    "SELECT pg_advisory_xact_lock(hashtext({0}))",
+                    ["incoming-webhook-claim"],
+                    ct);
             }
 
-            var leaseToken = Guid.CreateVersion7();
-            message.Claim(leaseOwner, leaseToken, leaseExpiresAt, request.ClaimedAt);
-            TrackAppendedEvidence(message);
-            claims.Add(new IncomingWebhookClaim(
-                message.Id,
-                message.TenantId,
-                leaseToken,
-                message.ProcessingFence,
-                message.ProcessingGeneration));
-        }
+            var candidates = await _dbContext.IncomingWebhookMessages
+                .IgnoreTenantFilter(TenantFilterBypassReasons.WebhookWorkerCrossTenantQueue)
+                .Where(message =>
+                    ((message.StatusId == (int)IncomingWebhookMessageStatus.Verified ||
+                      message.StatusId == (int)IncomingWebhookMessageStatus.RetryDue) &&
+                     (message.NextAttemptAt == null || message.NextAttemptAt <= request.ClaimedAt)) ||
+                    (message.StatusId == (int)IncomingWebhookMessageStatus.Processing &&
+                     message.ProcessingLeaseExpiresAt != null &&
+                     message.ProcessingLeaseExpiresAt <= request.ClaimedAt))
+                .OrderBy(message => message.NextAttemptAt ?? message.ReceivedAt)
+                .ThenBy(message => message.ReceivedAt)
+                .ThenBy(message => message.Id)
+                .Take(request.BatchSize)
+                .ToListAsync(ct);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return claims;
+            var claims = new List<IncomingWebhookClaim>(candidates.Count);
+            foreach (var message in candidates)
+            {
+                if (message.Status == IncomingWebhookMessageStatus.Processing)
+                {
+                    message.RecoverExpiredClaim(request.ClaimedAt);
+                }
+
+                var leaseToken = Guid.CreateVersion7();
+                message.Claim(leaseOwner, leaseToken, leaseExpiresAt, request.ClaimedAt);
+                TrackAppendedEvidence(message);
+                claims.Add(new IncomingWebhookClaim(
+                    message.Id,
+                    message.TenantId,
+                    leaseToken,
+                    message.ProcessingFence,
+                    message.ProcessingGeneration));
+            }
+
+            await _dbContext.SaveChangesAsync(ct);
+            return claims;
+        }, cancellationToken);
     }
 
     public Task<IncomingWebhookMessage?> GetActiveClaimAsync(

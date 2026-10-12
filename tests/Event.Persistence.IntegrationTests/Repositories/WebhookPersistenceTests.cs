@@ -10,6 +10,7 @@ using Explore.Persistence;
 using Explore.Persistence.QueryFilters;
 using Explore.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using TUnit.Core;
 
 namespace Event.Persistence.IntegrationTests.Repositories;
@@ -113,6 +114,48 @@ public sealed class WebhookPersistenceTests(PostgreSqlContainerFixture fixture)
             .IgnoreTenantFilter(TenantFilterBypassReasons.WebhookTenantOperation)
             .CountAsync(e => e.Provider == "coop" && e.ProviderMessageId == "msg-123");
         await Assert.That(persistedCount).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task IncomingWebhookRepository_RetryingExecutionStrategy_ClaimsDueMessagesAtomically()
+    {
+        await fixture.ResetAsync();
+        await using (var setupContext = fixture.CreateDbContext())
+        {
+            var tenant = CreateTenant("incoming-webhook-retrying-claim");
+            setupContext.Tenants.Add(tenant);
+            setupContext.IncomingWebhookMessages.Add(
+                CreateIncomingMessage(tenant.Id, "coop", "retrying-claim", "retrying-claim-idem"));
+            await setupContext.SaveChangesAsync();
+        }
+
+        var options = new DbContextOptionsBuilder<ExploreDbContext>()
+            .UseNpgsql(fixture.ConnectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorCodesToAdd: null);
+                npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+            })
+            .UseSnakeCaseNamingConvention()
+            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
+            .Options;
+        await using var retryingContext = new ExploreDbContext(options);
+        retryingContext.EnableTenantFilterBypass("Persistence retry-strategy integration test system context.");
+        var repository = new IncomingWebhookMessageRepository(retryingContext);
+
+        var claims = await repository.ClaimDueAsync(
+            new IncomingWebhookClaimRequest(
+                "incoming-worker-retrying",
+                10,
+                DateTime.UtcNow.AddMinutes(1),
+                TimeSpan.FromMinutes(1)),
+            CancellationToken.None);
+
+        await Assert.That(claims).HasSingleItem();
+        await Assert.That(claims.Single().ProcessingFence).IsEqualTo(1);
+        await Assert.That(claims.Single().ProcessingGeneration).IsEqualTo(1);
     }
 
     [Test]

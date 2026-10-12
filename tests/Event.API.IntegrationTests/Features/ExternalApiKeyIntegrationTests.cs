@@ -32,14 +32,14 @@ public class ExternalApiKeyIntegrationTests
     public async Task UpdateExternalApiKeyPolicy_WithOwnerRequest_ShouldUpdateEditableFields()
     {
         var userId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Build Bot", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Build Bot", [ExternalApiKeyScopes.UsersRead]);
         var expiresAt = DateTime.UtcNow.AddDays(30);
 
         var payload = new UpdateExternalApiKeyPolicyDto
         {
             Id = apiKeyId,
             Name = "Deploy Bot",
-            Scopes = ["events:write", "events:read", "events:write"],
+            Scopes = [ExternalApiKeyScopes.UsersWrite, ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite],
             ExpiresAt = expiresAt
         };
 
@@ -60,7 +60,7 @@ public class ExternalApiKeyIntegrationTests
         var stored = await dbContext.ExternalApiKeys.SingleAsync(x => x.Id == apiKeyId);
 
         await Assert.That(stored.Name).IsEqualTo("Deploy Bot");
-        await Assert.That(stored.Scopes).IsEqualTo("events:read events:write");
+        await Assert.That(stored.Scopes).IsEqualTo("users:read users:write");
         await Assert.That(stored.ExpiresAt).IsEqualTo(expiresAt);
         await Assert.That(stored.OwnerId).IsEqualTo(userId);
         await Assert.That(stored.ExternalApiKeyStatusId).IsEqualTo((int)ExternalApiKeyStatusEnum.Active);
@@ -71,7 +71,7 @@ public class ExternalApiKeyIntegrationTests
     public async Task GetExternalApiKeyDetails_WithOwnerRequest_ShouldReturnVisibleMetadata()
     {
         var userId = Guid.NewGuid();
-        var issued = await CreateIssuedExternalApiKeyAsync(userId, "Reader Bot", ["events:read", "events:write"]);
+        var issued = await CreateIssuedExternalApiKeyAsync(userId, "Reader Bot", [ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite]);
         var apiKeyId = issued.Id;
 
         using var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"/api/externalapikey/{apiKeyId}", userId);
@@ -87,7 +87,7 @@ public class ExternalApiKeyIntegrationTests
         await Assert.That(body.ExternalApiKeyOwnerTypeId).IsEqualTo((int)ExternalApiKeyOwnerType.User);
         await Assert.That(body.ExternalApiKeyOwnerTypeCode).IsEqualTo("USER");
         await Assert.That(body.OwnerId).IsEqualTo(userId);
-        await Assert.That(body.Scopes).IsEquivalentTo(["events:read", "events:write"]);
+        await Assert.That(body.Scopes).IsEquivalentTo([ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite]);
         await Assert.That(body.KeyId.Length).IsEqualTo(16);
         await Assert.That(raw).DoesNotContain("\"apiKey\"");
         await Assert.That(raw).DoesNotContain("\"secretHash\"");
@@ -100,7 +100,7 @@ public class ExternalApiKeyIntegrationTests
     {
         var ownerUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Private Bot", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Private Bot", [ExternalApiKeyScopes.UsersRead]);
 
         using var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Get, $"/api/externalapikey/{apiKeyId}", otherUserId);
         var response = await _fixture.Client.SendAsync(request);
@@ -309,13 +309,13 @@ public class ExternalApiKeyIntegrationTests
     {
         var ownerUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Owner Key", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Owner Key", [ExternalApiKeyScopes.UsersRead]);
 
         var payload = new UpdateExternalApiKeyPolicyDto
         {
             Id = apiKeyId,
             Name = "Hijacked Key",
-            Scopes = ["events:write"],
+            Scopes = [ExternalApiKeyScopes.UsersWrite],
             ExpiresAt = DateTime.UtcNow.AddDays(7)
         };
 
@@ -331,7 +331,7 @@ public class ExternalApiKeyIntegrationTests
         var stored = await dbContext.ExternalApiKeys.SingleAsync(x => x.Id == apiKeyId);
 
         await Assert.That(stored.Name).IsEqualTo("Owner Key");
-        await Assert.That(stored.Scopes).IsEqualTo("events:read");
+        await Assert.That(stored.Scopes).IsEqualTo(ExternalApiKeyScopes.UsersRead);
         await Assert.That(stored.ExpiresAt).IsNull();
         await Assert.That(stored.OwnerId).IsEqualTo(ownerUserId);
     }
@@ -411,7 +411,7 @@ public class ExternalApiKeyIntegrationTests
     public async Task DeleteExternalApiKey_WithOwnerRequest_ShouldRevokeKeyAndPopulateAuditFields()
     {
         var userId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Ops Bot", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(userId, "Ops Bot", [ExternalApiKeyScopes.UsersRead]);
 
         using var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Delete, $"/api/externalapikey/{apiKeyId}", userId);
         var response = await _fixture.Client.SendAsync(request);
@@ -431,7 +431,7 @@ public class ExternalApiKeyIntegrationTests
     {
         var ownerUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Private Ops Bot", ["events:read"]);
+        var apiKeyId = await CreateExternalApiKeyAsync(ownerUserId, "Private Ops Bot", [ExternalApiKeyScopes.UsersRead]);
 
         using var request = _fixture.CreateAuthenticatedRequest(HttpMethod.Delete, $"/api/externalapikey/{apiKeyId}", otherUserId);
         var response = await _fixture.Client.SendAsync(request);

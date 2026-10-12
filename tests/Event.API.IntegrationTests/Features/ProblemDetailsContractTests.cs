@@ -10,6 +10,7 @@ using Event.Api.IntegrationTests.Helpers;
 using Explore.Application.Exceptions;
 using Explore.Application.Responses;
 using Explore.Application.Services;
+using Explore.Domain.Constants;
 using Explore.Domain.Enums;
 using Explore.Domain.Settings.Definitions;
 using MediatR;
@@ -132,7 +133,7 @@ public class ProblemDetailsContractTests
                     TenantId = tenantId,
                     OwnerId = ownerId,
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };

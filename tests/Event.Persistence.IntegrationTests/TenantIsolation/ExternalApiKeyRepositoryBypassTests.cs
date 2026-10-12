@@ -4,6 +4,7 @@
 using Event.Persistence.IntegrationTests.Fixtures;
 using Explore.Application.Contracts.Infrastructure;
 using Explore.Domain;
+using Explore.Domain.Constants;
 using Explore.Domain.Enums;
 using Explore.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -134,7 +135,7 @@ public class ExternalApiKeyRepositoryBypassTests(PostgreSqlContainerFixture fixt
             Name = name,
             KeyId = $"{keyIdPrefix}-{Guid.NewGuid():N}",
             SecretHash = $"hash-{keyIdPrefix}",
-            Scopes = "events:read",
+            Scopes = ExternalApiKeyScopes.UsersRead,
             OwnerType = ownerType,
             OwnerId = ownerId,
             ExternalApiKeyStatusId = (int)ExternalApiKeyStatusEnum.Active,

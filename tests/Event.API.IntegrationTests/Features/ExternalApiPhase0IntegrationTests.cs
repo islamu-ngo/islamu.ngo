@@ -70,7 +70,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerType = "Organization",
                     OwnerId = Guid.NewGuid().ToString(),
-                    Scopes = ["events:write"],
+                    Scopes = [ExternalApiKeyScopes.OrganizationsWrite],
                     SecretHash = ApiKeyHashing.ComputeHash(rawApiKey)
                 }
             ]
@@ -112,7 +112,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerId = ownerId,
                     OwnerType = ExternalApiKeyOwnerType.Organization,
-                    Scopes = ["events:write", "events:read"]
+                    Scopes = [ExternalApiKeyScopes.OrganizationsWrite, ExternalApiKeyScopes.OrganizationsRead]
                 }
             ]
         };
@@ -153,7 +153,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerId = ownerId,
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -200,7 +200,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerId = Guid.NewGuid(),
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 },
                 new ExternalApiPhase0WebApplicationFactory.PersistedApiKeySeed
                 {
@@ -209,7 +209,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerId = Guid.NewGuid(),
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -254,7 +254,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerId = Guid.NewGuid(),
                     Status = ExternalApiKeyStatusEnum.Revoked,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -290,7 +290,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = apiKeyTenantId,
                     OwnerType = "User",
                     OwnerId = Guid.NewGuid().ToString(),
-                    Scopes = ["events:read"],
+                    Scopes = [ExternalApiKeyScopes.UsersRead],
                     SecretHash = ApiKeyHashing.ComputeHash(rawApiKey)
                 }
             ]
@@ -330,7 +330,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     Secret = secret,
                     TenantId = apiKeyTenantId,
                     OwnerId = Guid.NewGuid(),
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -414,7 +414,7 @@ public sealed class ExternalApiPhase0IntegrationTests
                     TenantId = tenantId,
                     OwnerType = "Organization",
                     OwnerId = Guid.NewGuid().ToString(),
-                    Scopes = ["events:write"],
+                    Scopes = [ExternalApiKeyScopes.OrganizationsWrite],
                     SecretHash = ApiKeyHashing.ComputeHash(rawApiKey)
                 }
             ]

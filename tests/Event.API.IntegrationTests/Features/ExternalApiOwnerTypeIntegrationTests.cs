@@ -38,7 +38,7 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                     TenantId = tenantId,
                     OwnerId = ownerId,
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read", "users:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead, ExternalApiKeyScopes.UsersWrite]
                 }
             ]
         };
@@ -78,7 +78,7 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                     TenantId = tenantId,
                     OwnerId = orgId,
                     OwnerType = ExternalApiKeyOwnerType.Organization,
-                    Scopes = ["organizations:read", "events:write"]
+                    Scopes = [ExternalApiKeyScopes.OrganizationsRead, ExternalApiKeyScopes.OrganizationsWrite]
                 }
             ]
         };
@@ -319,7 +319,7 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                     TenantId = PlatformDefaults.DefaultTenantId,
                     OwnerId = ownerId,
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -462,7 +462,7 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                     TenantId = tenantId,
                     OwnerId = Guid.NewGuid(),
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"],
+                    Scopes = [ExternalApiKeyScopes.UsersRead],
                     ExpiresAtUtc = DateTimeOffset.UtcNow.AddMinutes(-5)
                 }
             ]
@@ -494,7 +494,7 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                     TenantId = tenantId,
                     OwnerId = Guid.NewGuid(),
                     OwnerType = ExternalApiKeyOwnerType.User,
-                    Scopes = ["events:read"]
+                    Scopes = [ExternalApiKeyScopes.UsersRead]
                 }
             ]
         };
@@ -539,7 +539,9 @@ public sealed class ExternalApiOwnerTypeIntegrationTests
                 TenantId = k.tenant,
                 OwnerId = Guid.NewGuid(),
                 OwnerType = k.type,
-                Scopes = k.type == ExternalApiKeyOwnerType.InstanceAdmin ? ["admin:instance"] : ["events:read"]
+                Scopes = k.type == ExternalApiKeyOwnerType.InstanceAdmin
+                    ? [ExternalApiKeyScopes.AdminInstance]
+                    : [ExternalApiKeyScopes.UsersRead]
             }).ToArray()
         };
 

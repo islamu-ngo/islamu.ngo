@@ -97,7 +97,9 @@
                Variant="DrawerVariant.Temporary"
                Anchor="Anchor.Start"
                Overlay="true"
-               OverlayAutoClose="true">
+               OverlayAutoClose="true"
+               Style="--mud-drawer-width:min(24rem, 90vw);block-size:100dvh;max-block-size:100dvh;"
+               aria-hidden="@(_mobileOpen ? "false" : "true")">
         <div class="site-mega-menu__mobile-panel" data-testid="site-mega-menu-mobile-panel">
             <div class="site-mega-menu__mobile-header">
                 <h2 class="site-mega-menu__mobile-title">Primary navigation</h2>

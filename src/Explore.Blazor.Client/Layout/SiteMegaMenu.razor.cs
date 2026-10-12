@@ -240,51 +240,56 @@ public partial class SiteMegaMenu : ComponentBase, IAsyncDisposable, IBrowserVie
         await CloseDesktopAsync(restoreFocus: true);
     }
 
-    protected async Task ScheduleDesktopCloseAsync()
+    protected Task ScheduleDesktopCloseAsync()
     {
         if (_openSectionId is null || _disposed)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         CancelDesktopClose();
         var cts = new CancellationTokenSource();
         _desktopCloseCts = cts;
 
-        try
+        _ = InvokeAsync(async () =>
         {
-            await Task.Delay(DesktopCloseDelayMs, cts.Token);
-            if (_disposed || cts.IsCancellationRequested || !ReferenceEquals(_desktopCloseCts, cts))
+            try
+            {
+                await Task.Delay(DesktopCloseDelayMs, cts.Token);
+                if (_disposed || cts.IsCancellationRequested || !ReferenceEquals(_desktopCloseCts, cts))
+                {
+                    return;
+                }
+
+                _desktopCloseCts = null;
+                await CloseDesktopAsync(restoreFocus: false);
+                if (!_disposed && !cts.IsCancellationRequested)
+                {
+                    await InvokeAsync(() =>
+                    {
+                        if (!_disposed)
+                        {
+                            StateHasChanged();
+                        }
+                    });
+                }
+            }
+            catch (OperationCanceledException)
             {
                 return;
             }
-
-            _desktopCloseCts = null;
-            await CloseDesktopAsync(restoreFocus: false);
-            if (!_disposed && !cts.IsCancellationRequested)
+            finally
             {
-                await InvokeAsync(() =>
+                if (ReferenceEquals(_desktopCloseCts, cts))
                 {
-                    if (!_disposed)
-                    {
-                        StateHasChanged();
-                    }
-                });
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-        finally
-        {
-            if (ReferenceEquals(_desktopCloseCts, cts))
-            {
-                _desktopCloseCts = null;
-            }
+                    _desktopCloseCts = null;
+                }
 
-            cts.Dispose();
-        }
+                cts.Dispose();
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     protected void CancelDesktopClose()

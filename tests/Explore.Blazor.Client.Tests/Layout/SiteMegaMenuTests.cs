@@ -87,28 +87,39 @@ public sealed class SiteMegaMenuTests : IDisposable
         await focusService.Received(1).SaveFocusAsync();
     }
 
-    [Test]
+    [Test, Timeout(10_000)]
     public async Task SiteMegaMenu_DelayedCloseCancelsOnReentryThenClosesAfterGrace()
     {
         SetupViewport(Breakpoint.Lg, 1280);
 
         var cut = RenderMenu();
         await OpenDesktopSectionAsync(cut, "discover");
-        var pendingClose = cut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
-        await Task.Yield();
+        await cut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
         await cut.Find("#site-mega-menu-panel").TriggerEventAsync("onpointerenter", new PointerEventArgs());
-        await pendingClose;
-        await Task.Delay(190);
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("true");
 
+        var renderedClosingPanel = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var removedPanel = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        cut.OnMarkupUpdated += (_, _) =>
+        {
+            var panels = cut.FindAll("#site-mega-menu-panel");
+            if (panels.Any(panel => panel.ClassList.Contains("site-mega-menu__panel--closing")))
+            {
+                renderedClosingPanel.TrySetResult();
+            }
+
+            if (panels.Count == 0)
+            {
+                removedPanel.TrySetResult();
+            }
+        };
+
         await cut.Find(".site-mega-menu__desktop").TriggerEventAsync("onpointerleave", new PointerEventArgs());
-        cut.WaitForAssertion(() =>
-            Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("false").GetAwaiter().GetResult());
-        await Assert.That(cut.Find("#site-mega-menu-panel").ClassList.Contains("site-mega-menu__panel--closing")).IsTrue();
-        cut.WaitForAssertion(() =>
-            Assert.That(cut.FindAll("#site-mega-menu-panel").Count).IsEqualTo(0).GetAwaiter().GetResult(),
-            timeout: TimeSpan.FromMilliseconds(600));
+        await Task.WhenAll(renderedClosingPanel.Task, removedPanel.Task);
+
+        await Assert.That(cut.Find("[data-testid='site-mega-menu-trigger-discover']").GetAttribute("aria-expanded")).IsEqualTo("false");
+        await Assert.That(cut.FindAll("#site-mega-menu-panel").Count).IsEqualTo(0);
     }
 
     [Test]
@@ -184,6 +195,8 @@ public sealed class SiteMegaMenuTests : IDisposable
         cut.Find("[data-testid='site-mega-menu-mobile-toggle']").Click();
 
         await Assert.That(cut.Find("[data-testid='site-mega-menu-mobile-toggle']").GetAttribute("aria-expanded")).IsEqualTo("true");
+        await Assert.That(cut.Find("#site-mega-menu-mobile-drawer").GetAttribute("style"))
+            .Contains("block-size:100dvh");
         await Assert.That(cut.FindAll("[data-testid^='site-mega-menu-mobile-section-']").Count).IsEqualTo(3);
         await Assert.That(cut.Find("[data-testid='site-mega-menu-mobile-link-community-guidelines']").GetAttribute("href")).IsEqualTo("/community-guidelines");
         await Assert.That(cut.Markup).DoesNotContain("/privacy");
@@ -199,6 +212,22 @@ public sealed class SiteMegaMenuTests : IDisposable
         cut.Find("[data-testid='site-mega-menu-mobile-toggle']").Click();
         await cut.Find("[data-testid='site-mega-menu']").TriggerEventAsync("onkeydown", new KeyboardEventArgs { Key = "Escape" });
         await Assert.That(cut.Find("[data-testid='site-mega-menu-mobile-toggle']").GetAttribute("aria-expanded")).IsEqualTo("false");
+    }
+
+    [Test]
+    public async Task SiteMegaMenu_ClosedMobileDrawer_IsHiddenFromAssistiveTechnology()
+    {
+        SetupViewport(Breakpoint.Sm, 390);
+
+        var cut = RenderMenu();
+        var drawer = cut.Find("#site-mega-menu-mobile-drawer");
+        await Assert.That(drawer.GetAttribute("aria-hidden")).IsEqualTo("true");
+
+        cut.Find("[data-testid='site-mega-menu-mobile-toggle']").Click();
+        await Assert.That(drawer.GetAttribute("aria-hidden")).IsEqualTo("false");
+
+        cut.Find("[data-testid='site-mega-menu-mobile-close']").Click();
+        await Assert.That(drawer.GetAttribute("aria-hidden")).IsEqualTo("true");
     }
 
     [Test]

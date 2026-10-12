@@ -66,10 +66,10 @@
 }
 
 .site-mega-menu__backdrop {
-    position: absolute;
-    inset-block-start: 100%;
-    inset-inline: calc(50% - 50vw);
-    block-size: 100dvh;
+    position: fixed;
+    inset-block-start: var(--mud-appbar-height, 4rem);
+    inset-inline: 0;
+    block-size: calc(100dvh - var(--mud-appbar-height, 4rem));
     z-index: 0;
     border: 0;
     background: transparent;
@@ -77,10 +77,10 @@
 }
 
 .site-mega-menu__panel {
-    position: absolute;
-    inset-block-start: 100%;
-    inset-inline: calc(50% - 50vw);
-    max-block-size: min(32rem, calc(100dvh - var(--isl-space-16)));
+    position: fixed;
+    inset-block-start: var(--mud-appbar-height, 4rem);
+    inset-inline: 0;
+    max-block-size: min(32rem, calc(100dvh - var(--mud-appbar-height, 4rem)));
     overflow-y: auto;
     z-index: 1;
     border-block-start: 1px solid var(--mud-palette-lines-default);
@@ -133,7 +133,7 @@
 
 .site-mega-menu__grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--isl-space-5);
 }
 

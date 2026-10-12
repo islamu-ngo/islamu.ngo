@@ -16,6 +16,10 @@ public partial class RemoveEventProductSurface : Migration
 
         migrationBuilder.Sql("DROP VIEW IF EXISTS vw_event_with_sessions;");
 
+        migrationBuilder.DropForeignKey("fk_event_custom_property_definitions_event_custom_property_opt", "event_custom_property_definitions");
+        migrationBuilder.DropForeignKey("fk_event_session_custom_property_definitions_event_session_cus", "event_session_custom_property_definitions");
+        migrationBuilder.DropForeignKey("fk_event_session_template_custom_property_definitions_event_se", "event_session_template_custom_property_definitions");
+        migrationBuilder.DropForeignKey("fk_event_template_custom_property_definitions_event_template_c", "event_template_custom_property_definitions");
         migrationBuilder.DropForeignKey("fk_email_dispatch_outbox_events_event_id", "email_dispatch_outbox");
         migrationBuilder.DropForeignKey("fk_email_dispatch_outbox_event_registration_intents_registrati", "email_dispatch_outbox");
         migrationBuilder.DropForeignKey("fk_integration_sync_outbox_events_event_id", "integration_sync_outbox");
@@ -101,6 +105,7 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.DropTable("event_registration_intents");
         migrationBuilder.DropTable("event_report_external_links");
         migrationBuilder.DropTable("event_report_signals");
+        migrationBuilder.DropTable("event_moderation_records");
         migrationBuilder.DropTable("event_report_decisions");
         migrationBuilder.DropTable("event_report_evidence");
         migrationBuilder.DropTable("event_report_targets");
@@ -116,7 +121,6 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.DropTable("event_sessions");
         migrationBuilder.DropTable("event_session_groups");
         migrationBuilder.DropTable("event_days");
-        migrationBuilder.DropTable("event_moderation_records");
         migrationBuilder.DropTable("event_role_assignments");
         migrationBuilder.DropTable("event_islamic_aspects");
         migrationBuilder.DropTable("event_tech_aspects");
@@ -339,15 +343,19 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.CreateIndex("ix_event_moderation_records_tenant_source_report_decision", "event_moderation_records", new[] { "tenant_id", "source_report_decision_id" }, filter: "source_report_decision_id IS NOT NULL");
 
         migrationBuilder.AddForeignKey("fk_event_sessions_events_tenant_id_event_id", "event_sessions", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
-        migrationBuilder.AddForeignKey("fk_event_sessions_event_session_statuses_event_session_status_", "event_sessions", "event_session_status_id", "event_session_statuses", "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_sessions_event_session_statuses_event_session_status_", "event_sessions", "event_session_status_id", "event_session_statuses", principalColumn: "id", onDelete: ReferentialAction.Restrict);
         migrationBuilder.AddForeignKey("fk_event_registration_intents_events_tenant_id_event_id", "event_registration_intents", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Cascade);
-        migrationBuilder.AddForeignKey("fk_event_registrations_event_registration_intents_event_registr", "event_registrations", "event_registration_intent_id", "event_registration_intents", "id", onDelete: ReferentialAction.Cascade);
+        migrationBuilder.AddForeignKey("fk_event_registrations_event_registration_intents_event_registr", "event_registrations", "event_registration_intent_id", "event_registration_intents", principalColumn: "id", onDelete: ReferentialAction.Cascade);
         migrationBuilder.AddForeignKey("fk_event_reports_events_tenant_id_event_id", "event_reports", new[] { "tenant_id", "event_id" }, "events", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
         migrationBuilder.AddForeignKey("fk_event_report_cases_event_reports_tenant_id_report_id", "event_report_cases", new[] { "tenant_id", "report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" });
         migrationBuilder.AddForeignKey("fk_event_report_decisions_event_report_cases_tenant_id_report_", "event_report_decisions", new[] { "tenant_id", "report_id", "case_id" }, "event_report_cases", principalColumns: new[] { "tenant_id", "report_id", "id" });
         migrationBuilder.AddForeignKey("fk_event_report_decisions_event_reports_tenant_id_report_id", "event_report_decisions", new[] { "tenant_id", "report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" });
         migrationBuilder.AddForeignKey("fk_event_moderation_records_event_reports_tenant_id_source_rep", "event_moderation_records", new[] { "tenant_id", "source_report_id" }, "event_reports", principalColumns: new[] { "tenant_id", "id" }, onDelete: ReferentialAction.Restrict);
         migrationBuilder.AddForeignKey("fk_event_moderation_records_event_report_decisions_tenant_id_s", "event_moderation_records", new[] { "tenant_id", "source_report_id", "source_report_decision_id" }, "event_report_decisions", principalColumns: new[] { "tenant_id", "report_id", "id" }, onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_custom_property_definitions_event_custom_property_opt", "event_custom_property_definitions", "default_option_id", "event_custom_property_options", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_session_custom_property_definitions_event_session_cus", "event_session_custom_property_definitions", "default_option_id", "event_session_custom_property_options", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_session_template_custom_property_definitions_event_se", "event_session_template_custom_property_definitions", "default_option_id", "event_session_template_custom_property_options", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_event_template_custom_property_definitions_event_template_c", "event_template_custom_property_definitions", "default_option_id", "event_template_custom_property_options", principalColumn: "id", onDelete: ReferentialAction.Restrict);
     }
 
     private static void RestoreRetainedColumnsIndexesAndForeignKeys(MigrationBuilder migrationBuilder)
@@ -390,16 +398,16 @@ public partial class RemoveEventProductSurface : Migration
         migrationBuilder.CreateIndex("ix_notification_external_delegations_report_decision_id", "notification_external_delegations", "report_decision_id");
         migrationBuilder.CreateIndex("ix_organization_reviews_event_id", "organization_reviews", "event_id");
 
-        migrationBuilder.AddForeignKey("fk_email_dispatch_outbox_events_event_id", "email_dispatch_outbox", "event_id", "events", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_email_dispatch_outbox_event_registration_intents_registrati", "email_dispatch_outbox", "registration_intent_id", "event_registration_intents", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_integration_sync_outbox_events_event_id", "integration_sync_outbox", "event_id", "events", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_integration_sync_outbox_event_registration_intents_registra", "integration_sync_outbox", "registration_intent_id", "event_registration_intents", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_notification_intents_events_event_id", "notification_intents", "event_id", "events", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_notification_intents_event_reports_report_id", "notification_intents", "report_id", "event_reports", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_notification_intents_event_report_decisions_report_decision", "notification_intents", "report_decision_id", "event_report_decisions", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_notification_external_delegations_event_reports_report_id", "notification_external_delegations", "report_id", "event_reports", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_notification_external_delegations_event_report_decisions_re", "notification_external_delegations", "report_decision_id", "event_report_decisions", "id", onDelete: ReferentialAction.Restrict);
-        migrationBuilder.AddForeignKey("fk_organization_reviews_events_event_id", "organization_reviews", "event_id", "events", "id", onDelete: ReferentialAction.Cascade);
+        migrationBuilder.AddForeignKey("fk_email_dispatch_outbox_events_event_id", "email_dispatch_outbox", "event_id", "events", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_email_dispatch_outbox_event_registration_intents_registrati", "email_dispatch_outbox", "registration_intent_id", "event_registration_intents", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_integration_sync_outbox_events_event_id", "integration_sync_outbox", "event_id", "events", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_integration_sync_outbox_event_registration_intents_registra", "integration_sync_outbox", "registration_intent_id", "event_registration_intents", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_notification_intents_events_event_id", "notification_intents", "event_id", "events", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_notification_intents_event_reports_report_id", "notification_intents", "report_id", "event_reports", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_notification_intents_event_report_decisions_report_decision", "notification_intents", "report_decision_id", "event_report_decisions", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_notification_external_delegations_event_reports_report_id", "notification_external_delegations", "report_id", "event_reports", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_notification_external_delegations_event_report_decisions_re", "notification_external_delegations", "report_decision_id", "event_report_decisions", principalColumn: "id", onDelete: ReferentialAction.Restrict);
+        migrationBuilder.AddForeignKey("fk_organization_reviews_events_event_id", "organization_reviews", "event_id", "events", principalColumn: "id", onDelete: ReferentialAction.Cascade);
     }
 
     private static void RestorePolicyColumns(MigrationBuilder migrationBuilder, string table)

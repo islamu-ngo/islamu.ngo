@@ -132,11 +132,57 @@ public class AddBlogFoundationMigrationTests
         }
     }
 
-    private static IReadOnlyList<MigrationOperation> InvokeMigration(string methodName)
+    [Test]
+    public async Task RemoveEventProductSurfaceUpAndDown_HandleCircularDependenciesReversibly()
     {
-        var migration = new AddBlogFoundation();
+        var upOperations = InvokeMigration(new RemoveEventProductSurface(), "Up").ToArray();
+        var downOperations = InvokeMigration(new RemoveEventProductSurface(), "Down").ToArray();
+        var circularForeignKeys = new[]
+        {
+            (Name: "fk_event_custom_property_definitions_event_custom_property_opt", Table: "event_custom_property_definitions", PrincipalTable: "event_custom_property_options"),
+            (Name: "fk_event_session_custom_property_definitions_event_session_cus", Table: "event_session_custom_property_definitions", PrincipalTable: "event_session_custom_property_options"),
+            (Name: "fk_event_session_template_custom_property_definitions_event_se", Table: "event_session_template_custom_property_definitions", PrincipalTable: "event_session_template_custom_property_options"),
+            (Name: "fk_event_template_custom_property_definitions_event_template_c", Table: "event_template_custom_property_definitions", PrincipalTable: "event_template_custom_property_options")
+        };
+        var restoredCircularForeignKeys = downOperations.OfType<AddForeignKeyOperation>()
+            .Where(operation => circularForeignKeys.Any(foreignKey => foreignKey.Name == operation.Name))
+            .ToDictionary(operation => operation.Name, operation => operation);
+
+        await Assert.That(restoredCircularForeignKeys.Keys)
+            .IsEquivalentTo(circularForeignKeys.Select(foreignKey => foreignKey.Name));
+
+        foreach (var foreignKey in circularForeignKeys)
+        {
+            var foreignKeyDropIndex = Array.FindIndex(upOperations, operation =>
+                operation is DropForeignKeyOperation drop && drop.Name == foreignKey.Name);
+            var principalTableDropIndex = Array.FindIndex(upOperations, operation =>
+                operation is DropTableOperation drop && drop.Name == foreignKey.PrincipalTable);
+            var restoredForeignKey = restoredCircularForeignKeys[foreignKey.Name];
+
+            await Assert.That(foreignKeyDropIndex).IsGreaterThanOrEqualTo(0);
+            await Assert.That(foreignKeyDropIndex).IsLessThan(principalTableDropIndex);
+            await Assert.That(restoredForeignKey.Table).IsEqualTo(foreignKey.Table);
+            await Assert.That(restoredForeignKey.Columns).IsEquivalentTo(["default_option_id"]);
+            await Assert.That(restoredForeignKey.PrincipalTable).IsEqualTo(foreignKey.PrincipalTable);
+            await Assert.That(restoredForeignKey.PrincipalColumns).IsEquivalentTo(["id"]);
+            await Assert.That(restoredForeignKey.OnDelete).IsEqualTo(ReferentialAction.Restrict);
+        }
+
+        var moderationRecordDropIndex = Array.FindIndex(upOperations, operation =>
+            operation is DropTableOperation drop && drop.Name == "event_moderation_records");
+        var reportDecisionDropIndex = Array.FindIndex(upOperations, operation =>
+            operation is DropTableOperation drop && drop.Name == "event_report_decisions");
+
+        await Assert.That(moderationRecordDropIndex).IsLessThan(reportDecisionDropIndex);
+    }
+
+    private static IReadOnlyList<MigrationOperation> InvokeMigration(string methodName)
+        => InvokeMigration(new AddBlogFoundation(), methodName);
+
+    private static IReadOnlyList<MigrationOperation> InvokeMigration(Migration migration, string methodName)
+    {
         var builder = new MigrationBuilder("Npgsql.EntityFrameworkCore.PostgreSQL");
-        var method = typeof(AddBlogFoundation).GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        var method = migration.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
 
         method!.Invoke(migration, [builder]);
 
